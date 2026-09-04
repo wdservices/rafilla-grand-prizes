@@ -1,3 +1,7 @@
+import mercedesImage from "@/assets/rafilla-mercedes.jpg";
+import techBundleImage from "@/assets/rafilla-tech-bundle.jpg";
+import apartmentImage from "@/assets/rafilla-apartment.jpg";
+
 export type CompetitionStatus = "LIVE" | "CLOSING SOON" | "UPCOMING";
 
 export type Competition = {
@@ -32,7 +36,7 @@ export const competitions: Competition[] = [
     closes: "18 Mar · 23:59",
     status: "LIVE",
     featured: true,
-    image: "/src/assets/rafilla-mercedes.jpg",
+    image: mercedesImage,
     imageAlt: "Silver Mercedes-Benz C-Class sedan in a warm lilac studio",
     accent: "coral",
     specs: ["2025 model", "Premium interior", "Automatic transmission", "Executive sedan"],
@@ -48,7 +52,7 @@ export const competitions: Competition[] = [
     entriesSold: 6_500,
     closes: "12 Mar · 23:59",
     status: "CLOSING SOON",
-    image: "/src/assets/rafilla-tech-bundle.jpg",
+    image: techBundleImage,
     imageAlt: "Blue smartphone, earbuds, and mint smartwatch on a pastel desk",
     accent: "sky",
     specs: ["Flagship smartphone", "Wireless earbuds", "Smartwatch", "Premium accessory set"],
@@ -64,7 +68,7 @@ export const competitions: Competition[] = [
     entriesSold: 9_200,
     closes: "25 Mar · 23:59",
     status: "LIVE",
-    image: "/src/assets/rafilla-apartment.jpg",
+    image: apartmentImage,
     imageAlt: "Bright contemporary apartment lounge with warm daylight and yellow accents",
     accent: "lemon",
     specs: ["Two bedrooms", "Contemporary lounge", "Daylight-filled interiors", "City-facing balcony"],

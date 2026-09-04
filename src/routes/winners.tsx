@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { WinnersPage } from "@/components/rafilla/public-pages";
+export const Route = createFileRoute("/winners")({ head: () => ({ meta: [{ title: "Winners — Rafilla" }, { name: "description", content: "Explore approved Rafilla winner announcements and draw details." }, { property: "og:title", content: "Winners — Rafilla" }, { property: "og:description", content: "Explore approved Rafilla winner announcements and draw details." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: WinnersPage });

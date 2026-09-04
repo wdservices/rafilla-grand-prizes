@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { ContactPage } from "@/components/rafilla/public-pages";
+export const Route = createFileRoute("/contact")({ head: () => ({ meta: [{ title: "Contact Rafilla" }, { name: "description", content: "Contact the Rafilla team about support, partnerships, and the platform." }, { property: "og:title", content: "Contact Rafilla" }, { property: "og:description", content: "Contact the Rafilla team about support, partnerships, and the platform." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: ContactPage });
