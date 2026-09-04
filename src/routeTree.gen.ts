@@ -10,33 +10,167 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BecomeAPartnerRouteImport } from './routes/become-a-partner'
+import { Route as CompetitionsRouteImport } from './routes/competitions'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as WinnersRouteImport } from './routes/winners'
+import { Route as CompetitionsSlugRouteImport } from './routes/competitions.$slug'
+import { Route as DrawVerificationCampaignRouteImport } from './routes/draw-verification.$campaign'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BecomeAPartnerRoute = BecomeAPartnerRouteImport.update({
+  id: '/become-a-partner',
+  path: '/become-a-partner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompetitionsRoute = CompetitionsRouteImport.update({
+  id: '/competitions',
+  path: '/competitions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WinnersRoute = WinnersRouteImport.update({
+  id: '/winners',
+  path: '/winners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompetitionsSlugRoute = CompetitionsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => CompetitionsRoute,
+} as any)
+const DrawVerificationCampaignRoute =
+  DrawVerificationCampaignRouteImport.update({
+    id: '/draw-verification/$campaign',
+    path: '/draw-verification/$campaign',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/become-a-partner': typeof BecomeAPartnerRoute
+  '/competitions': typeof CompetitionsRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/winners': typeof WinnersRoute
+  '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/become-a-partner': typeof BecomeAPartnerRoute
+  '/competitions': typeof CompetitionsRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/winners': typeof WinnersRoute
+  '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/become-a-partner': typeof BecomeAPartnerRoute
+  '/competitions': typeof CompetitionsRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
+  '/how-it-works': typeof HowItWorksRoute
+  '/winners': typeof WinnersRoute
+  '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/auth'
+    | '/become-a-partner'
+    | '/competitions'
+    | '/contact'
+    | '/faq'
+    | '/how-it-works'
+    | '/winners'
+    | '/competitions/$slug'
+    | '/draw-verification/$campaign'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/auth'
+    | '/become-a-partner'
+    | '/competitions'
+    | '/contact'
+    | '/faq'
+    | '/how-it-works'
+    | '/winners'
+    | '/competitions/$slug'
+    | '/draw-verification/$campaign'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/auth'
+    | '/become-a-partner'
+    | '/competitions'
+    | '/contact'
+    | '/faq'
+    | '/how-it-works'
+    | '/winners'
+    | '/competitions/$slug'
+    | '/draw-verification/$campaign'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  AuthRoute: typeof AuthRoute
+  BecomeAPartnerRoute: typeof BecomeAPartnerRoute
+  CompetitionsRoute: typeof CompetitionsRouteWithChildren
+  ContactRoute: typeof ContactRoute
+  FaqRoute: typeof FaqRoute
+  HowItWorksRoute: typeof HowItWorksRoute
+  WinnersRoute: typeof WinnersRoute
+  DrawVerificationCampaignRoute: typeof DrawVerificationCampaignRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +182,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/become-a-partner': {
+      id: '/become-a-partner'
+      path: '/become-a-partner'
+      fullPath: '/become-a-partner'
+      preLoaderRoute: typeof BecomeAPartnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/competitions': {
+      id: '/competitions'
+      path: '/competitions'
+      fullPath: '/competitions'
+      preLoaderRoute: typeof CompetitionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/winners': {
+      id: '/winners'
+      path: '/winners'
+      fullPath: '/winners'
+      preLoaderRoute: typeof WinnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/competitions/$slug': {
+      id: '/competitions/$slug'
+      path: '/$slug'
+      fullPath: '/competitions/$slug'
+      preLoaderRoute: typeof CompetitionsSlugRouteImport
+      parentRoute: typeof CompetitionsRoute
+    }
+    '/draw-verification/$campaign': {
+      id: '/draw-verification/$campaign'
+      path: '/draw-verification/$campaign'
+      fullPath: '/draw-verification/$campaign'
+      preLoaderRoute: typeof DrawVerificationCampaignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface CompetitionsRouteChildren {
+  CompetitionsSlugRoute: typeof CompetitionsSlugRoute
+}
+
+const CompetitionsRouteChildren: CompetitionsRouteChildren = {
+  CompetitionsSlugRoute: CompetitionsSlugRoute,
+}
+
+const CompetitionsRouteWithChildren = CompetitionsRoute._addFileChildren(
+  CompetitionsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  AuthRoute: AuthRoute,
+  BecomeAPartnerRoute: BecomeAPartnerRoute,
+  CompetitionsRoute: CompetitionsRouteWithChildren,
+  ContactRoute: ContactRoute,
+  FaqRoute: FaqRoute,
+  HowItWorksRoute: HowItWorksRoute,
+  WinnersRoute: WinnersRoute,
+  DrawVerificationCampaignRoute: DrawVerificationCampaignRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

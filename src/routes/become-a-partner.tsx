@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { PartnerPage } from "@/components/rafilla/public-pages";
+export const Route = createFileRoute("/become-a-partner")({ head: () => ({ meta: [{ title: "Become a Rafilla Partner" }, { name: "description", content: "Submit premium assets and track campaigns with Rafilla's partner experience." }, { property: "og:title", content: "Become a Rafilla Partner" }, { property: "og:description", content: "Submit premium assets and track campaigns with Rafilla's partner experience." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: PartnerPage });

@@ -1,0 +1,3 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { AuthPreviewPage } from "@/components/rafilla/public-pages";
+export const Route = createFileRoute("/auth")({ head: () => ({ meta: [{ title: "Join Rafilla" }, { name: "description", content: "Create your Rafilla account to participate in premium prize competitions." }, { property: "og:title", content: "Join Rafilla" }, { property: "og:description", content: "Create your Rafilla account to participate in premium prize competitions." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: AuthPreviewPage });
