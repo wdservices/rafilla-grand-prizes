@@ -1,5 +1,6 @@
-import { ArrowUpRight, Instagram, Mail, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Cookie, Instagram, Mail, ShieldCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { showCookieBanner } from "@/components/rafilla/cookie";
 
 export function SiteFooter() {
   return (
@@ -65,9 +66,18 @@ export function SiteFooter() {
           </Link>
         </div>
       </div>
-      <div className="mt-5 flex flex-col gap-2 px-1 text-xs font-bold text-ink/45 sm:flex-row sm:items-center sm:justify-between">
-        <p>© 2026 Rafilla. Development preview.</p>
-        <p>Public inventory shown here is demo data pending platform configuration.</p>
+      <div className="mt-5 flex flex-col gap-3 px-1 text-xs font-bold text-ink/45 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="button"
+          onClick={showCookieBanner}
+          className="inline-flex w-fit items-center gap-1.5 rounded-full bg-ink/5 px-3 py-1.5 text-ink/55 ring-1 ring-ink/10 transition-colors hover:bg-ink/10 hover:text-ink"
+        >
+          <Cookie className="size-3.5 text-coral" /> Cookie preferences
+        </button>
+        <div className="flex flex-col gap-1 sm:items-end">
+          <p>© 2026 Rafilla. Development preview.</p>
+          <p>Public inventory shown here is demo data pending platform configuration.</p>
+        </div>
       </div>
     </footer>
   );

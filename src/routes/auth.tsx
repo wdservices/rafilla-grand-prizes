@@ -14,6 +14,9 @@ import type { AuthTab } from "@/components/rafilla/auth/tabs";
 
 type AuthMode = "forgot" | "otp" | "complete";
 
+const canonicalBase = "https://rafilla.com";
+const ogImageDefault = "https://rafilla.com/og-default.png";
+
 function AuthPage() {
   const search = Route.useSearch() as Record<string, unknown>;
   const rawMode = search["mode"];
@@ -57,15 +60,38 @@ function AuthPage() {
 }
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({
-    meta: [
-      { title: "Log in / Sign up — Rafilla" },
-      { name: "description", content: "Log in or create your Rafilla account to enter premium prize competitions with fair, verified draws." },
-      { property: "og:title", content: "Log in / Sign up — Rafilla" },
-      { property: "og:description", content: "Log in or create your Rafilla account to enter premium prize competitions with fair, verified draws." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () => {
+    const pathname = "/auth";
+    const canonical = `${canonicalBase}${pathname}`;
+    const title = "Log in or create account — Rafilla";
+    const description =
+      "Sign in or register your Rafilla account to start entering prize competitions, track entries, manage wallet and refer friends. Noindex private page. rafilla.com";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { name: "robots", content: "noindex, nofollow" },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:image", content: ogImageDefault },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:locale", content: "en_NG" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: ogImageDefault },
+        { name: "twitter:site", content: "@rafillang" },
+        { name: "twitter:creator", content: "@rafillang" },
+      ],
+      links: [
+        { rel: "canonical", href: canonical },
+        { rel: "alternate", hreflang: "en", href: canonical },
+      ],
+    };
+  },
   component: AuthPage,
 });

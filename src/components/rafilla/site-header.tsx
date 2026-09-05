@@ -44,6 +44,7 @@ export function SiteHeader() {
                 "text-sm font-bold text-ink/60 transition-colors hover:text-ink",
                 pathname === link.to && "text-ink",
               )}
+              aria-current={pathname === link.to ? "page" : undefined}
               activeProps={{ className: "text-ink" }}
             >
               {link.label}
@@ -52,6 +53,7 @@ export function SiteHeader() {
           <Link
             to="/about"
             className="text-sm font-bold text-ink/60 transition-colors hover:text-ink"
+            aria-current={pathname === "/about" ? "page" : undefined}
           >
             About
           </Link>
@@ -90,6 +92,7 @@ export function SiteHeader() {
                 "block rounded-2xl px-4 py-3 text-sm font-bold text-ink/65 hover:bg-lilac/15 hover:text-ink",
                 pathname === link.to && "bg-lilac/15 text-ink",
               )}
+              aria-current={pathname === link.to ? "page" : undefined}
             >
               {link.label}
             </Link>

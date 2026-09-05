@@ -33,7 +33,7 @@ export function AuthShell({ children, variant = "login" }: AuthShellProps) {
   return (
     <div className="min-h-screen bg-paper">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-7xl px-4 pb-8 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 pb-8 pt-6 sm:px-6 sm:pt-8 lg:px-8">
         <div className="mx-auto w-full max-w-[480px] lg:max-w-none lg:grid lg:grid-cols-20 lg:gap-8 lg:items-stretch lg:min-h-[720px]">
           <div className="hidden lg:flex lg:col-span-9 lg:flex-col lg:rounded-[28px] lg:bg-cream lg:p-8 lg:ring-1 lg:ring-ink/5 xl:p-12">
             <div className="flex items-center gap-2">
@@ -97,7 +97,7 @@ export function AuthShell({ children, variant = "login" }: AuthShellProps) {
             </div>
           </div>
         </div>
-      </main>
+      </div>
       <SiteFooter />
     </div>
   );

@@ -1,23 +1,65 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { TermsAndConditionsPage } from "@/components/rafilla/public-pages";
+
+const canonicalBase = "https://rafilla.com";
+const ogImageDefault = "https://rafilla.com/og-default.png";
+
 export const Route = createFileRoute("/terms-and-conditions")({
-  head: () => ({
-    meta: [
-      { title: "Terms and Conditions — Rafilla" },
-      {
-        name: "description",
-        content:
-          "Read Rafilla's terms and conditions covering competitions, entries, draws, wallet usage, and user responsibilities.",
+  head: () => {
+    const pathname = "/terms-and-conditions";
+    const canonical = `${canonicalBase}${pathname}`;
+    const title = "Terms and conditions — User & platform agreement · Rafilla";
+    const description =
+      "Rafilla terms and conditions: account creation, wallet usage, competition entry, draws, prizes, liability, limitations, user conduct and the full legal agreement between you and Rafilla. rafilla.com";
+
+    const termsArticleJsonLd = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: title,
+      description,
+      author: {
+        "@type": "Organization",
+        name: "Rafilla Grand Prizes",
+        url: canonicalBase,
       },
-      { property: "og:title", content: "Terms and Conditions — Rafilla" },
-      {
-        property: "og:description",
-        content:
-          "Read Rafilla's terms and conditions covering competitions, entries, draws, wallet usage, and user responsibilities.",
+      publisher: {
+        "@type": "Organization",
+        name: "Rafilla Grand Prizes",
+        url: canonicalBase,
       },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+      datePublished: "2025-01-01",
+      dateModified: new Date().toISOString().split("T")[0],
+      mainEntityOfPage: canonical,
+      image: ogImageDefault,
+    });
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { name: "robots", content: "index, follow" },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "article" },
+        { property: "og:url", content: canonical },
+        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:image", content: ogImageDefault },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:locale", content: "en_NG" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: ogImageDefault },
+        { name: "twitter:site", content: "@rafillang" },
+        { name: "twitter:creator", content: "@rafillang" },
+        { "data-head-children": true, __html: `<script type="application/ld+json">${termsArticleJsonLd}</script>` } as any,
+      ],
+      links: [
+        { rel: "canonical", href: canonical },
+        { rel: "alternate", hreflang: "en", href: canonical },
+      ],
+    };
+  },
   component: TermsAndConditionsPage,
 });

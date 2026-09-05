@@ -1,9 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
-  Link,
   createRootRouteWithContext,
-  useRouter,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -13,65 +11,63 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteFooter } from "@/components/rafilla/site-footer";
 import { SiteHeader } from "@/components/rafilla/site-header";
+import { CookieConsentBanner } from "@/components/rafilla/cookie";
+import { ErrorPage } from "@/components/rafilla/error-page";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+    <div className="relative min-h-screen overflow-hidden bg-cream text-ink">
+      <SiteHeader />
+      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-120px)] w-full max-w-4xl flex-col items-center justify-center px-4 py-16 text-center sm:px-6 lg:px-8">
+        <div
+          className="font-display font-extrabold leading-none tracking-tight"
+          style={{
+            fontSize: "clamp(8rem, 22vw, 14rem)",
+            color: "var(--color-ink)",
+            textShadow: "0 12px 60px -20px rgba(0,0,0,0.3)",
+            WebkitTextStroke: "2px var(--color-coral)",
+          }}
+        >
+          404
+        </div>
+        <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          Competition not found
+        </h1>
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-ink/65 sm:text-lg">
+          The page you're looking for has ended, been moved, or never existed.
         </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        <div className="mt-10 flex w-full max-w-md flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+          <a
+            href="/"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-coral px-6 text-sm font-extrabold text-paper shadow-[0_8px_20px_-8px_var(--coral)] transition-transform hover:-translate-y-0.5 active:translate-y-px"
           >
-            Go home
-          </Link>
+            🏠 Back to Home
+          </a>
+          <a
+            href="/competitions"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-ink/15 bg-paper px-6 text-sm font-extrabold text-ink transition-transform hover:-translate-y-0.5 hover:bg-lilac/15 active:translate-y-px"
+          >
+            🎟 Browse competitions
+          </a>
+          <a
+            href="/contact"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-sm font-extrabold text-ink/65 transition-colors hover:bg-paper hover:text-ink active:translate-y-px"
+          >
+            ✉️ Contact us
+          </a>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
-  const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Try again
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Go home
-          </a>
-        </div>
-      </div>
-    </div>
-  );
+  return <ErrorPage error={error} reset={reset} />;
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -79,22 +75,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Rafilla — Big Prizes. Fair Chances." },
-      {
-        name: "description",
-        content:
-          "Premium prize competitions with clear entries, secure accounts, and publicly verifiable draws.",
-      },
-      { name: "author", content: "Rafilla" },
-      { property: "og:title", content: "Rafilla — Big Prizes. Fair Chances." },
-      {
-        property: "og:description",
-        content:
-          "Premium prize competitions with clear entries, secure accounts, and publicly verifiable draws.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "theme-color", content: "#0E1021" },
+      { name: "author", content: "Rafilla Grand Prizes" },
     ],
     links: [
       {
@@ -136,9 +118,18 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen overflow-x-hidden bg-cream text-ink">
+        <a
+          href="#main-content"
+          className="fixed top-4 left-4 z-[100] -translate-y-[200%] rounded-full bg-ink px-6 py-2 text-cream font-extrabold shadow-xl transition-transform focus-visible:translate-y-0"
+        >
+          Skip to content
+        </a>
         <SiteHeader />
-        <Outlet />
+        <main id="main-content" tabIndex={-1}>
+          <Outlet />
+        </main>
         <SiteFooter />
+        <CookieConsentBanner />
       </div>
     </QueryClientProvider>
   );

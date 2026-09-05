@@ -1,21 +1,25 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   Search,
   Download,
   MoreHorizontal,
   Banknote,
   Eye,
-  AlertTriangle,
   Clock3,
   CheckCircle2,
   XCircle,
   ShieldAlert,
-  X,
-  Unlock,
-  ShieldCheck,
-  History,
-  TrendingUp,
   UserRound,
+  Building2,
+  UsersRound,
+  Receipt,
+  Check,
+  Undo2,
+  PlayCircle,
+  FileText,
+  Filter,
+  CalendarDays,
+  Trophy,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,7 +27,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +53,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -50,33 +62,54 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { AdminShell } from "@/components/rafilla/admin/shell";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminShell } from "@/components/rafilla/admin/admin-shell";
 import { cn, formatNaira } from "@/lib/utils";
 
-type PayoutStatus = "PENDING" | "UNDER REVIEW" | "APPROVED" | "PROCESSING" | "PAID" | "REJECTED" | "FAILED" | "CANCELLED";
-type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
+type PayoutStatus = "PENDING" | "PROCESSING" | "PAID" | "FAILED" | "REVERSED";
+type PayoutType = "WINNER" | "PARTNER" | "REFERRAL";
 
 interface MockPayout {
-  ref: string;
-  user: string;
-  username: string;
+  id: string;
+  date: string;
+  recipient: string;
+  recipientType: "USER" | "PARTNER";
   initials: string;
   tint: "sky" | "mint" | "coral" | "lemon" | "lilac";
+  type: PayoutType;
   amount: number;
-  bankName: string;
-  accountNo: string;
-  accountFull: string;
+  sourceBank: string;
+  destination: string;
   status: PayoutStatus;
-  submitted: string;
-  updated: string;
-  updatedBy: string;
-  risk: RiskLevel;
-  riskScore: number;
-  factors: string[];
-  available: number;
-  notes?: string;
 }
+
+const TINTS: MockPayout["tint"][] = ["sky", "mint", "coral", "lemon", "lilac"];
+const STATUSES: PayoutStatus[] = ["PENDING", "PROCESSING", "PAID", "PAID", "FAILED", "PENDING", "REVERSED", "PAID"];
+const TYPES: PayoutType[] = ["WINNER", "WINNER", "PARTNER", "REFERRAL", "WINNER", "PARTNER", "REFERRAL", "WINNER"];
+
+const FIRST = ["Amaka", "Chidi", "Ifeoma", "Tunde", "Zainab", "Uche", "Kemi", "Bola", "Adebayo", "Ngozi", "Femi", "Obioma"];
+const LAST = ["Peace", "Kelechi", "Dike", "Okafor", "Abubakar", "Nwankwo", "Olusanya", "Tinubu", "Homes", "Chukwu", "Adesanya", "Ibe"];
+const BANKS = ["GTBank", "Zenith", "Access", "UBA", "First Bank", "Wema Bank", "Stanbic IBTC", "Fidelity"];
+
+const PAYOUTS: MockPayout[] = Array.from({ length: 20 }, (_, i) => {
+  const type = TYPES[i % TYPES.length]!;
+  const isPartner = type === "PARTNER";
+  const fn = FIRST[i % FIRST.length]!;
+  const ln = LAST[i % LAST.length]!;
+  return {
+    id: `RF-PY-${String(260300 + i)}`,
+    date: `2026-03-${String(12 - (i % 10)).padStart(2, "0")}`,
+    recipient: `${fn} ${isPartner ? "Ltd" : ln}`,
+    recipientType: isPartner ? "PARTNER" : "USER",
+    initials: `${fn[0]!}${(isPartner ? "L" : ln[0]!)}`,
+    tint: TINTS[i % TINTS.length]!,
+    type,
+    amount: (Math.floor(Math.random() * 980) + 20) * 100000,
+    sourceBank: "Rafilla · Providus NG",
+    destination: `${BANKS[i % BANKS.length]!} · ****${String(1000 + i * 37).slice(0, 4)}`,
+    status: STATUSES[i % STATUSES.length]!,
+  };
+});
 
 const tintBg: Record<MockPayout["tint"], string> = {
   sky: "bg-sky/30 text-ink",
@@ -86,572 +119,298 @@ const tintBg: Record<MockPayout["tint"], string> = {
   lilac: "bg-lilac/35 text-ink",
 };
 
-const statusTint: Record<PayoutStatus, string> = {
-  "PENDING": "bg-sky/25 text-ink",
-  "UNDER REVIEW": "bg-lemon/40 text-ink",
-  "APPROVED": "bg-ink text-cream",
-  "PROCESSING": "bg-coral/20 text-coral",
-  "PAID": "bg-mint/35 text-ink",
-  "REJECTED": "bg-rose/25 text-ink",
-  "FAILED": "bg-rose/25 text-ink",
-  "CANCELLED": "bg-ink/10 text-ink/55",
+const statusPill: Record<PayoutStatus, string> = {
+  PENDING: "bg-lemon/40 text-ink",
+  PROCESSING: "bg-sky/25 text-ink",
+  PAID: "bg-mint/35 text-ink",
+  FAILED: "bg-coral/20 text-coral",
+  REVERSED: "bg-ink/15 text-ink",
 };
 
-const riskTint: Record<RiskLevel, string> = {
-  LOW: "bg-mint/30 text-ink",
-  MEDIUM: "bg-lemon/40 text-ink",
-  HIGH: "bg-coral/20 text-coral",
-};
-
-const FILTER_STATUSES: PayoutStatus[] = ["PENDING", "UNDER REVIEW", "APPROVED", "PROCESSING", "PAID", "REJECTED", "FAILED", "CANCELLED"];
-
-const BANKS = ["All", "Access Bank", "GTBank", "First Bank", "Zenith Bank", "UBA", "FCMB", "Stanbic IBTC", "Sterling", "Wema Bank"] as const;
-const RISKS = ["All", "L", "M", "H"] as const;
-
-const MOCK_PAYOUTS: MockPayout[] = [
-  { ref: "PAY-260312-001", user: "Amaka Peace", username: "@amaka.p", initials: "AP", tint: "lilac", amount: 185000, bankName: "GTBank", accountNo: "****1234", accountFull: "0123451234", status: "PAID", submitted: "2026-03-12 08:14", updated: "2026-03-12 11:42", updatedBy: "Finance Bola", risk: "LOW", riskScore: 18, factors: ["Consistent history", "Verified bank"], available: 328000, notes: "Paid via GT transfer · ref GT_77231A" },
-  { ref: "PAY-260312-002", user: "Tunde Okafor", username: "@tunde.o", initials: "TO", tint: "sky", amount: 42000, bankName: "Access Bank", accountNo: "****8812", accountFull: "0034568812", status: "PENDING", submitted: "2026-03-12 09:28", updated: "2026-03-12 09:28", updatedBy: "—", risk: "LOW", riskScore: 12, factors: ["First payout · auto-reviewed"], available: 68500 },
-  { ref: "PAY-260312-003", user: "Chidi Kelechi", username: "@chidi.k", initials: "CK", tint: "mint", amount: 210000, bankName: "Zenith Bank", accountNo: "****4490", accountFull: "0122004490", status: "UNDER REVIEW", submitted: "2026-03-12 06:44", updated: "2026-03-12 10:01", updatedBy: "Risk Team", risk: "MEDIUM", riskScore: 54, factors: ["Unusual size", "2x weekly cap"], available: 245000 },
-  { ref: "PAY-260312-004", user: "Ifeoma Dike", username: "@ifeoma.d", initials: "ID", tint: "coral", amount: 85000, bankName: "UBA", accountNo: "****0021", accountFull: "0055780021", status: "APPROVED", submitted: "2026-03-11 17:02", updated: "2026-03-12 07:55", updatedBy: "Admin Aisha", risk: "LOW", riskScore: 10, factors: ["Partner approved winner claim"], available: 120500 },
-  { ref: "PAY-260312-005", user: "Kemi Adedeji", username: "@kemi.a", initials: "KA", tint: "lemon", amount: 105400, bankName: "First Bank", accountNo: "****7702", accountFull: "0011887702", status: "PROCESSING", submitted: "2026-03-11 20:11", updated: "2026-03-12 10:30", updatedBy: "Finance Bola", risk: "LOW", riskScore: 16, factors: ["Queue · disbursing today"], available: 412000 },
-  { ref: "PAY-260311-082", user: "Velocity User A", username: "@vel_a", initials: "VA", tint: "coral", amount: 150000, bankName: "Wema Bank", accountNo: "****0099", accountFull: "0011000099", status: "REJECTED", submitted: "2026-03-11 09:00", updated: "2026-03-11 16:20", updatedBy: "Fraud Team", risk: "HIGH", riskScore: 91, factors: ["Suspended account", "Duplicate bank flagged"], available: 0, notes: "Rejected: account suspended for velocity fraud. Audit: #FR-4421" },
-  { ref: "PAY-260311-064", user: "Ngozi Gift", username: "@ngozi.g", initials: "NG", tint: "lemon", amount: 14200, bankName: "Sterling", accountNo: "****3301", accountFull: "0099123301", status: "FAILED", submitted: "2026-03-11 14:15", updated: "2026-03-11 14:50", updatedBy: "System", risk: "LOW", riskScore: 8, factors: ["Bank API timeout"], available: 48000, notes: "Auto retried — attempt 2" },
-  { ref: "PAY-260311-041", user: "Femi Johnson", username: "@femi.j", initials: "FJ", tint: "sky", amount: 55000, bankName: "Stanbic IBTC", accountNo: "****1188", accountFull: "0009211188", status: "PAID", submitted: "2026-03-11 10:18", updated: "2026-03-11 13:04", updatedBy: "Finance Bola", risk: "LOW", riskScore: 14, factors: ["12th clean payout"], available: 410000 },
-  { ref: "PAY-260310-019", user: "User retract 1", username: "@retract1", initials: "R1", tint: "ink", amount: 38000, bankName: "FCMB", accountNo: "****5512", accountFull: "0211665512", status: "CANCELLED", submitted: "2026-03-10 11:30", updated: "2026-03-10 11:58", updatedBy: "User", risk: "LOW", riskScore: 0, factors: ["User-initiated cancel"], available: 38000 },
-  { ref: "PAY-260310-007", user: "Zainab Sani", username: "@zainab.s", initials: "ZS", tint: "mint", amount: 68000, bankName: "GTBank", accountNo: "****2245", accountFull: "0124882245", status: "PAID", submitted: "2026-03-10 07:45", updated: "2026-03-10 10:12", updatedBy: "Finance Bola", risk: "LOW", riskScore: 10, factors: ["Consistent history"], available: 65000 },
-];
-
-const STAT_PILLS: Array<{ label: string; count: number; amount: number; tone: "sky" | "lemon" | "ink" | "coral" | "mint" | "rose" }> = [
-  { label: "Total pending", count: 38, amount: 2847200, tone: "sky" },
-  { label: "Under review", count: 12, amount: 842000, tone: "lemon" },
-  { label: "Approved", count: 8, amount: 427500, tone: "ink" },
-  { label: "Paid", count: 182, amount: 18420300, tone: "mint" },
-  { label: "Rejected", count: 6, amount: 171000, tone: "rose" },
-];
-
-const statToneBg: Record<(typeof STAT_PILLS)[number]["tone"], string> = {
-  sky: "bg-sky/25 text-ink",
-  lemon: "bg-lemon/40 text-ink",
-  ink: "bg-ink text-cream",
-  coral: "bg-coral/18 text-coral",
-  mint: "bg-mint/30 text-ink",
-  rose: "bg-rose/25 text-ink",
+const typeIcon: Record<PayoutType, { icon: typeof Trophy; label: string; tone: string }> = {
+  WINNER: { icon: Trophy as any, label: "Winner payout", tone: "bg-coral/20 text-coral" },
+  PARTNER: { icon: Building2, label: "Partner settlement", tone: "bg-lilac/35 text-ink" },
+  REFERRAL: { icon: UsersRound, label: "Referral cash-out", tone: "bg-sky/25 text-ink" },
 };
 
 export function AdminPayoutsPage() {
-  const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<PayoutStatus[]>([]);
-  const [bank, setBank] = useState<(typeof BANKS)[number]>("All");
-  const [risk, setRisk] = useState<(typeof RISKS)[number]>("All");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [min, setMin] = useState("");
-  const [max, setMax] = useState("");
-  const [active, setActive] = useState<MockPayout | null>(null);
-  const [rejecting, setRejecting] = useState<MockPayout | null>(null);
+  const [tab, setTab] = useState<"winner" | "partner" | "referral">("winner");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [receiptFor, setReceiptFor] = useState<MockPayout | null>(null);
 
-  const filtered = useMemo(
-    () =>
-      MOCK_PAYOUTS.filter((p) => {
-        const q = query.toLowerCase().trim();
-        if (q && !(p.user.toLowerCase().includes(q) || p.username.toLowerCase().includes(q) || p.ref.toLowerCase().includes(q))) return false;
-        if (statusFilter.length && !statusFilter.includes(p.status)) return false;
-        if (bank !== "All" && p.bankName !== bank) return false;
-        if (risk !== "All") {
-          const map = { L: "LOW", M: "MEDIUM", H: "HIGH" } as const;
-          if (p.risk !== map[risk as "L" | "M" | "H"]) return false;
-        }
-        if (from && p.submitted.slice(0, 10) < from) return false;
-        if (to && p.submitted.slice(0, 10) > to) return false;
-        if (min && p.amount < Number(min)) return false;
-        if (max && p.amount > Number(max)) return false;
-        return true;
-      }),
-    [query, statusFilter, bank, risk, from, to, min, max],
-  );
+  const filtered = PAYOUTS.filter((p) => {
+    const s = search.toLowerCase();
+    if (s && !p.recipient.toLowerCase().includes(s) && !p.id.toLowerCase().includes(s)) return false;
+    if (statusFilter !== "all" && p.status.toLowerCase() !== statusFilter) return false;
+    const typeMap: Record<string, PayoutType> = { winner: "WINNER", partner: "PARTNER", referral: "REFERRAL" };
+    return p.type === typeMap[tab];
+  });
 
-  const advance = (p: MockPayout, next: PayoutStatus) => {
-    toast.success("Payout updated", {
-      description: `${p.ref} · ${p.status} → ${next} · by Admin Aisha · audit written.`,
-    });
+  const allSelected = filtered.length > 0 && filtered.every((p) => selected[p.id]);
+  const selectedCount = Object.values(selected).filter(Boolean).length;
+
+  const stats = PAYOUTS.reduce((acc, p) => {
+    acc.all++;
+    acc.total += p.amount;
+    if (p.status === "PENDING") acc.pending++;
+    if (p.status === "PROCESSING") acc.processing++;
+    if (p.status === "PAID") { acc.paid++; acc.paidTotal += p.amount; }
+    if (p.status === "FAILED") acc.failed++;
+    if (p.status === "REVERSED") acc.reversed++;
+    return acc;
+  }, { all: 0, pending: 0, processing: 0, paid: 0, failed: 0, reversed: 0, total: 0, paidTotal: 0 });
+
+  const pillBg: Record<string, string> = {
+    all: "bg-ink/5 text-ink",
+    pending: "bg-lemon/40 text-ink",
+    processing: "bg-sky/25 text-ink",
+    paid: "bg-mint/35 text-ink",
+    failed: "bg-coral/20 text-coral",
+    reversed: "bg-ink/15 text-ink",
   };
 
-  const toggleStatus = (s: PayoutStatus) =>
-    setStatusFilter((p) => (p.includes(s) ? p.filter((x) => x !== s) : [...p, s]));
-
   return (
-    <AdminShell activeNav="payouts">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">Admin · Payouts</p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
-            Payout requests
-          </h1>
-          <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
-            Referral-earning cash payouts go through review before being released. Every status
-            change leaves an immutable trail with the admin and notes.
-          </p>
-        </div>
+    <AdminShell activeNav="payouts" title="Payouts">
+      <header className="mb-6">
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">Admin · Payouts</p>
+        <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">Payouts</h1>
+        <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
+          Winner payouts, partner settlements, and referral cash-outs — all finance movements in one queue.
+        </p>
       </header>
 
-      <section className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
-        {STAT_PILLS.map((s) => (
-          <Card
-            key={s.label}
-            className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none"
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold", statToneBg[s.tone])}>
-                  <Banknote className="size-3" />
-                  {s.label}
-                </span>
+      <section className="mb-5 flex flex-wrap gap-2">
+        {[
+          { k: "all", label: "All payouts", sub: stats.all, tone: "all" as const, icon: Banknote, subIsCount: true },
+          { k: "pending", label: "Pending", sub: stats.pending, tone: "pending" as const, icon: Clock3, subIsCount: true },
+          { k: "processing", label: "Processing", sub: stats.processing, tone: "processing" as const, icon: PlayCircle, subIsCount: true },
+          { k: "paid", label: "Paid", sub: stats.paid, tone: "paid" as const, icon: CheckCircle2, subIsCount: true, alt: formatNaira(stats.paidTotal) },
+          { k: "failed", label: "Failed", sub: stats.failed, tone: "failed" as const, icon: XCircle, subIsCount: true },
+          { k: "reversed", label: "Reversed", sub: stats.reversed, tone: "reversed" as const, icon: Undo2, subIsCount: true },
+        ].map((p) => (
+          <Card key={p.k} className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none min-w-[160px]">
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className={cn("grid size-10 place-items-center rounded-xl", pillBg[p.tone])}>
+                <p.icon className="size-4.5" />
               </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                <p className="font-display text-2xl font-extrabold text-ink">{s.count}</p>
-                <span className="text-[11px] font-bold text-ink/45">requests</span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">{p.label}</p>
+                <p className="truncate font-display text-lg font-extrabold text-ink">{p.subIsCount ? p.sub : formatNaira(p.sub as any)}</p>
+                {p.alt && <p className="truncate text-[11px] font-bold text-ink/55">{p.alt}</p>}
               </div>
-              <p className="mt-1 text-sm font-extrabold text-ink">{formatNaira(s.amount)}</p>
             </CardContent>
           </Card>
         ))}
       </section>
 
-      <Card className="mb-5 rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-        <CardContent className="p-4 sm:p-5 space-y-4">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-            <label className="flex min-h-11 items-center gap-3 rounded-full bg-cream px-4 text-sm font-bold text-ink/50 md:col-span-4">
-              <Search className="size-4 shrink-0" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search user, ref, username..."
-                className="w-full bg-transparent text-ink outline-none placeholder:text-ink/40"
-              />
-            </label>
-            <div className="md:col-span-2">
-              <Select value={bank} onValueChange={(v) => setBank(v as typeof bank)}>
-                <SelectTrigger className="min-h-11 rounded-full bg-sky/25 px-4 font-extrabold text-ink ring-0">
-                  <SelectValue placeholder="Bank" />
-                </SelectTrigger>
-                <SelectContent className="rounded-[22px] bg-paper p-1">
-                  {BANKS.map((b) => (
-                    <SelectItem key={b} value={b} className="rounded-xl font-bold">{b === "All" ? "All banks" : b}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
+        <CardContent className="space-y-4 p-5 sm:p-6">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+            <div className="flex flex-wrap items-center gap-3 justify-between">
+              <TabsList className="rounded-full bg-cream p-1">
+                <TabsTrigger value="winner" className="rounded-full px-4 py-1.5 text-xs font-extrabold data-[state=active]:bg-paper data-[state=active]:text-ink data-[state=active]:shadow-sm data-[state=inactive]:text-ink/60">
+                  <Trophy className="mr-1.5 size-3.5" /> Winner payouts
+                </TabsTrigger>
+                <TabsTrigger value="partner" className="rounded-full px-4 py-1.5 text-xs font-extrabold data-[state=active]:bg-paper data-[state=active]:text-ink data-[state=active]:shadow-sm data-[state=inactive]:text-ink/60">
+                  <Building2 className="mr-1.5 size-3.5" /> Partner settlements
+                </TabsTrigger>
+                <TabsTrigger value="referral" className="rounded-full px-4 py-1.5 text-xs font-extrabold data-[state=active]:bg-paper data-[state=active]:text-ink data-[state=active]:shadow-sm data-[state=inactive]:text-ink/60">
+                  <UsersRound className="mr-1.5 size-3.5" /> Referral cash-outs
+                </TabsTrigger>
+              </TabsList>
+              {selectedCount > 0 && (
+                <Button variant="primary" onClick={() => toast.success(`${selectedCount} payouts queued for processing`, { description: "Settlement batch created." })}>
+                  <PlayCircle className="size-4" /> Process selected ({selectedCount})
+                </Button>
+              )}
             </div>
-            <div className="md:col-span-1">
-              <Select value={risk} onValueChange={(v) => setRisk(v as typeof risk)}>
-                <SelectTrigger className="min-h-11 rounded-full bg-lemon/35 px-4 font-extrabold text-ink ring-0">
-                  <SelectValue placeholder="Risk" />
-                </SelectTrigger>
-                <SelectContent className="rounded-[22px] bg-paper p-1">
-                  {RISKS.map((r) => (
-                    <SelectItem key={r} value={r} className="rounded-xl font-bold">Risk {r}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="md:col-span-5 flex flex-wrap justify-end gap-2">
-              <div className="flex items-center gap-2 rounded-full bg-cream px-4 py-2 text-xs font-extrabold text-ink/65 ring-1 ring-ink/5">
-                <Clock3 className="size-3.5" />
-                <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8 border-0 bg-transparent p-0 text-xs font-bold text-ink shadow-none focus-visible:ring-0" />
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px] max-w-sm">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink/40" />
+                <Input
+                  placeholder="Search recipient or ID…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-10 rounded-full border-0 bg-cream pl-9 pr-4 text-xs font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral"
+                />
+              </div>
+              <div className="flex items-center gap-2 rounded-full bg-cream px-3 py-1.5 text-xs font-bold text-ink/65 ring-1 ring-ink/10">
+                <CalendarDays className="size-3.5" />
+                <Input type="date" defaultValue="2026-03-01" className="h-7 w-32 border-0 bg-transparent p-0 font-bold text-ink shadow-none focus-visible:ring-0" />
                 <span>→</span>
-                <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8 border-0 bg-transparent p-0 text-xs font-bold text-ink shadow-none focus-visible:ring-0" />
+                <Input type="date" defaultValue="2026-03-12" className="h-7 w-32 border-0 bg-transparent p-0 font-bold text-ink shadow-none focus-visible:ring-0" />
               </div>
-              <div className="flex items-center gap-2 rounded-full bg-cream px-4 py-2 text-xs font-extrabold text-ink/65 ring-1 ring-ink/5">
-                <span>₦ min</span>
-                <Input type="number" value={min} onChange={(e) => setMin(e.target.value)} placeholder="0" className="h-8 w-20 border-0 bg-transparent p-0 text-xs font-bold text-ink shadow-none focus-visible:ring-0" />
-                <span>max</span>
-                <Input type="number" value={max} onChange={(e) => setMax(e.target.value)} placeholder="500000" className="h-8 w-24 border-0 bg-transparent p-0 text-xs font-bold text-ink shadow-none focus-visible:ring-0" />
-              </div>
-              <Button variant="outline" size="sm" onClick={() => toast.success("CSV export queued", { description: "payouts_export.csv (UTF-8 BOM, Naira formatted)" })}>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-10 w-40 rounded-full bg-cream px-4 text-xs font-extrabold text-ink shadow-none ring-1 ring-ink/10 focus:ring-coral">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-[22px] bg-paper p-1">
+                  <SelectItem value="all" className="rounded-xl font-bold">All statuses</SelectItem>
+                  <SelectItem value="pending" className="rounded-xl font-bold">Pending</SelectItem>
+                  <SelectItem value="processing" className="rounded-xl font-bold">Processing</SelectItem>
+                  <SelectItem value="paid" className="rounded-xl font-bold">Paid</SelectItem>
+                  <SelectItem value="failed" className="rounded-xl font-bold">Failed</SelectItem>
+                  <SelectItem value="reversed" className="rounded-xl font-bold">Reversed</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm">
                 <Download className="size-3.5" /> Export CSV
               </Button>
             </div>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Status</span>
-            <button
-              onClick={() => setStatusFilter([])}
-              className={cn(
-                "rounded-full px-3 py-1.5 text-[11px] font-extrabold transition-colors",
-                statusFilter.length === 0 ? "bg-ink text-cream" : "bg-cream text-ink/60 ring-1 ring-ink/10 hover:bg-lilac/20",
-              )}
-            >
-              ALL
-            </button>
-            {FILTER_STATUSES.map((s) => {
-              const on = statusFilter.includes(s);
-              return (
-                <button
-                  key={s}
-                  onClick={() => toggleStatus(s)}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-[11px] font-extrabold ring-1 transition-colors",
-                    on ? `${statusTint[s]} ring-transparent` : "bg-cream text-ink/60 ring-ink/10 hover:bg-lilac/20",
-                  )}
-                >
-                  {s}
-                </button>
-              );
-            })}
-          </div>
+            <TabsContent value={tab} className="mt-0">
+              <div className="overflow-x-auto -mx-2 px-2">
+                <Table>
+                  <TableHeader className="[&_tr]:border-ink/10">
+                    <TableRow>
+                      <TableHead className="py-3 w-10">
+                        <Checkbox checked={allSelected} onCheckedChange={(v) => {
+                          const next: Record<string, boolean> = {};
+                          if (v) filtered.forEach((p) => (next[p.id] = true));
+                          setSelected(next);
+                        }} />
+                      </TableHead>
+                      <TableHead className="py-3 font-extrabold text-ink/65">ID</TableHead>
+                      <TableHead className="py-3 font-extrabold text-ink/65">Date</TableHead>
+                      <TableHead className="py-3 font-extrabold text-ink/65">Recipient</TableHead>
+                      <TableHead className="py-3 font-extrabold text-ink/65">Type</TableHead>
+                      <TableHead className="py-3 text-right font-extrabold text-ink/65">Amount</TableHead>
+                      <TableHead className="py-3 font-extrabold text-ink/65">Source</TableHead>
+                      <TableHead className="py-3 font-extrabold text-ink/65">Destination</TableHead>
+                      <TableHead className="py-3 font-extrabold text-ink/65">Status</TableHead>
+                      <TableHead className="py-3 text-right font-extrabold text-ink/65">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="[&_tr]:border-ink/10">
+                    {filtered.map((p) => (
+                      <TableRow key={p.id} className="hover:bg-lilac/10">
+                        <TableCell className="py-3">
+                          <Checkbox checked={!!selected[p.id]} onCheckedChange={(v) => setSelected({ ...selected, [p.id]: !!v })} />
+                        </TableCell>
+                        <TableCell className="py-3 text-[11px] font-extrabold text-ink/70 whitespace-nowrap">{p.id}</TableCell>
+                        <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">{p.date}</TableCell>
+                        <TableCell className="py-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar className={cn("size-9 ring-2 ring-paper", tintBg[p.tint])}>
+                              <AvatarFallback className={cn("text-xs font-extrabold", tintBg[p.tint])}>{p.initials}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-extrabold text-ink max-w-[160px]">{p.recipient}</p>
+                              <Badge className={cn("mt-0.5 rounded-full px-1.5 py-0 text-[9px] font-extrabold uppercase tracking-wider ring-0", p.recipientType === "USER" ? "bg-sky/25 text-ink" : "bg-lilac/35 text-ink")}>
+                                {p.recipientType}
+                              </Badge>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3">
+                          <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold ring-0", typeIcon[p.type].tone)}>
+                            {typeIcon[p.type].label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-3 text-right text-xs font-extrabold text-ink whitespace-nowrap">{formatNaira(p.amount)}</TableCell>
+                        <TableCell className="py-3 text-[11px] font-bold text-ink/65 whitespace-nowrap">{p.sourceBank}</TableCell>
+                        <TableCell className="py-3 text-[11px] font-bold text-ink/65 whitespace-nowrap">{p.destination}</TableCell>
+                        <TableCell className="py-3">
+                          <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0", statusPill[p.status])}>
+                            {p.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-3 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="size-8">
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52 rounded-[22px] bg-paper p-1.5">
+                              <DropdownMenuLabel className="rounded-xl px-3 py-2 text-[11px] font-extrabold uppercase tracking-wider text-ink/45">
+                                {p.id}
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink" onClick={() => setReceiptFor(p)}>
+                                <Receipt className="mr-2 size-4" /> View receipt
+                              </DropdownMenuItem>
+                              {(p.status === "PENDING" || p.status === "FAILED") && (
+                                <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink" onClick={() => toast.success("Processing payout", { description: `${p.id} · ${formatNaira(p.amount)}` })}>
+                                  <PlayCircle className="mr-2 size-4" /> Process
+                                </DropdownMenuItem>
+                              )}
+                              {p.status === "PROCESSING" && (
+                                <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-mint-700 focus:bg-mint/20" onClick={() => toast.success("Payout marked paid", { description: p.id })}>
+                                  <CheckCircle2 className="mr-2 size-4" /> Mark paid
+                                </DropdownMenuItem>
+                              )}
+                              {(p.status === "PAID" || p.status === "PROCESSING") && (
+                                <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15" onClick={() => toast.info("Reversal requested", { description: p.id })}>
+                                  <Undo2 className="mr-2 size-4" /> Reverse
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {filtered.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={10} className="py-10 text-center text-sm font-bold text-ink/50">
+                          No payouts for this filter yet.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
-      <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-cream/60 [&_tr]:border-ink/10">
-                <TableRow>
-                  <TableHead className="px-4 py-3 font-extrabold text-ink/65">Reference</TableHead>
-                  <TableHead className="px-4 py-3 font-extrabold text-ink/65">User</TableHead>
-                  <TableHead className="px-4 py-3 font-extrabold text-ink/65">Amount</TableHead>
-                  <TableHead className="px-4 py-3 font-extrabold text-ink/65">Bank details</TableHead>
-                  <TableHead className="px-4 py-3 font-extrabold text-ink/65">Status</TableHead>
-                  <TableHead className="px-4 py-3 font-extrabold text-ink/65">Submitted</TableHead>
-                  <TableHead className="px-4 py-3 font-extrabold text-ink/65">Last updated</TableHead>
-                  <TableHead className="px-4 py-3 font-extrabold text-ink/65">Risk</TableHead>
-                  <TableHead className="px-4 py-3 text-right font-extrabold text-ink/65"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="[&_tr]:border-ink/10">
-                {filtered.map((p) => (
-                  <TableRow key={p.ref} className="cursor-pointer hover:bg-lilac/10" onClick={() => setActive(p)}>
-                    <TableCell className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-mono text-xs font-extrabold text-ink">{p.ref}</p>
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className={cn("size-9", tintBg[p.tint])}>
-                          <AvatarFallback className={cn("text-[11px] font-extrabold", tintBg[p.tint])}>{p.initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-extrabold text-ink">{p.user}</p>
-                          <p className="truncate text-[11px] font-bold text-ink/50">{p.username}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 font-display text-base font-extrabold text-ink">{formatNaira(p.amount)}</TableCell>
-                    <TableCell className="px-4 py-3 whitespace-nowrap text-xs font-bold">
-                      <p className="font-extrabold text-ink">{p.bankName}</p>
-                      <p className="text-ink/55">{p.accountNo}</p>
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <Badge className={cn("rounded-full px-2.5 py-1 text-[11px] font-extrabold ring-0", statusTint[p.status])}>
-                        {p.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-xs font-bold text-ink/65">{p.submitted}</TableCell>
-                    <TableCell className="px-4 py-3 text-xs font-bold text-ink/65">
-                      <p>{p.updated}</p>
-                      <p className="text-[11px] text-ink/45">{p.updatedBy}</p>
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold ring-0", riskTint[p.risk])}>
-                          {p.risk}
-                        </Badge>
-                        <span className="text-[11px] font-extrabold text-ink/45">score {p.riskScore}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-9">
-                            <MoreHorizontal className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-60 rounded-[22px] bg-paper p-2">
-                          <DropdownMenuLabel className="rounded-xl bg-cream px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                            {p.ref}
-                          </DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold focus:bg-lilac/20" onClick={() => setActive(p)}>
-                            <Eye className="mr-2 size-4" /> View details
-                          </DropdownMenuItem>
-                          {p.status === "PENDING" && (
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold focus:bg-lemon/30" onClick={() => advance(p, "UNDER REVIEW")}>
-                              <Clock3 className="mr-2 size-4" /> Mark under review
-                            </DropdownMenuItem>
-                          )}
-                          {(p.status === "PENDING" || p.status === "UNDER REVIEW") && (
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold focus:bg-ink/10" onClick={() => advance(p, "APPROVED")}>
-                              <CheckCircle2 className="mr-2 size-4" /> Approve
-                            </DropdownMenuItem>
-                          )}
-                          {p.status === "APPROVED" && (
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold focus:bg-coral/15" onClick={() => advance(p, "PROCESSING")}>
-                              <TrendingUp className="mr-2 size-4" /> Mark processing
-                            </DropdownMenuItem>
-                          )}
-                          {(p.status === "PROCESSING" || p.status === "APPROVED") && (
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold focus:bg-mint/25" onClick={() => advance(p, "PAID")}>
-                              <CheckCircle2 className="mr-2 size-4" /> Mark Paid
-                            </DropdownMenuItem>
-                          )}
-                          {(p.status === "PENDING" || p.status === "UNDER REVIEW" || p.status === "APPROVED") && (
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold focus:bg-coral/15" onClick={() => setRejecting(p)}>
-                              <XCircle className="mr-2 size-4" /> Reject…
-                            </DropdownMenuItem>
-                          )}
-                          {(p.status === "PENDING" || p.status === "UNDER REVIEW") && (
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold focus:bg-ink/10" onClick={() => advance(p, "CANCELLED")}>
-                              <X className="mr-2 size-4" /> Cancel
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={9} className="px-4 py-12 text-center text-sm font-extrabold text-ink/45">
-                      No payouts match the current filters.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Sheet open={!!active} onOpenChange={(v) => !v && setActive(null)}>
-        <SheetContent side="right" className="w-full max-w-xl overflow-y-auto rounded-l-[28px] bg-cream p-0 sm:max-w-xl">
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-ink/10 bg-cream/95 px-6 py-4 backdrop-blur">
-            {active && (
-              <div className="min-w-0">
-                <p className="font-mono text-xs font-extrabold text-coral">{active.ref}</p>
-                <p className="mt-1 truncate font-display text-lg font-extrabold text-ink">
-                  {active.user} · {formatNaira(active.amount)}
-                </p>
-              </div>
-            )}
-            <button
-              className="grid size-10 place-items-center rounded-full bg-paper text-ink/65 hover:bg-lilac/20 hover:text-ink"
-              onClick={() => setActive(null)}
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-
-          {active && (
-            <div className="space-y-5 px-6 py-6">
-              <div className="grid grid-cols-2 gap-3">
-                <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                  <CardContent className="p-4">
-                    <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Available balance</p>
-                    <p className="mt-2 font-display text-xl font-extrabold text-ink">{formatNaira(active.available)}</p>
-                  </CardContent>
-                </Card>
-                <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                  <CardContent className="p-4">
-                    <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Status</p>
-                    <div className="mt-2"><Badge className={cn("rounded-full px-2.5 py-1 text-[11px] font-extrabold ring-0", statusTint[active.status])}>{active.status}</Badge></div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                <CardContent className="space-y-3 p-5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">User summary</p>
-                    <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold ring-0", riskTint[active.risk])}>Risk {active.risk} · {active.riskScore}</Badge>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Avatar className={cn("size-11", tintBg[active.tint])}>
-                      <AvatarFallback className={cn("text-sm font-extrabold", tintBg[active.tint])}>{active.initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-display text-lg font-extrabold text-ink">{active.user}</p>
-                      <p className="truncate text-xs font-bold text-ink/55">{active.username}</p>
-                    </div>
-                    <Button variant="outline" size="sm"><UserRound className="size-3.5" /> Open profile</Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">Bank details</p>
-                    <Button variant="outline" size="sm" onClick={() => toast.success("Account unmasked", { description: `${active.bankName} · ${active.accountFull} (audited)` })}>
-                      <Unlock className="size-3.5" /> Unmask
-                    </Button>
-                  </div>
-                  <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    {[
-                      ["Bank", active.bankName],
-                      ["Account no", active.accountNo],
-                      ["Payout amount", formatNaira(active.amount)],
-                      ["Submitted", active.submitted],
-                    ].map(([k, v]) => (
-                      <div key={k} className="rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/10">
-                        <dt className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">{k}</dt>
-                        <dd className="mt-1 truncate font-bold text-ink">{v}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">Payout history · {active.username}</p>
-                    <History className="size-4 text-ink/45" />
-                  </div>
-                  <div className="mt-4 divide-y divide-ink/10">
-                    {[
-                      ["2026-02-28", "Paid", "₦55,000", "GTBank · ****4421", "mint"],
-                      ["2026-02-10", "Paid", "₦28,500", "GTBank · ****4421", "mint"],
-                      ["2026-01-21", "Paid", "₦120,000", "GTBank · ****4421", "mint"],
-                    ].map((r, i) => (
-                      <div key={i} className="flex items-center justify-between gap-3 py-3">
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-extrabold text-ink">{r[1]} · {r[2]}</p>
-                          <p className="truncate text-[11px] font-bold text-ink/55">{r[3]}</p>
-                        </div>
-                        <span className="text-[11px] font-extrabold text-ink/45">{r[0]}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">Commission source (ledger trace)</p>
-                    <TrendingUp className="size-4 text-coral" />
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    {[
-                      ["Level 1 · @tunde.o (×25 entries)", "₦20,000", "coral"],
-                      ["Level 2 · @chidi.k (×12 entries)", "₦3,000", "sky"],
-                      ["Level 1 · @kemi.a (×40 entries)", "₦16,000", "coral"],
-                      ["Referral bonus (weekly leaderboard)", "₦500", "lemon"],
-                    ].map((r, i) => (
-                      <div key={i} className="flex items-center justify-between gap-3 rounded-2xl bg-cream px-4 py-3">
-                        <p className="text-xs font-extrabold text-ink">{r[0]}</p>
-                        <p className="text-sm font-extrabold text-coral">+{r[1]}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">Risk factors</p>
-                    <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold ring-0", riskTint[active.risk])}>
-                      <ShieldAlert className="mr-1 size-2.5" /> Score {active.riskScore}
-                    </Badge>
-                  </div>
-                  <ul className="mt-4 space-y-2">
-                    {active.factors.map((f, i) => (
-                      <li key={i} className="flex items-start gap-2 rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/10">
-                        <AlertTriangle className={cn("mt-0.5 size-4 shrink-0", active.risk === "LOW" ? "text-mint" : active.risk === "MEDIUM" ? "text-lemon" : "text-coral")} />
-                        <span className="text-sm font-bold text-ink">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {active.notes && (
-                    <div className="mt-4 rounded-2xl bg-coral/12 px-4 py-3 text-xs font-extrabold text-coral ring-1 ring-coral/20">
-                      {active.notes}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">Timeline</p>
-                    <ShieldCheck className="size-4 text-ink/45" />
-                  </div>
-                  <ol className="mt-4 space-y-4">
-                    {[
-                      ["Submitted by user", active.submitted, "System", "sky"],
-                      ["Queued for review", active.submitted, "Auto", "lemon"],
-                      ["Status → " + active.status, active.updated, active.updatedBy, active.status === "PAID" ? "mint" : active.status === "REJECTED" ? "rose" : "coral"],
-                    ].map(([label, time, by, tint], i) => (
-                      <li key={i} className="flex gap-3">
-                        <span className="mt-1 grid size-8 place-items-center rounded-full text-[11px] font-extrabold text-ink"
-                          style={{ backgroundColor:
-                            tint === "sky" ? "oklch(0.76 0.12 255 / 0.3)" :
-                            tint === "lemon" ? "oklch(0.87 0.14 88 / 0.45)" :
-                            tint === "mint" ? "oklch(0.87 0.12 165 / 0.35)" :
-                            tint === "rose" ? "oklch(0.79 0.12 350 / 0.3)" :
-                            "oklch(0.75 0.14 35 / 0.2)"
-                          }}
-                        >
-                          {i + 1}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-extrabold text-ink">{label}</p>
-                          <p className="text-[11px] font-bold text-ink/55">{time} · {by}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </CardContent>
-              </Card>
+      <Dialog open={!!receiptFor} onOpenChange={(v) => !v && setReceiptFor(null)}>
+        <DialogContent className="rounded-[28px] bg-cream p-0 shadow-none sm:max-w-2xl">
+          <DialogHeader className="flex-row items-start justify-between gap-4 border-b border-ink/10 px-6 py-5 sm:!flex-row sm:!items-center sm:!justify-between sm:!text-left">
+            <div>
+              <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
+                <span className="grid size-10 place-items-center rounded-2xl bg-mint/35">
+                  <Receipt className="size-4.5 text-ink" />
+                </span>
+                {receiptFor && `Payout receipt · ${receiptFor.id}`}
+              </DialogTitle>
+              {receiptFor && <p className="mt-1 text-[11px] font-bold text-ink/55">Issued {receiptFor.date}</p>}
             </div>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      <Dialog open={!!rejecting} onOpenChange={(v) => !v && setRejecting(null)}>
-        <DialogContent className="rounded-[28px] bg-cream p-0 shadow-none sm:max-w-lg">
-          <DialogHeader className="px-6 pt-6">
-            <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
-              <span className="grid size-10 place-items-center rounded-full bg-rose/25">
-                <XCircle className="size-4.5 text-ink" />
-              </span>
-              Reject payout
-            </DialogTitle>
+            <Button variant="outline" size="sm">
+              <FileText className="size-3.5" /> Download PDF
+            </Button>
           </DialogHeader>
-          {rejecting && (
-            <div className="space-y-4 px-6 pb-6">
-              <div className="rounded-2xl bg-paper px-4 py-3 text-sm">
-                <p className="font-mono text-[11px] font-extrabold text-coral">{rejecting.ref}</p>
-                <p className="mt-1 font-extrabold text-ink">{rejecting.user} · {formatNaira(rejecting.amount)}</p>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">
-                  Reason for rejection <span className="text-coral">*</span>
-                </Label>
-                <Textarea
-                  rows={4}
-                  placeholder="Policy violation, duplicate account, insufficient balance, closed claim window, KYC missing…"
-                  className="rounded-2xl border-ink/10 bg-paper p-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral"
-                />
-                <p className="text-[11px] font-extrabold text-ink/45">
-                  Rejection reason is sent to the user and written to the audit log.
-                </p>
-              </div>
-              <DialogFooter className="!flex-col gap-2 sm:!flex-row">
-                <Button variant="outline" type="button" size="md" onClick={() => setRejecting(null)}>Cancel</Button>
-                <Button
-                  type="button"
-                  size="md"
-                  variant="primary"
-                  onClick={() => {
-                    toast.success("Payout rejected", { description: `${rejecting.ref} · balance restored · audit written.` });
-                    setRejecting(null);
-                  }}
-                >
-                  Confirm rejection
-                </Button>
-              </DialogFooter>
+          {receiptFor && (
+            <div className="space-y-4 px-6 py-5">
+              <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5">
+                <CardContent className="p-5">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <Label className="text-[11px] font-extrabold uppercase tracking-wider text-ink/45">Amount</Label>
+                      <p className="mt-1 font-display text-2xl font-extrabold text-ink">{formatNaira(receiptFor.amount)}</p>
+                    </div>
+                    <div>
+                      <Label className="text-[11px] font-extrabold uppercase tracking-wider text-ink/45">Status</Label>
+                      <div className="mt-1"><Badge className={cn("rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase ring-0", statusPill[receiptFor.status])}>{receiptFor.status}</Badge></div>
+                    </div>
+                    <Separator className="col-span-2" />
+                    <div>
+                      <Label className="text-[11px] font-extrabold uppercase tracking-wider text-ink/45">Recipient</Label>
+                      <p className="mt-1 font-extrabold text-ink">{receiptFor.recipient}</p>
+                      <p className="text-xs font-bold text-ink/55">{receiptFor.destination}</p>
+                    </div>
+                    <div>
+                      <Label className="text-[11px] font-extrabold uppercase tracking-wider text-ink/45">Type</Label>
+                      <p className="mt-1 font-extrabold text-ink">{typeIcon[receiptFor.type].label}</p>
+                      <p className="text-xs font-bold text-ink/55">Source: {receiptFor.sourceBank}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </DialogContent>

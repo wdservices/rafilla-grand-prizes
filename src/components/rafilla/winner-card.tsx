@@ -8,10 +8,11 @@ export function WinnerCard({ winner }: { winner: WinnerCardType }) {
       <div className="overflow-hidden rounded-[18px] bg-lilac/20">
         <img
           src={winner.image}
-          alt={winner.imageAlt}
+          alt={`${winner.winnerName}, winner of ${winner.prize}`}
           width={600}
           height={400}
           loading="lazy"
+          decoding="async"
           className="aspect-[4/3] w-full object-cover"
         />
       </div>

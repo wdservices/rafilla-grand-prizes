@@ -1,24 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardSecurityPage } from "@/components/rafilla/dashboard";
 
+const canonicalBase = "https://rafilla.com";
+const ogImageDefault = "https://rafilla.com/og-default.png";
+
 export const Route = createFileRoute("/dashboard/security")({
-  head: () => ({
-    meta: [
-      { title: "Security — Rafilla" },
-      {
-        name: "description",
-        content:
-          "Protect your Rafilla account with password changes, 2FA, and active session controls.",
-      },
-      { property: "og:title", content: "Security — Rafilla" },
-      {
-        property: "og:description",
-        content:
-          "Protect your Rafilla account with password changes, 2FA, and active session controls.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () => {
+    const pathname = "/dashboard/security";
+    const canonical = `${canonicalBase}${pathname}`;
+    const title = "Account security — Rafilla";
+    const description =
+      "Private security: change password, enable 2FA two-factor authentication, view and revoke active login sessions, email and phone verification. Noindex. rafilla.com";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { name: "robots", content: "noindex, nofollow" },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:image", content: ogImageDefault },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:locale", content: "en_NG" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: ogImageDefault },
+        { name: "twitter:site", content: "@rafillang" },
+        { name: "twitter:creator", content: "@rafillang" },
+      ],
+      links: [
+        { rel: "canonical", href: canonical },
+        { rel: "alternate", hreflang: "en", href: canonical },
+      ],
+    };
+  },
   component: DashboardSecurityPage,
 });

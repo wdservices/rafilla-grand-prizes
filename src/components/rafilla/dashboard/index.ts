@@ -1,9 +1,12 @@
-export { DashboardShell } from "./shell";
+export { DashboardAppShell, DashboardNavLink } from "./app-shell";
 export { DashboardOverviewPage } from "./overview";
-export { DashboardWalletPage } from "./wallet";
+export { DashboardWalletPage, FundWalletModal } from "./wallet";
 export { DashboardEntriesPage } from "./entries";
 export { DashboardTransactionsPage } from "./transactions";
 export { DashboardProfilePage } from "./profile";
 export { DashboardSecurityPage } from "./security";
+export { DashboardRewardPoolPage } from "./reward-pool";
 export { DashboardReferralsPage } from "./referrals";
+export { DashboardCompetitionsPage } from "./competitions";
 export { DashboardReferralsPayoutPage } from "./payouts";
+export { DashboardShell } from "./shell";

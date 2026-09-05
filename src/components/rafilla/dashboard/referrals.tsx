@@ -7,54 +7,72 @@ import {
   Users,
   ArrowRight,
   Trophy,
-  ChevronRight,
-  ArrowUpRight,
+  X,
+  Send,
+  MessageCircle,
+  Twitter,
+  Wallet,
+  Banknote,
+  ChevronDown,
 } from "lucide-react";
 
-import { DashboardShell } from "@/components/rafilla/dashboard/shell";
+import { DashboardAppShell } from "@/components/rafilla/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/rafilla-data";
 import { cn } from "@/lib/utils";
 
-const treeLevels = [
-  { level: 1, name: "L1", count: 8, color: "bg-coral/15 text-coral" },
-  { level: 2, name: "L2", count: 14, color: "bg-sky/20 text-ink" },
-  { level: 3, name: "L3", count: 27, color: "bg-lemon/30 text-ink" },
-  { level: 4, name: "L4", count: 41, color: "bg-mint/30 text-ink" },
-  { level: 5, name: "L5", count: 83, color: "bg-lilac/30 text-ink" },
-] as const;
-
-const AvatarNames: Record<number, string[]> = {
-  1: ["Femi K.", "Tola A.", "Amaka O.", "Chidi E.", "Yetunde B.", "Ifeoma D.", "Ngozi S.", "Dayo P."],
-  2: ["Wale O.", "Bisi A.", "Uche J.", "Aisha M.", "Tunde L.", "Zainab I.", "Kunle O.", "Remi S."],
-  3: ["Blessing C.", "Emeka N.", "Fatima A.", "Segun O.", "Adebayo T.", "Nosa E.", "Ibrahim K.", "Temitope R."],
-  4: ["Onyeka G.", "Musa D.", "Chioma O.", "Samuel F.", "Halima U.", "Ayo J.", "Rita M.", "Kola B."],
-  5: ["Dami L.", "Glory E.", "Hassan I.", "Joy P.", "Kelechi N.", "Lilian T.", "Musa D.", "Nkiru A."],
+type TreeNode = {
+  name: string;
+  initials: string;
+  recruits: number;
+  active: boolean;
 };
+
+const l2: TreeNode[] = [
+  { name: "Femi K.", initials: "FK", recruits: 2, active: true },
+  { name: "Tola A.", initials: "TA", recruits: 3, active: true },
+  { name: "Amaka O.", initials: "AO", recruits: 1, active: true },
+  { name: "Chidi E.", initials: "CE", recruits: 2, active: true },
+];
+
+function genL3(l2i: number): TreeNode[] {
+  const names = [
+    ["Wale O.", "Bisi A.", "Uche J.", "Aisha M.", "Tunde L.", "Zainab I.", "Kunle O.", "Remi S."],
+    ["Blessing C.", "Emeka N.", "Fatima A.", "Segun O.", "Adebayo T.", "Nosa E.", "Ibrahim K.", "Temitope R."],
+  ];
+  const use = names[l2i % 2];
+  return use.map((n, i) => ({
+    name: n,
+    initials: n.split(" ").map((s) => s[0]).join(""),
+    recruits: Math.floor(Math.random() * 2),
+    active: i < (l2i === 0 ? 2 : l2i === 1 ? 3 : l2i === 2 ? 1 : 2),
+  }));
+}
 
 type Commission = {
   date: string;
-  user: string;
-  level: number;
-  entry: string;
+  who: string;
+  initials: string;
+  forWhat: string;
+  level: 1 | 2 | 3 | 4 | 5;
   amount: number;
   status: "PENDING" | "AVAILABLE";
 };
 
 const commissions: Commission[] = [
-  { date: "05 Mar · 16:02", user: "Femi K.", level: 1, entry: "Mercedes-Benz C-Class", amount: 200000, status: "AVAILABLE" },
-  { date: "05 Mar · 12:44", user: "Amaka O.", level: 2, entry: "Nova X1 Bundle", amount: 75000, status: "PENDING" },
-  { date: "04 Mar · 22:11", user: "Tola A.", level: 1, entry: "Nova X1 Bundle", amount: 500000, status: "AVAILABLE" },
-  { date: "04 Mar · 17:30", user: "Wale O.", level: 3, entry: "Luxury 2-Bed Apt", amount: 25000, status: "PENDING" },
-  { date: "04 Mar · 14:05", user: "Uche J.", level: 2, entry: "Mercedes-Benz C-Class", amount: 100000, status: "AVAILABLE" },
-  { date: "03 Mar · 20:14", user: "Blessing C.", level: 3, entry: "Nova X1 Bundle", amount: 50000, status: "AVAILABLE" },
-  { date: "03 Mar · 11:50", user: "Ifeoma D.", level: 1, entry: "Luxury 2-Bed Apt", amount: 250000, status: "AVAILABLE" },
-  { date: "02 Mar · 18:33", user: "Aisha M.", level: 2, entry: "Mercedes-Benz C-Class", amount: 80000, status: "PENDING" },
-  { date: "02 Mar · 09:18", user: "Onyeka G.", level: 4, entry: "Nova X1 Bundle", amount: 15000, status: "PENDING" },
-  { date: "01 Mar · 21:07", user: "Ngozi S.", level: 1, entry: "Nova X1 Bundle", amount: 500000, status: "AVAILABLE" },
+  { date: "05 Mar · 16:02", who: "Femi K.", initials: "FK", forWhat: "Mercedes-Benz C-Class ticket purchase", level: 1, amount: 200000, status: "AVAILABLE" },
+  { date: "05 Mar · 12:44", who: "Amaka O.", initials: "AO", forWhat: "Nova X1 Bundle ticket purchase", level: 2, amount: 75000, status: "PENDING" },
+  { date: "04 Mar · 22:11", who: "Tola A.", initials: "TA", forWhat: "Nova X1 Bundle ticket purchase", level: 1, amount: 500000, status: "AVAILABLE" },
+  { date: "04 Mar · 17:30", who: "Wale O.", initials: "WO", forWhat: "Luxury 2-Bed Apt ticket purchase", level: 3, amount: 25000, status: "PENDING" },
+  { date: "04 Mar · 14:05", who: "Uche J.", initials: "UJ", forWhat: "Mercedes-Benz C-Class ticket purchase", level: 2, amount: 100000, status: "AVAILABLE" },
+  { date: "03 Mar · 20:14", who: "Blessing C.", initials: "BC", forWhat: "Nova X1 Bundle ticket purchase", level: 3, amount: 50000, status: "AVAILABLE" },
+  { date: "03 Mar · 11:50", who: "Ifeoma D.", initials: "ID", forWhat: "Luxury 2-Bed Apt ticket purchase", level: 1, amount: 250000, status: "AVAILABLE" },
+  { date: "02 Mar · 18:33", who: "Aisha M.", initials: "AM", forWhat: "Mercedes-Benz C-Class ticket purchase", level: 2, amount: 80000, status: "PENDING" },
+  { date: "02 Mar · 09:18", who: "Onyeka G.", initials: "OG", forWhat: "Nova X1 Bundle ticket purchase", level: 4, amount: 15000, status: "PENDING" },
+  { date: "01 Mar · 21:07", who: "Ngozi S.", initials: "NS", forWhat: "Nova X1 Bundle ticket purchase", level: 1, amount: 500000, status: "AVAILABLE" },
 ];
 
-const levelBadge: Record<number, string> = {
+const levelBadge: Record<Commission["level"], string> = {
   1: "bg-coral/15 text-coral",
   2: "bg-sky/20 text-ink",
   3: "bg-lemon/30 text-ink",
@@ -62,25 +80,90 @@ const levelBadge: Record<number, string> = {
   5: "bg-lilac/30 text-ink",
 };
 
-export function DashboardReferralsPage() {
-  const [copied, setCopied] = useState<"code" | "url" | null>(null);
-  const refCode = "RAF-68B2AEA7";
-  const refUrl = "rafilla.com/?ref=raf-tunmise-24";
+const levelPct: Record<Commission["level"], string> = {
+  1: "10%",
+  2: "5%",
+  3: "3%",
+  4: "2%",
+  5: "1%",
+};
 
-  const copy = (what: "code" | "url", value: string) => {
-    navigator.clipboard?.writeText(value).catch(() => {});
+const levelRing: Record<number, string> = {
+  1: "ring-coral/60",
+  2: "ring-coral/45",
+  3: "ring-coral/30",
+  4: "ring-coral/20",
+  5: "ring-ink/10",
+};
+
+function NodeCard({
+  node,
+  level,
+  empty = false,
+}: {
+  node?: TreeNode;
+  level: number;
+  empty?: boolean;
+}) {
+  const earning = level <= 4;
+  if (empty) {
+    return (
+      <div className="flex flex-col items-center">
+        <div className="grid size-12 place-items-center rounded-full bg-ink/5 ring-1 ring-ink/10 opacity-40">
+          <ChevronDown className="size-4 text-ink/30 -rotate-90" />
+        </div>
+      </div>
+    );
+  }
+  const n = node!;
+  return (
+    <div className="flex flex-col items-center">
+      <div
+        className={cn(
+          "grid size-12 shrink-0 place-items-center rounded-full font-display text-xs font-extrabold ring-2",
+          earning ? levelRing[level] : "ring-ink/10",
+          n.active ? (level <= 4 ? "bg-coral/10 text-coral" : "bg-lilac/25 text-ink") : "bg-ink/5 text-ink/50 opacity-70"
+        )}
+      >
+        {n.initials}
+      </div>
+      <p className="mt-2 text-[11px] font-extrabold text-ink truncate max-w-[80px] text-center">{n.name}</p>
+      <p className="text-[10px] font-bold text-ink/45">{n.recruits} recruits</p>
+    </div>
+  );
+}
+
+export function DashboardReferralsPage() {
+  const [copied, setCopied] = useState<"url" | "code" | null>(null);
+  const [payoutOpen, setPayoutOpen] = useState(false);
+  const [payoutForm, setPayoutForm] = useState({
+    bank: "Wema Bank",
+    accountNo: "",
+    accountName: "",
+    amount: "920000",
+  });
+  const [payoutSubmitted, setPayoutSubmitted] = useState(false);
+
+  const refUrl = "https://rafilla.com/invite/tunmise-ade";
+  const refCode = "TUNMISE-ADE";
+
+  const copy = (what: "url" | "code", v: string) => {
+    navigator.clipboard?.writeText(v).catch(() => {});
     setCopied(what);
     setTimeout(() => setCopied(null), 1800);
   };
 
   return (
-    <DashboardShell activeNav="Referrals">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <DashboardAppShell
+      title="Referrals"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Referrals" },
+      ]}
+    >
+      <div className="space-y-6">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">
-            Grow the Rafilla network
-          </p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
+          <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
             Referrals
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/60">
@@ -88,216 +171,207 @@ export function DashboardReferralsPage() {
           </p>
         </div>
 
-        <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5 sm:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+            My referral link
+          </p>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-1 items-center gap-2 rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/5 min-w-0">
+              <span className="min-w-0 truncate font-mono text-xs font-bold text-ink">
+                {refUrl}
+              </span>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => copy("url", refUrl)}
+              >
+                {copied === "url" ? (
+                  <><Check className="size-4" /> Copied</>
+                ) : (
+                  <><Copy className="size-4" /> Copy</>
+                )}
+              </Button>
+              <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-ink/5">
+                <button
+                  className="grid size-10 place-items-center rounded-full text-ink/60 hover:bg-green-100 hover:text-green-700 transition-colors"
+                  aria-label="Share on WhatsApp"
+                  onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent("Join Rafilla and win big prizes! " + refUrl)}`, "_blank")}
+                >
+                  <MessageCircle className="size-4" />
+                </button>
+                <button
+                  className="grid size-10 place-items-center rounded-full text-ink/60 hover:bg-sky/20 hover:text-sky-700 transition-colors"
+                  aria-label="Share on Telegram"
+                  onClick={() => window.open(`https://t.me/share/url?url=${encodeURIComponent(refUrl)}&text=${encodeURIComponent("Join Rafilla!")}`, "_blank")}
+                >
+                  <Send className="size-4" />
+                </button>
+                <button
+                  className="grid size-10 place-items-center rounded-full text-ink/60 hover:bg-ink/5 transition-colors"
+                  aria-label="Share on Twitter"
+                  onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(refUrl)}&text=${encodeURIComponent("Join Rafilla and win big prizes!")}`, "_blank")}
+                >
+                  <Twitter className="size-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Invites sent" value="42" tone="bg-mint/30 text-ink" />
+            <StatCard label="Total recruits" value="4 / 20" tone="bg-coral/15 text-coral" />
+            <StatCard
+              label="Total earned commissions"
+              value={formatNaira(1240000)}
+              tone="bg-sky/20 text-ink"
+            />
+            <div className="rounded-[22px] bg-white p-5 ring-1 ring-ink/5">
+              <span className="inline-block rounded-xl bg-lemon/30 px-2.5 py-1 text-[10px] font-extrabold text-ink">
+                Available balance
+              </span>
+              <p className="mt-3 font-display text-2xl font-extrabold text-ink sm:text-3xl">
+                {formatNaira(920000)}
+              </p>
+              <p className="mt-1 text-xs font-bold text-ink/45">
+                {formatNaira(320000)} pending
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+          <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
-                Your referral tools
+                5-level earning tree
               </p>
               <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
-                Share code
+                Your referral network
               </h2>
-              <p className="mt-2 max-w-md text-xs font-bold leading-relaxed text-ink/55">
-                Anyone who joins with your code or link joins your 5-level referral tree.
+              <p className="mt-1 text-xs font-bold leading-relaxed text-ink/55 max-w-lg">
+                Coral ring = earning you commissions. L1 10% · L2 5% · L3 3% · L4 2% · L5 1%.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-3 rounded-2xl bg-lilac/30 px-4 py-3 ring-1 ring-ink/5">
-                <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                  Code
-                </span>
-                <span className="font-mono text-sm font-extrabold text-ink">{refCode}</span>
-                <button
-                  onClick={() => copy("code", refCode)}
+            <div className="flex flex-wrap gap-1.5 text-[10px] font-extrabold">
+              {[1, 2, 3, 4, 5].map((lv) => (
+                <span
+                  key={lv}
                   className={cn(
-                    "ml-1 grid size-8 place-items-center rounded-full text-xs font-extrabold transition-colors",
-                    copied === "code" ? "bg-mint/40 text-ink" : "bg-paper text-coral hover:bg-coral hover:text-cream",
+                    "rounded-full px-2.5 py-1 ring-2",
+                    levelRing[lv],
+                    lv <= 4 ? "bg-coral/10 text-coral" : "bg-ink/5 text-ink/50"
                   )}
-                  aria-label="Copy code"
                 >
-                  {copied === "code" ? <Check className="size-4" /> : <Copy className="size-4" />}
-                </button>
-              </div>
+                  L{lv} · {levelPct[lv as Commission["level"]]}
+                </span>
+              ))}
             </div>
           </div>
 
-          <div className="mt-6 rounded-[22px] bg-cream p-4 ring-1 ring-ink/5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
-                  Referral URL
-                </p>
-                <p className="mt-1 truncate font-mono text-sm font-bold text-ink">
-                  https://{refUrl}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => copy("url", `https://${refUrl}`)}
-                  className={cn(
-                    "inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-xs font-extrabold transition-colors",
-                    copied === "url"
-                      ? "bg-mint/40 text-ink"
-                      : "bg-coral text-cream hover:bg-coral/90",
-                  )}
-                >
-                  {copied === "url" ? (
-                    <>
-                      <Check className="size-3.5" /> Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="size-3.5" /> Copy link
-                    </>
-                  )}
-                </button>
-                <button className="inline-flex items-center gap-2 rounded-full bg-paper px-4 py-2.5 text-xs font-extrabold text-ink ring-1 ring-ink/10 hover:bg-lilac/20">
-                  <Share2 className="size-3.5" /> Share
-                </button>
+          <div className="mt-8 space-y-10">
+            <div className="flex justify-center">
+              <div className="flex flex-col items-center">
+                <div className={cn(
+                  "grid size-14 place-items-center rounded-full bg-coral text-white font-display text-sm font-extrabold ring-4",
+                  levelRing[1]
+                )}>
+                  TA
+                </div>
+                <p className="mt-2 text-[11px] font-extrabold text-ink">Tunmise A. (You)</p>
+                <p className="text-[10px] font-bold text-ink/45">4 recruits · L1 10%</p>
               </div>
             </div>
-            {copied && (
-              <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-mint/30 px-2.5 py-1 text-[10px] font-extrabold text-ink">
-                <Check className="size-3" /> Copied to clipboard
-              </p>
-            )}
-          </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[22px] bg-coral/10 p-5 ring-1 ring-coral/20">
-              <div className="flex items-center gap-2 text-coral">
-                <Users className="size-5" />
-                <span className="text-xs font-extrabold uppercase tracking-[0.14em]">
-                  People invited
-                </span>
-              </div>
-              <p className="mt-3 font-display text-4xl font-extrabold text-ink">24</p>
-              <p className="mt-1 text-xs font-bold text-ink/45">Direct + network</p>
+            <div className="flex justify-center">
+              <div className="h-8 w-px bg-ink/10" />
             </div>
 
-            <div className="rounded-[22px] bg-cream p-5 ring-1 ring-ink/5">
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
-                5-level tree
-              </p>
-              <div className="mt-4 space-y-2">
-                {treeLevels.map((lv, idx) => (
-                  <div key={lv.level} className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "w-16 shrink-0 rounded-xl px-2 py-1 text-center text-[10px] font-extrabold",
-                        lv.color,
-                      )}
-                      style={{ marginLeft: `${idx * 16}px` }}
-                    >
-                      {lv.name}
-                    </div>
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink/10">
-                      <div
-                        className="h-full rounded-full bg-coral/70"
-                        style={{
-                          width: `${Math.min(100, (lv.count / 83) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                    <span className="w-10 text-right font-display text-sm font-extrabold text-ink">
-                      {lv.count}
-                    </span>
-                  </div>
+            <div className="flex justify-center">
+              <div className="flex flex-wrap gap-6 justify-center max-w-[560px]">
+                {l2.map((n) => (
+                  <NodeCard key={n.name} node={n} level={2} />
                 ))}
               </div>
-              <details className="mt-4">
-                <summary className="cursor-pointer list-none text-xs font-extrabold text-ink/55 hover:text-coral">
-                  See names in tree <ChevronRight className="inline size-3.5" />
-                </summary>
-                <div className="mt-3 space-y-3">
-                  {treeLevels.map((lv) => (
-                    <div key={lv.level}>
-                      <div className="mb-2 flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "rounded-lg px-2 py-0.5 text-[10px] font-extrabold",
-                            lv.color,
-                          )}
-                        >
-                          {lv.name}
-                        </span>
-                        <span className="text-[10px] font-bold text-ink/45">
-                          {lv.count} people
-                        </span>
-                      </div>
-                      <div
-                        className="flex flex-wrap gap-1.5"
-                        style={{ paddingLeft: `${lv.level * 8}px` }}
-                      >
-                        {AvatarNames[lv.level].map((n) => (
-                          <span
-                            key={n}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-cream px-2 py-1 text-[10px] font-extrabold text-ink ring-1 ring-ink/5"
-                          >
-                            <span className="grid size-4 place-items-center rounded-full bg-lilac/30 text-[9px]">
-                              {n
-                                .split(" ")
-                                .map((x) => x[0])
-                                .join("")}
-                            </span>
-                            {n}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </details>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="flex gap-16 max-w-[560px] justify-center">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="h-6 w-px bg-ink/10" />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="flex flex-wrap gap-5 justify-center max-w-[680px]">
+                {l2.flatMap((_, l2i) => genL3(l2i).slice(0, 2)).map((n, i) => (
+                  <NodeCard key={"l3" + i} node={n} level={3} />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="flex gap-12 max-w-[680px] justify-center opacity-50">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="h-6 w-px bg-ink/10" />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="flex flex-wrap gap-4 justify-center max-w-[760px] opacity-70">
+                {Array.from({ length: 8 }).map((_, i) => {
+                  const names = ["Kola B.", "Rita M.", "Ayo J.", "Halima U.", "Samuel F.", "Chioma O.", "Musa D.", "Onyeka G."];
+                  const n = names[i];
+                  return (
+                    <NodeCard
+                      key={"l4" + i}
+                      node={{
+                        name: n,
+                        initials: n.split(" ").map((s) => s[0]).join(""),
+                        recruits: 0,
+                        active: i < 5,
+                      }}
+                      level={4}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="flex flex-wrap gap-3 justify-center max-w-[820px] opacity-50">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <NodeCard key={"l5" + i} level={5} empty />
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { label: "Total earned", amount: 58200, tone: "bg-mint/30" },
-            { label: "Available", amount: 28400, tone: "bg-coral/15" },
-            { label: "Pending", amount: 15200, tone: "bg-lemon/30" },
-            { label: "Paid out", amount: 14600, tone: "bg-sky/20" },
-          ].map((e) => (
-              <div
-                key={e.label}
-                className="rounded-[22px] bg-paper p-5 ring-1 ring-ink/5"
-              >
-                <span
-                  className={cn(
-                    "inline-block rounded-xl px-2.5 py-1 text-[10px] font-extrabold",
-                    e.tone,
-                    "text-ink",
-                  )}
-                >
-                  {e.label}
-                </span>
-                <p className="mt-3 font-display text-2xl font-extrabold text-ink sm:text-3xl">
-                  {formatNaira(e.amount)}
-                </p>
-              </div>
-            ))}
-        </div>
-
-        <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5">
-          <div className="flex items-end justify-between gap-4">
+        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+          <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Commission ledger
               </p>
               <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
-                Commissions history
+                Recent commissions
               </h2>
             </div>
           </div>
+
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[680px] text-left text-sm">
+            <table className="w-full min-w-[780px] text-left text-sm">
               <thead className="bg-cream text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
                 <tr>
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Referred user</th>
-                  <th className="px-4 py-3 hidden sm:table-cell">Entry they bought</th>
-                  <th className="px-4 py-3 text-right">Commission</th>
+                  <th className="px-4 py-3">When</th>
+                  <th className="px-4 py-3">Who</th>
+                  <th className="px-4 py-3 hidden sm:table-cell">For what</th>
+                  <th className="px-4 py-3">Level</th>
+                  <th className="px-4 py-3 text-right">Amount</th>
                   <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
@@ -309,19 +383,29 @@ export function DashboardReferralsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
+                        <span className="grid size-8 place-items-center rounded-full bg-lilac/30 font-display text-[10px] font-extrabold text-ink ring-1 ring-ink/5">
+                          {c.initials}
+                        </span>
+                        <span className="text-sm font-extrabold text-ink">{c.who}</span>
+                      </div>
+                    </td>
+                    <td className="hidden px-4 py-3 text-sm font-bold text-ink/70 sm:table-cell">
+                      {c.forWhat}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
                         <span
                           className={cn(
-                            "rounded-full px-2 py-0.5 text-[10px] font-extrabold",
-                            levelBadge[c.level],
+                            "inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold",
+                            levelBadge[c.level]
                           )}
                         >
                           L{c.level}
                         </span>
-                        <span className="text-sm font-extrabold text-ink">{c.user}</span>
+                        <span className="text-[10px] font-bold text-ink/45">
+                          {levelPct[c.level]}
+                        </span>
                       </div>
-                    </td>
-                    <td className="hidden px-4 py-3 text-sm font-bold text-ink/70 sm:table-cell">
-                      {c.entry}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right font-display text-base font-extrabold text-mint">
                       +{formatNaira(Math.floor(c.amount / 100))}
@@ -333,9 +417,7 @@ export function DashboardReferralsPage() {
                       <span
                         className={cn(
                           "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
-                          c.status === "AVAILABLE"
-                            ? "bg-mint/30 text-ink"
-                            : "bg-lemon/40 text-ink",
+                          c.status === "AVAILABLE" ? "bg-mint/30 text-ink" : "bg-lemon/40 text-ink"
                         )}
                       >
                         {c.status}
@@ -350,17 +432,164 @@ export function DashboardReferralsPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Button asChild variant="outline" size="lg" className="min-h-14 text-sm">
-            <Link to="/competitions">
-              <Trophy className="size-4" /> USE FOR ENTRY <ArrowUpRight className="size-4" />
+            <Link to="/dashboard/competitions">
+              <Trophy className="size-4" /> USE FOR ENTRY <ArrowRight className="size-4" />
             </Link>
           </Button>
-          <Button asChild variant="primary" size="lg" className="min-h-14 text-sm">
-            <Link to="/dashboard/referrals/payout">
-              REQUEST CASH PAYOUT <ArrowRight className="size-4" />
-            </Link>
+          <Button
+            variant="primary"
+            size="lg"
+            className="min-h-14 text-sm"
+            onClick={() => setPayoutOpen(true)}
+          >
+            <Banknote className="size-4" /> REQUEST CASH PAYOUT <ArrowRight className="size-4" />
           </Button>
         </div>
       </div>
-    </DashboardShell>
+
+      {payoutOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center" onClick={() => { setPayoutOpen(false); setPayoutSubmitted(false); }}>
+          <div
+            className="w-full max-w-md rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                  Referral earnings
+                </p>
+                <h2 className="mt-1 font-display text-2xl font-extrabold text-ink">
+                  Request payout
+                </h2>
+              </div>
+              <button
+                onClick={() => { setPayoutOpen(false); setPayoutSubmitted(false); }}
+                className="grid size-10 shrink-0 place-items-center rounded-full bg-cream text-ink ring-1 ring-ink/5"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {payoutSubmitted ? (
+              <div className="mt-8 text-center">
+                <div className="mx-auto grid size-20 place-items-center rounded-full bg-mint/30">
+                  <Check className="size-10 text-coral" />
+                </div>
+                <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">
+                  Payout requested
+                </h3>
+                <p className="mt-2 font-display text-3xl font-extrabold text-coral">
+                  {formatNaira(Number(payoutForm.amount || 0) * 100)}
+                </p>
+                <p className="mt-1 text-xs font-bold text-ink/55">
+                  Review is typically 1–3 business days
+                </p>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="mt-6 w-full"
+                  onClick={() => { setPayoutOpen(false); setPayoutSubmitted(false); }}
+                >
+                  Done
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="mt-6 rounded-2xl bg-mint/20 p-4 ring-1 ring-mint/30 flex items-center justify-between">
+                  <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                    Available
+                  </span>
+                  <span className="font-display text-xl font-extrabold text-ink">
+                    {formatNaira(920000)}
+                  </span>
+                </div>
+
+                <div className="mt-5 space-y-4">
+                  <Field
+                    label="Bank name"
+                    value={payoutForm.bank}
+                    onChange={(v) => setPayoutForm((f) => ({ ...f, bank: v }))}
+                  />
+                  <Field
+                    label="Account number"
+                    value={payoutForm.accountNo}
+                    onChange={(v) => setPayoutForm((f) => ({ ...f, accountNo: v.replace(/\D/g, "").slice(0, 10) }))}
+                    placeholder="10 digits"
+                  />
+                  <Field
+                    label="Account name"
+                    value={payoutForm.accountName}
+                    onChange={(v) => setPayoutForm((f) => ({ ...f, accountName: v }))}
+                    placeholder="As it appears on your bank account"
+                  />
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                        Amount
+                      </label>
+                      <button
+                        onClick={() => setPayoutForm((f) => ({ ...f, amount: "920000" }))}
+                        className="text-[11px] font-extrabold text-coral hover:underline"
+                      >
+                        Max · {formatNaira(920000)}
+                      </button>
+                    </div>
+                    <div className="flex min-h-11 items-center gap-2 rounded-2xl bg-cream px-4 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral">
+                      <Wallet className="size-4 text-coral" />
+                      <span className="font-display text-lg font-extrabold text-ink">₦</span>
+                      <input
+                        type="number"
+                        value={payoutForm.amount}
+                        onChange={(e) => setPayoutForm((f) => ({ ...f, amount: e.target.value }))}
+                        max={920000}
+                        className="w-full bg-transparent font-display text-xl font-extrabold text-ink outline-none placeholder:text-ink/30"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="mt-6 w-full"
+                  onClick={() => {
+                    if (!payoutForm.accountNo || !payoutForm.accountName || !payoutForm.amount) return;
+                    setPayoutSubmitted(true);
+                  }}
+                  disabled={!payoutForm.accountNo || !payoutForm.accountName || !payoutForm.amount}
+                >
+                  Submit payout request <ArrowRight className="size-4" />
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </DashboardAppShell>
+  );
+}
+
+function StatCard({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className="rounded-[22px] bg-white p-5 ring-1 ring-ink/5">
+      <span className={cn("inline-block rounded-xl px-2.5 py-1 text-[10px] font-extrabold", tone)}>
+        {label}
+      </span>
+      <p className="mt-3 font-display text-2xl font-extrabold text-ink sm:text-3xl">{value}</p>
+    </div>
+  );
+}
+
+function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange?: (v: string) => void; placeholder?: string }) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">{label}</label>
+      <input
+        value={value}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+        placeholder={placeholder}
+        className="min-h-11 w-full rounded-2xl bg-cream px-4 text-sm font-bold text-ink ring-1 ring-ink/5 outline-none placeholder:text-ink/35 focus:ring-2 focus:ring-coral"
+      />
+    </div>
   );
 }

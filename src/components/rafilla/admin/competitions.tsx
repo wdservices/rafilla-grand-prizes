@@ -5,20 +5,23 @@ import {
   MoreHorizontal,
   LayoutGrid,
   List,
-  Star,
   Trophy,
-  Copy,
   Eye,
   CheckCircle2,
-  PauseCircle,
-  Archive,
+  Sparkles,
   X,
   Upload,
   CalendarDays,
   Ticket,
   Gift,
-  Sparkles,
   AlertCircle,
+  ChevronRight,
+  Check,
+  Building2,
+  Clock,
+  Eye as EyeIcon,
+  Pencil,
+  PlayCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,6 +34,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -41,7 +53,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -49,7 +60,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -61,1056 +72,558 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { AdminShell } from "@/components/rafilla/admin/shell";
+import { AdminShell } from "@/components/rafilla/admin/admin-shell";
 import { cn, formatNaira } from "@/lib/utils";
 
-type CompStatus =
-  | "DRAFT"
-  | "PENDING REVIEW"
-  | "APPROVED"
-  | "SCHEDULED"
-  | "LIVE"
-  | "CLOSING"
-  | "CLOSED"
-  | "AWAITING DRAW"
-  | "DRAWN"
-  | "WINNER VERIFIED"
-  | "CLAIM IN PROGRESS"
-  | "DELIVERED"
-  | "COMPLETED"
-  | "ARCHIVED";
-
-const STATUS_ORDER: CompStatus[] = [
-  "DRAFT",
-  "PENDING REVIEW",
-  "APPROVED",
-  "SCHEDULED",
-  "LIVE",
-  "CLOSING",
-  "CLOSED",
-  "AWAITING DRAW",
-  "DRAWN",
-  "WINNER VERIFIED",
-  "CLAIM IN PROGRESS",
-  "DELIVERED",
-  "COMPLETED",
-  "ARCHIVED",
-];
-
-const STATUS_TINT: Record<CompStatus, string> = {
-  "DRAFT": "bg-ink/8 text-ink/65",
-  "PENDING REVIEW": "bg-lemon/40 text-ink",
-  "APPROVED": "bg-sky/25 text-ink",
-  "SCHEDULED": "bg-lilac/35 text-ink",
-  "LIVE": "bg-mint/35 text-ink",
-  "CLOSING": "bg-coral/20 text-coral",
-  "CLOSED": "bg-coral/25 text-coral",
-  "AWAITING DRAW": "bg-lemon/40 text-ink",
-  "DRAWN": "bg-sky/30 text-ink",
-  "WINNER VERIFIED": "bg-mint/35 text-ink",
-  "CLAIM IN PROGRESS": "bg-lemon/40 text-ink",
-  "DELIVERED": "bg-mint/35 text-ink",
-  "COMPLETED": "bg-ink text-cream",
-  "ARCHIVED": "bg-ink/12 text-ink/60",
-};
-
-const ALLOWED_TRANSITIONS: Record<CompStatus, CompStatus[]> = {
-  "DRAFT": ["PENDING REVIEW", "ARCHIVED"],
-  "PENDING REVIEW": ["APPROVED", "DRAFT", "ARCHIVED"],
-  "APPROVED": ["SCHEDULED", "DRAFT", "ARCHIVED"],
-  "SCHEDULED": ["LIVE", "APPROVED", "ARCHIVED"],
-  "LIVE": ["CLOSING", "CLOSED", "SCHEDULED"],
-  "CLOSING": ["CLOSED", "LIVE"],
-  "CLOSED": ["AWAITING DRAW"],
-  "AWAITING DRAW": ["DRAWN"],
-  "DRAWN": ["WINNER VERIFIED"],
-  "WINNER VERIFIED": ["CLAIM IN PROGRESS"],
-  "CLAIM IN PROGRESS": ["DELIVERED"],
-  "DELIVERED": ["COMPLETED"],
-  "COMPLETED": ["ARCHIVED"],
-  "ARCHIVED": [],
-};
+type CompStatus = "DRAFT" | "SCHEDULED" | "LIVE" | "COMPLETED";
 
 interface MockComp {
   id: string;
-  title: string;
+  name: string;
   slug: string;
-  image: string;
-  category: "Auto" | "Tech" | "Property" | "Home" | "Experience";
+  category: string;
   status: CompStatus;
-  partner: string;
-  partnerInitials: string;
-  partnerTint: "sky" | "mint" | "coral" | "lemon" | "lilac";
+  entriesSold: number;
+  totalEntries: number;
   ticketPrice: number;
-  ticketsSold: number;
-  ticketsCapacity: number;
-  start: string;
-  close: string;
-  featured: boolean;
-  rewardPool: boolean;
-  rewardPct: number;
-  poolContribution: number;
+  image: string;
+  partner: string;
+  drawDate: string;
 }
 
-const partnerTintBg: Record<MockComp["partnerTint"], string> = {
-  sky: "bg-sky/30 text-ink",
-  mint: "bg-mint/35 text-ink",
-  coral: "bg-coral/20 text-coral",
-  lemon: "bg-lemon/40 text-ink",
-  lilac: "bg-lilac/35 text-ink",
-};
+const IMAGES = [mercedesImage, techBundleImage, apartmentImage];
+const PARTNERS = ["Lux Wheels Ltd", "TechHome NG", "Adebayo Homes", "Lekki Luxury Autos", "Abuja Tech Hub"];
+const CATEGORIES = ["Auto", "Tech", "Property", "Jewelry", "Home", "Experience"];
+const STATUSES: CompStatus[] = ["LIVE", "SCHEDULED", "DRAFT", "COMPLETED", "LIVE", "LIVE", "SCHEDULED", "DRAFT", "COMPLETED", "LIVE"];
 
-const MOCK_COMPS: MockComp[] = [
-  {
-    id: "c-01",
-    title: "2026 Mercedes-Benz C-Class",
-    slug: "mercedes-benz-c-class-2026",
-    image: mercedesImage,
-    category: "Auto",
-    status: "LIVE",
-    partner: "Lux Wheels Ltd",
-    partnerInitials: "LW",
-    partnerTint: "lemon",
-    ticketPrice: 10000,
-    ticketsSold: 4210,
-    ticketsCapacity: 5000,
-    start: "2026-02-12",
-    close: "2026-03-18",
-    featured: true,
-    rewardPool: true,
-    rewardPct: 5,
-    poolContribution: 2105000,
-  },
-  {
-    id: "c-02",
-    title: "Nova X1 Tech Bundle",
-    slug: "nova-x1-bundle",
-    image: techBundleImage,
-    category: "Tech",
-    status: "CLOSING",
-    partner: "TechHome NG",
-    partnerInitials: "TH",
-    partnerTint: "mint",
-    ticketPrice: 5000,
-    ticketsSold: 9420,
-    ticketsCapacity: 10000,
-    start: "2026-02-01",
-    close: "2026-03-12",
-    featured: false,
-    rewardPool: true,
-    rewardPct: 5,
-    poolContribution: 2355000,
-  },
-  {
-    id: "c-03",
-    title: "Luxury 2-Bed Apartment, Lagos",
-    slug: "lagos-2-bed-apartment",
-    image: apartmentImage,
-    category: "Property",
-    status: "SCHEDULED",
-    partner: "Adebayo Homes",
-    partnerInitials: "AH",
-    partnerTint: "coral",
-    ticketPrice: 2500,
-    ticketsSold: 0,
-    ticketsCapacity: 22500,
-    start: "2026-03-20",
-    close: "2026-06-25",
-    featured: true,
-    rewardPool: true,
-    rewardPct: 5,
-    poolContribution: 0,
-  },
-  {
-    id: "c-04",
-    title: "Ikeja Home Studio Build",
-    slug: "ikeja-home-studio",
-    image: techBundleImage,
-    category: "Home",
-    status: "DRAWN",
-    partner: "Grace Property",
-    partnerInitials: "GP",
-    partnerTint: "lilac",
-    ticketPrice: 1500,
-    ticketsSold: 5800,
-    ticketsCapacity: 6000,
-    start: "2026-01-20",
-    close: "2026-03-02",
-    featured: false,
-    rewardPool: true,
-    rewardPct: 5,
-    poolContribution: 435000,
-  },
-  {
-    id: "c-05",
-    title: "Abuja Generator Pack",
-    slug: "abuja-generator-pack",
-    image: apartmentImage,
-    category: "Home",
-    status: "WINNER VERIFIED",
-    partner: "TechHome NG",
-    partnerInitials: "TH",
-    partnerTint: "mint",
-    ticketPrice: 3000,
-    ticketsSold: 5000,
-    ticketsCapacity: 5000,
-    start: "2026-01-10",
-    close: "2026-02-28",
-    featured: false,
-    rewardPool: false,
-    rewardPct: 0,
-    poolContribution: 0,
-  },
-  {
-    id: "c-06",
-    title: "PH Laptop Suite",
-    slug: "ph-laptop-suite",
-    image: techBundleImage,
-    category: "Tech",
-    status: "PENDING REVIEW",
-    partner: "TechHome NG",
-    partnerInitials: "TH",
-    partnerTint: "mint",
-    ticketPrice: 2000,
-    ticketsSold: 0,
-    ticketsCapacity: 4000,
-    start: "2026-03-15",
-    close: "2026-05-10",
-    featured: false,
-    rewardPool: true,
-    rewardPct: 5,
-    poolContribution: 0,
-  },
-  {
-    id: "c-07",
-    title: "Eko Hotel Weekend Suite",
-    slug: "eko-hotel-weekend",
-    image: apartmentImage,
-    category: "Experience",
-    status: "DRAFT",
-    partner: "Luxury Hosts",
-    partnerInitials: "LH",
-    partnerTint: "sky",
-    ticketPrice: 1000,
-    ticketsSold: 0,
-    ticketsCapacity: 3000,
-    start: "TBD",
-    close: "TBD",
-    featured: false,
-    rewardPool: true,
-    rewardPct: 5,
-    poolContribution: 0,
-  },
-  {
-    id: "c-08",
-    title: "Kano Solar Home Kit",
-    slug: "kano-solar-kit",
-    image: mercedesImage,
-    category: "Home",
-    status: "APPROVED",
-    partner: "Lux Wheels Ltd",
-    partnerInitials: "LW",
-    partnerTint: "lemon",
-    ticketPrice: 4000,
-    ticketsSold: 0,
-    ticketsCapacity: 7500,
-    start: "2026-03-22",
-    close: "2026-06-30",
-    featured: false,
-    rewardPool: true,
-    rewardPct: 5,
-    poolContribution: 0,
-  },
-  {
-    id: "c-09",
-    title: "Ibadan Farming Grant",
-    slug: "ibadan-farming-grant",
-    image: apartmentImage,
-    category: "Experience",
-    status: "COMPLETED",
-    partner: "Adebayo Homes",
-    partnerInitials: "AH",
-    partnerTint: "coral",
-    ticketPrice: 800,
-    ticketsSold: 10000,
-    ticketsCapacity: 10000,
-    start: "2025-12-01",
-    close: "2026-01-15",
-    featured: false,
-    rewardPool: true,
-    rewardPct: 5,
-    poolContribution: 400000,
-  },
+const NAMES = [
+  "Mercedes-Benz C-Class 2025",
+  "Nova X1 Tech Bundle",
+  "Luxury 2-Bed Apartment",
+  "Ikeja Home Studio",
+  "Abuja Generator Pack",
+  "PH Laptop Suite",
+  "Eko Weekend Giveaway",
+  "Lekki Jewelry Set",
+  "Lagos Yacht Experience",
+  "Jos Land Plot",
+  "Kano Textile Bundle",
+  "VI Penthouse Week",
 ];
 
-const CATEGORIES = ["All", "Auto", "Tech", "Property", "Home", "Experience"] as const;
+const TOTAL_ENTRIES_POOL = [5000, 10000, 22500, 6000, 5000, 4000, 8000, 3000, 2500, 15000];
+const TICKET_PRICE_POOL = [10000, 5000, 2500, 1500, 1000, 7500, 2000, 5000, 20000, 3000];
+const COMPS: MockComp[] = NAMES.map((n, i) => ({
+  id: `RF-C-${String(i + 1).padStart(5, "0")}`,
+  name: n,
+  slug: n.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+  category: CATEGORIES[i % CATEGORIES.length]!,
+  status: STATUSES[i % STATUSES.length]!,
+  entriesSold: Math.floor(Math.random() * 4500) + 200,
+  totalEntries: TOTAL_ENTRIES_POOL[i % 10]!,
+  ticketPrice: TICKET_PRICE_POOL[i % 10]! * 100,
+  image: IMAGES[i % IMAGES.length]!,
+  partner: PARTNERS[i % PARTNERS.length]!,
+  drawDate: `2026-${String(((i % 11) + 2)).padStart(2, "0")}-${String(((i % 27) + 1)).padStart(2, "0")}`,
+}));
+
+const statusTone: Record<CompStatus, string> = {
+  DRAFT: "bg-ink/10 text-ink",
+  SCHEDULED: "bg-sky/25 text-ink",
+  LIVE: "bg-mint/35 text-ink",
+  COMPLETED: "bg-coral/20 text-coral",
+};
+
+const STEP_LABELS = ["Basics", "Asset", "Entry config", "Schedule", "Visibility", "Review & Publish"] as const;
+type Step = (typeof STEP_LABELS)[number];
 
 export function AdminCompetitionsPage() {
-  const [query, setQuery] = useState("");
-  const [activeStatuses, setActiveStatuses] = useState<CompStatus[]>([]);
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("All");
-  const [partner, setPartner] = useState("All");
-  const [featuredOnly, setFeaturedOnly] = useState(false);
-  const [view, setView] = useState<"table" | "grid">("table");
-  const [bulk, setBulk] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editing, setEditing] = useState<MockComp | null>(null);
-  const [step, setStep] = useState<"basic" | "prize" | "campaign" | "rules" | "preview">("basic");
+  const [tab, setTab] = useState("live");
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [search, setSearch] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [stepIdx, setStepIdx] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
 
-  const partners = useMemo(() => ["All", ...Array.from(new Set(MOCK_COMPS.map((c) => c.partner))], []);
+  const filtered = COMPS.filter((c) => {
+    const s = search.toLowerCase();
+    if (s && !c.name.toLowerCase().includes(s) && !c.slug.includes(s)) return false;
+    if (tab === "all") return true;
+    const statusMap: Record<string, CompStatus | "all"> = {
+      live: "LIVE",
+      scheduled: "SCHEDULED",
+      draft: "DRAFT",
+      completed: "COMPLETED",
+    };
+    return c.status === statusMap[tab];
+  });
 
-  const toggleStatus = (s: CompStatus) =>
-    setActiveStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
-
-  const filtered = useMemo(
-    () =>
-      MOCK_COMPS.filter((c) => {
-        const q = query.toLowerCase().trim();
-        if (q && !c.title.toLowerCase().includes(q) && !c.slug.toLowerCase().includes(q)) return false;
-        if (activeStatuses.length && !activeStatuses.includes(c.status)) return false;
-        if (category !== "All" && c.category !== category) return false;
-        if (partner !== "All" && c.partner !== partner) return false;
-        if (featuredOnly && !c.featured) return false;
-        return true;
-      }),
-    [query, activeStatuses, category, partner, featuredOnly],
-  );
-
-  const toggleSel = (id: string) =>
-    setSelectedIds((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
-
-  const bulkAction = (kind: "archive" | "publish") => {
-    if (!selectedIds.length) return toast.error("Select one or more competitions first");
-    toast.success(`Bulk ${kind}`, {
-      description: `${selectedIds.length} competition(s) scheduled for ${kind} · queued for background processing.`,
-    });
-    setSelectedIds([]);
-  };
-
-  const openNew = () => {
-    setEditing(null);
-    setEditorOpen(true);
-    setStep("basic");
-  };
-
-  const openEdit = (c: MockComp) => {
-    setEditing(c);
-    setEditorOpen(true);
-    setStep("basic");
-  };
-
-  const changeStatus = (c: MockComp, next: CompStatus) => {
-    toast.success("Status transitioned", {
-      description: `${c.title} · ${c.status} → ${next} · audit log written.`,
-    });
-  };
-
-  const transitionsAllowed = (c: MockComp) => ALLOWED_TRANSITIONS[c.status];
+  function nextStep() {
+    if (stepIdx < STEP_LABELS.length - 1) setStepIdx(stepIdx + 1);
+  }
+  function prevStep() {
+    if (stepIdx > 0) setStepIdx(stepIdx - 1);
+  }
+  function submitDraft() {
+    setSubmitted(true);
+    setTimeout(() => {
+      toast.success("Competition created", { description: "Draft saved · ready to schedule when approved." });
+    }, 400);
+  }
+  function closeAndReset() {
+    setModalOpen(false);
+    setTimeout(() => {
+      setStepIdx(0);
+      setSubmitted(false);
+    }, 250);
+  }
 
   return (
-    <AdminShell activeNav="competitions">
+    <AdminShell activeNav="competitions" title="Competitions">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">Admin · Competitions</p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
-            Competitions
-          </h1>
+          <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">Competitions</h1>
           <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
-            Full 14-state lifecycle management for campaigns, from first draft through draw and prize delivery.
+            Create, schedule, draw, and manage prize competitions across the Rafilla platform.
           </p>
         </div>
-      </header>
-
-      <Card className="mb-5 rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-        <CardContent className="p-4 sm:p-5 space-y-4">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-            <label className="flex min-h-11 items-center gap-3 rounded-full bg-cream px-4 text-sm font-bold text-ink/50 md:col-span-5">
-              <Search className="size-4 shrink-0" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by title, slug, campaign id..."
-                className="w-full bg-transparent text-ink outline-none placeholder:text-ink/40"
-              />
-            </label>
-
-            <div className="md:col-span-2">
-              <Select value={category} onValueChange={(v) => setCategory(v as typeof category)}>
-                <SelectTrigger className="min-h-11 rounded-full bg-lilac/20 px-4 font-extrabold text-ink ring-0">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent className="rounded-[22px] bg-paper p-1">
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c} className="rounded-xl font-bold">Category · {c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="md:col-span-3">
-              <Select value={partner} onValueChange={setPartner}>
-                <SelectTrigger className="min-h-11 rounded-full bg-sky/25 px-4 font-extrabold text-ink ring-0">
-                  <SelectValue placeholder="Partner" />
-                </SelectTrigger>
-                <SelectContent className="rounded-[22px] bg-paper p-1">
-                  {partners.map((p) => (
-                    <SelectItem key={p} value={p} className="rounded-xl font-bold">{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 md:col-span-2">
-              <Label className="flex items-center gap-2 text-xs font-extrabold text-ink/65">
-                <Star className="size-3.5 text-lemon" />
-                <Switch checked={featuredOnly} onCheckedChange={setFeaturedOnly} />
-                Featured only
-              </Label>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Status</span>
-            <button
-              onClick={() => setActiveStatuses([])}
-              className={cn(
-                "rounded-full px-3 py-1.5 text-[11px] font-extrabold transition-colors",
-                activeStatuses.length === 0
-                  ? "bg-ink text-cream"
-                  : "bg-cream text-ink/60 ring-1 ring-ink/10 hover:bg-lilac/20",
-              )}
-            >
-              ALL
-            </button>
-            {STATUS_ORDER.map((s) => {
-              const on = activeStatuses.includes(s);
-              return (
-                <button
-                  key={s}
-                  onClick={() => toggleStatus(s)}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-[11px] font-extrabold ring-1 transition-colors",
-                    on ? `${STATUS_TINT[s]} ring-transparent` : "bg-cream text-ink/60 ring-ink/10 hover:bg-lilac/20",
-                  )}
-                >
-                  {s}
+        <Dialog open={modalOpen} onOpenChange={(v) => { setModalOpen(v); if (!v) { setTimeout(() => { setStepIdx(0); setSubmitted(false); }, 200); } }}>
+          <DialogTrigger asChild>
+            <Button variant="primary">
+              <Plus className="size-4" /> New competition
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="rounded-[28px] bg-paper p-0 shadow-none sm:max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
+            <DialogHeader className="border-b border-ink/10 px-6 py-5">
+              <DialogTitle className="flex items-center justify-between gap-3 font-display text-2xl font-extrabold text-ink">
+                <span className="flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-2xl bg-coral/20">
+                    <Trophy className="size-4.5 text-coral" />
+                  </span>
+                  New competition
+                </span>
+                <button className="grid size-9 place-items-center rounded-full bg-cream text-ink/60 hover:bg-lilac/20 hover:text-ink" onClick={closeAndReset}>
+                  <X className="size-4" />
                 </button>
-              );
-            })}
-          </div>
+              </DialogTitle>
+              <DialogDescription className="mt-1 text-sm font-bold text-ink/55">
+                Step {stepIdx + 1} of {STEP_LABELS.length} · {STEP_LABELS[stepIdx]}
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-4">
-            <div className="flex items-center gap-2">
-              <div className="flex overflow-hidden rounded-full bg-cream ring-1 ring-ink/10">
-                <button
-                  onClick={() => setView("table")}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-extrabold transition-colors",
-                    view === "table" ? "bg-ink text-cream" : "text-ink/60 hover:text-ink",
-                  )}
-                >
-                  <List className="size-3.5" /> Table
-                </button>
-                <button
-                  onClick={() => setView("grid")}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3.5 py-2 text-[11px] font-extrabold transition-colors",
-                    view === "grid" ? "bg-ink text-cream" : "text-ink/60 hover:text-ink",
-                  )}
-                >
-                  <LayoutGrid className="size-3.5" /> Grid
-                </button>
+            {submitted ? (
+              <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col items-center justify-center text-center">
+                <div className="grid size-20 place-items-center rounded-full bg-mint/35">
+                  <CheckCircle2 className="size-10 text-ink" />
+                </div>
+                <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">Competition created</h3>
+                <p className="mt-2 max-w-md text-sm font-bold text-ink/60">
+                  Your draft competition has been saved. Asset review, schedule, and draw settings can be adjusted before going live.
+                </p>
+                <div className="mt-6 grid grid-cols-2 gap-3 text-left w-full max-w-md">
+                  <Card className="rounded-2xl border-0 bg-cream p-0 ring-1 ring-ink/5">
+                    <CardContent className="p-4">
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Competition ID</p>
+                      <p className="mt-1 text-sm font-extrabold text-ink">RF-C-00134</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="rounded-2xl border-0 bg-cream p-0 ring-1 ring-ink/5">
+                    <CardContent className="p-4">
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Status</p>
+                      <Badge className="mt-1 rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-extrabold uppercase ring-0 text-ink">Draft</Badge>
+                    </CardContent>
+                  </Card>
+                </div>
+                <Button variant="primary" className="mt-7" onClick={closeAndReset}>
+                  <Sparkles className="size-4" /> Done
+                </Button>
               </div>
-              <Label className="ml-1 flex items-center gap-2 text-xs font-extrabold text-ink/65">
-                <Checkbox checked={bulk} onCheckedChange={(v) => { setBulk(!!v); if (!v) setSelectedIds([]); }} />
-                Bulk actions
-              </Label>
-              {bulk && (
-                <div className="ml-1 flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => bulkAction("publish")}>
-                    <CheckCircle2 className="size-3.5" /> Bulk publish
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => bulkAction("archive")}>
-                    <Archive className="size-3.5" /> Bulk archive
-                  </Button>
-                  {selectedIds.length > 0 && (
-                    <span className="text-[11px] font-extrabold text-ink/55">{selectedIds.length} selected</span>
+            ) : (
+              <>
+                <div className="px-6 pt-4">
+                  <div className="flex items-center gap-1.5 overflow-x-auto py-2">
+                    {STEP_LABELS.map((s, i) => (
+                      <div key={s} className="flex items-center gap-1.5 shrink-0">
+                        <div className={cn(
+                          "grid size-8 place-items-center rounded-full text-[11px] font-extrabold",
+                          i < stepIdx ? "bg-mint/35 text-ink" : i === stepIdx ? "bg-coral text-white" : "bg-cream text-ink/55",
+                        )}>
+                          {i < stepIdx ? <Check className="size-3.5" /> : i + 1}
+                        </div>
+                        <span className={cn("text-[10px] font-extrabold uppercase tracking-wider whitespace-nowrap", i <= stepIdx ? "text-ink" : "text-ink/40")}>
+                          {s}
+                        </span>
+                        {i < STEP_LABELS.length - 1 && <ChevronRight className="size-3 text-ink/30 mx-0.5" />}
+                      </div>
+                    ))}
+                  </div>
+                  <Separator className="mt-2" />
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+                  {stepIdx === 0 && (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="sm:col-span-2 space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Competition name</Label>
+                          <Input placeholder="e.g. 2026 Mercedes-Benz C-Class Grand Prize" className="h-11 rounded-2xl border-0 bg-cream px-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">URL slug</Label>
+                          <Input placeholder="mercedes-c-class-2026" className="h-11 rounded-2xl border-0 bg-cream px-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Category</Label>
+                          <Select defaultValue="auto">
+                            <SelectTrigger className="h-11 rounded-2xl bg-cream px-4 text-sm font-extrabold text-ink shadow-none ring-1 ring-ink/10 focus:ring-coral">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-[22px] bg-paper p-1">
+                              {CATEGORIES.map((c) => <SelectItem key={c} value={c.toLowerCase()} className="rounded-xl font-bold">{c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="sm:col-span-2 space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Description</Label>
+                          <Textarea rows={4} placeholder="Rich description shown on the competition landing page…" className="rounded-2xl border-0 bg-cream p-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral" />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {stepIdx === 1 && (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="sm:col-span-2 space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Asset / prize name</Label>
+                          <Input placeholder="Mercedes-Benz C-Class 2025 · brand new, full warranty" className="h-11 rounded-2xl border-0 bg-cream px-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral" />
+                        </div>
+                        <div className="sm:col-span-2 space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Image URLs (comma-separated)</Label>
+                          <Textarea rows={2} placeholder="https://cdn.rafilla.ng/asset1.jpg, https://cdn.rafilla.ng/asset2.jpg" className="rounded-2xl border-0 bg-cream p-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Market value (₦)</Label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">₦</span>
+                            <Input type="number" placeholder="12,000,000" className="h-11 rounded-2xl border-0 bg-cream pl-8 pr-4 text-base font-extrabold text-ink placeholder:text-ink/40 focus-visible:ring-coral" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Asset condition</Label>
+                          <Select defaultValue="new">
+                            <SelectTrigger className="h-11 rounded-2xl bg-cream px-4 text-sm font-extrabold text-ink shadow-none ring-1 ring-ink/10 focus:ring-coral">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-[22px] bg-paper p-1">
+                              <SelectItem value="new" className="rounded-xl font-bold">Brand new</SelectItem>
+                              <SelectItem value="likenew" className="rounded-xl font-bold">Like new</SelectItem>
+                              <SelectItem value="refurbished" className="rounded-xl font-bold">Certified refurbished</SelectItem>
+                              <SelectItem value="used" className="rounded-xl font-bold">Used / verified</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="sm:col-span-2 space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Partner</Label>
+                          <Select defaultValue={PARTNERS[0]!.toLowerCase().replace(/[^a-z]/g, "")}>
+                            <SelectTrigger className="h-11 rounded-2xl bg-cream px-4 text-sm font-extrabold text-ink shadow-none ring-1 ring-ink/10 focus:ring-coral">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-[22px] bg-paper p-1">
+                              {PARTNERS.map((p) => <SelectItem key={p} value={p.toLowerCase().replace(/[^a-z]/g, "")} className="rounded-xl font-bold">{p}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {stepIdx === 2 && (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Ticket price (₦)</Label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">₦</span>
+                            <Input type="number" defaultValue="10000" className="h-11 rounded-2xl border-0 bg-cream pl-8 pr-4 text-base font-extrabold text-ink placeholder:text-ink/40 focus-visible:ring-coral" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Max total entries</Label>
+                          <Input type="number" defaultValue="5000" className="h-11 rounded-2xl border-0 bg-cream px-4 text-base font-extrabold text-ink focus-visible:ring-coral" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Max entries per user</Label>
+                          <Input type="number" defaultValue="200" className="h-11 rounded-2xl border-0 bg-cream px-4 text-base font-extrabold text-ink focus-visible:ring-coral" />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {stepIdx === 3 && (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Start date</Label>
+                          <Input type="datetime-local" defaultValue="2026-04-01T09:00" className="h-11 rounded-2xl border-0 bg-cream px-4 text-sm font-bold text-ink focus-visible:ring-coral" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Draw date</Label>
+                          <Input type="datetime-local" defaultValue="2026-06-18T21:00" className="h-11 rounded-2xl border-0 bg-cream px-4 text-sm font-bold text-ink focus-visible:ring-coral" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Live push delay (mins)</Label>
+                          <Input type="number" defaultValue="60" className="h-11 rounded-2xl border-0 bg-cream px-4 text-base font-extrabold text-ink focus-visible:ring-coral" />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {stepIdx === 4 && (
+                    <>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3">
+                          <div>
+                            <p className="text-sm font-extrabold text-ink">Featured competition</p>
+                            <p className="text-xs font-bold text-ink/55">Pin to the top of the home page and featured carousel.</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3">
+                          <div>
+                            <p className="text-sm font-extrabold text-ink">Public results</p>
+                            <p className="text-xs font-bold text-ink/55">Publish draw results and winner identity publicly.</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {stepIdx === 5 && (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Card className="rounded-2xl border-0 bg-cream p-0 ring-1 ring-ink/5">
+                          <CardContent className="p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Basics</p>
+                              <Badge className="rounded-full bg-mint/35 px-2 py-0.5 text-[9px] font-extrabold ring-0 text-ink">OK</Badge>
+                            </div>
+                            <p className="text-sm font-extrabold text-ink">2026 Mercedes-Benz C-Class</p>
+                            <p className="text-[11px] font-bold text-ink/55">Auto · slug: mercedes-c-class-2026</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="rounded-2xl border-0 bg-cream p-0 ring-1 ring-ink/5">
+                          <CardContent className="p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Asset</p>
+                              <Badge className="rounded-full bg-mint/35 px-2 py-0.5 text-[9px] font-extrabold ring-0 text-ink">OK</Badge>
+                            </div>
+                            <p className="text-sm font-extrabold text-ink">{formatNaira(1200000000)} · Brand new</p>
+                            <p className="text-[11px] font-bold text-ink/55">Lux Wheels Ltd · partner split 48%</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="rounded-2xl border-0 bg-cream p-0 ring-1 ring-ink/5">
+                          <CardContent className="p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Entry config</p>
+                              <Badge className="rounded-full bg-mint/35 px-2 py-0.5 text-[9px] font-extrabold ring-0 text-ink">OK</Badge>
+                            </div>
+                            <p className="text-sm font-extrabold text-ink">{formatNaira(1000000)} per ticket</p>
+                            <p className="text-[11px] font-bold text-ink/55">5,000 total · 200 max per user</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="rounded-2xl border-0 bg-cream p-0 ring-1 ring-ink/5">
+                          <CardContent className="p-4 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Schedule</p>
+                              <Badge className="rounded-full bg-mint/35 px-2 py-0.5 text-[9px] font-extrabold ring-0 text-ink">OK</Badge>
+                            </div>
+                            <p className="text-sm font-extrabold text-ink">Draw · 2026-06-18 21:00</p>
+                            <p className="text-[11px] font-bold text-ink/55">Live delay 60 mins · featured + public results</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </>
                   )}
                 </div>
-              )}
-            </div>
-            <Button variant="primary" size="md" onClick={openNew}>
-              <Plus className="size-4" /> Create new competition
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
-      {view === "table" ? (
-        <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-          <CardContent className="p-0">
-            <ScrollArea className="w-full">
+                <DialogFooter className="border-t border-ink/10 px-6 py-4 flex-wrap">
+                  <Button variant="outline" onClick={prevStep} disabled={stepIdx === 0}>Back</Button>
+                  <div className="flex-1" />
+                  <Button variant="ghost" onClick={submitDraft}>Save as draft</Button>
+                  {stepIdx < STEP_LABELS.length - 1 ? (
+                    <Button variant="primary" onClick={nextStep}>Continue <ChevronRight className="size-4" /></Button>
+                  ) : (
+                    <Button variant="primary" onClick={submitDraft}>Create competition <Sparkles className="size-4" /></Button>
+                  )}
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      </header>
+
+      <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
+        <CardContent className="space-y-4 p-5 sm:p-6">
+          <div className="flex flex-wrap items-center gap-3 justify-between">
+            <Tabs value={tab} onValueChange={setTab} className="w-auto">
+              <TabsList className="rounded-full bg-cream p-1">
+                {[
+                  { v: "live", l: "Live" },
+                  { v: "scheduled", l: "Scheduled" },
+                  { v: "draft", l: "Draft" },
+                  { v: "completed", l: "Completed" },
+                  { v: "all", l: "All" },
+                ].map((t) => (
+                  <TabsTrigger
+                    key={t.v}
+                    value={t.v}
+                    className="rounded-full px-4 py-1.5 text-xs font-extrabold data-[state=active]:bg-paper data-[state=active]:text-ink data-[state=active]:shadow-sm data-[state=inactive]:text-ink/60"
+                  >
+                    {t.l}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink/40" />
+                <Input
+                  placeholder="Search…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="h-10 w-56 rounded-full border-0 bg-cream pl-9 pr-4 text-xs font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral"
+                />
+              </div>
+              <div className="flex items-center rounded-full bg-cream p-0.5 ring-1 ring-ink/10">
+                <Button variant="ghost" size="icon" className={cn("size-9 rounded-full", view === "grid" && "bg-paper text-ink shadow-sm")} onClick={() => setView("grid")}>
+                  <LayoutGrid className="size-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className={cn("size-9 rounded-full", view === "list" && "bg-paper text-ink shadow-sm")} onClick={() => setView("list")}>
+                  <List className="size-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {view === "grid" ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filtered.map((c) => {
+                const pct = Math.min(100, Math.round((c.entriesSold / c.totalEntries) * 100));
+                const full = pct >= 100;
+                return (
+                  <Card key={c.id} className="group rounded-[26px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none overflow-hidden">
+                    <div className="relative aspect-[16/10] overflow-hidden">
+                      <img src={c.image} alt={`${c.name} prize`} className="size-full object-cover transition-transform group-hover:scale-105" />
+                      <div className="absolute left-3 top-3 flex items-center gap-1.5">
+                        <Badge className={cn("rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider ring-0", statusTone[c.status])}>
+                          {c.status}
+                        </Badge>
+                        <Badge className="rounded-full bg-paper/90 px-2.5 py-1 text-[10px] font-extrabold text-ink ring-0 backdrop-blur">
+                          {c.category}
+                        </Badge>
+                      </div>
+                      <div className="absolute right-3 top-3">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8 rounded-full bg-paper/90 backdrop-blur text-ink">
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40 rounded-[22px] bg-paper p-1.5">
+                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink"><EyeIcon className="mr-2 size-4" />View</DropdownMenuItem>
+                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink"><Pencil className="mr-2 size-4" />Edit</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                    <CardContent className="p-5 space-y-3">
+                      <h3 className="font-display text-lg font-extrabold text-ink leading-tight line-clamp-2 min-h-[3.25rem]">{c.name}</h3>
+                      <div className="flex items-center justify-between text-[11px] font-extrabold">
+                        <span className="text-ink/60 flex items-center gap-1"><Clock className="size-3" />Draw {c.drawDate}</span>
+                        <span className="text-ink whitespace-nowrap">{formatNaira(c.ticketPrice)}</span>
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5 text-[11px] font-extrabold text-ink/60">
+                          <span>Entries</span>
+                          <span>{c.entriesSold.toLocaleString("en-NG")} / {c.totalEntries.toLocaleString("en-NG")} · {pct}%</span>
+                        </div>
+                        <Progress value={pct} className="h-2 rounded-full bg-cream [&>div]:bg-coral [&>div]:rounded-full" />
+                      </div>
+                      <div className="flex items-center gap-2 pt-2">
+                        <Button variant="outline" size="sm"><Pencil className="size-3.5" />Edit</Button>
+                        <Button variant="outline" size="sm"><Ticket className="size-3.5" />Manage entries</Button>
+                        {c.status === "LIVE" && full && (
+                          <Button variant="primary" size="sm"><PlayCircle className="size-3.5" />Draw now</Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="overflow-x-auto -mx-2 px-2">
               <Table>
-                <TableHeader className="bg-cream/60 [&_tr]:border-ink/10">
+                <TableHeader className="[&_tr]:border-ink/10">
                   <TableRow>
-                    {bulk && <TableHead className="w-10 px-4 py-3"></TableHead>}
-                    <TableHead className="px-4 py-3 font-extrabold text-ink/65">Competition</TableHead>
-                    <TableHead className="px-4 py-3 font-extrabold text-ink/65">Category</TableHead>
-                    <TableHead className="px-4 py-3 font-extrabold text-ink/65">Status</TableHead>
-                    <TableHead className="px-4 py-3 font-extrabold text-ink/65">Partner</TableHead>
-                    <TableHead className="px-4 py-3 font-extrabold text-ink/65">Tickets</TableHead>
-                    <TableHead className="px-4 py-3 font-extrabold text-ink/65">Progress</TableHead>
-                    <TableHead className="px-4 py-3 font-extrabold text-ink/65">Start → Close</TableHead>
-                    <TableHead className="px-4 py-3 font-extrabold text-ink/65">Flags</TableHead>
-                    <TableHead className="px-4 py-3 text-right font-extrabold text-ink/65"></TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Competition</TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Category</TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Partner</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">Entries %</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">Ticket</TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Status</TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Draw date</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-ink/10">
                   {filtered.map((c) => {
-                    const pct = c.ticketsCapacity ? Math.round((c.ticketsSold / c.ticketsCapacity * 100) : 0;
+                    const pct = Math.min(100, Math.round((c.entriesSold / c.totalEntries) * 100));
+                    const full = pct >= 100;
                     return (
-                      <TableRow key={c.id} className="cursor-pointer hover:bg-lilac/10" onClick={() => openEdit(c)}>
-                        {bulk && (
-                          <TableCell className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                            <Checkbox checked={selectedIds.includes(c.id)} onCheckedChange={() => toggleSel(c.id)} />
-                          </TableCell>
-                        )}
-                        <TableCell className="px-4 py-3">
+                      <TableRow key={c.id} className="hover:bg-lilac/10">
+                        <TableCell className="py-3">
                           <div className="flex items-center gap-3">
-                            <div className="size-12 shrink-0 overflow-hidden rounded-2xl bg-lilac/30 ring-1 ring-ink/5">
-                              <img src={c.image} alt={c.title} className="size-full object-cover" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-extrabold text-ink">{c.title}</p>
-                              <p className="truncate text-[11px] font-bold text-ink/50">{c.slug}</p>
+                            <img src={c.image} alt="" aria-hidden="true" className="size-11 rounded-2xl object-cover ring-2 ring-paper" />
+                            <div className="min-w-0 max-w-[260px]">
+                              <p className="truncate text-sm font-extrabold text-ink">{c.name}</p>
+                              <p className="truncate text-[11px] font-bold text-ink/50">{c.id}</p>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-sm font-extrabold text-ink">{c.category}</TableCell>
-                        <TableCell className="px-4 py-3">
-                          <Badge className={cn("rounded-full px-2.5 py-1 text-[11px] font-extrabold ring-0", STATUS_TINT[c.status])}>
+                        <TableCell className="py-3 text-xs font-bold text-ink/70">{c.category}</TableCell>
+                        <TableCell className="py-3 text-xs font-bold text-ink/70">{c.partner}</TableCell>
+                        <TableCell className="py-3">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="h-2 w-28 overflow-hidden rounded-full bg-cream">
+                              <div className="h-full bg-coral" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-[11px] font-extrabold text-ink/65 w-10 text-right">{pct}%</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 text-right text-xs font-extrabold text-ink whitespace-nowrap">{formatNaira(c.ticketPrice)}</TableCell>
+                        <TableCell className="py-3">
+                          <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0", statusTone[c.status])}>
                             {c.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <Avatar className={cn("size-7", partnerTintBg[c.partnerTint])}>
-                              <AvatarFallback className={cn("text-[10px] font-extrabold", partnerTintBg[c.partnerTint])}>
-                                {c.partnerInitials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs font-bold text-ink/70">{c.partner}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 whitespace-nowrap text-xs font-extrabold text-ink">
-                          <div>{formatNaira(c.ticketPrice)} · entry</div>
-                          <div className="text-[11px] font-bold text-ink/50">
-                            {c.ticketsSold.toLocaleString("en-NG")} / {c.ticketsCapacity.toLocaleString("en-NG")}
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 w-40">
-                          <Progress value={pct} className="h-2 bg-ink/10 [&>div]:bg-coral" />
-                          <span className="mt-1 block text-[11px] font-extrabold text-ink/55">{pct}% filled</span>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-xs font-bold text-ink/65">
-                          <div>{c.start}</div>
-                          <div className="text-[11px] text-ink/45">{c.close}</div>
-                        </TableCell>
-                        <TableCell className="px-4 py-3">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {c.featured && (
-                              <Badge className="rounded-full bg-lemon/40 px-2 py-0.5 text-[10px] font-extrabold text-ink ring-0">
-                                <Star className="mr-1 size-2.5" /> Featured
-                              </Badge>
-                            )}
-                            {c.rewardPool && (
-                              <Badge className="rounded-full bg-mint/30 px-2 py-0.5 text-[10px] font-extrabold text-ink ring-0">
-                                <Gift className="mr-1 size-2.5" /> Pool {c.rewardPct}%
-                              </Badge>
+                        <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">{c.drawDate}</TableCell>
+                        <TableCell className="py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="size-8 text-ink/70"><EyeIcon className="size-4" /></Button>
+                            <Button variant="ghost" size="icon" className="size-8 text-ink/70"><Pencil className="size-4" /></Button>
+                            {c.status === "LIVE" && full && (
+                              <Button variant="primary" size="sm"><PlayCircle className="size-3.5" />Draw</Button>
                             )}
                           </div>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="size-9">
-                                <MoreHorizontal className="size-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-60 rounded-[22px] bg-paper p-2">
-                              <DropdownMenuLabel className="rounded-xl bg-cream px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                                {c.title.slice(0, 24)}
-                              </DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold focus:bg-lilac/20" onClick={() => openEdit(c)}>
-                                <Trophy className="mr-2 size-4" /> Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold focus:bg-lemon/30"
-                                onClick={() => { toast.success("Competition duplicated", { description: `Draft copy of ${c.title} created` }); }}
-                              >
-                                <Copy className="mr-2 size-4" /> Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold focus:bg-sky/20"
-                                onClick={() => toast.success("Preview opened", { description: c.slug })}
-                              >
-                                <Eye className="mr-2 size-4" /> Preview
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuLabel className="rounded-xl bg-cream/50 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                                Lifecycle transitions
-                              </DropdownMenuLabel>
-                              {transitionsAllowed(c).length === 0 ? (
-                                <DropdownMenuItem disabled className="rounded-xl px-3 py-2 text-xs font-bold text-ink/40">
-                                  No further transitions
-                                </DropdownMenuItem>
-                              ) : (
-                                transitionsAllowed(c).map((next) => {
-                                  const danger = next === "ARCHIVED" || next === "CLOSED";
-                                  return (
-                                    <DropdownMenuItem
-                                      key={next}
-                                      className={cn(
-                                        "rounded-xl cursor-pointer px-3 py-2 text-xs font-bold",
-                                        danger ? "focus:bg-coral/15 focus:text-coral" : "focus:bg-mint/25",
-                                      )}
-                                      onClick={() => changeStatus(c, next)}
-                                    >
-                                      {next === "APPROVED" || next === "WINNER VERIFIED" ? (
-                                        <CheckCircle2 className="mr-2 size-4" />
-                                      ) : next === "CLOSED" || next === "ARCHIVED" ? (
-                                        <Archive className="mr-2 size-4" />
-                                      ) : next === "LIVE" || next === "SCHEDULED" ? (
-                                        <Sparkles className="mr-2 size-4" />
-                                      ) : (
-                                        <PauseCircle className="mr-2 size-4" />
-                                      )}
-                                      {next === "PENDING REVIEW" ? "Submit for review" : `Move to ${next}`}
-                                    </DropdownMenuItem>
-                                  );
-                                })
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );
                   })}
-                  {filtered.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={bulk ? 10 : 9} className="px-4 py-12 text-center text-sm font-extrabold text-ink/45">
-                        No competitions match these filters.
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((c) => {
-            const pct = c.ticketsCapacity ? Math.round((c.ticketsSold / c.ticketsCapacity) * 100) : 0;
-            return (
-              <Card
-                key={c.id}
-                onClick={() => openEdit(c)}
-                className="cursor-pointer rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none transition-transform hover:-translate-y-0.5"
-              >
-                <div className="aspect-[4/3] w-full overflow-hidden rounded-t-[28px] bg-lilac/30">
-                  <img src={c.image} alt={c.title} className="h-full w-full object-cover" />
-                </div>
-                <CardContent className="p-5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge className={cn("rounded-full px-2.5 py-1 text-[10px] font-extrabold ring-0", STATUS_TINT[c.status])}>
-                      {c.status}
-                    </Badge>
-                    <Badge className="rounded-full bg-lilac/30 px-2.5 py-1 text-[10px] font-extrabold text-ink ring-0">
-                      {c.category}
-                    </Badge>
-                    {c.featured && (
-                      <Badge className="rounded-full bg-lemon/40 px-2 py-0.5 text-[10px] font-extrabold text-ink ring-0">
-                        <Star className="mr-1 size-2.5" /> Featured
-                      </Badge>
-                    )}
-                  </div>
-                  <h3 className="mt-3 font-display text-xl font-extrabold leading-tight text-ink">{c.title}</h3>
-                  <div className="mt-2 flex items-center justify-between text-xs font-bold text-ink/55">
-                    <span>{formatNaira(c.ticketPrice)} entry</span>
-                    <span>{c.partner}</span>
-                  </div>
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between text-[11px] font-extrabold text-ink/55">
-                      <span>{c.ticketsSold.toLocaleString()} / {c.ticketsCapacity.toLocaleString()}</span>
-                      <span>{pct}%</span>
-                    </div>
-                    <Progress value={pct} className="mt-2 h-2 bg-ink/10 [&>div]:bg-coral" />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
-      <Sheet open={editorOpen} onOpenChange={(v) => !v && setEditorOpen(false)}>
-        <SheetContent side="right" className="w-full max-w-3xl overflow-y-auto rounded-l-[28px] bg-cream p-0 sm:max-w-3xl">
-          <div className="sticky top-0 z-10 flex flex-col gap-4 border-b border-ink/10 bg-cream/95 px-6 py-4 backdrop-blur">
-            <div className="flex items-center justify-between gap-3">
-              <SheetHeader className="!text-left !p-0">
-                <SheetTitle className="font-display text-2xl font-extrabold text-ink">
-                  {editing ? `Edit · ${editing.title}` : "Create new competition"}
-                </SheetTitle>
-                <p className="mt-1 text-xs font-bold text-ink/55">
-                  5 steps · all fields save to a draft until approved for publishing.
-                </p>
-              </SheetHeader>
-              <button
-                className="grid size-10 place-items-center rounded-full bg-paper text-ink/65 hover:bg-lilac/20 hover:text-ink"
-                onClick={() => setEditorOpen(false)}
-              >
-                <X className="size-4" />
-              </button>
             </div>
-            <Tabs value={step} onValueChange={(v) => setStep(v as typeof step)} className="w-full">
-              <TabsList className="flex h-auto w-full flex-wrap gap-1 rounded-2xl bg-paper p-1">
-                {(["basic", "prize", "campaign", "rules", "preview"] as const).map((s, i) => (
-                  <TabsTrigger
-                  key={s}
-                  value={s}
-                  className="flex-1 rounded-xl px-2.5 py-2 text-[11px] font-extrabold capitalize data-[state=active]:bg-ink data-[state=active]:text-cream data-[state=active]:shadow-none sm:text-xs"
-                >
-                  <span className="mr-1 text-ink/45 data-[state=active]:text-cream/65">{i + 1}.</span>
-                  {s === "basic" ? "Basic" : s}
-                </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-
-          <div className="px-6 py-6">
-            <Tabs value={step} onValueChange={(v) => setStep(v as typeof step)}>
-              <TabsContent value="basic" className="mt-0 space-y-5">
-                <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                  <CardContent className="space-y-4 p-5">
-                    <div>
-                      <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Title</Label>
-                      <Input defaultValue={editing?.title ?? ""} placeholder="2026 Mercedes-Benz C-Class" className="mt-2 min-h-12 rounded-2xl border-ink/10 bg-cream px-4 text-base font-extrabold text-ink shadow-none focus-visible:ring-coral" />
-                    </div>
-                    <div>
-                      <div className="mt-2 flex items-end justify-between gap-3">
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Slug</Label>
-                        <button type="button" className="text-[11px] font-extrabold text-coral">Auto-generate</button>
-                      </div>
-                      <Input defaultValue={editing?.slug ?? ""} placeholder="mercedes-benz-c-class-2026" className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Category</Label>
-                        <Select defaultValue={editing?.category ?? "Auto"}>
-                          <SelectTrigger className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 font-extrabold text-ink shadow-none focus-visible:ring-coral">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-[22px] bg-paper p-1">
-                            {["Auto", "Tech", "Property", "Home", "Experience"].map((c) => (
-                              <SelectItem key={c} value={c} className="rounded-xl font-bold">{c}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Partner</Label>
-                        <Select defaultValue={editing?.partner ?? partners[1]}>
-                          <SelectTrigger className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 font-extrabold text-ink shadow-none focus-visible:ring-coral">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-[22px] bg-paper p-1">
-                            {partners.slice(1).map((p) => (
-                              <SelectItem key={p} value={p} className="rounded-xl font-bold">{p}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Short description</Label>
-                      <Textarea rows={2} defaultValue="A refined executive sedan." placeholder="One line that shows up on cards." className="mt-2 rounded-2xl border-ink/10 bg-cream p-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Full description</Label>
-                      <Textarea rows={5} defaultValue={editing ? "Premium cabin, intelligent assistance, and the presence to make every arrival count." : ""} placeholder="Full marketing copy for the competition detail page." className="mt-2 rounded-2xl border-ink/10 bg-cream p-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <Label className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3 text-sm font-extrabold text-ink ring-1 ring-ink/10">
-                        <span><Star className="mr-2 inline size-3.5 text-lemon" /> Featured on homepage</span>
-                        <Switch defaultChecked={editing?.featured ?? false} />
-                      </Label>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Tags</Label>
-                        <Input defaultValue="sedan,luxury,2026,auto" placeholder="comma separated" className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="prize" className="mt-0 space-y-5">
-                <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                  <CardContent className="space-y-4 p-5">
-                    <div>
-                      <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Prize name</Label>
-                      <Input defaultValue="2026 Mercedes-Benz C-Class" className="mt-2 min-h-12 rounded-2xl border-ink/10 bg-cream px-4 text-base font-extrabold text-ink shadow-none focus-visible:ring-coral" />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Prize value (₦)</Label>
-                      <Input type="number" defaultValue="12000000" className="mt-2 min-h-12 rounded-2xl border-ink/10 bg-cream px-4 text-base font-extrabold text-ink shadow-none focus-visible:ring-coral" />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Prize images</Label>
-                      <div className="mt-2 grid grid-cols-4 gap-2">
-                        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-ink/20 bg-cream text-xs font-extrabold text-ink/55 hover:border-coral hover:text-coral">
-                          <Upload className="size-5" />
-                          Drop images
-                        </label>
-                        {[mercedesImage, apartmentImage, techBundleImage].map((src, i) => (
-                          <div key={i} className="group relative aspect-square overflow-hidden rounded-2xl ring-1 ring-ink/10">
-                            <img src={src} alt="prize" className="h-full w-full object-cover" />
-                            <button className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-ink/70 text-cream opacity-0 transition-opacity group-hover:opacity-100">
-                              <X className="size-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Specifications</Label>
-                      <div className="mt-2 space-y-2">
-                        {[
-                          ["2026 model year",
-                          "Premium interior leather",
-                          "Automatic transmission",
-                          "Executive sedan 4-door",
-                        ].map((s, i) => (
-                          <div key={i} className="flex items-center gap-2 rounded-2xl bg-cream px-3 py-2 ring-1 ring-ink/10">
-                            <span className="w-6 shrink-0 text-[11px] font-extrabold text-ink/45">#{i + 1}</span>
-                            <Input defaultValue={s} className="min-h-9 rounded-xl bg-transparent px-0 font-bold text-ink shadow-none focus-visible:ring-0" />
-                            <button className="text-coral"><X className="size-3.5" /></button>
-                          </div>
-                        ))}
-                        <button className="mt-1 text-xs font-extrabold text-coral">+ Add specification row</button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Condition notes</Label>
-                      <Textarea rows={3} defaultValue="Brand new, manufacturer warranty included. Delivery within Lagos + nationwide shipping available." className="mt-2 rounded-2xl border-ink/10 bg-cream p-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="campaign" className="mt-0 space-y-5">
-                <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                  <CardContent className="space-y-4 p-5">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Ticket price (₦)</Label>
-                        <Input type="number" defaultValue={editing?.ticketPrice ?? 10000} className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 text-sm font-extrabold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Ticket quantity (capacity)</Label>
-                        <Input type="number" defaultValue={editing?.ticketsCapacity ?? 5000} className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 text-sm font-extrabold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Start date · time</Label>
-                        <Input type="datetime-local" defaultValue="2026-02-12T10:00" className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 text-sm font-extrabold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Close date · time</Label>
-                        <Input type="datetime-local" defaultValue="2026-03-18T23:59" className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 text-sm font-extrabold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Max entries per user</Label>
-                        <Input type="number" defaultValue={0} className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 text-sm font-extrabold text-ink shadow-none focus-visible:ring-coral" />
-                        <p className="mt-1 text-[11px] font-bold text-ink/45">0 = unlimited</p>
-                      </div>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Order of entries</Label>
-                        <Select defaultValue="consecutive">
-                          <SelectTrigger className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 font-extrabold text-ink shadow-none focus-visible:ring-coral"><SelectValue /></SelectTrigger>
-                          <SelectContent className="rounded-[22px] bg-paper p-1">
-                            <SelectItem value="consecutive" className="rounded-xl font-bold">Consecutive (1,2,3…)</SelectItem>
-                            <SelectItem value="random" className="rounded-xl font-bold">Raffle-style random</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Draw date · time</Label>
-                        <Input type="datetime-local" defaultValue="2026-03-19T20:00" className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 text-sm font-extrabold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Draw location</Label>
-                        <Input defaultValue="Virtual · Lagos HQ · Live stream" className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                    </div>
-                    <div className="rounded-2xl bg-cream p-4 ring-1 ring-ink/10">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-extrabold text-ink">
-                            <Gift className="mr-1.5 inline size-4 text-mint" />
-                            Reward pool contribution
-                          </p>
-                          <p className="text-[11px] font-bold text-ink/55">Diverts a percentage of every entry into a platform-wide reward pool.</p>
-                        </div>
-                        <Switch defaultChecked={editing?.rewardPool ?? true} />
-                      </div>
-                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div>
-                          <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">% contribution</Label>
-                          <Input type="number" defaultValue={editing?.rewardPct ?? 5} className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-paper px-4 text-sm font-extrabold text-ink shadow-none focus-visible:ring-coral" />
-                        </div>
-                        <div>
-                          <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Estimated pool (projected)</Label>
-                          <div className="mt-2 flex min-h-11 items-center rounded-2xl bg-paper px-4 text-sm font-extrabold text-ink ring-1 ring-ink/10">
-                            {formatNaira(editing?.poolContribution ?? 2500000)}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="rules" className="mt-0 space-y-5">
-                <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                  <CardContent className="space-y-4 p-5">
-                    <div className="flex items-start gap-3 rounded-2xl bg-coral/12 px-4 py-3 text-xs font-extrabold text-coral ring-1 ring-coral/20">
-                      <AlertCircle className="mt-0.5 size-4 shrink-0" />
-                      These fields appear on the public competition page and in the downloadable rules PDF.
-                    </div>
-                    <div>
-                      <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Competition rules (long text)</Label>
-                      <Textarea rows={6} defaultValue="Eligibility is 18+. One ticket = one entry. Draw conducted by verified random seed." className="mt-2 rounded-2xl border-ink/10 bg-cream p-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Eligibility notes</Label>
-                        <Textarea rows={3} defaultValue="Residents of Nigeria, 18+. Staff of Rafilla and partners are excluded." className="mt-2 rounded-2xl border-ink/10 bg-cream p-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Claim instructions</Label>
-                        <Textarea rows={3} defaultValue="Winner contacted within 48h. Claim window 14 days. Valid ID + affidavit required." className="mt-2 rounded-2xl border-ink/10 bg-cream p-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Delivery / Collection info</Label>
-                        <Textarea rows={3} defaultValue="Lagos doorstep delivery included. Nationwide: winner covers insured shipping (max 2 weeks)." className="mt-2 rounded-2xl border-ink/10 bg-cream p-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <Label className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3 text-sm font-extrabold text-ink ring-1 ring-ink/10">
-                        <span>Partner public visibility</span>
-                        <Switch defaultChecked />
-                      </Label>
-                      <div>
-                        <Label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/55">Partner display name override</Label>
-                        <Input placeholder="Leave empty to use legal name" className="mt-2 min-h-11 rounded-2xl border-ink/10 bg-cream px-4 text-sm font-bold text-ink shadow-none focus-visible:ring-coral" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="preview" className="mt-0 space-y-5">
-                <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-                  <div className="overflow-hidden rounded-[28px] bg-lilac/30 p-3 ring-1 ring-ink/5">
-                    <img src={editing?.image ?? mercedesImage} alt="preview" className="aspect-[4/3] w-full rounded-[22px] object-cover" />
-                  </div>
-                  <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5">
-                    <div className="flex items-center justify-between gap-3">
-                      <Badge className="rounded-full bg-coral/15 px-3 py-1 text-[11px] font-extrabold text-coral ring-0">
-                        {editing?.category ?? "Auto"}
-                      </Badge>
-                      <Badge className={cn("rounded-full px-3 py-1 text-[11px] font-extrabold ring-0", STATUS_TINT[editing?.status ?? "DRAFT"])}>
-                        {editing?.status ?? "DRAFT"}
-                      </Badge>
-                    </div>
-                    <h2 className="mt-4 font-display text-3xl font-extrabold leading-tight text-ink">
-                      {editing?.title ?? "2026 Mercedes-Benz C-Class"}
-                    </h2>
-                    <p className="mt-2 text-sm font-bold leading-relaxed text-ink/60">
-                      A refined executive sedan with a premium cabin, intelligent assistance, and the presence to make every arrival count.
-                    </p>
-                    <div className="mt-6 grid grid-cols-2 gap-4 border-y border-ink/10 py-5">
-                      <div>
-                        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Entry price</p>
-                        <p className="mt-1 font-display text-2xl font-extrabold text-ink">{formatNaira(editing?.ticketPrice ?? 10000)}</p>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Prize value</p>
-                        <p className="mt-1 font-display text-2xl font-extrabold text-ink">₦12,000,000</p>
-                      </div>
-                    </div>
-                    <div className="mt-5 space-y-1.5">
-                      <div className="flex items-center justify-between text-[11px] font-extrabold text-ink/55">
-                        <span>Tickets sold</span><span>84%</span>
-                      </div>
-                      <Progress value={84} className="h-3 bg-ink/10 [&>div]:bg-coral" />
-                    </div>
-                    <div className="mt-5 flex items-center gap-3 rounded-2xl bg-cream p-4 text-sm">
-                      <CalendarDays className="size-5 text-coral" />
-                      <div>
-                        <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Competition closes</p>
-                        <p className="font-extrabold text-ink">{editing?.close ?? "18 Mar · 23:59"}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <Card className="rounded-[22px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-                  <CardContent className="p-5">
-                    <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">Meta preview</p>
-                    <dl className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                      {[
-                        ["Slug", editing?.slug ?? "mercedes-benz-c-class-2026"],
-                        ["Partner", editing?.partner ?? "Lux Wheels Ltd"],
-                        ["Draw", "2026-03-19 20:00 WAT · Virtual Lagos HQ"],
-                        ["Reward pool", editing?.rewardPool ? `Enabled · ${editing.rewardPct}%` : "Disabled"],
-                        ["Featured", editing?.featured ? "Yes" : "No"],
-                        ["Entries/user", editing?.ticketsSold ? `${editing.ticketsSold.toLocaleString()} sold of ${editing.ticketsCapacity.toLocaleString()}` : "Unlimited"],
-                      ].map(([k, v]) => (
-                        <div key={k} className="rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/10">
-                          <dt className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">{k}</dt>
-                          <dd className="mt-1 font-bold text-ink">{v}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-
-            <div className="mt-8 flex flex-col-reverse items-stretch justify-between gap-3 border-t border-ink/10 pt-5 sm:flex-row sm:items-center">
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="md" onClick={() => toast.success("Draft saved", { description: "Autosave also runs on every change." })}>
-                  Save draft
-                </Button>
-                <Button variant="outline" size="md" onClick={() => toast.success("Preview opened")}>
-                  <Eye className="size-4" /> Preview
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="md" onClick={() => toast.success("Submitted for review", { description: "Reviewers notified · status → PENDING REVIEW" })}>
-                  Submit for review
-                </Button>
-                <Button variant="primary" size="md" onClick={() => toast.success("Approved & scheduled", { description: "Campaign approved · audit log written." })}>
-                  <CheckCircle2 className="size-4" /> Approve & publish
-                </Button>
-              </div>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          )}
+        </CardContent>
+      </Card>
     </AdminShell>
   );
 }

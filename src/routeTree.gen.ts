@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BecomeAPartnerRouteImport } from './routes/become-a-partner'
@@ -22,21 +23,46 @@ import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as RobotsRouteImport } from './routes/robots'
 import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
 import { Route as WinnersRouteImport } from './routes/winners'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAuditLogsRouteImport } from './routes/admin.audit-logs'
+import { Route as AdminCompetitionsRouteImport } from './routes/admin.competitions'
+import { Route as AdminConfigRouteImport } from './routes/admin.config'
+import { Route as AdminCrmRouteImport } from './routes/admin.crm'
+import { Route as AdminFraudRouteImport } from './routes/admin.fraud'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
+import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
+import { Route as AdminPayoutsRouteImport } from './routes/admin.payouts'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as CompetitionsSlugRouteImport } from './routes/competitions.$slug'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardCompetitionsRouteImport } from './routes/dashboard.competitions'
 import { Route as DashboardEntriesRouteImport } from './routes/dashboard.entries'
 import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
 import { Route as DashboardReferralsRouteImport } from './routes/dashboard.referrals'
+import { Route as DashboardRewardPoolRouteImport } from './routes/dashboard.reward-pool'
 import { Route as DashboardSecurityRouteImport } from './routes/dashboard.security'
 import { Route as DashboardTransactionsRouteImport } from './routes/dashboard.transactions'
 import { Route as DashboardWalletRouteImport } from './routes/dashboard.wallet'
 import { Route as DrawVerificationCampaignRouteImport } from './routes/draw-verification.$campaign'
+import { Route as DrawVerificationSlugRouteImport } from './routes/draw-verification.$slug'
+import { Route as PartnerIndexRouteImport } from './routes/partner.index'
+import { Route as PartnerAnalyticsRouteImport } from './routes/partner.analytics'
+import { Route as PartnerListingsRouteImport } from './routes/partner.listings'
+import { Route as PartnerProfileRouteImport } from './routes/partner.profile'
+import { Route as PartnerSettlementsRouteImport } from './routes/partner.settlements'
+import { Route as PartnerSubmitRouteImport } from './routes/partner.submit'
 import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as DashboardReferralsPayoutRouteImport } from './routes/dashboard.referrals.payout'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -99,6 +125,61 @@ const WinnersRoute = WinnersRouteImport.update({
   path: '/winners',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAuditLogsRoute = AdminAuditLogsRouteImport.update({
+  id: '/admin/audit-logs',
+  path: '/admin/audit-logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCompetitionsRoute = AdminCompetitionsRouteImport.update({
+  id: '/admin/competitions',
+  path: '/admin/competitions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminConfigRoute = AdminConfigRouteImport.update({
+  id: '/admin/config',
+  path: '/admin/config',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminCrmRoute = AdminCrmRouteImport.update({
+  id: '/admin/crm',
+  path: '/admin/crm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFraudRoute = AdminFraudRouteImport.update({
+  id: '/admin/fraud',
+  path: '/admin/fraud',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/admin/notifications',
+  path: '/admin/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPartnersRoute = AdminPartnersRouteImport.update({
+  id: '/admin/partners',
+  path: '/admin/partners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPayoutsRoute = AdminPayoutsRouteImport.update({
+  id: '/admin/payouts',
+  path: '/admin/payouts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/admin/reports',
+  path: '/admin/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompetitionsSlugRoute = CompetitionsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -107,6 +188,11 @@ const CompetitionsSlugRoute = CompetitionsSlugRouteImport.update({
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardCompetitionsRoute = DashboardCompetitionsRouteImport.update({
+  id: '/dashboard/competitions',
+  path: '/dashboard/competitions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardEntriesRoute = DashboardEntriesRouteImport.update({
@@ -122,6 +208,11 @@ const DashboardProfileRoute = DashboardProfileRouteImport.update({
 const DashboardReferralsRoute = DashboardReferralsRouteImport.update({
   id: '/dashboard/referrals',
   path: '/dashboard/referrals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRewardPoolRoute = DashboardRewardPoolRouteImport.update({
+  id: '/dashboard/reward-pool',
+  path: '/dashboard/reward-pool',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardSecurityRoute = DashboardSecurityRouteImport.update({
@@ -145,6 +236,41 @@ const DrawVerificationCampaignRoute =
     path: '/draw-verification/$campaign',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DrawVerificationSlugRoute = DrawVerificationSlugRouteImport.update({
+  id: '/draw-verification/$slug',
+  path: '/draw-verification/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerIndexRoute = PartnerIndexRouteImport.update({
+  id: '/partner/',
+  path: '/partner/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerAnalyticsRoute = PartnerAnalyticsRouteImport.update({
+  id: '/partner/analytics',
+  path: '/partner/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerListingsRoute = PartnerListingsRouteImport.update({
+  id: '/partner/listings',
+  path: '/partner/listings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerProfileRoute = PartnerProfileRouteImport.update({
+  id: '/partner/profile',
+  path: '/partner/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerSettlementsRoute = PartnerSettlementsRouteImport.update({
+  id: '/partner/settlements',
+  path: '/partner/settlements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerSubmitRoute = PartnerSubmitRouteImport.update({
+  id: '/partner/submit',
+  path: '/partner/submit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapXmlRoute = SitemapXmlRouteImport.update({
   id: '/sitemap/xml',
   path: '/sitemap/xml',
@@ -159,6 +285,7 @@ const DashboardReferralsPayoutRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/become-a-partner': typeof BecomeAPartnerRoute
@@ -171,20 +298,41 @@ export interface FileRoutesByFullPath {
   '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/winners': typeof WinnersRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
+  '/admin/competitions': typeof AdminCompetitionsRoute
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/crm': typeof AdminCrmRoute
+  '/admin/fraud': typeof AdminFraudRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/partners': typeof AdminPartnersRoute
+  '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/entries': typeof DashboardEntriesRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/referrals': typeof DashboardReferralsRouteWithChildren
+  '/dashboard/reward-pool': typeof DashboardRewardPoolRoute
   '/dashboard/security': typeof DashboardSecurityRoute
   '/dashboard/transactions': typeof DashboardTransactionsRoute
   '/dashboard/wallet': typeof DashboardWalletRoute
   '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
+  '/draw-verification/$slug': typeof DrawVerificationSlugRoute
+  '/partner/analytics': typeof PartnerAnalyticsRoute
+  '/partner/listings': typeof PartnerListingsRoute
+  '/partner/profile': typeof PartnerProfileRoute
+  '/partner/settlements': typeof PartnerSettlementsRoute
+  '/partner/submit': typeof PartnerSubmitRoute
   '/sitemap/xml': typeof SitemapXmlRoute
+  '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/partner/': typeof PartnerIndexRoute
   '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/become-a-partner': typeof BecomeAPartnerRoute
@@ -197,21 +345,42 @@ export interface FileRoutesByTo {
   '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/winners': typeof WinnersRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
+  '/admin/competitions': typeof AdminCompetitionsRoute
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/crm': typeof AdminCrmRoute
+  '/admin/fraud': typeof AdminFraudRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/partners': typeof AdminPartnersRoute
+  '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/entries': typeof DashboardEntriesRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/referrals': typeof DashboardReferralsRouteWithChildren
+  '/dashboard/reward-pool': typeof DashboardRewardPoolRoute
   '/dashboard/security': typeof DashboardSecurityRoute
   '/dashboard/transactions': typeof DashboardTransactionsRoute
   '/dashboard/wallet': typeof DashboardWalletRoute
   '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
+  '/draw-verification/$slug': typeof DrawVerificationSlugRoute
+  '/partner/analytics': typeof PartnerAnalyticsRoute
+  '/partner/listings': typeof PartnerListingsRoute
+  '/partner/profile': typeof PartnerProfileRoute
+  '/partner/settlements': typeof PartnerSettlementsRoute
+  '/partner/submit': typeof PartnerSubmitRoute
   '/sitemap/xml': typeof SitemapXmlRoute
+  '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/partner': typeof PartnerIndexRoute
   '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/become-a-partner': typeof BecomeAPartnerRoute
@@ -224,22 +393,43 @@ export interface FileRoutesById {
   '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/winners': typeof WinnersRoute
+  '/admin/audit-logs': typeof AdminAuditLogsRoute
+  '/admin/competitions': typeof AdminCompetitionsRoute
+  '/admin/config': typeof AdminConfigRoute
+  '/admin/crm': typeof AdminCrmRoute
+  '/admin/fraud': typeof AdminFraudRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/partners': typeof AdminPartnersRoute
+  '/admin/payouts': typeof AdminPayoutsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/entries': typeof DashboardEntriesRoute
   '/dashboard/profile': typeof DashboardProfileRoute
   '/dashboard/referrals': typeof DashboardReferralsRouteWithChildren
+  '/dashboard/reward-pool': typeof DashboardRewardPoolRoute
   '/dashboard/security': typeof DashboardSecurityRoute
   '/dashboard/transactions': typeof DashboardTransactionsRoute
   '/dashboard/wallet': typeof DashboardWalletRoute
   '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
+  '/draw-verification/$slug': typeof DrawVerificationSlugRoute
+  '/partner/analytics': typeof PartnerAnalyticsRoute
+  '/partner/listings': typeof PartnerListingsRoute
+  '/partner/profile': typeof PartnerProfileRoute
+  '/partner/settlements': typeof PartnerSettlementsRoute
+  '/partner/submit': typeof PartnerSubmitRoute
   '/sitemap/xml': typeof SitemapXmlRoute
+  '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/partner/': typeof PartnerIndexRoute
   '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$'
     | '/about'
     | '/auth'
     | '/become-a-partner'
@@ -252,20 +442,41 @@ export interface FileRouteTypes {
     | '/robots'
     | '/terms-and-conditions'
     | '/winners'
+    | '/admin/audit-logs'
+    | '/admin/competitions'
+    | '/admin/config'
+    | '/admin/crm'
+    | '/admin/fraud'
+    | '/admin/notifications'
+    | '/admin/partners'
+    | '/admin/payouts'
+    | '/admin/reports'
+    | '/admin/users'
     | '/competitions/$slug'
+    | '/dashboard/competitions'
     | '/dashboard/entries'
     | '/dashboard/profile'
     | '/dashboard/referrals'
+    | '/dashboard/reward-pool'
     | '/dashboard/security'
     | '/dashboard/transactions'
     | '/dashboard/wallet'
     | '/draw-verification/$campaign'
+    | '/draw-verification/$slug'
+    | '/partner/analytics'
+    | '/partner/listings'
+    | '/partner/profile'
+    | '/partner/settlements'
+    | '/partner/submit'
     | '/sitemap/xml'
+    | '/admin/'
     | '/dashboard/'
+    | '/partner/'
     | '/dashboard/referrals/payout'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$'
     | '/about'
     | '/auth'
     | '/become-a-partner'
@@ -278,20 +489,41 @@ export interface FileRouteTypes {
     | '/robots'
     | '/terms-and-conditions'
     | '/winners'
+    | '/admin/audit-logs'
+    | '/admin/competitions'
+    | '/admin/config'
+    | '/admin/crm'
+    | '/admin/fraud'
+    | '/admin/notifications'
+    | '/admin/partners'
+    | '/admin/payouts'
+    | '/admin/reports'
+    | '/admin/users'
     | '/competitions/$slug'
+    | '/dashboard/competitions'
     | '/dashboard/entries'
     | '/dashboard/profile'
     | '/dashboard/referrals'
+    | '/dashboard/reward-pool'
     | '/dashboard/security'
     | '/dashboard/transactions'
     | '/dashboard/wallet'
     | '/draw-verification/$campaign'
+    | '/draw-verification/$slug'
+    | '/partner/analytics'
+    | '/partner/listings'
+    | '/partner/profile'
+    | '/partner/settlements'
+    | '/partner/submit'
     | '/sitemap/xml'
+    | '/admin'
     | '/dashboard'
+    | '/partner'
     | '/dashboard/referrals/payout'
   id:
     | '__root__'
     | '/'
+    | '/$'
     | '/about'
     | '/auth'
     | '/become-a-partner'
@@ -304,21 +536,42 @@ export interface FileRouteTypes {
     | '/robots'
     | '/terms-and-conditions'
     | '/winners'
+    | '/admin/audit-logs'
+    | '/admin/competitions'
+    | '/admin/config'
+    | '/admin/crm'
+    | '/admin/fraud'
+    | '/admin/notifications'
+    | '/admin/partners'
+    | '/admin/payouts'
+    | '/admin/reports'
+    | '/admin/users'
     | '/competitions/$slug'
+    | '/dashboard/competitions'
     | '/dashboard/entries'
     | '/dashboard/profile'
     | '/dashboard/referrals'
+    | '/dashboard/reward-pool'
     | '/dashboard/security'
     | '/dashboard/transactions'
     | '/dashboard/wallet'
     | '/draw-verification/$campaign'
+    | '/draw-verification/$slug'
+    | '/partner/analytics'
+    | '/partner/listings'
+    | '/partner/profile'
+    | '/partner/settlements'
+    | '/partner/submit'
     | '/sitemap/xml'
+    | '/admin/'
     | '/dashboard/'
+    | '/partner/'
     | '/dashboard/referrals/payout'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   BecomeAPartnerRoute: typeof BecomeAPartnerRoute
@@ -331,15 +584,35 @@ export interface RootRouteChildren {
   RobotsRoute: typeof RobotsRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
   WinnersRoute: typeof WinnersRoute
+  AdminAuditLogsRoute: typeof AdminAuditLogsRoute
+  AdminCompetitionsRoute: typeof AdminCompetitionsRoute
+  AdminConfigRoute: typeof AdminConfigRoute
+  AdminCrmRoute: typeof AdminCrmRoute
+  AdminFraudRoute: typeof AdminFraudRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminPartnersRoute: typeof AdminPartnersRoute
+  AdminPayoutsRoute: typeof AdminPayoutsRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  DashboardCompetitionsRoute: typeof DashboardCompetitionsRoute
   DashboardEntriesRoute: typeof DashboardEntriesRoute
   DashboardProfileRoute: typeof DashboardProfileRoute
   DashboardReferralsRoute: typeof DashboardReferralsRouteWithChildren
+  DashboardRewardPoolRoute: typeof DashboardRewardPoolRoute
   DashboardSecurityRoute: typeof DashboardSecurityRoute
   DashboardTransactionsRoute: typeof DashboardTransactionsRoute
   DashboardWalletRoute: typeof DashboardWalletRoute
   DrawVerificationCampaignRoute: typeof DrawVerificationCampaignRoute
+  DrawVerificationSlugRoute: typeof DrawVerificationSlugRoute
+  PartnerAnalyticsRoute: typeof PartnerAnalyticsRoute
+  PartnerListingsRoute: typeof PartnerListingsRoute
+  PartnerProfileRoute: typeof PartnerProfileRoute
+  PartnerSettlementsRoute: typeof PartnerSettlementsRoute
+  PartnerSubmitRoute: typeof PartnerSubmitRoute
   SitemapXmlRoute: typeof SitemapXmlRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  PartnerIndexRoute: typeof PartnerIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -349,6 +622,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -435,6 +715,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WinnersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/audit-logs': {
+      id: '/admin/audit-logs'
+      path: '/admin/audit-logs'
+      fullPath: '/admin/audit-logs'
+      preLoaderRoute: typeof AdminAuditLogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/competitions': {
+      id: '/admin/competitions'
+      path: '/admin/competitions'
+      fullPath: '/admin/competitions'
+      preLoaderRoute: typeof AdminCompetitionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/config': {
+      id: '/admin/config'
+      path: '/admin/config'
+      fullPath: '/admin/config'
+      preLoaderRoute: typeof AdminConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/crm': {
+      id: '/admin/crm'
+      path: '/admin/crm'
+      fullPath: '/admin/crm'
+      preLoaderRoute: typeof AdminCrmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/fraud': {
+      id: '/admin/fraud'
+      path: '/admin/fraud'
+      fullPath: '/admin/fraud'
+      preLoaderRoute: typeof AdminFraudRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/admin/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/partners': {
+      id: '/admin/partners'
+      path: '/admin/partners'
+      fullPath: '/admin/partners'
+      preLoaderRoute: typeof AdminPartnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/payouts': {
+      id: '/admin/payouts'
+      path: '/admin/payouts'
+      fullPath: '/admin/payouts'
+      preLoaderRoute: typeof AdminPayoutsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/admin/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/competitions/$slug': {
       id: '/competitions/$slug'
       path: '/$slug'
@@ -447,6 +804,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/competitions': {
+      id: '/dashboard/competitions'
+      path: '/dashboard/competitions'
+      fullPath: '/dashboard/competitions'
+      preLoaderRoute: typeof DashboardCompetitionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/entries': {
@@ -468,6 +832,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/referrals'
       fullPath: '/dashboard/referrals'
       preLoaderRoute: typeof DashboardReferralsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/reward-pool': {
+      id: '/dashboard/reward-pool'
+      path: '/dashboard/reward-pool'
+      fullPath: '/dashboard/reward-pool'
+      preLoaderRoute: typeof DashboardRewardPoolRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/security': {
@@ -496,6 +867,55 @@ declare module '@tanstack/react-router' {
       path: '/draw-verification/$campaign'
       fullPath: '/draw-verification/$campaign'
       preLoaderRoute: typeof DrawVerificationCampaignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/draw-verification/$slug': {
+      id: '/draw-verification/$slug'
+      path: '/draw-verification/$slug'
+      fullPath: '/draw-verification/$slug'
+      preLoaderRoute: typeof DrawVerificationSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partner/': {
+      id: '/partner/'
+      path: '/partner'
+      fullPath: '/partner/'
+      preLoaderRoute: typeof PartnerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partner/analytics': {
+      id: '/partner/analytics'
+      path: '/partner/analytics'
+      fullPath: '/partner/analytics'
+      preLoaderRoute: typeof PartnerAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partner/listings': {
+      id: '/partner/listings'
+      path: '/partner/listings'
+      fullPath: '/partner/listings'
+      preLoaderRoute: typeof PartnerListingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partner/profile': {
+      id: '/partner/profile'
+      path: '/partner/profile'
+      fullPath: '/partner/profile'
+      preLoaderRoute: typeof PartnerProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partner/settlements': {
+      id: '/partner/settlements'
+      path: '/partner/settlements'
+      fullPath: '/partner/settlements'
+      preLoaderRoute: typeof PartnerSettlementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partner/submit': {
+      id: '/partner/submit'
+      path: '/partner/submit'
+      fullPath: '/partner/submit'
+      preLoaderRoute: typeof PartnerSubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap/xml': {
@@ -540,6 +960,7 @@ const DashboardReferralsRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   BecomeAPartnerRoute: BecomeAPartnerRoute,
@@ -552,15 +973,35 @@ const rootRouteChildren: RootRouteChildren = {
   RobotsRoute: RobotsRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
   WinnersRoute: WinnersRoute,
+  AdminAuditLogsRoute: AdminAuditLogsRoute,
+  AdminCompetitionsRoute: AdminCompetitionsRoute,
+  AdminConfigRoute: AdminConfigRoute,
+  AdminCrmRoute: AdminCrmRoute,
+  AdminFraudRoute: AdminFraudRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminPartnersRoute: AdminPartnersRoute,
+  AdminPayoutsRoute: AdminPayoutsRoute,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  DashboardCompetitionsRoute: DashboardCompetitionsRoute,
   DashboardEntriesRoute: DashboardEntriesRoute,
   DashboardProfileRoute: DashboardProfileRoute,
   DashboardReferralsRoute: DashboardReferralsRouteWithChildren,
+  DashboardRewardPoolRoute: DashboardRewardPoolRoute,
   DashboardSecurityRoute: DashboardSecurityRoute,
   DashboardTransactionsRoute: DashboardTransactionsRoute,
   DashboardWalletRoute: DashboardWalletRoute,
   DrawVerificationCampaignRoute: DrawVerificationCampaignRoute,
+  DrawVerificationSlugRoute: DrawVerificationSlugRoute,
+  PartnerAnalyticsRoute: PartnerAnalyticsRoute,
+  PartnerListingsRoute: PartnerListingsRoute,
+  PartnerProfileRoute: PartnerProfileRoute,
+  PartnerSettlementsRoute: PartnerSettlementsRoute,
+  PartnerSubmitRoute: PartnerSubmitRoute,
   SitemapXmlRoute: SitemapXmlRoute,
+  AdminIndexRoute: AdminIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  PartnerIndexRoute: PartnerIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

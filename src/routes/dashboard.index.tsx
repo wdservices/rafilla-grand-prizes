@@ -1,24 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DashboardOverviewPage } from "@/components/rafilla/dashboard";
 
+const canonicalBase = "https://rafilla.com";
+const ogImageDefault = "https://rafilla.com/og-default.png";
+
 export const Route = createFileRoute("/dashboard/")({
-  head: () => ({
-    meta: [
-      { title: "Dashboard Overview — Rafilla" },
-      {
-        name: "description",
-        content:
-          "Your Rafilla dashboard — wallet, entries, referrals, and account overview at a glance.",
-      },
-      { property: "og:title", content: "Dashboard Overview — Rafilla" },
-      {
-        property: "og:description",
-        content:
-          "Your Rafilla dashboard — wallet, entries, referrals, and account overview at a glance.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () => {
+    const pathname = "/dashboard";
+    const canonical = `${canonicalBase}${pathname}`;
+    const title = "Dashboard — Rafilla";
+    const description =
+      "Private dashboard: wallet balance, competition entries, referrals progress, prize notifications and account overview. Noindex user area. rafilla.com";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { name: "robots", content: "noindex, nofollow" },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:url", content: canonical },
+        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:image", content: ogImageDefault },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:locale", content: "en_NG" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: ogImageDefault },
+        { name: "twitter:site", content: "@rafillang" },
+        { name: "twitter:creator", content: "@rafillang" },
+      ],
+      links: [
+        { rel: "canonical", href: canonical },
+        { rel: "alternate", hreflang: "en", href: canonical },
+      ],
+    };
+  },
   component: DashboardOverviewPage,
 });

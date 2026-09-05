@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { getPasswordStrength, passwordStrengthLabels } from "@/lib/password-strength";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -32,21 +33,12 @@ function GoogleIcon({ className }: { className?: string }) {
 
 type PasswordStrength = 0 | 1 | 2 | 3 | 4;
 
-function getPasswordStrength(password: string): PasswordStrength {
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-  return Math.min(4, score) as PasswordStrength;
-}
-
 const strengthLabels: Record<PasswordStrength, { label: string; color: string; dots: number }> = {
   0: { label: "", color: "bg-ink/10", dots: 0 },
-  1: { label: "Weak", color: "bg-coral", dots: 1 },
-  2: { label: "Medium", color: "bg-lemon", dots: 2 },
-  3: { label: "Strong", color: "bg-sky", dots: 3 },
-  4: { label: "Very strong", color: "bg-mint", dots: 4 },
+  1: passwordStrengthLabels[0],
+  2: passwordStrengthLabels[1],
+  3: passwordStrengthLabels[2],
+  4: passwordStrengthLabels[3],
 };
 
 function authInputBase(error?: string) {
@@ -133,7 +125,10 @@ export function RegisterForm() {
     terms?: string;
   }>({});
 
-  const strength = useMemo(() => (password ? getPasswordStrength(password) : 0), [password]);
+  const strength = useMemo(
+    () => (password ? ((Math.min(3, getPasswordStrength(password)) + 1) as PasswordStrength) : 0),
+    [password],
+  );
   const strengthInfo = strengthLabels[strength];
 
   function validate() {

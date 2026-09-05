@@ -1,27 +1,30 @@
 import {
   Users,
-  UserCheck,
-  Building2,
   Trophy,
   Ticket,
-  WalletCards,
+  DollarSign,
   Banknote,
   Gift,
-  AlertTriangle,
   TrendingUp,
-  TrendingDown,
   UserPlus,
-  CheckCircle2,
-  Sparkles,
-  DollarSign,
-  ShieldCheck,
+  Clock,
+  Eye,
+  PlayCircle,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AdminShell } from "@/components/rafilla/admin/shell";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { AdminShell } from "@/components/rafilla/admin/admin-shell";
 import { cn, formatNaira } from "@/lib/utils";
 
 interface KpiCardProps {
@@ -31,7 +34,7 @@ interface KpiCardProps {
   delta?: string;
   deltaPositive?: boolean;
   icon: React.ComponentType<{ className?: string }>;
-  tone: "ink" | "sky" | "mint" | "coral" | "lemon";
+  tone: "ink" | "sky" | "mint" | "coral" | "lemon" | "lilac";
 }
 
 const toneBg: Record<KpiCardProps["tone"], string> = {
@@ -40,6 +43,7 @@ const toneBg: Record<KpiCardProps["tone"], string> = {
   mint: "bg-mint/30",
   coral: "bg-coral/18",
   lemon: "bg-lemon/35",
+  lilac: "bg-lilac/30",
 };
 
 const toneIcon: Record<KpiCardProps["tone"], string> = {
@@ -48,6 +52,7 @@ const toneIcon: Record<KpiCardProps["tone"], string> = {
   mint: "text-ink",
   coral: "text-coral",
   lemon: "text-ink",
+  lilac: "text-ink",
 };
 
 function KpiCard({ label, value, sub, delta, deltaPositive, icon: Icon, tone }: KpiCardProps) {
@@ -56,7 +61,9 @@ function KpiCard({ label, value, sub, delta, deltaPositive, icon: Icon, tone }: 
       <CardContent className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">{label}</p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+              {label}
+            </p>
             <p className="mt-2 font-display text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
               {value}
             </p>
@@ -65,24 +72,15 @@ function KpiCard({ label, value, sub, delta, deltaPositive, icon: Icon, tone }: 
               <div
                 className={cn(
                   "mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-extrabold",
-                  deltaPositive ? "bg-mint/30 text-ink" : "bg-rose/20 text-ink",
+                  deltaPositive ? "bg-mint/30 text-ink" : "bg-coral/20 text-ink",
                 )}
               >
-                {deltaPositive ? (
-                  <TrendingUp className="size-3" />
-                ) : (
-                  <TrendingDown className="size-3" />
-                )}
+                {deltaPositive ? <TrendingUp className="size-3" /> : <TrendingUp className="size-3 rotate-180" />}
                 {delta}
               </div>
             )}
           </div>
-          <div
-            className={cn(
-              "grid size-12 shrink-0 place-items-center rounded-2xl sm:size-14",
-              toneBg[tone],
-            )}
-          >
+          <div className={cn("grid size-12 shrink-0 place-items-center rounded-2xl sm:size-14", toneBg[tone])}>
             <Icon className={cn("size-5 sm:size-6", toneIcon[tone])} />
           </div>
         </div>
@@ -91,307 +89,312 @@ function KpiCard({ label, value, sub, delta, deltaPositive, icon: Icon, tone }: 
   );
 }
 
-function LineChartMock({ accent = "coral", accent2 = "sky" }: { accent?: "coral" | "sky" | "mint"; accent2?: "coral" | "sky" | "mint" }) {
-  const w = 600;
-  const h = 260;
-  const pad = 30;
-  const data = [42, 48, 45, 58, 62, 55, 68, 72, 70, 82, 88, 85, 95, 102, 98, 110, 118, 122, 130, 125, 140, 148, 155, 162, 170, 165, 178, 185, 192, 200];
-  const data2 = [28, 32, 30, 38, 40, 36, 45, 48, 46, 55, 60, 57, 65, 70, 68, 75, 80, 82, 88, 85, 92, 98, 102, 108, 112, 110, 118, 122, 128, 135];
-  const maxY = Math.max(...data) * 1.1;
-  const step = (w - pad * 2) / (data.length - 1);
-  const toY = (v: number) => h - pad - (v / maxY) * (h - pad * 2);
-  const points1 = data.map((v, i) => `${pad + i * step},${toY(v)}`).join(" ");
-  const points2 = data2.map((v, i) => `${pad + i * step},${toY(v)}`).join(" ");
-  const fill1 = `${pad},${h - pad} ${points1} ${pad + (data.length - 1) * step},${h - pad}`;
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-[260px] w-full">
-      <defs>
-        <pattern id="grid" width="40" height="35" patternUnits="userSpaceOnUse">
-          <path d="M 40 0 L 0 0 0 35" fill="none" stroke="oklch(0.929 0.013 255.508)" strokeWidth="1" />
-        </pattern>
-      </defs>
-      <rect x={pad} y={pad} width={w - pad * 2} height={h - pad * 2} fill="url(#grid)" rx="12" />
-      <polygon points={fill1} fill={accent === "coral" ? "oklch(0.75 0.14 35 / 0.18)" : "oklch(0.76 0.12 255 / 0.18)"} />
-      <polyline points={points2} fill="none" stroke={accent2 === "coral" ? "oklch(0.75 0.14 35)" : accent2 === "mint" ? "oklch(0.87 0.12 165)" : "oklch(0.76 0.12 255)"} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-      <polyline points={points1} fill="none" stroke={accent === "coral" ? "oklch(0.75 0.14 35)" : accent === "mint" ? "oklch(0.87 0.12 165)" : "oklch(0.76 0.12 255)"} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-      {[0, 7, 14, 21, 29].map((i) => (
-        <g key={i}>
-          <circle cx={pad + i * step} cy={toY(data[i])} r="4" fill={accent === "coral" ? "oklch(0.75 0.14 35)" : "oklch(0.76 0.12 255)"} />
-        </g>
-      ))}
-      <text x={pad} y={h - 8} fontSize="10" fill="oklch(0.554 0.046 257.417)" fontWeight="700">Day 1</text>
-      <text x={w - pad} y={h - 8} fontSize="10" fill="oklch(0.554 0.046 257.417)" fontWeight="700" textAnchor="end">Today</text>
-    </svg>
-  );
-}
-
-function BarChartMock({ tone = "mint", bars = 30 }: { tone?: "mint" | "sky" | "coral" | "lemon"; bars?: number }) {
-  const w = 600;
-  const h = 260;
-  const pad = 30;
-  const values = Array.from({ length: bars }, (_, i) => 30 + Math.sin(i / 2.5) * 18 + Math.random() * 40 + (i / bars) * 25);
-  const maxY = Math.max(...values) * 1.15;
+function DualChartBars() {
+  const days = 14;
+  const w = 720;
+  const h = 240;
+  const pad = 28;
+  const tickets = [4200, 5100, 4800, 6200, 7100, 6800, 7500, 8200, 7900, 9100, 10200, 9800, 11500, 12400];
+  const revenueBase = [210, 255, 240, 310, 355, 340, 375, 410, 395, 455, 510, 490, 575, 620];
+  const maxT = Math.max(...tickets) * 1.15;
+  const maxR = Math.max(...revenueBase) * 1.15;
   const barArea = w - pad * 2;
-  const bw = (barArea / bars) * 0.65;
-  const gap = (barArea / bars) * 0.35;
-  const fill =
-    tone === "mint" ? "oklch(0.87 0.12 165)" :
-    tone === "sky" ? "oklch(0.76 0.12 255)" :
-    tone === "coral" ? "oklch(0.75 0.14 35)" :
-    "oklch(0.87 0.14 88)";
+  const bw = (barArea / days) * 0.38;
+  const gap = (barArea / days) * 0.62;
+  const toYT = (v: number) => h - pad - (v / maxT) * (h - pad * 2);
+  const toYR = (v: number) => h - pad - (v / maxR) * (h - pad * 2);
+  const labels = ["Mon 1", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Mon 8", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const coralOklch = "oklch(0.75 0.14 35)";
+  const skyOklch = "oklch(0.76 0.12 255)";
+  const gridOklch = "oklch(0.929 0.013 255.508)";
+  const labelOklch = "oklch(0.554 0.046 257.417)";
+
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-[260px] w-full">
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-[240px] w-full">
       <defs>
-        <pattern id="bgrid" width="40" height="35" patternUnits="userSpaceOnUse">
-          <path d="M 40 0 L 0 0 0 35" fill="none" stroke="oklch(0.929 0.013 255.508)" strokeWidth="1" />
+        <pattern id="agrid" width="60" height="32" patternUnits="userSpaceOnUse">
+          <path d={`M 60 0 L 0 0 0 32`} fill="none" stroke={gridOklch} strokeWidth="1" />
         </pattern>
       </defs>
-      <rect x={pad} y={pad} width={w - pad * 2} height={h - pad * 2} fill="url(#bgrid)" rx="12" />
-      {values.map((v, i) => {
+      <rect x={pad} y={pad} width={w - pad * 2} height={h - pad * 2} fill="url(#agrid)" rx="12" />
+      {tickets.map((v, i) => {
         const x = pad + i * (bw + gap) + gap / 2;
-        const bh = (v / maxY) * (h - pad * 2);
+        const bh = (v / maxT) * (h - pad * 2);
         const y = h - pad - bh;
-        return <rect key={i} x={x} y={y} width={bw} height={bh} rx={bw / 2 > 8 ? 8 : bw / 2} fill={fill} />;
+        return <rect key={`t${i}`} x={x} y={y} width={bw} height={bh} rx={bw / 2} fill={coralOklch} opacity="0.85" />;
       })}
-      <text x={pad} y={h - 8} fontSize="10" fill="oklch(0.554 0.046 257.417)" fontWeight="700">Day 1</text>
-      <text x={w - pad} y={h - 8} fontSize="10" fill="oklch(0.554 0.046 257.417)" fontWeight="700" textAnchor="end">Today</text>
+      {revenueBase.map((v, i) => {
+        const x = pad + i * (bw + gap) + gap / 2 + bw;
+        const bh = (v / maxR) * (h - pad * 2);
+        const y = h - pad - bh;
+        return <rect key={`r${i}`} x={x} y={y} width={bw} height={bh} rx={bw / 2} fill={skyOklch} opacity="0.75" />;
+      })}
+      {[0, 3, 6, 9, 13].map((i) => (
+        <text
+          key={i}
+          x={pad + i * (bw + gap) + gap / 2 + bw}
+          y={h - 8}
+          fontSize="9"
+          fill={labelOklch}
+          fontWeight="700"
+          textAnchor="middle"
+        >
+          {labels[i]}
+        </text>
+      ))}
+      <circle cx={pad + 13 * (bw + gap) + gap / 2 + bw / 2} cy={toYT(tickets[13]!)} r="3.5" fill={coralOklch} />
+      <circle cx={pad + 13 * (bw + gap) + gap / 2 + bw + bw / 2} cy={toYR(revenueBase[13]!)} r="3.5" fill={skyOklch} />
     </svg>
   );
 }
 
-function HBarChartMock() {
-  const items = [
-    { name: "Mercedes C-Class 2026", val: 4210, cap: 5000 },
-    { name: "Nova X1 Tech Bundle", val: 3890, cap: 10000 },
-    { name: "Lagos 2-Bed Apt", val: 2100, cap: 8000 },
-    { name: "Ikeja Home Studio", val: 1780, cap: 6000 },
-    { name: "Abuja Generator Pack", val: 1420, cap: 5000 },
-    { name: "PH Laptop Suite", val: 980, cap: 4000 },
-  ];
-  const max = 5000;
-  return (
-    <div className="space-y-4">
-      {items.map((it) => {
-        const pct = Math.round((it.val / max) * 100);
-        const pctCap = Math.round((it.val / it.cap) * 100);
-        return (
-          <div key={it.name}>
-            <div className="flex items-center justify-between gap-3">
-              <p className="truncate text-sm font-extrabold text-ink">{it.name}</p>
-              <div className="flex shrink-0 items-center gap-2 text-[11px] font-extrabold text-ink/55">
-                <span>{it.val.toLocaleString("en-NG")} sold</span>
-                <Badge className="rounded-full bg-coral/15 px-2 py-0.5 text-[10px] font-extrabold text-coral ring-0">
-                  {pctCap}% filled
-                </Badge>
-              </div>
-            </div>
-            <div className="mt-2 h-3 overflow-hidden rounded-full bg-cream">
-              <div
-                className="h-full rounded-full bg-coral"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-const ACTIVITY = [
-  { type: "register", label: "User registered", who: "Tunde O.", initials: "TO", tint: "sky", time: "2 min ago", detail: "Email + phone verified" },
-  { type: "publish", label: "Competition published", who: "Admin Aisha", initials: "AA", tint: "coral", time: "8 min ago", detail: "Mercedes C-Class 2026 • 5,000 entries" },
-  { type: "draw", label: "Draw completed", who: "Draw Engine", initials: "DE", tint: "mint", time: "17 min ago", detail: "Abuja Generator Pack • Verified" },
-  { type: "payout", label: "Payout paid", who: "Finance Bola", initials: "FB", tint: "lemon", time: "28 min ago", detail: "₦185,000 to Chidi K. • GTBank" },
-  { type: "partner", label: "Partner approved", who: "Admin Aisha", initials: "AA", tint: "lilac", time: "42 min ago", detail: "Lux Wheels Ltd • Auto category" },
-  { type: "wallet", label: "Wallet funded", who: "Amaka P.", initials: "AP", tint: "mint", time: "56 min ago", detail: "₦250,000 • Paystack successful" },
-  { type: "ticket", label: "Ticket entry purchased", who: "Tunde O.", initials: "TO", tint: "sky", time: "1 hr ago", detail: "25 entries • Nova X1 Bundle" },
-  { type: "verify", label: "Draw verification published", who: "Audit Uche", initials: "AU", tint: "ink", time: "1 hr ago", detail: "Ikeja Home Studio • Seed #7f3a…" },
-  { type: "suspend", label: "User account suspended", who: "Fraud Team", initials: "FT", tint: "rose", time: "2 hr ago", detail: "Velocity alert • 3 tickets under review" },
-  { type: "winner", label: "Winner claim approved", who: "Admin Aisha", initials: "AA", tint: "lemon", time: "3 hr ago", detail: "Ifeoma D. • ₦1.95M prize" },
+const REGISTRATIONS = [
+  { name: "Aisha Mohammed", email: "aisha.m@rafilla.ng", initials: "AM", tint: "coral" as const, date: "2h ago", verified: true },
+  { name: "Tunde Okafor", email: "tunde.o@mail.ng", initials: "TO", tint: "sky" as const, date: "3h ago", verified: true },
+  { name: "Chidi Kelechi", email: "chidi.k@outlook.com", initials: "CK", tint: "mint" as const, date: "4h ago", verified: false },
+  { name: "Amaka Peace", email: "amaka.p@gmail.com", initials: "AP", tint: "lemon" as const, date: "5h ago", verified: true },
+  { name: "Ifeoma Dike", email: "ifeoma.d@yahoo.com", initials: "ID", tint: "lilac" as const, date: "6h ago", verified: true },
+  { name: "Uche Nwankwo", email: "uche.n@hotmail.com", initials: "UN", tint: "sky" as const, date: "7h ago", verified: false },
+  { name: "Bola Tinubu", email: "bola.t@rafilla.ng", initials: "BT", tint: "coral" as const, date: "8h ago", verified: true },
+  { name: "Zainab Abubakar", email: "zainab.a@gmail.com", initials: "ZA", tint: "mint" as const, date: "9h ago", verified: true },
 ];
 
-const tintBgShort: Record<string, string> = {
+const tintBg: Record<string, string> = {
   sky: "bg-sky/30 text-ink",
   mint: "bg-mint/35 text-ink",
   coral: "bg-coral/20 text-coral",
   lemon: "bg-lemon/40 text-ink",
   lilac: "bg-lilac/35 text-ink",
   ink: "bg-ink/10 text-ink",
-  rose: "bg-rose/20 text-ink",
 };
 
-export function AdminOverviewPage() {
+const PAYOUTS_QUEUE = [
+  { user: "Amaka Peace", initials: "AP", tint: "lemon" as const, amount: 18500000 },
+  { user: "Chidi Kelechi", initials: "CK", tint: "sky" as const, amount: 21000000 },
+  { user: "Ifeoma Dike", initials: "ID", tint: "mint" as const, amount: 9500000 },
+  { user: "Tunde Okafor", initials: "TO", tint: "coral" as const, amount: 32000000 },
+  { user: "Zainab Abubakar", initials: "ZA", tint: "lilac" as const, amount: 15800000 },
+];
+
+type CompStatus = "DRAFT" | "SCHEDULED" | "LIVE" | "DRAWING" | "RESULTED" | "CLOSED" | "COMPLETED";
+
+const COMP_LIFECYCLE: Array<{ name: string; pct: number; status: CompStatus; action: string }> = [
+  { name: "Mercedes-Benz C-Class 2025", pct: 84, status: "LIVE", action: "Monitor entries" },
+  { name: "Nova X1 Tech Bundle", pct: 94, status: "DRAWING", action: "Start draw now" },
+  { name: "Luxury 2-Bed Apartment", pct: 0, status: "SCHEDULED", action: "Review asset" },
+  { name: "Ikeja Home Studio", pct: 97, status: "RESULTED", action: "Verify winner" },
+  { name: "Abuja Generator Pack", pct: 100, status: "COMPLETED", action: "Archive" },
+  { name: "PH Laptop Suite", pct: 100, status: "CLOSED", action: "Settle partner" },
+  { name: "Eko Weekend Giveaway", pct: 20, status: "DRAFT", action: "Publish schedule" },
+  { name: "Lekki Jewelry Set", pct: 0, status: "DRAFT", action: "Add asset" },
+];
+
+const statusTone: Record<CompStatus, string> = {
+  DRAFT: "bg-ink/10 text-ink",
+  SCHEDULED: "bg-sky/25 text-ink",
+  LIVE: "bg-mint/35 text-ink",
+  DRAWING: "bg-lemon/40 text-ink",
+  RESULTED: "bg-lilac/35 text-ink",
+  CLOSED: "bg-ink/15 text-ink",
+  COMPLETED: "bg-coral/20 text-coral",
+};
+
+export function AdminOverview() {
   return (
-    <AdminShell activeNav="overview">
-      <section className="rounded-[28px] bg-coral p-6 text-cream sm:p-8 lg:p-10">
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div className="max-w-2xl">
-            <h1 className="font-display text-4xl font-extrabold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
-              Platform Overview
-            </h1>
-            <p className="mt-3 max-w-xl text-base font-bold leading-relaxed text-cream/80 sm:text-lg">
-              A live snapshot of participants, campaigns, revenue, and payout activity across the
-              entire Rafilla platform.
-            </p>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-paper/15 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.12em] ring-1 ring-cream/25 backdrop-blur">
-            <span className="grid size-2 place-items-center">
-              <span className="size-2 animate-pulse rounded-full bg-cream" />
-            </span>
-            Live data from the last 30 days
-          </div>
-        </div>
+    <AdminShell activeNav="dashboard" title="Dashboard">
+      <header className="mb-6">
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">Admin · Overview</p>
+        <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          Dashboard
+        </h1>
+        <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
+          Key metrics and live snapshot of the Rafilla platform.
+        </p>
+      </header>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <KpiCard label="Total users" value="12,480" delta="+12% week" deltaPositive icon={Users} tone="ink" />
+        <KpiCard label="Active competitions" value="32" icon={Trophy} tone="sky" />
+        <KpiCard label="Tickets sold (7 days)" value="124,560" sub={formatNaira(6228000000)} delta="+8.4%" deltaPositive icon={Ticket} tone="lemon" />
+        <KpiCard label="Revenue (MTD)" value={formatNaira(41298000000)} delta="+18.2%" deltaPositive icon={DollarSign} tone="coral" />
+        <KpiCard label="Pending payouts" value="82" sub={formatNaira(2468000000)} icon={Banknote} tone="lilac" />
+        <KpiCard label="Referral pool (all-time)" value={formatNaira(5812000000)} icon={Gift} tone="mint" />
       </section>
 
-      <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Total Users" value="14,286" delta="+6.2% (30d)" deltaPositive icon={Users} tone="ink" />
-        <KpiCard label="Active Users (30d)" value="3,921" delta="+12.8% (30d)" deltaPositive icon={UserCheck} tone="sky" />
-        <KpiCard label="Partners" value="27" sub="Approved · 8 Pending" icon={Building2} tone="mint" />
-        <KpiCard label="Active Competitions" value="14" sub="2 Scheduled" icon={Trophy} tone="coral" />
-        <KpiCard label="Tickets Sold (30d)" value="84,520" delta="+18.4% (30d)" deltaPositive icon={Ticket} tone="lemon" />
-        <KpiCard label="Platform Revenue (30d)" value={formatNaira(42580000)} delta="+22.1% (30d)" deltaPositive icon={DollarSign} tone="ink" />
-        <KpiCard label="Wallet Funding (30d)" value={formatNaira(58127450)} icon={WalletCards} tone="mint" />
-        <KpiCard label="Referral Liability" value={formatNaira(4218640)} icon={Gift} tone="coral" />
-      </section>
-
-      <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
-        {[
-          { label: "Pending Payouts", value: "38 requests", sub: formatNaira(2847200), tone: "sky" as const, icon: Banknote },
-          { label: "Active Listings", value: "46", sub: "Across 5 categories", tone: "mint" as const, icon: Trophy },
-          { label: "Completed Competitions", value: "126", sub: "All draws verified", tone: "lemon" as const, icon: CheckCircle2 },
-          { label: "Recent Winners", value: "7 / 12", sub: "Drawn & approved", tone: "coral" as const, icon: Sparkles },
-          { label: "Fraud Alerts", value: "3 open", sub: "Under review", tone: "ink" as const, icon: AlertTriangle, alert: true },
-        ].map((s) => (
-          <Card key={s.label} className={cn("rounded-[22px] border-0 p-0 ring-1 shadow-none", s.alert ? "bg-rose/10 ring-rose/25" : "bg-paper ring-ink/5")}>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className={cn("grid size-10 place-items-center rounded-xl", s.alert ? "bg-rose/20" : toneBg[s.tone])}>
-                <s.icon className={cn("size-4.5", s.alert ? "text-ink" : toneIcon[s.tone])} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">{s.label}</p>
-                <p className="truncate font-display text-lg font-extrabold text-ink">{s.value}</p>
-                <p className="truncate text-[11px] font-bold text-ink/55">{s.sub}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
-
-      <section className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <section className="mt-6">
         <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
           <CardContent className="p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Revenue trend</p>
-                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">₦42.58M · 30 days</h3>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                  Daily performance · last 14 days
+                </p>
+                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">
+                  Tickets & revenue trend
+                </h3>
               </div>
-              <div className="flex items-center gap-3 text-[11px] font-extrabold">
+              <div className="flex items-center gap-4 text-[11px] font-extrabold">
                 <span className="inline-flex items-center gap-1.5 text-ink/65">
-                  <span className="size-2 rounded-full bg-coral" /> Revenue
+                  <span className="size-2.5 rounded-full bg-coral" /> Tickets sold
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-ink/65">
-                  <span className="size-2 rounded-full bg-sky" /> Wallet funding
+                  <span className="size-2.5 rounded-full bg-sky" /> Daily revenue
                 </span>
               </div>
             </div>
             <div className="mt-4 -mx-2">
-              <LineChartMock accent="coral" accent2="sky" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-          <CardContent className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Ticket sales</p>
-                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">84,520 · per day</h3>
-              </div>
-              <Badge className="rounded-full bg-mint/30 px-3 py-1 text-[10px] font-extrabold text-ink ring-0">
-                Mint bars · 30 days
-              </Badge>
-            </div>
-            <div className="mt-4 -mx-2">
-              <BarChartMock tone="mint" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-          <CardContent className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">User growth</p>
-                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">Registrations · per day</h3>
-              </div>
-              <Badge className="rounded-full bg-sky/25 px-3 py-1 text-[10px] font-extrabold text-ink ring-0">
-                Sky bars · 30 days
-              </Badge>
-            </div>
-            <div className="mt-4 -mx-2">
-              <BarChartMock tone="sky" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-          <CardContent className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Competition performance</p>
-                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">Top 6 campaigns</h3>
-              </div>
-              <Badge className="rounded-full bg-coral/15 px-3 py-1 text-[10px] font-extrabold text-coral ring-0">
-                Coral fill
-              </Badge>
-            </div>
-            <div className="mt-5">
-              <HBarChartMock />
+              <DualChartBars />
             </div>
           </CardContent>
         </Card>
       </section>
 
-      <section className="mt-8">
-        <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
+      <section className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none lg:col-span-2 xl:col-span-1">
           <CardContent className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Live feed</p>
-                <h3 className="mt-1 font-display text-2xl font-extrabold text-ink">Recent activity</h3>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                  Sign-ups
+                </p>
+                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">Recent registrations</h3>
               </div>
               <Button variant="outline" size="sm">
-                <ShieldCheck className="size-3.5" />
-                Open audit log
+                <UserPlus className="size-3.5" /> Invite
               </Button>
             </div>
+            <div className="mt-4 overflow-x-auto">
+              <Table>
+                <TableHeader className="[&_tr]:border-ink/10">
+                  <TableRow>
+                    <TableHead className="px-0 py-3 font-extrabold text-ink/65">User</TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Date</TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Verified</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="[&_tr]:border-ink/10">
+                  {REGISTRATIONS.map((r, i) => (
+                    <TableRow key={i} className="hover:bg-lilac/10">
+                      <TableCell className="px-0 py-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className={cn("size-9 ring-2 ring-paper", tintBg[r.tint])}>
+                            <AvatarFallback className={cn("text-xs font-extrabold", tintBg[r.tint])}>{r.initials}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-extrabold text-ink">{r.name}</p>
+                            <p className="truncate text-xs font-bold text-ink/55">{r.email}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1"><Clock className="size-3" />{r.date}</span>
+                      </TableCell>
+                      <TableCell className="py-3">
+                        {r.verified ? (
+                          <Badge className="rounded-full bg-mint/30 px-2 py-0.5 text-[10px] font-extrabold text-ink ring-0">Verified</Badge>
+                        ) : (
+                          <Badge className="rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-extrabold text-ink ring-0">Pending</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-3 text-right">
+                        <Button variant="outline" size="sm">
+                          <Eye className="size-3.5" /> Impersonate
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
 
-            <ol className="mt-6 space-y-4">
-              {ACTIVITY.map((a, idx) => (
-                <li key={idx} className="flex gap-4">
-                  <div className="relative flex flex-col items-center">
-                    <Avatar className={cn("size-10 ring-2 ring-paper", tintBgShort[a.tint])}>
-                      <AvatarFallback className={cn("text-xs font-extrabold", tintBgShort[a.tint])}>
-                        {a.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    {idx < ACTIVITY.length - 1 && (
-                      <span className="mt-1 w-px flex-1 bg-ink/10" />
-                    )}
+        <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
+          <CardContent className="p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                  Finance
+                </p>
+                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">Pending payouts</h3>
+              </div>
+              <Badge className="rounded-full bg-coral/15 px-2.5 py-1 text-[10px] font-extrabold text-coral ring-0">
+                82 items
+              </Badge>
+            </div>
+            <div className="mt-4 space-y-2.5">
+              {PAYOUTS_QUEUE.map((p, i) => (
+                <div key={i} className="flex items-center gap-3 rounded-2xl bg-cream/50 px-3 py-2.5">
+                  <Avatar className={cn("size-9 ring-2 ring-paper", tintBg[p.tint])}>
+                    <AvatarFallback className={cn("text-xs font-extrabold", tintBg[p.tint])}>{p.initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-extrabold text-ink">{p.user}</p>
+                    <p className="truncate text-[11px] font-bold text-ink/55">{formatNaira(p.amount)}</p>
                   </div>
-                  <div className="min-w-0 flex-1 pb-4">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <p className="text-sm font-extrabold text-ink">{a.label}</p>
-                      <span className="text-xs font-bold text-ink/40">·</span>
-                      <p className="text-xs font-bold text-ink/55">{a.who}</p>
-                      <span className="ml-auto text-[11px] font-extrabold text-ink/45">{a.time}</span>
-                    </div>
-                    <p className="mt-1 text-sm font-bold text-ink/65">{a.detail}</p>
-                  </div>
-                </li>
+                  <Badge className="rounded-full bg-lemon/40 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-ink ring-0">
+                    Pending
+                  </Badge>
+                  <Button variant="primary" size="sm">
+                    <PlayCircle className="size-3.5" /> Process
+                  </Button>
+                </div>
               ))}
-            </ol>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
+          <CardContent className="p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                  Competitions
+                </p>
+                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">Lifecycle status</h3>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <a href="/admin/competitions">View all</a>
+              </Button>
+            </div>
+            <div className="mt-4 overflow-x-auto">
+              <Table>
+                <TableHeader className="[&_tr]:border-ink/10">
+                  <TableRow>
+                    <TableHead className="px-0 py-3 font-extrabold text-ink/65">Name</TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Entries</TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Status</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">Next</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="[&_tr]:border-ink/10">
+                  {COMP_LIFECYCLE.map((c, i) => (
+                    <TableRow key={i} className="hover:bg-lilac/10">
+                      <TableCell className="px-0 py-3">
+                        <p className="truncate text-sm font-extrabold text-ink max-w-[220px]">{c.name}</p>
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-16 overflow-hidden rounded-full bg-cream">
+                            <div className="h-full bg-coral" style={{ width: `${c.pct}%` }} />
+                          </div>
+                          <span className="text-[11px] font-extrabold text-ink/65">{c.pct}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0", statusTone[c.status])}>
+                          {c.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-3 text-right text-xs font-bold text-ink/65 whitespace-nowrap">
+                        {c.action}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </section>

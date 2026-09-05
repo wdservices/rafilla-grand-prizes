@@ -161,7 +161,7 @@ export function CompleteProfileForm() {
                 )}
               >
                 {avatarPreview ? (
-                  <img src={avatarPreview} alt="" className="size-full object-cover" />
+                  <img src={avatarPreview} alt="" aria-hidden="true" className="size-full object-cover" />
                 ) : (
                   <div className="grid size-10 place-items-center rounded-full bg-white text-ink/40">
                     <User className="size-6" />

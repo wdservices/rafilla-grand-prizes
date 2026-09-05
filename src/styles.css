@@ -210,3 +210,13 @@
     scroll-behavior: auto !important;
   }
 }
+
+:where(button, a, [role="button"], input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 3px solid var(--coral) !important;
+  outline-offset: 2px;
+  border-radius: 14px;
+}
+
+button {
+  white-space: normal;
+}
