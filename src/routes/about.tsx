@@ -1,3 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AboutPage } from "@/components/rafilla/public-pages";
-export const Route = createFileRoute("/about")({ head: () => ({ meta: [{ title: "About Rafilla" }, { name: "description", content: "Learn about Rafilla's transparent, premium prize competition experience." }, { property: "og:title", content: "About Rafilla" }, { property: "og:description", content: "Learn about Rafilla's transparent, premium prize competition experience." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }] }), component: AboutPage });
+export const Route = createFileRoute("/about")({
+  head: () => ({
+    meta: [
+      { title: "About Rafilla" },
+      {
+        name: "description",
+        content: "Learn about Rafilla's transparent, premium prize competition experience.",
+      },
+      { property: "og:title", content: "About Rafilla" },
+      {
+        property: "og:description",
+        content: "Learn about Rafilla's transparent, premium prize competition experience.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: AboutPage,
+});

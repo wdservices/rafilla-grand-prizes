@@ -1,0 +1,9 @@
+export { DashboardShell } from "./shell";
+export { DashboardOverviewPage } from "./overview";
+export { DashboardWalletPage } from "./wallet";
+export { DashboardEntriesPage } from "./entries";
+export { DashboardTransactionsPage } from "./transactions";
+export { DashboardProfilePage } from "./profile";
+export { DashboardSecurityPage } from "./security";
+export { DashboardReferralsPage } from "./referrals";
+export { DashboardReferralsPayoutPage } from "./payouts";

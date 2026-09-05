@@ -13,13 +13,26 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BecomeAPartnerRouteImport } from './routes/become-a-partner'
+import { Route as CompetitionRulesRouteImport } from './routes/competition-rules'
 import { Route as CompetitionsRouteImport } from './routes/competitions'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
+import { Route as RobotsRouteImport } from './routes/robots'
+import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
 import { Route as WinnersRouteImport } from './routes/winners'
 import { Route as CompetitionsSlugRouteImport } from './routes/competitions.$slug'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardEntriesRouteImport } from './routes/dashboard.entries'
+import { Route as DashboardProfileRouteImport } from './routes/dashboard.profile'
+import { Route as DashboardReferralsRouteImport } from './routes/dashboard.referrals'
+import { Route as DashboardSecurityRouteImport } from './routes/dashboard.security'
+import { Route as DashboardTransactionsRouteImport } from './routes/dashboard.transactions'
+import { Route as DashboardWalletRouteImport } from './routes/dashboard.wallet'
 import { Route as DrawVerificationCampaignRouteImport } from './routes/draw-verification.$campaign'
+import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
+import { Route as DashboardReferralsPayoutRouteImport } from './routes/dashboard.referrals.payout'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -39,6 +52,11 @@ const AuthRoute = AuthRouteImport.update({
 const BecomeAPartnerRoute = BecomeAPartnerRouteImport.update({
   id: '/become-a-partner',
   path: '/become-a-partner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompetitionRulesRoute = CompetitionRulesRouteImport.update({
+  id: '/competition-rules',
+  path: '/competition-rules',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompetitionsRoute = CompetitionsRouteImport.update({
@@ -61,6 +79,21 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RobotsRoute = RobotsRouteImport.update({
+  id: '/robots',
+  path: '/robots',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
+  id: '/terms-and-conditions',
+  path: '/terms-and-conditions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WinnersRoute = WinnersRouteImport.update({
   id: '/winners',
   path: '/winners',
@@ -71,11 +104,57 @@ const CompetitionsSlugRoute = CompetitionsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => CompetitionsRoute,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardEntriesRoute = DashboardEntriesRouteImport.update({
+  id: '/dashboard/entries',
+  path: '/dashboard/entries',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardProfileRoute = DashboardProfileRouteImport.update({
+  id: '/dashboard/profile',
+  path: '/dashboard/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardReferralsRoute = DashboardReferralsRouteImport.update({
+  id: '/dashboard/referrals',
+  path: '/dashboard/referrals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardSecurityRoute = DashboardSecurityRouteImport.update({
+  id: '/dashboard/security',
+  path: '/dashboard/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardTransactionsRoute = DashboardTransactionsRouteImport.update({
+  id: '/dashboard/transactions',
+  path: '/dashboard/transactions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardWalletRoute = DashboardWalletRouteImport.update({
+  id: '/dashboard/wallet',
+  path: '/dashboard/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DrawVerificationCampaignRoute =
   DrawVerificationCampaignRouteImport.update({
     id: '/draw-verification/$campaign',
     path: '/draw-verification/$campaign',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const SitemapXmlRoute = SitemapXmlRouteImport.update({
+  id: '/sitemap/xml',
+  path: '/sitemap/xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardReferralsPayoutRoute =
+  DashboardReferralsPayoutRouteImport.update({
+    id: '/payout',
+    path: '/payout',
+    getParentRoute: () => DashboardReferralsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -83,26 +162,52 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/become-a-partner': typeof BecomeAPartnerRoute
+  '/competition-rules': typeof CompetitionRulesRoute
   '/competitions': typeof CompetitionsRouteWithChildren
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/robots': typeof RobotsRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/winners': typeof WinnersRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/dashboard/entries': typeof DashboardEntriesRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
+  '/dashboard/referrals': typeof DashboardReferralsRouteWithChildren
+  '/dashboard/security': typeof DashboardSecurityRoute
+  '/dashboard/transactions': typeof DashboardTransactionsRoute
+  '/dashboard/wallet': typeof DashboardWalletRoute
   '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/become-a-partner': typeof BecomeAPartnerRoute
+  '/competition-rules': typeof CompetitionRulesRoute
   '/competitions': typeof CompetitionsRouteWithChildren
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/robots': typeof RobotsRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/winners': typeof WinnersRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/dashboard/entries': typeof DashboardEntriesRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
+  '/dashboard/referrals': typeof DashboardReferralsRouteWithChildren
+  '/dashboard/security': typeof DashboardSecurityRoute
+  '/dashboard/transactions': typeof DashboardTransactionsRoute
+  '/dashboard/wallet': typeof DashboardWalletRoute
   '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
+  '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -110,13 +215,26 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/become-a-partner': typeof BecomeAPartnerRoute
+  '/competition-rules': typeof CompetitionRulesRoute
   '/competitions': typeof CompetitionsRouteWithChildren
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/robots': typeof RobotsRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/winners': typeof WinnersRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/dashboard/entries': typeof DashboardEntriesRoute
+  '/dashboard/profile': typeof DashboardProfileRoute
+  '/dashboard/referrals': typeof DashboardReferralsRouteWithChildren
+  '/dashboard/security': typeof DashboardSecurityRoute
+  '/dashboard/transactions': typeof DashboardTransactionsRoute
+  '/dashboard/wallet': typeof DashboardWalletRoute
   '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
+  '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -125,39 +243,78 @@ export interface FileRouteTypes {
     | '/about'
     | '/auth'
     | '/become-a-partner'
+    | '/competition-rules'
     | '/competitions'
     | '/contact'
     | '/faq'
     | '/how-it-works'
+    | '/privacy-policy'
+    | '/robots'
+    | '/terms-and-conditions'
     | '/winners'
     | '/competitions/$slug'
+    | '/dashboard/entries'
+    | '/dashboard/profile'
+    | '/dashboard/referrals'
+    | '/dashboard/security'
+    | '/dashboard/transactions'
+    | '/dashboard/wallet'
     | '/draw-verification/$campaign'
+    | '/sitemap/xml'
+    | '/dashboard/'
+    | '/dashboard/referrals/payout'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/auth'
     | '/become-a-partner'
+    | '/competition-rules'
     | '/competitions'
     | '/contact'
     | '/faq'
     | '/how-it-works'
+    | '/privacy-policy'
+    | '/robots'
+    | '/terms-and-conditions'
     | '/winners'
     | '/competitions/$slug'
+    | '/dashboard/entries'
+    | '/dashboard/profile'
+    | '/dashboard/referrals'
+    | '/dashboard/security'
+    | '/dashboard/transactions'
+    | '/dashboard/wallet'
     | '/draw-verification/$campaign'
+    | '/sitemap/xml'
+    | '/dashboard'
+    | '/dashboard/referrals/payout'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/auth'
     | '/become-a-partner'
+    | '/competition-rules'
     | '/competitions'
     | '/contact'
     | '/faq'
     | '/how-it-works'
+    | '/privacy-policy'
+    | '/robots'
+    | '/terms-and-conditions'
     | '/winners'
     | '/competitions/$slug'
+    | '/dashboard/entries'
+    | '/dashboard/profile'
+    | '/dashboard/referrals'
+    | '/dashboard/security'
+    | '/dashboard/transactions'
+    | '/dashboard/wallet'
     | '/draw-verification/$campaign'
+    | '/sitemap/xml'
+    | '/dashboard/'
+    | '/dashboard/referrals/payout'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -165,12 +322,24 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   BecomeAPartnerRoute: typeof BecomeAPartnerRoute
+  CompetitionRulesRoute: typeof CompetitionRulesRoute
   CompetitionsRoute: typeof CompetitionsRouteWithChildren
   ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  RobotsRoute: typeof RobotsRoute
+  TermsAndConditionsRoute: typeof TermsAndConditionsRoute
   WinnersRoute: typeof WinnersRoute
+  DashboardEntriesRoute: typeof DashboardEntriesRoute
+  DashboardProfileRoute: typeof DashboardProfileRoute
+  DashboardReferralsRoute: typeof DashboardReferralsRouteWithChildren
+  DashboardSecurityRoute: typeof DashboardSecurityRoute
+  DashboardTransactionsRoute: typeof DashboardTransactionsRoute
+  DashboardWalletRoute: typeof DashboardWalletRoute
   DrawVerificationCampaignRoute: typeof DrawVerificationCampaignRoute
+  SitemapXmlRoute: typeof SitemapXmlRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -203,6 +372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BecomeAPartnerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/competition-rules': {
+      id: '/competition-rules'
+      path: '/competition-rules'
+      fullPath: '/competition-rules'
+      preLoaderRoute: typeof CompetitionRulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/competitions': {
       id: '/competitions'
       path: '/competitions'
@@ -231,6 +407,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HowItWorksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/robots': {
+      id: '/robots'
+      path: '/robots'
+      fullPath: '/robots'
+      preLoaderRoute: typeof RobotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms-and-conditions': {
+      id: '/terms-and-conditions'
+      path: '/terms-and-conditions'
+      fullPath: '/terms-and-conditions'
+      preLoaderRoute: typeof TermsAndConditionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/winners': {
       id: '/winners'
       path: '/winners'
@@ -245,12 +442,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompetitionsSlugRouteImport
       parentRoute: typeof CompetitionsRoute
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/dashboard'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/entries': {
+      id: '/dashboard/entries'
+      path: '/dashboard/entries'
+      fullPath: '/dashboard/entries'
+      preLoaderRoute: typeof DashboardEntriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/profile': {
+      id: '/dashboard/profile'
+      path: '/dashboard/profile'
+      fullPath: '/dashboard/profile'
+      preLoaderRoute: typeof DashboardProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/referrals': {
+      id: '/dashboard/referrals'
+      path: '/dashboard/referrals'
+      fullPath: '/dashboard/referrals'
+      preLoaderRoute: typeof DashboardReferralsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/security': {
+      id: '/dashboard/security'
+      path: '/dashboard/security'
+      fullPath: '/dashboard/security'
+      preLoaderRoute: typeof DashboardSecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/transactions': {
+      id: '/dashboard/transactions'
+      path: '/dashboard/transactions'
+      fullPath: '/dashboard/transactions'
+      preLoaderRoute: typeof DashboardTransactionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/wallet': {
+      id: '/dashboard/wallet'
+      path: '/dashboard/wallet'
+      fullPath: '/dashboard/wallet'
+      preLoaderRoute: typeof DashboardWalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/draw-verification/$campaign': {
       id: '/draw-verification/$campaign'
       path: '/draw-verification/$campaign'
       fullPath: '/draw-verification/$campaign'
       preLoaderRoute: typeof DrawVerificationCampaignRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/sitemap/xml': {
+      id: '/sitemap/xml'
+      path: '/sitemap/xml'
+      fullPath: '/sitemap/xml'
+      preLoaderRoute: typeof SitemapXmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/referrals/payout': {
+      id: '/dashboard/referrals/payout'
+      path: '/payout'
+      fullPath: '/dashboard/referrals/payout'
+      preLoaderRoute: typeof DashboardReferralsPayoutRouteImport
+      parentRoute: typeof DashboardReferralsRoute
     }
   }
 }
@@ -267,17 +527,40 @@ const CompetitionsRouteWithChildren = CompetitionsRoute._addFileChildren(
   CompetitionsRouteChildren,
 )
 
+interface DashboardReferralsRouteChildren {
+  DashboardReferralsPayoutRoute: typeof DashboardReferralsPayoutRoute
+}
+
+const DashboardReferralsRouteChildren: DashboardReferralsRouteChildren = {
+  DashboardReferralsPayoutRoute: DashboardReferralsPayoutRoute,
+}
+
+const DashboardReferralsRouteWithChildren =
+  DashboardReferralsRoute._addFileChildren(DashboardReferralsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   BecomeAPartnerRoute: BecomeAPartnerRoute,
+  CompetitionRulesRoute: CompetitionRulesRoute,
   CompetitionsRoute: CompetitionsRouteWithChildren,
   ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
   HowItWorksRoute: HowItWorksRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
+  RobotsRoute: RobotsRoute,
+  TermsAndConditionsRoute: TermsAndConditionsRoute,
   WinnersRoute: WinnersRoute,
+  DashboardEntriesRoute: DashboardEntriesRoute,
+  DashboardProfileRoute: DashboardProfileRoute,
+  DashboardReferralsRoute: DashboardReferralsRouteWithChildren,
+  DashboardSecurityRoute: DashboardSecurityRoute,
+  DashboardTransactionsRoute: DashboardTransactionsRoute,
+  DashboardWalletRoute: DashboardWalletRoute,
   DrawVerificationCampaignRoute: DrawVerificationCampaignRoute,
+  SitemapXmlRoute: SitemapXmlRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

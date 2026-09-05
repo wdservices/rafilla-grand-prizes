@@ -80,10 +80,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Rafilla — Big Prizes. Fair Chances." },
-      { name: "description", content: "Premium prize competitions with clear entries, secure accounts, and publicly verifiable draws." },
+      {
+        name: "description",
+        content:
+          "Premium prize competitions with clear entries, secure accounts, and publicly verifiable draws.",
+      },
       { name: "author", content: "Rafilla" },
       { property: "og:title", content: "Rafilla — Big Prizes. Fair Chances." },
-      { property: "og:description", content: "Premium prize competitions with clear entries, secure accounts, and publicly verifiable draws." },
+      {
+        property: "og:description",
+        content:
+          "Premium prize competitions with clear entries, secure accounts, and publicly verifiable draws.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
@@ -95,7 +103,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap",
+      },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
   }),
@@ -124,11 +135,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-        <div className="min-h-screen overflow-x-hidden bg-cream text-ink">
-          <SiteHeader />
-          <Outlet />
-          <SiteFooter />
-        </div>
+      <div className="min-h-screen overflow-x-hidden bg-cream text-ink">
+        <SiteHeader />
+        <Outlet />
+        <SiteFooter />
+      </div>
     </QueryClientProvider>
   );
 }

@@ -128,11 +128,11 @@ There are THREE primary platform experiences.
 
 Each must have a separate authenticated dashboard and permission model.
 
-------------------------------------------------------------
+---
 
 USER
 
-------------------------------------------------------------
+---
 
 Users can:
 
@@ -174,11 +174,11 @@ Users can:
 
 - Manage account/security
 
-------------------------------------------------------------
+---
 
 PARTNER
 
-------------------------------------------------------------
+---
 
 Partners can:
 
@@ -210,11 +210,11 @@ Partners can:
 
 Partners cannot independently publish campaigns without administrator approval.
 
-------------------------------------------------------------
+---
 
 ADMIN
 
-------------------------------------------------------------
+---
 
 Administrators have global platform access.
 
@@ -326,11 +326,11 @@ Hero should include a premium featured competition visual.
 
 Below the hero:
 
-------------------------------------------------------------
+---
 
 LIVE COMPETITIONS
 
-------------------------------------------------------------
+---
 
 Display competition cards.
 
@@ -362,19 +362,19 @@ Each card should contain:
 
 All active listed products should be discoverable from the public marketplace.
 
-------------------------------------------------------------
+---
 
 FEATURED PRIZES
 
-------------------------------------------------------------
+---
 
 Large premium cards for selected competitions.
 
-------------------------------------------------------------
+---
 
 HOW RAFILLA WORKS
 
-------------------------------------------------------------
+---
 
 Step 1:
 
@@ -400,11 +400,11 @@ Step 6:
 
 You could be the winner
 
-------------------------------------------------------------
+---
 
 WHY RAFILLA
 
-------------------------------------------------------------
+---
 
 Highlight:
 
@@ -420,11 +420,11 @@ Secure Accounts
 
 Fair Competition
 
-------------------------------------------------------------
+---
 
 REWARD POOL
 
-------------------------------------------------------------
+---
 
 Display the live reward pool counter where configured.
 
@@ -436,11 +436,11 @@ Example:
 
 Use a live server-driven value.
 
-------------------------------------------------------------
+---
 
 RECENT WINNERS
 
-------------------------------------------------------------
+---
 
 Display approved winner announcements.
 
@@ -456,11 +456,11 @@ Include:
 
 - Location where appropriate and legally permitted
 
-------------------------------------------------------------
+---
 
 BECOME A PARTNER
 
-------------------------------------------------------------
+---
 
 CTA for businesses/assets owners.
 
@@ -468,19 +468,19 @@ CTA for businesses/assets owners.
 
 "Partner with Rafilla."
 
-------------------------------------------------------------
+---
 
 FAQ
 
-------------------------------------------------------------
+---
 
 Include common questions.
 
-------------------------------------------------------------
+---
 
 FINAL CTA
 
-------------------------------------------------------------
+---
 
 "Your next big win could start here."
 
@@ -1260,11 +1260,11 @@ Performance
 
 Recent Activity
 
-------------------------------------------------------------
+---
 
 MY LISTINGS
 
-------------------------------------------------------------
+---
 
 Each listing displays:
 
@@ -1292,11 +1292,11 @@ Amount generated
 
 Performance
 
-------------------------------------------------------------
+---
 
 SUBMIT AN ASSET
 
-------------------------------------------------------------
+---
 
 Fields:
 
@@ -2336,29 +2336,29 @@ SEO pages:
 
 /
 
- /competitions
+/competitions
 
- /competitions/[slug]
+/competitions/[slug]
 
- /winners
+/winners
 
- /how-it-works
+/how-it-works
 
- /about
+/about
 
- /partners
+/partners
 
- /faq
+/faq
 
- /trust
+/trust
 
- /terms-and-conditions
+/terms-and-conditions
 
- /privacy-policy
+/privacy-policy
 
- /competition-rules
+/competition-rules
 
- /draw-verification
+/draw-verification
 
 Each public competition page must have:
 
@@ -3336,19 +3336,19 @@ Think:
 
 Premium marketplace
 
-+
+-
 
 Fintech-grade transaction experience
 
-+
+-
 
 Modern competition platform
 
-+
+-
 
 Trust-first design
 
-+
+-
 
 Enterprise-grade admin system
 
