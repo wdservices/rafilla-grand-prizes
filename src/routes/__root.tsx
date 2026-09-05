@@ -4,6 +4,7 @@ import {
   createRootRouteWithContext,
   HeadContent,
   Scripts,
+  useLocation,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -114,6 +115,8 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+  const isAuthRoute = location.pathname === "/auth" || location.pathname.startsWith("/auth/");
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -124,11 +127,11 @@ function RootComponent() {
         >
           Skip to content
         </a>
-        <SiteHeader />
+        {!isAuthRoute && <SiteHeader />}
         <main id="main-content" tabIndex={-1}>
           <Outlet />
         </main>
-        <SiteFooter />
+        {!isAuthRoute && <SiteFooter />}
         <CookieConsentBanner />
       </div>
     </QueryClientProvider>

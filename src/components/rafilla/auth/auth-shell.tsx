@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 import { Check, ShieldCheck, BadgeCheck, WalletCards } from "lucide-react";
 
-import { SiteHeader } from "@/components/rafilla/site-header";
-import { SiteFooter } from "@/components/rafilla/site-footer";
-
 type AuthVariant = "login" | "register" | "forgot" | "otp" | "complete";
 
 interface AuthShellProps {
@@ -32,8 +29,7 @@ const trustItems = [
 export function AuthShell({ children, variant = "login" }: AuthShellProps) {
   return (
     <div className="min-h-screen bg-paper">
-      <SiteHeader />
-      <div className="mx-auto w-full max-w-7xl px-4 pb-8 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14 lg:px-8">
         <div className="mx-auto w-full max-w-[480px] lg:max-w-none lg:grid lg:grid-cols-20 lg:gap-8 lg:items-stretch lg:min-h-[720px]">
           <div className="hidden lg:flex lg:col-span-9 lg:flex-col lg:rounded-[28px] lg:bg-cream lg:p-8 lg:ring-1 lg:ring-ink/5 xl:p-12">
             <div className="flex items-center gap-2">
@@ -98,7 +94,6 @@ export function AuthShell({ children, variant = "login" }: AuthShellProps) {
           </div>
         </div>
       </div>
-      <SiteFooter />
     </div>
   );
 }
