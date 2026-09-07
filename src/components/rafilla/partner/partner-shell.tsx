@@ -161,9 +161,13 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
           </Sheet>
 
           <Link to="/partner" className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-full bg-ink flex items-center justify-center">
-              <Award className="w-4 h-4 text-coral" />
-            </div>
+            <img
+              src="/Rafilla-logo.png"
+              alt=""
+              className="size-8 shrink-0 rounded-xl shadow-sm"
+              width={32}
+              height={32}
+            />
             <span className="font-display text-ink text-lg hidden sm:block">Rafilla</span>
             <Badge variant="outline" className="rounded-full border-coral/30 bg-coral/10 text-coral text-[10px] hidden sm:inline-flex">
               Partner

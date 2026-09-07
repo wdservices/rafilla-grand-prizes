@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 
 import { HomePage } from "@/components/rafilla/public-pages";
 
@@ -67,7 +67,7 @@ export const Route = createFileRoute("/")({
       ],
       links: [
         { rel: "canonical", href: canonical },
-        { rel: "alternate", hreflang: "en", href: canonical },
+        { rel: "alternate", hrefLang: "en", href: canonical },
       ],
     };
   },

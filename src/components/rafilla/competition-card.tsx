@@ -1,4 +1,5 @@
-import { ArrowUpRight, CalendarDays, Ticket } from "lucide-react";
+import { useState } from "react";
+import { ArrowUpRight, CalendarDays, Minus, Plus, Ticket } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
@@ -17,13 +18,30 @@ export function CompetitionCard({
   competition,
   featured = false,
   variant = "grid",
+  onEnterDraw,
+  defaultQuantity = 1,
 }: {
   competition: Competition;
   featured?: boolean;
   variant?: "grid" | "list";
+  onEnterDraw?: (quantity: number) => void;
+  defaultQuantity?: number;
 }) {
   const accent = accentStyles[competition.accent];
   const progress = getProgress(competition);
+  const ticketsLeft = Math.max(0, competition.totalEntries - competition.entriesSold);
+  const maxQty = Math.max(1, Math.min(50, ticketsLeft));
+  const [qty, setQty] = useState<number>(() =>
+    Math.max(1, Math.min(maxQty, defaultQuantity)),
+  );
+  const entryTotalKobo = competition.entryPrice * qty;
+  const baseChancePct =
+    competition.totalEntries > 0 ? (qty / competition.totalEntries) * 100 : 0;
+  const chanceDisplay = qty <= 1
+    ? "Buy more tickets to improve your odds"
+    : baseChancePct >= 10
+      ? `${baseChancePct.toFixed(1)}% chance of winning`
+      : `${qty.toLocaleString("en-NG")}× better chance than 1 ticket`;
 
   if (featured) {
     return (
@@ -161,8 +179,8 @@ export function CompetitionCard({
                 </p>
               </div>
             </div>
-            <div className="flex items-end gap-3">
-              <div className="min-w-0 flex-1">
+            <div className="grid grid-cols-2 gap-3 pt-1 md:grid-cols-5 md:items-end">
+              <div className="min-w-0 md:col-span-2">
                 <div className="mb-1 flex items-center justify-between gap-2 text-xs font-bold">
                   <span className="truncate text-ink/60">
                     {competition.entriesSold.toLocaleString("en-NG")} of{" "}
@@ -176,11 +194,33 @@ export function CompetitionCard({
                     style={{ width: `${progress}%` }}
                   />
                 </div>
+                <p className="mt-2 rounded-2xl bg-raf-lime/25 px-3 py-1.5 text-[11px] font-extrabold text-ink ring-1 ring-raf-lime/40">
+                  <Ticket className="mr-1 inline size-3.5 text-raf-green" />
+                  {chanceDisplay}
+                </p>
               </div>
-              <Button asChild variant="primary" size="md">
-                <Link to="/competitions/$slug" params={{ slug: competition.slug }}>
-                  Enter draw <ArrowUpRight className="size-4" />
-                </Link>
+              <QuantityStepper
+                value={qty}
+                onChange={(v) => setQty(Math.max(1, Math.min(maxQty, v)))}
+                min={1}
+                max={maxQty}
+              />
+              <div className="text-right">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-ink/40">
+                  Total
+                </p>
+                <p className="font-display text-lg font-extrabold text-ink tabular-nums">
+                  {formatNaira(entryTotalKobo)}
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                size="md"
+                className="w-full md:col-span-1 shadow-[0_12px_28px_-12px_var(--coral)]"
+                onClick={() => onEnterDraw?.(qty)}
+                disabled={!onEnterDraw || ticketsLeft === 0}
+              >
+                <Ticket className="size-4" /> Enter draw
               </Button>
             </div>
           </div>
@@ -216,7 +256,7 @@ export function CompetitionCard({
             </span>
           </div>
           <p className="text-xs font-bold text-ink/55">
-            {formatNaira(competition.entryPrice)} ·{" "}
+            {formatNaira(competition.entryPrice)} / ticket ·{" "}
             {competition.entriesSold.toLocaleString("en-NG")} sold
           </p>
           <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
@@ -235,15 +275,45 @@ export function CompetitionCard({
           </div>
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between border-t border-ink/10 pt-3">
-        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-ink/55">
-          <Ticket className="size-3.5" /> {progress}% filled
-        </span>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/competitions/$slug" params={{ slug: competition.slug }}>
-            View <ArrowUpRight className="size-3.5" />
-          </Link>
-        </Button>
+      <div className="mt-3 space-y-3 border-t border-ink/10 pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <QuantityStepper
+            value={qty}
+            onChange={(v) => setQty(Math.max(1, Math.min(maxQty, v)))}
+            min={1}
+            max={maxQty}
+          />
+          <div className="text-right">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-ink/40">
+              {`${qty} ticket${qty === 1 ? "" : "s"} · Total`}
+            </p>
+            <p className="font-display text-lg font-extrabold text-ink tabular-nums">
+              {formatNaira(entryTotalKobo)}
+            </p>
+          </div>
+        </div>
+        <div className="rounded-2xl bg-raf-lime/25 px-3 py-2 ring-1 ring-raf-lime/40">
+          <p className="text-[11px] font-extrabold text-ink">
+            <Ticket className="mr-1 inline size-3.5 text-raf-green" />
+            {chanceDisplay}
+          </p>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <Button asChild variant="ghost" size="sm" className="flex-1">
+            <Link to="/competitions/$slug" params={{ slug: competition.slug }}>
+              View <ArrowUpRight className="ml-1 size-3.5" />
+            </Link>
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            className="flex-[1.5] shadow-[0_12px_28px_-12px_var(--coral)]"
+            onClick={() => onEnterDraw?.(qty)}
+            disabled={!onEnterDraw || ticketsLeft === 0}
+          >
+            <Ticket className="size-4" /> Enter draw
+          </Button>
+        </div>
       </div>
     </article>
   );
@@ -283,5 +353,76 @@ function ShieldIcon() {
     <span className="grid size-4 place-items-center rounded-full bg-mint/50 text-[10px] text-ink">
       ✓
     </span>
+  );
+}
+
+export function QuantityStepper({
+  value,
+  onChange,
+  min = 1,
+  max = 50,
+  size = "md",
+}: {
+  value: number;
+  onChange: (next: number) => void;
+  min?: number;
+  max?: number;
+  size?: "sm" | "md" | "lg";
+}) {
+  const dims =
+    size === "lg"
+      ? "h-12 w-12"
+      : size === "sm"
+      ? "h-9 w-9"
+      : "h-11 w-11";
+  const labelSize =
+    size === "lg"
+      ? "font-display text-2xl"
+      : size === "sm"
+      ? "font-display text-base"
+      : "font-display text-xl";
+  const safeMin = Math.max(1, min);
+  const safeMax = Math.max(safeMin, max);
+  const safeValue = Math.max(safeMin, Math.min(safeMax, value));
+  return (
+    <div
+      className="inline-flex items-center rounded-full bg-white ring-1 ring-ink/10"
+      role="group"
+      aria-label="Ticket quantity selector"
+    >
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(safeMin, safeValue - 1))}
+        disabled={safeValue <= safeMin}
+        aria-label="Decrease quantity"
+        className={cn(
+          "grid place-items-center rounded-full text-ink transition-colors hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40",
+          dims,
+        )}
+      >
+        <Minus className="size-4.5" />
+      </button>
+      <span
+        className={cn(
+          "min-w-[2.5ch] text-center tabular-nums font-extrabold text-ink px-1",
+          labelSize,
+        )}
+        aria-live="polite"
+      >
+        {safeValue}
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(Math.min(safeMax, safeValue + 1))}
+        disabled={safeValue >= safeMax}
+        aria-label="Increase quantity"
+        className={cn(
+          "grid place-items-center rounded-full text-ink transition-colors hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40",
+          dims,
+        )}
+      >
+        <Plus className="size-4.5" />
+      </button>
+    </div>
   );
 }

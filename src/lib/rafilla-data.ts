@@ -63,6 +63,15 @@ const accents: Competition["accent"][] = ["coral", "sky", "lemon", "mint", "lila
 
 const mk = (n: number) => n * 100;
 
+export const REWARD_POOL = {
+  totalKobo: mk(48_210_000),
+  label: "Current reward pool",
+  seasonLabel: "Community reward pool",
+  tagline: "Live · Funded by entries",
+  totalParticipants: 2488,
+  rank: 4,
+};
+
 export const competitions: Competition[] = [
   {
     slug: "mercedes-benz-c-class",

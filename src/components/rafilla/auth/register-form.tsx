@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { Eye, EyeOff, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { getPasswordStrength, passwordStrengthLabels } from "@/lib/password-strength";
@@ -43,7 +42,7 @@ const strengthLabels: Record<PasswordStrength, { label: string; color: string; d
 
 function authInputBase(error?: string) {
   return cn(
-    "h-12 rounded-[14px] border-2 bg-cream/40 px-4 text-sm font-bold text-ink placeholder:text-ink/30",
+    "h-12 rounded-[14px] border-2 bg-cream/40 px-4 text-sm font-bold text-ink placeholder:text-ink/40",
     "transition-all duration-200",
     "focus-visible:outline-none focus-visible:border-coral focus-visible:ring-0",
     error ? "border-coral bg-coral/5" : "border-ink/10 hover:border-ink/20",
@@ -52,42 +51,23 @@ function authInputBase(error?: string) {
 
 function authTextareaBase(error?: string) {
   return cn(
-    "min-h-[96px] rounded-[14px] border-2 bg-cream/40 px-4 py-3 text-sm font-bold text-ink placeholder:text-ink/30 resize-none",
+    "min-h-[90px] rounded-[14px] border-2 bg-cream/40 px-4 py-3 text-sm font-bold text-ink placeholder:text-ink/40 resize-none",
     "transition-all duration-200",
     "focus-visible:outline-none focus-visible:border-coral focus-visible:ring-0",
     error ? "border-coral bg-coral/5" : "border-ink/10 hover:border-ink/20",
   );
 }
 
-interface FieldWrapperProps {
-  id: string;
-  label: string;
-  error?: string | undefined;
-  required?: boolean | undefined;
-  children: React.ReactNode;
-  hint?: string | undefined;
-}
-
-function FieldWrapper({ id, label, error, required, children, hint }: FieldWrapperProps) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label htmlFor={id} className="text-xs font-extrabold text-ink/70">
-          {label}
-          {required ? <span className="ml-0.5 text-coral">*</span> : null}
-        </Label>
-      </div>
-      <div className="relative">{children}</div>
-      {error ? (
-        <p className="flex items-center gap-1 text-xs font-bold text-coral">
-          <AlertCircle className="size-3.5" />
-          {error}
-        </p>
-      ) : hint ? (
-        <p className="text-xs font-bold text-ink/40">{hint}</p>
-      ) : null}
-    </div>
-  );
+function ErrorRow({ error, hint }: { error?: string; hint?: string }) {
+  if (error)
+    return (
+      <p className="flex items-center gap-1 px-1 text-xs font-bold text-coral">
+        <AlertCircle className="size-3.5" />
+        {error}
+      </p>
+    );
+  if (hint) return <p className="px-1 text-xs font-bold text-ink/40">{hint}</p>;
+  return null;
 }
 
 function isAdult(dob: string): boolean {
@@ -195,8 +175,8 @@ export function RegisterForm() {
   }
 
   return (
-    <form noValidate onSubmit={onSubmit} className="space-y-4.5">
-      <header>
+    <form noValidate onSubmit={onSubmit} className="space-y-3.5">
+      <header className="mb-0.5">
         <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
           Create your account
         </h1>
@@ -205,67 +185,58 @@ export function RegisterForm() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FieldWrapper
-          id="r-username"
-          label="Username"
-          required
-          error={errors.username}
-          hint="e.g. tunmise_24"
-        >
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
           <input
             id="r-username"
             type="text"
             autoComplete="username"
-            placeholder="tunmise_24"
+            placeholder="Username *"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className={authInputBase(errors.username)}
+            className={cn(authInputBase(errors.username), "w-full")}
           />
-        </FieldWrapper>
+          <ErrorRow error={errors.username} hint="e.g. tunmise_24" />
+        </div>
 
-        <FieldWrapper id="r-email" label="Email address" required error={errors.email}>
+        <div className="space-y-1">
           <input
             id="r-email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder="Email address *"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={authInputBase(errors.email)}
+            className={cn(authInputBase(errors.email), "w-full")}
           />
-        </FieldWrapper>
+          <ErrorRow error={errors.email} />
+        </div>
       </div>
 
-      <FieldWrapper
-        id="r-phone"
-        label="Phone number"
-        required
-        error={errors.phone}
-        hint="NG format: +234 803 ..."
-      >
+      <div className="space-y-1">
         <input
           id="r-phone"
           type="tel"
           autoComplete="tel"
-          placeholder="+234 803 000 0000"
+          placeholder="Phone number * (NG)"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className={authInputBase(errors.phone)}
+          className={cn(authInputBase(errors.phone), "w-full")}
         />
-      </FieldWrapper>
+        <ErrorRow error={errors.phone} hint="+234 803 000 0000" />
+      </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <FieldWrapper id="r-password" label="Password" required error={errors.password}>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
           <div className="relative">
             <input
               id="r-password"
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
-              placeholder="Create a password"
+              placeholder="Password *"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={cn(authInputBase(errors.password), "pr-12")}
+              className={cn(authInputBase(errors.password), "w-full pr-12")}
             />
             <button
               type="button"
@@ -277,7 +248,7 @@ export function RegisterForm() {
             </button>
           </div>
           {password ? (
-            <div className="mt-2 space-y-1.5">
+            <div className="mt-1.5 space-y-1">
               <div className="flex items-center gap-1.5">
                 {[1, 2, 3, 4].map((dot) => (
                   <span
@@ -292,23 +263,19 @@ export function RegisterForm() {
               <p className="text-xs font-bold text-ink/60">{strengthInfo.label}</p>
             </div>
           ) : null}
-        </FieldWrapper>
+          <ErrorRow error={errors.password} />
+        </div>
 
-        <FieldWrapper
-          id="r-confirm"
-          label="Confirm password"
-          required
-          error={errors.confirmPassword}
-        >
+        <div className="space-y-1">
           <div className="relative">
             <input
               id="r-confirm"
               type={showConfirmPassword ? "text" : "password"}
               autoComplete="new-password"
-              placeholder="Repeat password"
+              placeholder="Confirm password *"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className={cn(authInputBase(errors.confirmPassword), "pr-12")}
+              className={cn(authInputBase(errors.confirmPassword), "w-full pr-12")}
             />
             <button
               type="button"
@@ -319,41 +286,39 @@ export function RegisterForm() {
               {showConfirmPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
             </button>
           </div>
-        </FieldWrapper>
+          <ErrorRow error={errors.confirmPassword} />
+        </div>
       </div>
 
-      <FieldWrapper id="r-address" label="Residential address" required error={errors.address}>
+      <div className="space-y-1">
         <textarea
           id="r-address"
           autoComplete="street-address"
-          placeholder="Street, city, state"
+          placeholder="Residential address *"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          className={authTextareaBase(errors.address)}
+          className={cn(authTextareaBase(errors.address), "w-full")}
         />
-      </FieldWrapper>
+        <ErrorRow error={errors.address} hint="Street, city, state" />
+      </div>
 
-      <FieldWrapper
-        id="r-dob"
-        label="Date of birth"
-        required
-        error={errors.dob}
-        hint="Must be 18+ years"
-      >
+      <div className="space-y-1">
         <input
           id="r-dob"
           type="date"
+          placeholder="Date of birth"
           max={new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
           value={dob}
           onChange={(e) => setDob(e.target.value)}
-          className={cn(authInputBase(errors.dob), "text-ink/70 [color-scheme:light]")}
+          className={cn(authInputBase(errors.dob), "w-full text-ink/70 [color-scheme:light]")}
         />
-      </FieldWrapper>
+        <ErrorRow error={errors.dob} hint="Must be 18+ years" />
+      </div>
 
-      <div className="space-y-2 pt-1">
+      <div className="space-y-1.5 pt-0.5">
         <div
           className={cn(
-            "flex items-start gap-3 rounded-[14px] border-2 p-4",
+            "flex items-start gap-3 rounded-[14px] border-2 p-3.5",
             errors.terms ? "border-coral bg-coral/5" : "border-ink/10 bg-cream/30",
           )}
         >
@@ -372,7 +337,7 @@ export function RegisterForm() {
             }}
             className="mt-0.5 size-5 rounded-md"
           />
-          <Label
+          <label
             htmlFor="r-terms"
             className="text-xs leading-relaxed font-bold text-ink/70 cursor-pointer select-none"
           >
@@ -401,14 +366,9 @@ export function RegisterForm() {
               Competition Rules
             </Link>
             .
-          </Label>
+          </label>
         </div>
-        {errors.terms ? (
-          <p className="flex items-center gap-1 text-xs font-bold text-coral">
-            <AlertCircle className="size-3.5" />
-            {errors.terms}
-          </p>
-        ) : null}
+        <ErrorRow error={errors.terms} />
       </div>
 
       <Button type="submit" variant="primary" size="lg" className="w-full" disabled={loading}>
@@ -416,7 +376,7 @@ export function RegisterForm() {
         {loading ? "Creating account..." : "Create account"}
       </Button>
 
-      <div className="relative py-1">
+      <div className="relative py-0.5">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t border-ink/10" />
         </div>
@@ -432,7 +392,7 @@ export function RegisterForm() {
         Continue with Google
       </Button>
 
-      <p className="pt-1 text-center text-sm font-bold text-ink/60">
+      <p className="pt-0.5 text-center text-sm font-bold text-ink/60">
         Have an account?{" "}
         <Link
           to="/auth"

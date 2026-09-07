@@ -27,9 +27,13 @@ export function SiteHeader() {
     <header className="relative z-30 mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2" aria-label="Rafilla home">
-          <span className="grid size-10 place-items-center rounded-full bg-lilac font-display text-xl font-extrabold text-ink shadow-sm">
-            R
-          </span>
+          <img
+            src="/Rafilla-logo.png"
+            alt=""
+            className="size-10 shrink-0 rounded-2xl shadow-sm"
+            width={40}
+            height={40}
+          />
           <span className="font-display text-2xl font-extrabold tracking-tight text-ink">
             Rafilla
           </span>

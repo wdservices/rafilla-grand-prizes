@@ -36,7 +36,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-import { CompetitionCard } from "@/components/rafilla/competition-card";
+import { CompetitionCard, QuantityStepper } from "@/components/rafilla/competition-card";
 import { WinnerCard } from "@/components/rafilla/winner-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -106,6 +106,7 @@ import {
   type Competition,
   applySort,
   type SortKey,
+  REWARD_POOL,
 } from "@/lib/rafilla-data";
 import { HeroFeaturedCarousel } from "@/components/rafilla/hero-carousel";
 import { cn, formatNaira as formatNairaKobo } from "@/lib/utils";
@@ -175,9 +176,11 @@ export function HomePage() {
               </span>
               <div>
                 <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/50">
-                  Current reward pool
+                  {REWARD_POOL.label}
                 </p>
-                <p className="mt-1 font-display text-3xl font-extrabold text-ink">₦48,210,000</p>
+                <p className="mt-1 font-display text-3xl font-extrabold text-ink">
+                  {formatNaira(REWARD_POOL.totalKobo)}
+                </p>
               </div>
               <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-mint/40 px-2.5 py-1 text-[11px] font-extrabold text-ink">
                 <span className="size-1.5 rounded-full bg-mint" /> Live
@@ -673,9 +676,12 @@ export function CompetitionsPage() {
     priceMinKobo: priceMinBoundKobo,
     priceMaxKobo: priceMaxBoundKobo,
     partners: [],
-    view: "grid",
     page: 1,
+    view: "grid",
+    advancedOpen: false,
   });
+  const [modalSlug, setModalSlug] = useState<string | null>(null);
+  const [modalQty, setModalQty] = useState<number>(1);
   const filtered = useMemo(() => {
     const q = state.query.trim().toLowerCase();
     const list = competitions.filter((c) => {
@@ -774,6 +780,10 @@ export function CompetitionsPage() {
                 key={competition.slug}
                 competition={competition}
                 variant={state.view}
+                onEnterDraw={(qty) => {
+                  setModalQty(qty);
+                  setModalSlug(competition.slug);
+                }}
               />
             ))}
           </div>
@@ -853,6 +863,12 @@ export function CompetitionsPage() {
           )}
         </>
       )}
+      <TicketPurchaseModal
+        open={!!modalSlug}
+        onClose={() => setModalSlug(null)}
+        competitionSlug={modalSlug ?? ""}
+        initialQuantity={modalQty}
+      />
     </div>
   );
 }
@@ -916,7 +932,18 @@ export function CompetitionDetailPage() {
       />
     );
   const progress = getProgress(competition);
-  const ticketsLeft = competition.totalEntries - competition.entriesSold;
+  const ticketsLeft = Math.max(0, competition.totalEntries - competition.entriesSold);
+  const maxQty = Math.max(1, Math.min(50, ticketsLeft));
+  const [qty, setQty] = useState<number>(1);
+  const safeQty = Math.max(1, Math.min(maxQty, qty));
+  const totalKobo = competition.entryPrice * safeQty;
+  const chancePct =
+    competition.totalEntries > 0 ? (safeQty / competition.totalEntries) * 100 : 0;
+  const chanceLabel = safeQty <= 1
+    ? "Buy more tickets to improve your odds"
+    : chancePct >= 10
+      ? `${chancePct.toFixed(1)}% chance of winning`
+      : `${safeQty.toLocaleString("en-NG")}× better chance than 1 ticket`;
   const cd = useCountdownDays(Math.max(1, competition.daysUntilClose));
   const related = useMemo(() => {
     return competitions
@@ -941,26 +968,47 @@ export function CompetitionDetailPage() {
           showStickyBar ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0 pointer-events-none",
         )}
       >
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
-          <div className="min-w-0 flex-1">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:px-8">
+          <div className="min-w-0 flex-1 lg:pr-4">
             <p className="truncate font-display text-sm font-extrabold text-ink sm:text-base">
               {competition.title}
             </p>
-            <div className="mt-0.5 flex items-center gap-2">
+            <div className="mt-0.5 flex flex-wrap items-center gap-2">
               <LiveCountdownPill competition={competition} />
-              <span className="hidden text-[11px] font-bold text-ink/55 sm:inline-flex">
-                <Ticket className="mr-1 size-3" /> {ticketsLeft.toLocaleString("en-NG")} tickets left
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-ink/55">
+                <Ticket className="size-3" /> {ticketsLeft.toLocaleString("en-NG")} left
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-raf-green">
+                <BadgeCheck className="size-3" /> {chanceLabel}
               </span>
             </div>
           </div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setModalOpen(true)}
-            className="shrink-0"
-          >
-            <Ticket className="size-3.5" /> Enter draw
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="hidden text-right lg:block">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-ink/40">
+                {`${safeQty} ticket${safeQty === 1 ? "" : "s"} · Total`}
+              </p>
+              <p className="font-display text-xl font-extrabold text-ink tabular-nums">
+                {formatNaira(totalKobo)}
+              </p>
+            </div>
+            <QuantityStepper
+              value={safeQty}
+              onChange={setQty}
+              min={1}
+              max={maxQty}
+              size="sm"
+            />
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setModalOpen(true)}
+              className="shrink-0 shadow-[0_12px_28px_-12px_var(--coral)]"
+              disabled={ticketsLeft === 0}
+            >
+              <Ticket className="size-3.5" /> Enter draw
+            </Button>
+          </div>
         </div>
       </div>
       <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
@@ -1077,18 +1125,57 @@ export function CompetitionDetailPage() {
                 </div>
               </div>
             </div>
-            <Button
-              variant="primary"
-              size="lg"
-              className="mt-5 w-full"
-              onClick={() => setModalOpen(true)}
-            >
-              <Ticket className="size-4" />
-              Enter now <ArrowRight className="size-4" />
-            </Button>
-            <p className="mt-3 text-center text-xs font-bold text-ink/45">
-              Tickets reserved for 5 minutes · Wallet &amp; Referrals only
-            </p>
+            <div className="mt-6 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-cream p-4 ring-1 ring-ink/5">
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40">
+                    Your tickets
+                  </p>
+                  <p className="mt-1 font-display text-sm font-extrabold text-ink">
+                    {`${safeQty} × ${formatNaira(competition.entryPrice)} entr${safeQty === 1 ? "y" : "ies"}`}
+                  </p>
+                </div>
+                <QuantityStepper
+                  value={safeQty}
+                  onChange={setQty}
+                  min={1}
+                  max={maxQty}
+                  size="md"
+                />
+                <div className="text-right">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40">
+                    Total
+                  </p>
+                  <p className="font-display text-2xl font-extrabold text-ink tabular-nums">
+                    {formatNaira(totalKobo)}
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-raf-lime/25 px-4 py-3 ring-1 ring-raf-lime/40">
+                <p className="text-[12px] font-extrabold text-ink">
+                  <Ticket className="mr-1 inline size-4 text-raf-green" /> {chanceLabel}
+                  {safeQty > 1 && (
+                    <span className="ml-2 font-bold text-ink/55">
+                      (buy more tickets to improve your odds)
+                    </span>
+                  )}
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full shadow-[0_12px_28px_-12px_var(--coral)]"
+                onClick={() => setModalOpen(true)}
+                disabled={ticketsLeft === 0}
+              >
+                <Ticket className="size-4" />
+                {`Enter now · ${safeQty} ticket${safeQty === 1 ? "" : "s"}`} <ArrowRight className="size-4" />
+              </Button>
+              <p className="text-center text-xs font-bold text-ink/45">
+                Tickets reserved for 5 minutes · Wallet &amp; Referrals only · Limit {maxQty} tickets
+                per draw
+              </p>
+            </div>
           </div>
         </div>
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1551,6 +1638,7 @@ export function CompetitionDetailPage() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         competitionSlug={competition.slug}
+        initialQuantity={safeQty}
       />
     </>
   );
@@ -1577,9 +1665,17 @@ export function HowItWorksPage() {
             <span className="font-display text-4xl font-extrabold text-coral">{index + 1}</span>
             <h2 className="mt-5 font-display text-xl font-extrabold text-ink">{step}</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink/55">
-              {step === "Watch the draw"
-                ? "When the competition closes, follow the draw and its verification details."
-                : "A straightforward step in your Rafilla journey, with the details you need in view."}
+              {step === "Create your account"
+                ? "Sign up in under two minutes with your name, email, Nigerian phone number, and a strong password. Confirm your OTP and your Rafilla account is ready to enter draws."
+                : step === "Fund your Rafilla Wallet"
+                ? "Top up your wallet with any amount from ₦5,000 using Paystack or Flutterwave. Your balance arrives instantly and every naira shows up as integer kobo, ready to spend on entries."
+                : step === "Choose a competition"
+                ? "Browse live draws across vehicles, homes, electronics, fashion, jewellery and more. Filter by price, category, and closing date, then open any card to see the prize, partner, and draw schedule."
+                : step === "Purchase your entries"
+                ? "Select how many tickets you want — 1 to 50 at a time. Confirm your order and wallet deduction in a reserved slot with a 5-minute timer, then you'll instantly get your unique RF entry IDs."
+                : step === "Watch the draw"
+                ? "When the competition closes, follow the live draw with full public verification — the commitment hash, random beacon seed HMAC_DRBG formula and winning ticket are all published."
+                : "If your ticket number is picked, our team contacts you directly with proof of every step. Confirm your delivery address, receive your prize with signed verification photo and share your story with the Rafilla community."}
             </p>
           </div>
         ))}
@@ -2525,27 +2621,6 @@ function MissingPage({ title, text }: { title: string; text: string }) {
   );
 }
 
-const placeholderText = (label: string) => (
-  <div className="rounded-[22px] bg-lilac/15 p-5 ring-1 ring-ink/5">
-    <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-coral">
-      PLACEHOLDER TEXT — PENDING LEGAL REVIEW
-    </p>
-    <p className="mt-3 text-sm leading-relaxed text-ink/60">
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut
-      labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-      laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
-      voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat
-      non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-    </p>
-    <p className="mt-4 text-sm leading-relaxed text-ink/60">
-      Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
-      laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto
-      beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut
-      odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
-    </p>
-  </div>
-);
-
 function LegalBanner() {
   return (
     <div className="mb-8 rounded-[22px] bg-coral px-5 py-4 text-cream shadow-[0_8px_20px_-8px_var(--coral)] ring-1 ring-coral/30">
@@ -2586,55 +2661,277 @@ function LegalSection({
 }
 
 export function TermsAndConditionsPage() {
-  const sections = [
-    { number: "1", title: "Acceptance of Terms", placeholderLabel: "acceptance-terms" },
-    { number: "2", title: "Eligibility & Age Verification", placeholderLabel: "eligibility-age" },
-    { number: "3", title: "Competition Rules & Play", placeholderLabel: "competition-rules-play" },
-    {
-      number: "4",
-      title: "Entry Purchase, Payments & Wallet",
-      placeholderLabel: "entry-payments-wallet",
-    },
-    {
-      number: "5",
-      title: "Draws, Winners & Prize Claims",
-      placeholderLabel: "draws-winners-claims",
-    },
-    { number: "6", title: "Referral Program", placeholderLabel: "referral-program" },
-    {
-      number: "7",
-      title: "Account Responsibilities",
-      placeholderLabel: "account-responsibilities",
-    },
-    {
-      number: "8",
-      title: "Disclaimers & Limitation of Liability",
-      placeholderLabel: "disclaimers-liability",
-    },
-    {
-      number: "9",
-      title: "Dispute Resolution & Governing Law (Nigeria)",
-      placeholderLabel: "dispute-resolution-law",
-    },
-    { number: "10", title: "Amendments", placeholderLabel: "amendments" },
-    { number: "11", title: "Contact", placeholderLabel: "contact-terms" },
-  ];
-
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
       <PageIntro
         eyebrow="Legal"
         title="Terms and Conditions"
-        text="The agreement that covers your use of Rafilla, competition entries, draws, and related services."
+        text="The agreement that covers your use of Rafilla, competition entries, draws, wallet, referrals, and related services."
       />
       <div className="mt-8">
         <LegalBanner />
-        <div className="space-y-10">
-          {sections.map((section) => (
-            <LegalSection key={section.number} number={section.number} title={section.title}>
-              {placeholderText(section.placeholderLabel)}
-            </LegalSection>
-          ))}
+        <div className="space-y-10 text-sm leading-relaxed text-ink/70 sm:text-[15px]">
+          <LegalSection number="1" title="Acceptance of Terms">
+            <div className="space-y-4">
+              <p>
+                Welcome to Rafilla ("we", "us", "our" or "Rafilla Grand Prizes"). These Terms and
+                Conditions ("Terms") are a binding legal agreement between you ("you", "your", the
+                user, or the "Participant") and Rafilla Grand Prizes, a company organized under the
+                laws of the Federal Republic of Nigeria with registered office in Lagos, Nigeria.
+              </p>
+              <p>
+                By accessing or using the Rafilla website located at <span className="font-bold text-ink">rafilla.com</span>{" "}
+                (the "Site"), creating an account on the Platform, purchasing a competition entry, funding your
+                wallet, participating in the referral or using any of our services (collectively, the "Services"),
+                you confirm that you have read, understood, and unconditionally agree to be bound by these
+                Terms, our <Link to="/privacy-policy" className="font-bold text-coral underline underline-offset-2 hover:text-ink">Privacy Policy</Link>,
+                and our <Link to="/competition-rules" className="font-bold text-coral underline underline-offset-2 hover:text-ink">Competition Rules</Link> (together, the "Agreement").
+              </p>
+              <p>
+                If you do not agree to any part of this Agreement, you must immediately stop using
+                the Services and close your access to the Site and all Rafilla Services.
+              </p>
+              <p>
+                These Terms are effective as of the date you first create an account or first use of the
+                Services ("Effective Date).
+              </p>
+            </div>
+          </LegalSection>
+          <LegalSection number="2" title="Eligibility & Age Verification">
+            <div className="space-y-4">
+            <ol className="list-decimal space-y-3 pl-5 marker:list-inside marker:text-coral">
+              <li>
+                <span className="font-bold text-ink">Age requirement.</span> You must be at least eighteen (18) years of age on the date
+                you create an account, enter a competition, or use the Services. By using the Services,
+                you represent and warrant that you are of legal age to form a binding contract in Nigeria.
+              </li>
+              <li>
+                <span className="font-bold text-ink">Residency and jurisdiction.</span> Prize competitions are open only to individuals
+                who are lawfully resident in the Federal Republic of Nigeria and physically present in Nigeria at
+                the time of account creation and prize draw. Employees, officers, directors of Rafilla, its affiliates, prize partners, advertising, and promotional agencies, and immediate family members (spouse, parent, sibling, child, grandparent, grandchild and household members of each) are not eligible to enter competitions or win prizes.
+              </li>
+              <li>
+                <span className="font-bold text-ink">Account verification.</span> Before you may withdraw any referral commission, or claim a prize, you must successfully complete our identity and account verification ("KYC") including, but not limited to, a verified email address via one-time passcode (OTP), a verified Nigerian phone number, a Bank Verification Number (BVN) check, a valid government-issued photo identification (National ID, Permanent Voters Card, Drivers Licence or International Passport), and proof of address not older than three (3) months. We reserve the right to request additional documentation in our sole discretion.
+              </li>
+              <li>
+                <span className="font-bold text-ink">Prohibited persons.</span> Individuals or entities whose activity appears on any sanctions lists administered by the Nigerian Government, the Central Bank of Nigeria, OFAC, the United Nations, or the European Union, or who have been previously banned, suspended, or terminated from Rafilla may not use the Services.
+              </li>
+            </ol>
+          </div>
+          </LegalSection>
+          <LegalSection number="3" title="Competition Rules & Play">
+            <div className="space-y-4">
+              <p>
+                All competitions and prize draws hosted on the Rafilla Platform are governed by
+                these Terms and by the standalone <Link to="/competition-rules" className="font-bold text-coral underline underline-offset-2 hover:text-ink">Competition Rules</Link> which are expressly
+                incorporated by reference into these Terms. In the event of a conflict between these Terms
+                and the Competition Rules for a specific draw, the Competition Rules shall prevail for that draw.
+              </p>
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">No purchase necessary exemptions.</span> Free alternative entry routes, where required by applicable Nigerian law, are described on request by writing to freeentry@rafilla.com with proof of Nigerian residency and a handwritten entry statement. No-purchase entries receive the same probability weight as paid entries in the same draw.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Ticket format.</span> Every successful entry generates one (1) or more unique ticket identifiers in the format <span className="font-mono text-ink">RF-YYYY-XXXXXXXX</span>. Ticket identifiers are stored on our systems and associated with your verified account.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Multiple entries per draw.</span> You may enter a single competition with multiple tickets (up to the per-account per-competition cap published on the competition detail page). Multiple entries proportionally improve your odds as published.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Independent probability.</span> Odds of winning are calculated as the number of tickets you hold in a closed draw divided by the total number of tickets sold in that draw.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="4" title="Entry Purchase, Payments & Wallet">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Currency and denomination.</span> All prices on the Rafilla Platform are stated in Nigerian Naira (₦). Financial values within our systems are stored in kobo (₦ x 100) to eliminate rounding errors. Final prices shown in the purchase UI are inclusive of all applicable taxes and platform fees unless expressly stated otherwise.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Payment providers.</span> Wallet funding is processed by licensed payment processors including Paystack and Flutterwave (the "Processors"). You agree to be bound by each respective Processor's terms, cardholder, and payment acceptance policies in addition to these Terms.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Wallet nature (spend-only).</span> Your Rafilla Wallet is a pre-funded spend-only instrument used exclusively for the purchase of competition entries. It is not a bank account, not insured by the Nigeria Deposit Insurance Corporation (NDIC), and does not accrue interest. You may not withdraw Wallet balances to an external bank account. Only Referral Commissions (defined in Section 6 below) are withdrawable per the payout procedures set out on the Referral dashboard.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Payment sources for entry.</span> Competitions entries may be paid from (a) your Rafilla Wallet balance or (b) your available Referral Commission balance. Split payments between Wallet and Referrals are not supported. You may top up the Wallet using the Processor integrations at any time.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Finality of purchase.</span> Once a competition entry purchase is completed and a ticket identifier (RF-YYYY-XXXXXXXX) is issued to your account, the purchase is final and non-refundable except in the specific cancellation scenarios set out in Section 10 of the Competition Rules or if required by applicable Nigerian law.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Chargebacks and reversals.</span> You agree not to initiate any chargeback, reversal, or dispute with your card issuer or Processor without first contacting Rafilla support at support@rafilla.com and allowing thirty (30) days for resolution. An unresolved chargeback in your favour after good-faith resolution will cause your account to be permanently suspended and any prizes or pending commissions forfeited.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Reservation.</span> Entry selections in the purchase flow are reserved for a rolling five (5) minute window while you complete checkout. If checkout does not complete within this window, the reserved tickets are released back to inventory.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="5" title="Draws, Winners & Prize Claims">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Draw timing.</span> Each competition closes automatically on the published end date and time stated on its competition page or when the published inventory of tickets for that draw is one hundred percent (100%) sold, whichever comes first. Late entries after close are not accepted.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Random selection algorithm.</span> Winner selection uses a cryptographically secure, independently verifiable HMAC_DRBG (Hash-based Message Authentication Code Deterministic Random Bit Generator) seeded with an independently published public seed combined with the frozen, ordered list of all ticket entries at close. The algorithm, the seed commitment, and the frozen entry set are published on the Draw Verification page at <Link to="/draw-verification/$campaign" params={{ campaign: "example" }} className="font-bold text-coral underline underline-offset-2">/draw-verification</Link> for every competition so that any third party may independently reproduce the winning ticket selection.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Prize insurance.</span> Where applicable, physical prize values are backed by a prize-indemnity insurance policy underwritten by an A-rated Nigerian insurer for the stated prize value, ensuring the prize is available for delivery to a valid winner.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Winner notification.</span> The verified winner is contacted within forty-eight (48) hours of the draw by email to the registered address and SMS to the verified Nigerian phone number on the account. The winner's first name, last initial, and state of residence may be published publicly in the Winners Gallery on the Site. A winner's full legal name and likeness are published only after separate written consent in line with our <Link to="/privacy-policy" className="font-bold text-coral underline underline-offset-2 hover:text-ink">Privacy Policy</Link>.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Claim window and KYC.</span> Winners have fourteen (14) calendar days from draw date ("Claim Window") to complete all required prize claim steps including KYC level-2 verification, signed prize acceptance, and any applicable affidavit of eligibility.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Unclaimed prizes and redraw.</span> If a winner does not complete the claim within the 14-day window or fails KYC verification, the prize is declared unclaimed and a verified redraw will be conducted from the remaining eligible entries in the same original frozen entry set using the same HMAC_DRBG procedure with a fresh published seed.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Prize delivery.</span> Physical prizes are delivered to a verifiable Nigerian address. Physical prizes are delivered to a verifiable Nigerian address of the winner's choice within Lagos, Abuja, or Port Harcourt within 45 calendar days of accepted claim, or as otherwise specified in the prize description. Cash alternatives are not offered unless expressly stated on the competition page.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="6" title="Referral Program">
+            <div className="space-y-4">
+              <p>
+                Rafilla operates a multi-level referral commission program ("Referral Program") that rewards
+                verified account holders ("Referrers") for introducing new verified account holders ("Referees")
+                who subsequently purchase paid competition entries on the Platform.
+              </p>
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Commission structure.</span> Commissions are earned on up to five (5) descending levels of your referral network (Level 1 through Level 5) using the published tiered percentage schedule applied to the net entry price (after taxes and processor fees actually paid by the referred entrant on a successful ticketed competition purchased.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Qualifying activity.</span> Commissions become earned only when a referee completes (a) email OTP verification, (b) a paid competition entry, and (c) a successful payment processor settlement. Refunds, reversals, or cancelled draws reduce the corresponding commissions in the same calendar month that they occur.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Commission balance.</span> Earned referral commissions accrue in a separate Referral balance from Wallet. The Referral balance is withdrawable (not the Wallet which is spend-only). Withdrawals are paid to a verified Nigerian bank account under the same verified account holder's name only and are subject to minimum withdrawal thresholds, and a completed payout schedule published on the Referrals dashboard.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Self-referrals and fraud.</span> Referring yourself, creating duplicate accounts, fabricated accounts, sham payments, or accounts that do not meet KYC will disqualify all commissions forfeit all earned balances, and result in account termination.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Program changes.</span> Rafilla reserves the right to modify the commission percentages, tier structure, thresholds, or discontinue the Referral Program at any time with thirty (30) calendar days prior written email notice to active Referrers.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="7" title="Account Responsibilities">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Account credentials.</span> You are solely responsible for maintaining the confidentiality of your account email, password, one-time passcodes, authenticator app codes, and any other account credentials. You agree to notify Rafilla immediately of any unauthorized use or suspected breach.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">One account per person.</span> You may maintain only one (1) active verified Rafilla account per individual natural person. Multiple accounts, account sharing, or selling access to an account is a material breach and will result in termination, forfeiture of entries and balances.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Accurate information.</span> You warrant that all registration, KYC, and profile information you provide is true, accurate, current, and complete and you will update it within 14 days of any material change.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Prohibited conduct.</span> You will not, and will not assist or enable any third party to: (a) reverse engineer, decompile, disassemble, scrape, bot, or automate access to the Platform; (b) use the Services for money laundering, terrorist financing, fraud, or any unlawful purpose under Nigerian law; (c) circumvent age, eligibility, entry limits, or geographic restrictions using VPN, proxy, or similar technology; (d) impersonate any person or entity; (e) interfere with the draw, entry integrity, or the security or integrity of the Platform.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Suspension and termination.</span> We may, in our sole discretion and without prior notice, immediately suspend, limit, or terminate your account and forfeit any or all entries, wallet, or referral balances if we reasonably suspect a breach of this Section 7, applicable law, or the integrity of a competition.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="8" title="Disclaimers & Limitation of Liability">
+            <div className="space-y-4">
+              <p>
+                TO THE FULLEST EXTENT PERMITTED BY NIGERIAN LAW, THE SERVICES, THE SITE, ALL COMPETITIONS,
+                DRAWS, PRIZES, WALLET, AND REFERRAL PROGRAM ARE PROVIDED BY RAFILLA ON AN "AS IS" AND "AS
+                AVAILABLE" BASIS. RAFILLA, ITS DIRECTORS, OFFICERS, EMPLOYEES, PARTNERS, INSURERS, AND AGENTS
+                MAKE NO WARRANTIES, EXPRESS OR IMPLIED, STATUTORY OR OTHERWISE, INCLUDING WITHOUT LIMITATION
+                WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, QUIET ENJOYMENT,
+                OR NON-INFRINGEMENT.
+              </p>
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Service interruptions.</span> Rafilla does not warrant uninterrupted, error-free, secure, virus-free operation of the Services, or that any defect will be corrected. Your access may be suspended for scheduled maintenance, emergency security patches, or force majeure without prior notice.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">No guarantee of win.</span> Nothing in this Agreement is a promise, guarantee, or warranty that you will win any prize or earn any referral commission. All competitions are games of chance conditioned on the verifiable HMAC_DRBG draw and you accept the outcome in Section 5.2.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Limitation of liability.</span> TO THE MAXIMUM EXTENT PERMITTED BY NIGERIAN LAW, RAFILLA SHALL NOT BE LIABLE TO YOU OR TO ANY THIRD PARTY FOR (A) ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY OR PUNITIVE DAMAGES, OR (B) ANY LOSS OF PROFITS, REVENUE, GOODWILL, DATA, OR USE, ARISING OUT OF OR IN CONNECTION WITH THE SERVICES, WHETHER IN CONTRACT, TORT (INCLUDING NEGLIGENCE), OR OTHERWISE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. OUR TOTAL AGGREGATE LIABILITY UNDER THIS AGREEMENT FOR ALL CLAIMS IN A CALENDAR YEAR SHALL NOT EXCEED THE LOWER OF (I) THE TOTAL AMOUNT YOU ACTUALLY PAID TO RAFILLA IN THE TWELVE (12) CALENDAR MONTHS PRECEDING THE CLAIM, OR (II) ONE MILLION FIVE HUNDRED THOUSAND NAIRA (₦1,500,000).
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Force majeure.</span> Neither party is liable for failure or delay in performing its obligations under this Agreement to the extent caused by acts of God, war, terrorism, civil unrest, pandemic, government order, utility outage, payment processor outage, or Internet infrastructure failure beyond the reasonable control of the party affected.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="9" title="Dispute Resolution & Governing Law (Nigeria)">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Governing law.</span> This Agreement and any claim, dispute or controversy arising out of or relating to this Agreement, the Services, competitions, or your relationship with Rafilla shall be governed by and construed exclusively under the laws of the Federal Republic of Nigeria, without regard to conflict of laws principles.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Amicable resolution first.</span> Before commencing any formal proceeding, you and we agree to first attempt in good faith to resolve any dispute through direct negotiation for a period of thirty (30) calendar days from the date written notice of dispute is delivered. Our notice address for disputes is legal@rafilla.com.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Mediation.</span> If the dispute is not resolved within 30 days, either party may submit the matter to non-binding mediation administered by the Lagos Multi-Door Courthouse (LMDC) before a single neutral mediator with costs shared equally by the parties.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Courts of competent jurisdiction.</span> Subject to subsections 2 and 3 above, you irrevocably submit to the exclusive jurisdiction of the courts of Lagos State, Nigeria for any action arising from or related to this Agreement, and waive any objection to venue or forum non conveniens.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Consumer protection notice.</span> Nothing in this Section 9 excludes or limits any mandatory rights you may have as a consumer under the Federal Competition and Consumer Protection Act 2018 or the Nigerian Data Protection Regulation 2019 (NDPR) that cannot be excluded or limited by contract.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="10" title="Amendments">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Right to modify.</span> Rafilla may update, amend, or modify these Terms, the Privacy Policy, or the Competition Rules from time to time in our sole discretion. Material changes (as determined by us in good faith) will be communicated to you by email to your registered address at least fourteen (14) calendar days before they take effect. Non-material changes take effect immediately upon posting on the Site.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Deemed acceptance.</span> Your continued use of the Services after the effective date of posted amendments constitutes your acceptance of the amended Terms. If you do not accept an amendment, your sole and exclusive remedy is to close your account and stop using the Services.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Open competitions grandfathered.</span> For open and purchased entries in competitions already opened at the time of amendment, the version of Competition Rules in effect at the time the entry was purchased shall govern that draw specifically unless otherwise required by Nigerian law.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="11" title="Contact">
+            <div className="space-y-4">
+              <p>If you have questions, complaints, or legal notices about these Terms, please contact Rafilla through any of the following channels:</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-paper p-4 ring-1 ring-ink/5">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Legal correspondence</p>
+                  <p className="mt-2 font-bold text-ink">legal@rafilla.com</p>
+                </div>
+                <div className="rounded-2xl bg-paper p-4 ring-1 ring-ink/5">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Customer support</p>
+                  <p className="mt-2 font-bold text-ink">support@rafilla.com</p>
+                </div>
+                <div className="rounded-2xl bg-paper p-4 ring-1 ring-ink/5">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Registered address</p>
+                  <p className="mt-2 font-bold text-ink">Lagos, Nigeria</p>
+                </div>
+                <div className="rounded-2xl bg-paper p-4 ring-1 ring-ink/5">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Response timeline</p>
+                  <p className="mt-2 font-bold text-ink">Within 5 business days</p>
+                </div>
+              </div>
+              <p className="pt-2 text-xs font-bold text-ink/55">
+                Dated: 2026-09-07. Last updated at time of account creation or latest email notification of material amendment.
+              </p>
+            </div>
+          </LegalSection>
         </div>
       </div>
     </div>
@@ -2642,34 +2939,287 @@ export function TermsAndConditionsPage() {
 }
 
 export function PrivacyPolicyPage() {
-  const sections = [
-    { number: "1", title: "Information We Collect", placeholderLabel: "information-collect" },
-    { number: "2", title: "How We Use Information", placeholderLabel: "how-we-use" },
-    { number: "3", title: "Sharing & Disclosure", placeholderLabel: "sharing-disclosure" },
-    { number: "4", title: "Cookies & Analytics", placeholderLabel: "cookies-analytics" },
-    { number: "5", title: "Data Retention & Security", placeholderLabel: "retention-security" },
-    { number: "6", title: "Your Rights & Choices", placeholderLabel: "rights-choices" },
-    { number: "7", title: "International Transfers", placeholderLabel: "international-transfers" },
-    { number: "8", title: "Children", placeholderLabel: "children-privacy" },
-    { number: "9", title: "Changes to this Policy", placeholderLabel: "changes-policy" },
-    { number: "10", title: "Contact", placeholderLabel: "contact-privacy" },
-  ];
-
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
       <PageIntro
         eyebrow="Legal"
         title="Privacy Policy"
-        text="How Rafilla collects, uses, and protects personal information for competition entrants and account holders."
+        text="How Rafilla collects, uses, shares, and protects personal information for competition entrants, account holders, and website visitors, in accordance with the NDPR 2019."
       />
       <div className="mt-8">
         <LegalBanner />
-        <div className="space-y-10">
-          {sections.map((section) => (
-            <LegalSection key={section.number} number={section.number} title={section.title}>
-              {placeholderText(section.placeholderLabel)}
-            </LegalSection>
-          ))}
+        <div className="space-y-10 text-sm leading-relaxed text-ink/70 sm:text-[15px]">
+          <LegalSection number="1" title="Information We Collect">
+            <div className="space-y-4">
+              <p>
+                Rafilla Grand Prizes ("Rafilla", "we", "us" or "our") is the Data Controller responsible for
+                the personal information described in this Privacy Policy. Our processing is conducted in
+                accordance with the Nigerian Data Protection Regulation 2019 ("NDPR") and applicable supplementary
+                guidance issued by the Nigeria Data Protection Commission (NDPC).
+              </p>
+              <p>
+                We collect only the information reasonably necessary to operate the Services, lawfully run prize
+                competitions, process payments, pay referral commissions, deliver prizes, meet our KYC, anti-money
+                laundering ("AML"), and counter-financing-of-terrorism ("CFT") obligations and for the other
+                purposes described in this Policy.
+              </p>
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Account and registration data.</span> When you create a Rafilla account we collect your first name, last name, email address, Nigerian mobile phone number, chosen password (stored only as a cryptographic hash), date of birth, state of residence, and referral code (if any).
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Verification, KYC and identity data.</span> When you apply to withdraw referral commissions, claim a prize, or when we otherwise require enhanced verification, we collect your Bank Verification Number (BVN), a scan or photograph of a valid government-issued photo ID (PVC, NIN slip, Driver Licence, Passport), a selfie or liveness photo, proof of residential address not older than 3 months (utility bill, bank statement, rent receipt), and your Nigerian bank account details (bank name, account number, account name) for payout purposes.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Transaction, wallet and payment data.</span> When you fund your Wallet, purchase competition entries, earn referral commissions, or request a payout, we collect transaction identifiers (including ticket IDs in the format RF-YYYY-XXXXXXXX), amounts, timestamps, payment processor references, the payment method used (card, bank transfer, USSD via Paystack or Flutterwave), last-4 of card numbers, and the status of each transaction. We do not store full card numbers or CVV — these are handled exclusively by our licensed PCI-DSS compliant payment Processors.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Competition and draw records.</span> We retain a permanent record of every ticket purchased (ticket ID, draw ID, purchase timestamp, quantity, entry price paid, source account debited) together with the published HMAC_DRBG draw input and output for each competition you enter, in order to resolve disputes and for independent audit.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Device, location and technical data.</span> We automatically collect IP address, approximate geo-location derived from IP (city/state level only), device make and model, operating system version, browser type and user agent string, screen resolution, referring URL, exit URL, pages visited, timestamps of visits, and general clickstream activity.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Marketing and communications preferences.</span> We collect your opt-in consents, opt-out records, and email/SMS bounce/open/click metadata used to deliver lawful competition, referral and prize notifications and (only where consent is given) marketing communications.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Correspondence and support.</span> We collect the content, attachments, and metadata of emails, support tickets, social media messages, chat transcripts, and telephone calls that you send to or receive from our support, legal, compliance, or anti-fraud teams.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="2" title="How We Use Information">
+            <div className="space-y-4">
+              <p>
+                We process each category of personal data only for one or more of the following purposes, relying on
+                one or more of the lawful bases under the NDPR (contract performance, legitimate interests, legal obligation,
+                consent, and protection of vital interests as applicable):
+              </p>
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Contract performance.</span> Creating and administering your Rafilla account, verifying your identity so that prizes and referral commissions can lawfully be paid to you, issuing RF ticket identifiers, debiting your Wallet or Referral balance in exchange for entries, conducting draws, selecting winners, contacting winners, arranging prize delivery, and paying referral commissions to your bank account.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Legal obligation.</span> Complying with the NDPR, CAMA, the CBN AML/CFT Regulations, the EFCC Act, tax reporting and withholding obligations, Nigerian sanctions law, valid court orders, subpoenas, lawful requests from Nigerian regulators, and our KYC and enhanced due diligence duties (including BVN verification and sanctions screening).
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Legitimate interests.</span> Operating and improving the Site and Services; preventing, detecting and investigating fraud, collusion, bot activity, ticket manipulation, VPN circumvention of geo-restrictions, money laundering, and other conduct which breaches the <Link to="/terms-and-conditions" className="font-bold text-coral underline underline-offset-2 hover:text-ink">Terms and Conditions</Link>; enforcing our rights under our agreements; ensuring network and information security; conducting product analytics; sending required administrative and lifecycle notices (draw reminders, claim window alerts, account security alerts). Where we rely on legitimate interests, we conduct an internal balancing test and you may object as described in Section 6.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Consent.</span> Where consent is required by applicable law — including for electronic direct marketing messages under the NDPR, the use of non-essential cookies, or the public release of a winner's full legal name and photographic likeness — we will only process after we have obtained your specific, freely given, informed, unambiguous, and revocable opt-in consent, which you may withdraw at any time.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Prize announcements and winners gallery.</span> We publish first name, last initial and state of residence of verified winners in the public Winners Gallery (<Link to="/winners" className="font-bold text-coral underline underline-offset-2 hover:text-ink">/winners</Link>) and across our marketing on the legitimate-interest basis described above, in order to evidence fair operation of the draws. A winner's full legal name, photo, and testimonial are published only with separate written consent.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="3" title="Sharing & Disclosure">
+            <div className="space-y-4">
+              <p>
+                We do not sell your personal information. We share data only with the categories of recipients listed below,
+                always subject to appropriate safeguards (contractual data processing clauses, NDPR-compliant processor terms,
+                confidentiality obligations, and technical and organizational security measures):
+              </p>
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Payment processors.</span> Paystack and Flutterwave, to process Wallet funding, payment authorisation, fraud screening, bank settlement and payouts. Payment processors operate under their own PCI-DSS certification and privacy notices.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Identity and KYC verification providers.</span> Licensed Nigerian identity verification service providers and BVN verification endpoints to validate government IDs, proof of address, liveness, sanctions screening, and BVN match.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Prize partners and insurers.</span> The partner that supplied a prize (where named on the competition page) and the prize-indemnity insurer(s), solely to the extent needed to deliver the prize, validate the insurance claim, or perform a required pre-delivery identity check on the winner.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Logistics and delivery partners.</span> Licensed courier or logistics companies to deliver physical prizes to a winner's nominated Nigerian address; only the minimum data needed for last-mile delivery is shared (name, phone, delivery address, prize description).
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Anti-fraud and cybersecurity vendors.</span> Device fingerprinting, bot detection, and analytics providers to detect and prevent collusion, botnet entries, card testing, account takeover and account abuse.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Professional advisors.</span> External auditors, solicitors, barristers, notaries public, accountants, tax advisors and insurers in the course of providing professional services to Rafilla, bound by professional secrecy obligations.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Regulators and law enforcement.</span> The Nigeria Data Protection Commission (NDPC), Central Bank of Nigeria (CBN), Economic and Financial Crimes Commission (EFCC), Independent Corrupt Practices Commission (ICPC), Nigerian Police Force, Federal Inland Revenue Service (FIRS), courts, and any other Nigerian regulator or competent law-enforcement body, in response to a valid, lawful, and specific written request, subpoena or court order.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Corporate transactions.</span> In the event of a merger, acquisition, business combination, financing, reorganisation, or sale of all or substantially all of the assets of Rafilla, your personal data may be transferred to the successor entity subject to the same or more protective privacy terms.
+                </li>
+              </ol>
+              <p>
+                We maintain a publicly accessible Register of Data Processing Activities available on written request to
+                privacy@rafilla.com that describes, for each processing operation, the categories of data subject, personal data,
+                processing purpose, lawful basis, recipient categories, retention periods, and applicable safeguards.
+              </p>
+            </div>
+          </LegalSection>
+          <LegalSection number="4" title="Cookies & Analytics">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">What cookies are.</span> Cookies are small text files that a website stores on your browser or device. We use cookies and similar technologies (pixels, local storage, session storage) together with your explicit cookie preferences (managed via the Cookie Preferences banner) as required by the NDPR.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Strictly necessary cookies — always on.</span> These cookies are required for basic operation of the Site and Services and include session authentication tokens, CSRF tokens, purchase-flow reservation timers (5-minute entry hold), load-balancer affinity identifiers, and cookie-consent choice persistence. These cannot be switched off because the Site would not function.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Analytics cookies (opt-in only).</span> With your consent, we run privacy-preserving first-party product analytics to help us understand how visitors use the Site so we can improve it. We use aggregated, pseudonymised page-view and click-event data; no raw personal identifiers are exported out of Nigeria without your further consent.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Marketing cookies (opt-in only).</span> With your explicit opt-in we may use social media remarketing pixels on Meta/Instagram and similar platforms to serve relevant Rafilla advertisements to people who have visited the Site. These are deactivated unless you opt in.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Managing preferences.</span> You can change your cookie preferences at any time by clicking "Cookie preferences" in the footer of the Site or by writing to privacy@rafilla.com. Most browsers also enable you to block or delete cookies via browser settings; note that doing so may affect the functionality of the Services.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="5" title="Data Retention & Security">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Retention by category.</span> We retain personal data only for as long as reasonably necessary to fulfil the purpose for which it was collected and to meet our legal, accounting, tax, audit and dispute-resolution obligations: (a) Account registration data — retained for the life of the account plus 7 years after closure; (b) KYC and identity documents — retained for 7 years after the last transaction on the account, in line with CBN AML/CFT record-keeping rules; (c) Transaction records including ticket IDs, draw inputs and outputs — permanently retained for independent draw audit and disputes; (d) Payment processor references — retained for 7 years after settlement; (e) Support correspondence — retained for 6 years after closure of the ticket; (f) Marketing opt-out registers — retained indefinitely in order to continue honouring opt-outs; (g) Raw server logs — retained for 12 months, then aggregated and anonymised.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Secure disposal.</span> Where personal data is no longer required we securely delete, destroy, or irreversibly anonymise it (overwriting, cryptographic shredding, or certified physical destruction), keeping an audit record of the disposal.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Technical and organizational security measures.</span> We implement the following minimum measures: (a) TLS 1.3+ encryption for all traffic in transit; (b) AES-256 encryption at rest for identity documents, BVN, and bank account details; (c) multi-factor authentication (time-based one-time passwords) required on all internal administrative accounts and available as a user option at <Link to="/dashboard/security" className="font-bold text-coral underline underline-offset-2 hover:text-ink">Dashboard → Security</Link>; (d) password hashing using Argon2id with a minimum 16 MiB memory cost; (e) role-based access controls and principle of least privilege for staff; (f) quarterly vulnerability scanning and annual penetration testing by an independent NDPC-recognised firm; (g) written Information Security Management System (ISMS); (h) staff NDPR training at onboarding and annually thereafter; (i) device management and endpoint protection on all internal endpoints.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Data breach notification.</span> In the event of a personal data breach that is likely to result in a risk to the rights and freedoms of natural persons, we will: (a) record the breach in our internal breach register; (b) notify the NDPC without undue delay and, where feasible, not later than 72 hours after becoming aware of it; and (c) communicate the breach to affected data subjects without undue delay where the risk is high, unless we have put in place subsequent technical and organisational measures that render the risk no longer high, or where the communication would involve disproportionate effort (in which case a public notice or similar measure will be used instead).
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="6" title="Your Rights & Choices">
+            <div className="space-y-4">
+              <p>
+                As a data subject under the NDPR 2019, you have the following rights in respect of your personal data. We will
+                respond to verified requests within 28 calendar days (extendable by a further 56 calendar days where the request
+                is complex or high-volume, in which case we will notify you of the extension within the first 28 days and explain
+                the reason for delay). We do not charge for a first request per calendar year; further manifestly unfounded or
+                excessive requests may attract a reasonable administrative fee based on cost.
+              </p>
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Right of access.</span> You may request confirmation of whether we are processing personal data relating to you, a copy of that data in a structured, commonly used and machine-readable format (JSON or CSV), and a description of the processing.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Right to rectification.</span> You have the right to have inaccurate or incomplete personal data corrected without undue delay. You can update most profile information directly on <Link to="/dashboard/profile" className="font-bold text-coral underline underline-offset-2 hover:text-ink">Dashboard → Profile</Link>.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Right to erasure ("right to be forgotten").</span> You may request deletion of personal data in the circumstances set out in the NDPR, for example where processing is no longer necessary, consent is withdrawn and no other lawful basis applies, or the processing is unlawful. Exclusions apply where retention is required by Nigerian law (e.g. 7-year AML records).
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Right to restrict processing.</span> You may request suspension of processing where the accuracy of the data is contested, the processing is unlawful, or we no longer need the data but you require it for the establishment, exercise or defence of legal claims.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Right to data portability.</span> Where processing is based on consent or on a contract and is carried out by automated means, you may receive your personal data in a machine-readable format or have it transmitted directly to another controller where technically feasible.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Right to object.</span> You may object at any time to processing based on our legitimate interests (including direct marketing) on grounds relating to your particular situation. We will cease processing unless we demonstrate compelling legitimate grounds for the processing which override your interests, rights and freedoms, or we need the processing for the establishment, exercise or defence of legal claims.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Right to withdraw consent.</span> Where we have relied on your consent to process personal data, you may withdraw that consent at any time. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Right to lodge a complaint.</span> If you believe that our processing of your personal data infringes the NDPR, you may lodge a complaint with the Nigeria Data Protection Commission (NDPC) at ndpc.gov.ng or by writing to the Data Protection Officer at privacy@rafilla.com who will acknowledge the complaint within 7 business days.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Automated decision-making and profiling.</span> We carry out limited automated decision-making and profiling for anti-fraud, sanctions screening, and credit-risk evaluation of referral payout requests. Where a decision based solely on automated processing produces a legal or similarly significant effect concerning you, you have the right to obtain human intervention, to express your point of view, to contest the decision, and to be given the reasons for it.
+                </li>
+              </ol>
+              <p>
+                To exercise any of these rights, please email privacy@rafilla.com from the email address registered to your account,
+                include your full name and registered phone number, and clearly describe the right you wish to exercise. We may
+                request additional verifying identity documentation before complying to protect against unauthorised access.
+              </p>
+            </div>
+          </LegalSection>
+          <LegalSection number="7" title="International Transfers">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">General rule.</span> As a general matter, Rafilla stores the primary copy of all personal data collected from Nigerian data subjects on servers physically located within the Federal Republic of Nigeria, operated by an NDPC-registered infrastructure provider.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Permitted transfers with safeguards.</span> Where it is necessary to transfer personal data outside of Nigeria to a sub-processor for purposes described in this Policy — for example, to a global cloud provider's disaster-recovery region, or to a licensed identity-verification provider — the transfer will be made only where one of the following NDPR conditions is met: (a) the recipient country is the subject of an NDPC adequacy decision; (b) we have executed binding Standard Data Protection Clauses (SDPCs) approved by the NDPC with the recipient; (c) the recipient has Binding Corporate Rules approved by the NDPC; or (d) we have obtained your explicit, informed, written consent to the specific transfer after clearly informing you of the possible risks of the transfer in the absence of an adequacy decision and appropriate safeguards.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Sub-processor register.</span> A current list of our non-Nigerian sub-processors and the safeguards applied to transfers is maintained in our Register of Data Processing Activities and is available on written request to privacy@rafilla.com.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="8" title="Children">
+            <div className="space-y-4">
+              <p>
+                Rafilla prize competitions are age-gated and are not directed at, and are not open to, children or minors under
+                the age of 18. We do not knowingly collect, solicit, or process personal data from any person under 18.
+              </p>
+              <p>
+                If we learn that we have inadvertently collected personal information from a child under 18 — including, for
+                example, where a minor fraudulently misrepresents age during registration — we will, upon becoming aware: (a)
+                immediately disable the account; (b) remove any ticket entries from draws; (c) refund any Wallet balance to the
+                source payment instrument; (d) permanently delete or irreversibly anonymise all personal data relating to that
+                minor from our systems and those of our processors; and (e) retain only a minimal record of the account
+                identifier and deletion date on a restricted blacklist to prevent re-registration.
+              </p>
+              <p>
+                If you are a parent, guardian or educator and believe a child under 18 has provided personal data to Rafilla
+                without your consent, please notify us immediately at privacy@rafilla.com with the subject line
+                <span className="font-mono font-bold text-ink"> "MINOR DATA REPORT"</span> and we will respond within 5 business days.
+              </p>
+            </div>
+          </LegalSection>
+          <LegalSection number="9" title="Changes to this Policy">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Version control.</span> This Privacy Policy is version-controlled and the "Last updated" date appears at the end of this Policy. Any new version supersedes all prior versions upon its effective date.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Material changes.</span> If we make changes that, in our good-faith determination, materially alter your rights, our obligations, or the scope of processing described in this Policy, we will: (a) send you written notice of the changes by email to your registered address at least thirty (30) calendar days before the new policy becomes effective; and (b) publish a notice on the Site for the same period; and (c) where a change is based on a new or expanded purpose that relies on consent, we will separately request your explicit opt-in before the new processing begins.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Open-entry grandfathering.</span> For entries already purchased in open competitions at the time of a material change, the Privacy Policy version in effect at the time the entry was paid for will continue to apply to that specific draw's record-keeping and winner processing unless you explicitly accept the newer version.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="10" title="Contact">
+            <div className="space-y-4">
+              <p>
+                For questions about this Privacy Policy, the exercise of your NDPR rights, data-subject access requests, a copy
+                of our Data Processing Register, or to report a suspected personal data breach, please contact our Data
+                Protection Officer ("DPO") and compliance team:
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-paper p-4 ring-1 ring-ink/5">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Data Protection Officer</p>
+                  <p className="mt-2 font-bold text-ink">privacy@rafilla.com</p>
+                </div>
+                <div className="rounded-2xl bg-paper p-4 ring-1 ring-ink/5">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Postal / registered address</p>
+                  <p className="mt-2 font-bold text-ink">Rafilla Grand Prizes · Lagos, Nigeria</p>
+                </div>
+                <div className="rounded-2xl bg-paper p-4 ring-1 ring-ink/5">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Breach hotline (urgent)</p>
+                  <p className="mt-2 font-bold text-ink">dpo-breach@rafilla.com</p>
+                </div>
+                <div className="rounded-2xl bg-paper p-4 ring-1 ring-ink/5">
+                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Supervisory authority</p>
+                  <p className="mt-2 font-bold text-ink">Nigeria Data Protection Commission (NDPC)</p>
+                </div>
+              </div>
+              <p className="pt-2 text-xs font-bold text-ink/55">
+                Last updated: 2026-09-07. Effective for all users registering on or after this date; earlier versions retained
+                in our version archive at privacy@rafilla.com on request.
+              </p>
+            </div>
+          </LegalSection>
         </div>
       </div>
     </div>
@@ -2677,40 +3227,283 @@ export function PrivacyPolicyPage() {
 }
 
 export function CompetitionRulesPage() {
-  const sections = [
-    { number: "1", title: "Organizer & Scope", placeholderLabel: "organizer-scope" },
-    { number: "2", title: "Eligibility", placeholderLabel: "eligibility-rules" },
-    { number: "3", title: "Entry", placeholderLabel: "entry-rules" },
-    { number: "4", title: "Ticket Pricing & Limits", placeholderLabel: "pricing-limits" },
-    { number: "5", title: "Competition Period", placeholderLabel: "competition-period" },
-    { number: "6", title: "Draw Procedure & Verification", placeholderLabel: "draw-verification" },
-    {
-      number: "7",
-      title: "Winner Selection & Notification",
-      placeholderLabel: "winner-notification",
-    },
-    { number: "8", title: "Prizes, Claims & Delivery", placeholderLabel: "prizes-claims-delivery" },
-    { number: "9", title: "Conduct & Cheating", placeholderLabel: "conduct-cheating" },
-    { number: "10", title: "Refunds", placeholderLabel: "refunds-rules" },
-    { number: "11", title: "Liability", placeholderLabel: "liability-rules" },
-    { number: "12", title: "Final Decisions", placeholderLabel: "final-decisions" },
-  ];
-
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
       <PageIntro
         eyebrow="Legal"
         title="Competition Rules"
-        text="The specific rules that apply to Rafilla prize competitions, including entries, draws, prizes, and claims."
+        text="The specific, binding rules that govern every Rafilla prize draw: entry, draws, winners, prizes, refunds and final decisions."
       />
       <div className="mt-8">
         <LegalBanner />
-        <div className="space-y-10">
-          {sections.map((section) => (
-            <LegalSection key={section.number} number={section.number} title={section.title}>
-              {placeholderText(section.placeholderLabel)}
-            </LegalSection>
-          ))}
+        <div className="space-y-10 text-sm leading-relaxed text-ink/70 sm:text-[15px]">
+          <LegalSection number="1" title="Organizer & Scope">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Organizer.</span> Every prize competition ("Competition", "draw" or "campaign") hosted on rafilla.com is organized and promoted by Rafilla Grand Prizes ("Organizer", "Rafilla", "we" or "us"), a company organized under the laws of the Federal Republic of Nigeria.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Scope and incorporation.</span> These Official Competition Rules ("Rules") apply to every Competition hosted on the Rafilla Platform, in addition to (and in the event of conflict taking priority over) the general <Link to="/terms-and-conditions" className="font-bold text-coral underline underline-offset-2 hover:text-ink">Terms and Conditions</Link> and <Link to="/privacy-policy" className="font-bold text-coral underline underline-offset-2 hover:text-ink">Privacy Policy</Link>, which are incorporated by reference. Where a specific Competition has additional rules published on its competition detail page (e.g. age restrictions, residency carve-outs, bespoke delivery terms, a draw delay clause due to inventory close timing), those specific rules also apply and take priority for that single Competition only.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Free entry route.</span> Where required by applicable Nigerian law, a free, no-purchase-necessary entry channel is available on written request to <span className="font-bold text-ink">freeentry@rafilla.com</span> with valid proof of Nigerian residency and a legible handwritten entry statement. Free entries are assigned the same ticket format (RF-YYYY-XXXXXXXX) and equal probability weight per entry as paid entries in the same draw.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="2" title="Eligibility">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Age.</span> All entrants must be a minimum of eighteen (18) years of age on the date the ticket entry is purchased or submitted.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Residency and presence.</span> Entries are only valid from individuals who are both (a) ordinarily resident in the Federal Republic of Nigeria, and (b) physically present in Nigeria at the moment the entry is purchased or submitted. We may use IP geo-location, device time-zone, SIM country, BVN match, KYC documentation, or a combination, to verify presence and residency.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Verified account.</span> A ticket entry is only valid when associated with a verified Rafilla account (successfully email OTP verified and phone number verified at a minimum). Winners must also complete full KYC level-2 verification (BVN, valid ID, proof of address) before a prize will be released.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Excluded persons.</span> The following persons are not eligible to enter any Competition or win any Prize: (a) employees, officers, directors and contractors of Rafilla and its affiliated companies; (b) employees, officers and directors of any prize Partner that has contributed a prize to the Competition and members of their immediate household; (c) Rafilla advertising, promotional, software, legal, compliance and audit agencies and members of their immediate household; (d) immediate family members (spouse, domestic partner, parent, stepparent, grandparent, sibling, half-sibling, child, stepchild, grandchild, legal ward) of any person in categories (a), (b) or (c) above; (e) individuals previously banned, suspended or terminated from Rafilla; (f) individuals on any applicable sanctions list.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">One natural person, one account.</span> No individual natural person may hold more than one (1) verified Rafilla account across all email addresses, phone numbers or device identities.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="3" title="Entry">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">How to enter.</span> Entries may be purchased through the Rafilla website only. Each entry is paid either from the entrant's pre-funded Rafilla Wallet balance or from the entrant's accrued Referral Commission balance. Split payments between sources are not supported.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Ticket issuance.</span> Once a purchase is complete and successfully debited from the selected source, Rafilla will electronically issue one or more unique ticket identifiers in the format <span className="font-mono text-ink">RF-YYYY-XXXXXXXX</span>. Ticket numbers are irrevocably associated with the verified account and cannot be sold, transferred, gifted, pledged, or assigned to any other person or account. Proof of purchase or a screen capture does not constitute a valid ticket in the absence of a corresponding RF ticket identifier recorded in our systems.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Reservation window.</span> When a user initiates the purchase flow, the selected number of entries is reserved from general inventory for a rolling five (5) minute window. If the purchase is not completed within this window the reserved tickets are released back to inventory and may be purchased by another entrant.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Entry confirmation.</span> Entrants will receive an in-app purchase confirmation, a transaction ledger entry in the Wallet / Transactions page and a summary email after a successful purchase. Entrants are solely responsible for verifying that their intended quantity of tickets has been correctly credited; discrepancies must be reported to support@rafilla.com within 24 hours.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">No agent or third-party entries.</span> Entries submitted by any third party on behalf of another, via bot, macro, script, automated service, proxy, virtual private network designed to circumvent geo-restriction, VPN, paid click farm, sweepstakes club, syndicate or similar means are void and will be disqualified.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="4" title="Ticket Pricing & Limits">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Entry price.</span> All prices are denominated in Nigerian Naira (₦) inclusive of all platform fees and applicable taxes unless otherwise stated on the Competition page. Prices within our backend systems are stored in integer kobo (₦ × 100) to avoid rounding drift.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Per-account per-competition cap.</span> Unless otherwise expressly stated on a specific Competition's detail page, a single verified account may purchase a maximum of fifty (50) ticket entries per individual Competition draw. The applicable numeric cap (including any lower cap for a specific draw) is published on the Competition detail page and enforced at checkout.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Inventory cap.</span> Each Competition has a fixed, published total ticket inventory ("Total Entries"). The inventory figure is displayed on every Competition card and detail page in the format "X LEFT | OUT OF Y". No further entries are accepted once the total inventory of tickets for a draw has been fully sold (i.e. "SOLD OUT" state), regardless of any remaining per-account quota.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Odds calculation.</span> The probability of winning any single prize is equal to the number of valid RF ticket identifiers held by an entrant divided by the total number of valid ticket identifiers sold in that specific draw. Odds are illustrated on the detail page and improve proportionally with the number of entries purchased.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="5" title="Competition Period">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Open period.</span> Each Competition opens at the published start date/time (UTC+1 / WAT) and closes at the first to occur of: (a) the published end date/time shown on the Competition detail page, or (b) the point in time at which 100% of the total ticket inventory is sold and confirmed paid.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Live countdown.</span> An on-page countdown timer displays the remaining time. The timer is indicative; authoritative close time is the server timestamp applied to the last accepted entry.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Late entries.</span> No entries are accepted after the Competition is closed. Late or unsuccessful transactions — including but not limited to transactions that fail verification or are declined by the payment processor after the close — are not counted and any associated monies are reversed back to the user's source account.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Extension or early close.</span> Rafilla reserves the right in its sole discretion (i) to extend the close date of any Competition if, for example, insufficient entries have been sold, or (ii) to close a Competition early upon a confirmed SOLD OUT state, or (iii) to pause a Competition temporarily for security, fraud investigation, technical emergency or regulatory inquiry. All valid ticket entries purchased before such pause, early close or extension continue to hold their probability weight unchanged.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="6" title="Draw Procedure & Verification">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Timing of draw.</span> The official draw ("Draw") for a Competition takes place within seventy-two (72) hours of that Competition's close. For draws marketed as "Live draws", the Draw will be conducted and streamed or published within the advertised live session window as described on the Competition page.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Draw algorithm.</span> The winning ticket identifier is selected by a cryptographically secure, publicly verifiable deterministic random draw using the <span className="font-mono font-bold text-ink">HMAC_DRBG</span> (Hash-based Message Authentication Code Deterministic Random Bit Generator) algorithm over SHA-256.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Published inputs.</span> Prior to the Draw, Rafilla publishes and commits to the following inputs on the Draw Verification page for the competition: (a) a public pre-commitment seed (a high-entropy hex-encoded random value); (b) a public external entropy beacon value (for example, the closing hash of a future publicly verifiable Nigerian Exchange or Bitcoin block hash published after close and known not to be manipulable by Rafilla); (c) the full ordered, frozen, immutable list of every valid RF ticket identifier and corresponding anonymized account index in the draw; (d) the exact HMAC_DRBG construction and derivation path that will be applied.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Independent reproducibility.</span> All inputs are published such that any independent third party can reproduce the exact winning ticket identifier offline without access to Rafilla's systems. The methodology, sample code and input schema are described on <Link to="/draw-verification/$campaign" params={{ campaign: "example" }} className="font-bold text-coral underline underline-offset-2">/draw-verification</Link>.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Single prize and multi-prize draws.</span> For Competitions with more than one prize tier, the same algorithm is applied iteratively using the same seed commitment but a per-prize counter increment to derive an ordered list of winners; winners are selected sequentially from the highest prize tier down and a single ticket is not drawn twice for the same draw.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Quorum.</span> No minimum number of ticket sales is required for a valid draw. The Draw is conducted regardless of the percentage sold. If a Competition is cancelled, Rule 10 governs refunds.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="7" title="Winner Selection & Notification">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Winning ticket.</span> The holder of the RF ticket identifier selected by the verified HMAC_DRBG procedure in Rule 6 is the "Provisional Winner" of the corresponding prize for that draw, subject to completing the eligibility, KYC and claim steps set out in these Rules.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Notification.</span> Rafilla will contact the Provisional Winner within forty-eight (48) hours of the Draw by: (a) in-app banner and notification; (b) e-mail to the registered e-mail address on the account; and (c) SMS to the verified Nigerian mobile telephone number on the account. Rafilla is not responsible for failure of delivery, spam folder filtering, or changed contact details.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Public winners announcement.</span> Following Draw confirmation, the Provisional Winner's first name, last initial and Nigerian state of residence may be published in the <Link to="/winners" className="font-bold text-coral underline underline-offset-2 hover:text-ink">Winners Gallery</Link> and/or across Rafilla social media channels. The Winner's full legal name, photograph, likeness or testimonial are only published after Rafilla has received that Winner's separate written consent.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Unclaimed prizes and redraw.</span> A Provisional Winner who does not respond to claim notification within fourteen (14) calendar days from the Draw date, or who fails or refuses to complete KYC level-2 verification and required signed documents within that period, or who is disqualified under Rule 2 or 9, forfeits all rights to the prize. In such event, the prize will be declared unclaimed and Rafilla will conduct a Verified Redraw using the remaining frozen entries from the same original draw with a fresh public seed and the same HMAC_DRBG procedure to select a Replacement Winner. The Redraw procedure is repeatable until a valid, claimable, verified Winner is produced.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="8" title="Prizes, Claims & Delivery">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Description.</span> Prizes are described on each Competition detail page alongside photographs, key specifications and, where applicable, a stated insurance-backed prize value. Any accessories, upgrades, add-ons, or consumables not expressly listed are excluded.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Insurance.</span> Physical prizes over the insured threshold are backed by a prize-indemnity insurance policy with an A-rated Nigerian insurer for the stated value, ensuring that the Organizer has the funds on hand to acquire or deliver the prize to the verified winner.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Required claim steps.</span> Within the 14-day Claim Window the verified Winner must: (a) confirm acceptance of the prize in writing; (b) complete KYC level-2 verification including BVN, valid government ID, proof of address, and liveness check; (c) where requested, sign and return a Prize Acceptance Form, Affidavit of Eligibility, Liability Release and (where consent is separately given) a Publicity Release; and (d) provide a valid delivery address and contact phone number for physical prizes or bank details for any cash-equivalent prize.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">No cash alternative, no substitution, no transfer.</span> Unless expressly stated on the Competition page, prizes are not exchangeable for cash, cannot be substituted for another prize by the Winner, and cannot be sold, transferred, gifted or assigned to any third party. Rafilla reserves the right in its sole discretion (but is not obliged) to substitute a prize of equal or greater value where the original prize becomes unavailable due to circumstances outside Rafilla's reasonable control.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Delivery.</span> Physical prizes are delivered to a valid Nigerian residential address nominated by the verified Winner. Delivery within Lagos, Abuja or Port Harcourt metro areas is attempted within forty-five (45) calendar days of verified, signed, accepted claim. Delivery outside these areas may require Winner collection at a partnered logistics depot or additional delivery coordination. The Winner is responsible for ensuring someone aged 18 or older is available to take receipt. Title and risk of loss passes to the Winner upon signed delivery.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Taxes and duties.</span> The Winner is solely responsible for any and all income taxes, value added tax, withholding tax, stamp duties, import duties, licence fees, vehicle registration, insurance, running costs and any other charges or liabilities that arise from or in connection with the prize, whether at the federal, state or local government level in Nigeria. Rafilla may, where required by law, deduct applicable withholding tax from any cash prize or cash component before payment.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="9" title="Conduct & Cheating">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">General standards.</span> Every entrant must use the Platform lawfully, honestly and fairly and must not act in a manner that, in Rafilla's reasonable determination, undermines the integrity of a Competition or of Rafilla generally.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Disqualifying conduct (non-exhaustive).</span> Any of the following acts, at Rafilla's sole reasonable determination, will result in disqualification of the relevant entry or entries, forfeiture of any prize right, and permanent suspension or termination of the account:
+                  <ul className="mt-2 list-disc space-y-2 pl-6 marker:text-coral">
+                    <li>Providing false, inaccurate, incomplete, stolen or impersonated registration or KYC information (including impersonation of another person, "jumpering" another person's BVN, or using a deceased individual's identity).</li>
+                    <li>Owning, operating or controlling more than one Rafilla account, directly or through nominees, family members, associates or shell accounts.</li>
+                    <li>Purchasing entries with stolen payment credentials, laundered funds, card-testing, chargeback abuse or any unlawful payment method.</li>
+                    <li>Using bots, macros, scripts, scraping, automation, click farms, VPNs, proxies, multi-accounting, colluding with other entrants, ring-fencing a competition by a coordinated syndicate or any other method to circumvent entry caps, inventory protections, geo-restrictions or the intended random character of the draw.</li>
+                    <li>Attempting to or actually interfering with the Draw algorithm, seed publication, frozen entry set publication, verification page, cloud infrastructure, application code, payment gateway, user account, or network systems of Rafilla or its Processors (including denial-of-service, account-takeover, credential stuffing, XSS, SQLi, phishing, malware, insider collusion, or any other attack).</li>
+                    <li>Harassing, threatening, abusing, coercing or bribing any Rafilla employee, contractor, partner, other entrant, or any member of a winner's household.</li>
+                    <li>Failure to cooperate with a reasonable anti-fraud, KYC, or source-of-funds request, including sanctions screening.</li>
+                  </ul>
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Forfeiture.</span> Where an entrant is disqualified: (a) any entries submitted by that entrant are void and are excluded from the current Draw and all future Draws; (b) any Wallet balance derived from fraud or unlawful sources is seized or reversed; (c) any accrued Referral commissions are forfeited; (d) if a winner or provisional winner is disqualified before prize delivery, Rule 7.4 (Unclaimed prizes and redraw) applies, as if the winner had not responded within the Claim Window.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="10" title="Refunds">
+            <div className="space-y-4">
+              <p>
+                Entry purchases are generally final. A refund of a purchased entry (or entries) will only be made by Rafilla in the following limited circumstances:
+              </p>
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Competition cancelled by Rafilla.</span> If Rafilla cancels a Competition before the Draw for any reason (including, without limitation, regulatory order, force majeure, failure of the prize Partner to perform, material technical failure that prevents a verifiable Draw, or insufficient entries where Rafilla elects not to exercise its extension option under Rule 5.4), every paid ticket entrant will receive a full refund of the entry price paid, credited back to the same source (Wallet or Referral balance) from which the purchase was debited, within ten (10) business days of cancellation. No additional interest, compensation or damages are payable beyond the entry price.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Duplicate or erroneous entries.</span> Where the Platform demonstrably and materially debits an incorrect amount, quantity or Competition through an error originating in our software (excluding user error), Rafilla will at its option either (a) correct the error by applying the debit to the intended Competition/quantity and refund any overcharge, or (b) fully refund the transaction on written request made within 24 hours of the debit.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Prohibited minor account.</span> Where an account is opened by a person under 18 and this is confirmed by KYC, the Wallet balance (if any) is refunded to the original payment source and the account is closed. No other refund applies.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Change of mind.</span> Change of mind, voluntary withdrawal from a Competition after ticket issuance, and buyer's remorse are not grounds for refund. Tickets are non-refundable once the RF ticket identifier has been issued and the draw is open and live.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Refunds to third parties.</span> Refunds are issued only to the Rafilla account and original payment source that made the purchase. Refunds to anyone other than the purchasing account holder are never made.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="11" title="Liability">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Organizer's undertakings.</span> Rafilla undertakes to run Competitions with reasonable skill and care, in accordance with these Rules and the verified HMAC_DRBG procedure described in Rule 6, and to deliver stated prizes to verified Winners as described in Rule 8.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">No warranties beyond the express.</span> Save to the extent such exclusion is prohibited by the Nigerian Consumer Protection Act 2018 or other applicable mandatory law, Rafilla excludes all warranties, conditions, representations and terms (express, implied, collateral, statutory or otherwise) with respect to the prize, including warranties of quality, merchantability, fitness for a particular purpose, durability, title and non-infringement. Any such warranty that cannot be excluded is limited in duration to the shortest period permitted by law.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Indirect and consequential loss excluded.</span> In no event will Rafilla, its directors, officers, employees, insurers, Processors or prize Partners be liable for any indirect, incidental, special, consequential, punitive or exemplary loss or damage, any loss of profit, loss of revenue, loss of opportunity, loss of goodwill, loss of data, or business interruption, however caused, whether in contract, tort (including negligence) or otherwise, arising out of or in connection with these Rules or a Competition, even if Rafilla has been advised of the possibility of such loss.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Aggregate cap.</span> Rafilla's total aggregate liability in contract, tort or otherwise for all losses arising out of or in connection with any one Competition under these Rules is limited in all cases to the lower of (a) the stated insured value of the prize for that Competition, or (b) the total entry fees actually received by Rafilla for that Competition.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Force majeure.</span> Rafilla is not liable for any failure, delay, disruption or contamination resulting from acts of God, war, terrorism, riot, civil disorder, pandemic, epidemic, government ban or order, strike, labour disruption, utility failure, internet backbone failure, cloud-provider outage, Processor outage, hacking, malware, failure of any third-party systems, or any other cause beyond Rafilla's reasonable control. In such an event Rafilla may at its discretion cancel a Competition and issue a full refund per Rule 10.1, or postpone the Draw to a date within 14 days of resolution of the force majeure event.
+                </li>
+              </ol>
+            </div>
+          </LegalSection>
+          <LegalSection number="12" title="Final Decisions">
+            <div className="space-y-4">
+              <ol className="list-decimal space-y-3 pl-5 marker:text-coral">
+                <li>
+                  <span className="font-bold text-ink">Finality of Organizer decisions.</span> All decisions of Rafilla (acting through its compliance and competitions team) in relation to the interpretation, application and enforcement of these Rules, the eligibility of any entrant, the validity of any entry, the conduct of the Draw, the identity of the Winner, the handling of a redraw, the validity of a prize claim, the operation of any refund, and any decision taken in the exercise of a discretion under these Rules, are final and binding on every entrant, Winner and claimant, and no correspondence, negotiation or appeal will be entered into except at the Organizer's absolute discretion.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Headings and construction.</span> Headings are for convenience only and do not affect the construction of these Rules. Words in the singular include the plural and vice versa; references to any gender include all genders; references to any statute or regulation include any modification, consolidation or re-enactment of it for the time being in force.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Severability.</span> If any provision (or part of any provision) of these Rules is or becomes illegal, invalid, or unenforceable in any respect under the law of any jurisdiction, that provision or part-provision is to that extent severed and deemed not to have formed part of these Rules in that jurisdiction, without affecting the legality, validity or enforceability of the remaining provisions.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Governing law and jurisdiction.</span> These Rules are governed by and construed in accordance with the laws of the Federal Republic of Nigeria. Subject to the mandatory consumer-protection rights that cannot be excluded, the courts of Lagos State, Nigeria have exclusive jurisdiction over any dispute, claim or matter arising out of or relating to these Rules or any Competition.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Contact for rule interpretation.</span> Written requests for the Organizer's interpretation of these Rules or notice of a formal dispute must be sent by email to <span className="font-bold text-ink">legal@rafilla.com</span> stating the sender's full name, registered account email, draw reference, ticket identifiers concerned and the specific Rule(s) in issue. Formal dispute notices are acknowledged in writing within five (5) business days.
+                </li>
+                <li>
+                  <span className="font-bold text-ink">Rules version and effective date.</span> These Official Competition Rules are version 1.0, effective and last updated on <span className="font-bold text-ink">2026-09-07</span>. A Competition is governed by the version of the Rules that was in effect on the date a specific paid or free entry into that Competition was submitted, unless a later version is required by a mandatory change in Nigerian law, in which case the later mandatory version applies to the extent so required.
+                </li>
+              </ol>
+              <div className="mt-6 rounded-2xl bg-paper p-5 ring-1 ring-ink/5">
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-coral">Quick reference</p>
+                <p className="mt-3 font-bold text-ink">If you only remember six things, remember these:</p>
+                <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[13px] font-bold marker:text-coral">
+                  <li>18+, Nigeria, verified account only.</li>
+                  <li>Max 50 tickets per draw per account (or lower cap on the page).</li>
+                  <li>Tickets RF-YYYY-XXXXXXXX, non-transferable, final once issued.</li>
+                  <li>Draw closes at SOLD OUT or date, whichever comes first.</li>
+                  <li>HMAC_DRBG verified win selection; 48h notification, 14-day claim window.</li>
+                  <li>Cancelled comp = full refund; change of mind = no refund.</li>
+                </ul>
+                <p className="mt-4 text-[12px] font-bold text-ink/55">
+                  The <span className="text-coral">full Rules</span> above prevail over this quick-reference summary in all cases.
+                </p>
+              </div>
+            </div>
+          </LegalSection>
         </div>
       </div>
     </div>

@@ -116,7 +116,16 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
-  const isAuthRoute = location.pathname === "/auth" || location.pathname.startsWith("/auth/");
+  const pathname = location.pathname;
+  const hidePublicChrome =
+    pathname === "/auth" ||
+    pathname.startsWith("/auth/") ||
+    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/partner" ||
+    pathname.startsWith("/partner/");
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -127,12 +136,12 @@ function RootComponent() {
         >
           Skip to content
         </a>
-        {!isAuthRoute && <SiteHeader />}
+        {!hidePublicChrome && <SiteHeader />}
         <main id="main-content" tabIndex={-1}>
           <Outlet />
         </main>
-        {!isAuthRoute && <SiteFooter />}
-        <CookieConsentBanner />
+        {!hidePublicChrome && <SiteFooter />}
+        {!hidePublicChrome && <CookieConsentBanner />}
       </div>
     </QueryClientProvider>
   );

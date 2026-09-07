@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import {
@@ -89,7 +89,7 @@ export const Route = createFileRoute("/auth")({
       ],
       links: [
         { rel: "canonical", href: canonical },
-        { rel: "alternate", hreflang: "en", href: canonical },
+        { rel: "alternate", hrefLang: "en", href: canonical },
       ],
     };
   },

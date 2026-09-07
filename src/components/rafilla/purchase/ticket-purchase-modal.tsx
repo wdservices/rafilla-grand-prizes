@@ -18,6 +18,7 @@ import {
   Twitter,
   MessageCircle,
   Check,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,7 +26,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FundWalletModal } from "@/components/rafilla/dashboard/wallet";
 import { competitions, formatNaira, getProgress } from "@/lib/rafilla-data";
@@ -33,7 +33,7 @@ import { cn, formatNaira as formatNairaKobo } from "@/lib/utils";
 import { OversellBanner, ReservationTimeoutBar } from "./checkout-banner";
 
 type Step = 1 | 2 | 3 | 4;
-type PaymentSource = "wallet" | "referral" | "combo";
+type PaymentSource = "wallet" | "referral";
 
 const WALLET_BALANCE_KOBO = 45_000_000;
 const REFERRAL_BALANCE_KOBO = 920_000;
@@ -77,16 +77,21 @@ export function TicketPurchaseModal({
   open,
   onClose,
   competitionSlug,
+  initialQuantity = 1,
 }: {
   open: boolean;
   onClose: () => void;
   competitionSlug: string;
+  initialQuantity?: number;
 }) {
   const competition = competitions.find((c) => c.slug === competitionSlug);
+  const maxQty = competition
+    ? Math.max(1, Math.min(50, competition.totalEntries - competition.entriesSold))
+    : 50;
+  const safeInitial = Math.max(1, Math.min(maxQty, initialQuantity));
   const [step, setStep] = useState<Step>(1);
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState<number>(safeInitial);
   const [paymentSource, setPaymentSource] = useState<PaymentSource>("wallet");
-  const [walletSplitPct, setWalletSplitPct] = useState<number[]>([80]);
   const [agreeChecked, setAgreeChecked] = useState(false);
   const [reservationSeconds, setReservationSeconds] = useState(RESERVATION_SECONDS);
   const [purchaseComplete, setPurchaseComplete] = useState(false);
@@ -129,7 +134,10 @@ export function TicketPurchaseModal({
   useEffect(() => {
     if (open) {
       setStep(1);
-      setQty(1);
+      const q = competition
+        ? Math.max(1, Math.min(50, competition.totalEntries - competition.entriesSold, initialQuantity))
+        : Math.max(1, Math.min(50, initialQuantity));
+      setQty(q);
       setAgreeChecked(false);
       setPurchaseComplete(false);
       setRfids([]);
@@ -137,25 +145,16 @@ export function TicketPurchaseModal({
       setPaymentSource("wallet");
       setStepAnimKey((k) => k + 1);
     }
-  }, [open, competitionSlug]);
+  }, [open, competitionSlug, initialQuantity, competition]);
 
-  if (!open || !competition) return null;
-
-  const entryPriceKobo = competition.entryPrice * 100;
+  const entryPriceKobo = competition ? competition.entryPrice : 0;
   const subtotalKobo = entryPriceKobo * qty;
   const walletInsufficient = subtotalKobo > WALLET_BALANCE_KOBO;
   const referralInsufficient = subtotalKobo > REFERRAL_BALANCE_KOBO;
-  const totalAvailable = WALLET_BALANCE_KOBO + REFERRAL_BALANCE_KOBO;
-  const totalInsufficient = subtotalKobo > totalAvailable;
+  const selectedInsufficient =
+    paymentSource === "wallet" ? walletInsufficient : referralInsufficient;
 
-  const walletUseKobo = useMemo(() => {
-    if (paymentSource === "wallet") return subtotalKobo;
-    if (paymentSource === "referral") return 0;
-    const pct = walletSplitPct[0] / 100;
-    return Math.min(WALLET_BALANCE_KOBO, Math.round(subtotalKobo * pct));
-  }, [paymentSource, walletSplitPct, subtotalKobo]);
-
-  const referralUseKobo = Math.max(0, subtotalKobo - walletUseKobo);
+  if (!open || !competition) return null;
 
   const progress = getProgress(competition);
   const remaining = competition.totalEntries - competition.entriesSold;
@@ -318,10 +317,7 @@ export function TicketPurchaseModal({
                     <div className="flex items-center gap-2">
                       <Ticket className="h-5 w-5 text-coral" />
                       <span className="font-display text-3xl font-extrabold tabular-nums text-ink">
-                        {qty}
-                      </span>
-                      <span className="text-sm font-bold text-ink/45">
-                        ticket{qty === 1 ? "" : "s"}
+                        {`${qty} ticket${qty === 1 ? "" : "s"}`}
                       </span>
                     </div>
                     <Button
@@ -402,19 +398,18 @@ export function TicketPurchaseModal({
                     <span className="font-display text-xl text-coral">
                       {formatNairaKobo(subtotalKobo)}
                     </span>{" "}
-                    · {qty} ticket{qty === 1 ? "" : "s"}
+                    · {`${qty} ticket${qty === 1 ? "" : "s"}`}
                   </p>
                 </div>
 
                 <button
-                  onClick={() => !walletInsufficient && setPaymentSource("wallet")}
-                  disabled={walletInsufficient}
+                  onClick={() => setPaymentSource("wallet")}
                   className={cn(
                     "relative w-full rounded-2xl p-4 text-left ring-1 transition-all",
                     paymentSource === "wallet"
                       ? "bg-mint/20 ring-mint/50 ring-2"
                       : walletInsufficient
-                        ? "bg-paper/50 ring-ink/5 opacity-60"
+                        ? "bg-paper/50 ring-ink/5 opacity-70"
                         : "bg-white ring-ink/10 hover:ring-ink/20",
                   )}
                 >
@@ -460,14 +455,13 @@ export function TicketPurchaseModal({
                 </button>
 
                 <button
-                  onClick={() => !referralInsufficient && setPaymentSource("referral")}
-                  disabled={referralInsufficient}
+                  onClick={() => setPaymentSource("referral")}
                   className={cn(
                     "relative w-full rounded-2xl p-4 text-left ring-1 transition-all",
                     paymentSource === "referral"
                       ? "bg-mint/20 ring-mint/50 ring-2"
                       : referralInsufficient
-                        ? "bg-paper/50 ring-ink/5 opacity-60"
+                        ? "bg-paper/50 ring-ink/5 opacity-70"
                         : "bg-white ring-ink/10 hover:ring-ink/20",
                   )}
                 >
@@ -512,91 +506,32 @@ export function TicketPurchaseModal({
                   </div>
                 </button>
 
-                {(walletInsufficient || referralInsufficient) && !totalInsufficient && (
-                  <div
-                    className={cn(
-                      "rounded-2xl p-4 ring-2 transition-all",
-                      paymentSource === "combo"
-                        ? "bg-mint/20 ring-mint/50"
-                        : "bg-white ring-ink/10",
-                    )}
-                  >
-                    <button
-                      onClick={() => setPaymentSource("combo")}
-                      className="flex w-full items-start gap-3 text-left"
-                    >
-                      <span
-                        className={cn(
-                          "grid size-11 shrink-0 place-items-center rounded-2xl",
-                          paymentSource === "combo" ? "bg-mint/40 text-ink" : "bg-lilac/30 text-coral",
-                        )}
-                      >
-                        <Wallet className="size-4" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-display text-lg font-extrabold text-ink">
-                            Split payment
-                          </p>
-                          <span
-                            className={cn(
-                              "grid size-5 place-items-center rounded-full ring-1",
-                              paymentSource === "combo"
-                                ? "bg-coral text-white ring-coral/30"
-                                : "ring-ink/20",
-                            )}
-                          >
-                            {paymentSource === "combo" && (
-                              <Check className="size-3.5" strokeWidth={3.5} />
-                            )}
-                          </span>
-                        </div>
-                        <p className="mt-0.5 text-xs font-bold text-ink/55">
-                          Use Wallet + Referrals together
-                        </p>
-                      </div>
-                    </button>
-                    {paymentSource === "combo" && (
-                      <div className="mt-4 space-y-3 border-t border-ink/10 pt-4">
-                        <Slider
-                          value={walletSplitPct}
-                          onValueChange={setWalletSplitPct}
-                          max={100}
-                          min={0}
-                          step={1}
-                          className="py-2"
-                        />
-                        <div className="grid grid-cols-2 gap-3 text-xs font-bold">
-                          <div className="rounded-xl bg-sky/15 px-3 py-2 ring-1 ring-sky/20">
-                            <p className="text-ink/55">From Wallet</p>
-                            <p className="mt-0.5 font-display text-lg font-extrabold text-sky">
-                              {formatNairaKobo(walletUseKobo)}
-                            </p>
-                          </div>
-                          <div className="rounded-xl bg-lemon/30 px-3 py-2 ring-1 ring-lemon/20">
-                            <p className="text-ink/55">From Referrals</p>
-                            <p className="mt-0.5 font-display text-lg font-extrabold text-coral">
-                              {formatNairaKobo(referralUseKobo)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {totalInsufficient && (
+                {selectedInsufficient && (
                   <div className="rounded-2xl bg-coral/15 p-4 ring-1 ring-coral/30">
                     <div className="flex items-start gap-3">
                       <span className="mt-0.5 grid size-8 place-items-center rounded-full bg-coral/25 text-coral">
-                        <AlertTriangleIcon />
+                        <AlertTriangle className="size-4" />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="font-extrabold text-coral">Insufficient balance</p>
                         <p className="mt-1 text-xs font-bold text-ink/60">
-                          You need {formatNairaKobo(subtotalKobo)}. Available:{" "}
-                          {formatNairaKobo(totalAvailable)}.
+                          You need {formatNairaKobo(subtotalKobo)} using your selected{" "}
+                          {paymentSource === "wallet" ? "wallet" : "referral earnings"} balance.
                         </p>
+                        <div className="mt-2 grid gap-2 text-[11px] font-bold text-ink/55">
+                          <div className="flex items-center justify-between rounded-xl bg-white/50 px-2.5 py-1.5 ring-1 ring-ink/5">
+                            <span>Wallet</span>
+                            <span className={cn("font-extrabold", walletInsufficient ? "text-coral" : "text-ink")}>
+                              {formatNairaKobo(WALLET_BALANCE_KOBO)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between rounded-xl bg-white/50 px-2.5 py-1.5 ring-1 ring-ink/5">
+                            <span>Referrals</span>
+                            <span className={cn("font-extrabold", referralInsufficient ? "text-coral" : "text-ink")}>
+                              {formatNairaKobo(REFERRAL_BALANCE_KOBO)}
+                            </span>
+                          </div>
+                        </div>
                         <Button
                           variant="primary"
                           size="md"
@@ -616,7 +551,7 @@ export function TicketPurchaseModal({
                   </p>
                   <p className="mt-2 text-sm font-bold leading-relaxed text-ink/70">
                     <span className="font-extrabold text-ink">
-                      Wallet and Referrals are the only allowed sources.
+                      Choose Wallet or Referrals to cover the full entry amount.
                     </span>{" "}
                     No card or bank debits are processed directly during checkout.
                   </p>
@@ -640,7 +575,7 @@ export function TicketPurchaseModal({
                     variant="primary"
                     size="lg"
                     className="flex-1"
-                    disabled={totalInsufficient}
+                    disabled={selectedInsufficient}
                     onClick={() => nextStep(3)}
                   >
                     Next: Confirm &amp; reserve <ArrowRight className="size-4" />
@@ -711,7 +646,7 @@ export function TicketPurchaseModal({
                   <div className="space-y-2 p-4 text-sm">
                     <div className="flex items-center justify-between font-bold text-ink/60">
                       <span>Quantity</span>
-                      <span className="font-extrabold text-ink">{qty} tickets</span>
+                      <span className="font-extrabold text-ink">{`${qty} ticket${qty === 1 ? "" : "s"}`}</span>
                     </div>
                     <div className="flex items-center justify-between font-bold text-ink/60">
                       <span>Ticket price (ea)</span>
@@ -732,23 +667,8 @@ export function TicketPurchaseModal({
                             <Gift className="size-3.5 text-coral" /> Referrals
                           </>
                         )}
-                        {paymentSource === "combo" && (
-                          <>
-                            <Wallet className="size-3.5 text-sky" />+<Gift className="size-3.5 text-coral" /> Combo
-                          </>
-                        )}
                       </span>
                     </div>
-                    {paymentSource === "combo" && (
-                      <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
-                        <div className="rounded-lg bg-sky/15 px-2 py-1.5 font-extrabold text-sky">
-                          Wallet: {formatNairaKobo(walletUseKobo)}
-                        </div>
-                        <div className="rounded-lg bg-lemon/30 px-2 py-1.5 font-extrabold text-coral">
-                          Referrals: {formatNairaKobo(referralUseKobo)}
-                        </div>
-                      </div>
-                    )}
                     <Separator className="my-2 bg-ink/10" />
                     <div className="flex items-center justify-between font-display text-xl font-extrabold text-ink">
                       <span>Total</span>

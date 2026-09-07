@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
@@ -30,33 +29,9 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-interface AuthFieldProps {
-  id: string;
-  label: string;
-  type?: string | undefined;
-  error?: string | undefined;
-  children: React.ReactNode;
-  rightSlot?: React.ReactNode | undefined;
-}
-
-function AuthField({ id, label, error, children, rightSlot }: AuthFieldProps) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label htmlFor={id} className="text-xs font-extrabold text-ink/70">
-          {label}
-        </Label>
-        {rightSlot}
-      </div>
-      <div className="relative">{children}</div>
-      {error ? <p className="text-xs font-bold text-coral">{error}</p> : null}
-    </div>
-  );
-}
-
 function authInputBase(error?: string) {
   return cn(
-    "h-12 rounded-[14px] border-2 bg-cream/40 px-4 text-sm font-bold text-ink placeholder:text-ink/30",
+    "h-12 rounded-[14px] border-2 bg-cream/40 px-4 text-sm font-bold text-ink placeholder:text-ink/40",
     "transition-all duration-200",
     "focus-visible:outline-none focus-visible:border-coral focus-visible:ring-0",
     error ? "border-coral bg-coral/5" : "border-ink/10 hover:border-ink/20",
@@ -110,49 +85,37 @@ export function LoginForm() {
   }
 
   return (
-    <form noValidate onSubmit={onSubmit} className="space-y-5">
-      <header>
+    <form noValidate onSubmit={onSubmit} className="space-y-4">
+      <header className="mb-1">
         <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
           Welcome back
         </h1>
         <p className="mt-2 text-sm text-ink/60">Sign in to continue your Rafilla journey.</p>
       </header>
 
-      <AuthField id="email" label="Email address" error={errors.email}>
+      <div className="space-y-1">
         <input
           id="email"
           type="email"
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={authInputBase(errors.email)}
+          className={cn(authInputBase(errors.email), "w-full")}
         />
-      </AuthField>
+        {errors.email ? <p className="px-1 text-xs font-bold text-coral">{errors.email}</p> : null}
+      </div>
 
-      <AuthField
-        id="password"
-        label="Password"
-        error={errors.password}
-        rightSlot={
-          <Link
-            to="/auth"
-            search={{ mode: "forgot" }}
-            className="text-xs font-extrabold text-coral hover:underline hover:underline-offset-2"
-          >
-            Forgot password?
-          </Link>
-        }
-      >
+      <div className="space-y-1">
         <div className="relative">
           <input
             id="password"
             type={showPassword ? "text" : "password"}
             autoComplete="current-password"
-            placeholder="Enter your password"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={cn(authInputBase(errors.password), "pr-12")}
+            className={cn(authInputBase(errors.password), "w-full pr-12")}
           />
           <button
             type="button"
@@ -163,21 +126,33 @@ export function LoginForm() {
             {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
           </button>
         </div>
-      </AuthField>
+        <div className="flex items-center justify-between px-1">
+          {errors.password ? (
+            <p className="text-xs font-bold text-coral">{errors.password}</p>
+          ) : <span />}
+          <Link
+            to="/auth"
+            search={{ mode: "forgot" }}
+            className="text-xs font-extrabold text-coral hover:underline hover:underline-offset-2"
+          >
+            Forgot password?
+          </Link>
+        </div>
+      </div>
 
-      <div className="flex items-center gap-2.5 pt-1">
+      <div className="flex items-center gap-2.5">
         <Checkbox
           id="remember"
           checked={remember}
           onCheckedChange={(v) => setRemember(Boolean(v))}
           className="size-5 rounded-md"
         />
-        <Label
+        <label
           htmlFor="remember"
           className="text-xs font-bold text-ink/65 cursor-pointer select-none"
         >
           Remember me for 30 days
-        </Label>
+        </label>
       </div>
 
       <Button type="submit" variant="primary" size="lg" className="w-full" disabled={loading}>
@@ -185,7 +160,7 @@ export function LoginForm() {
         {loading ? "Signing in..." : "Log in"}
       </Button>
 
-      <div className="relative py-1">
+      <div className="relative py-0.5">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t border-ink/10" />
         </div>

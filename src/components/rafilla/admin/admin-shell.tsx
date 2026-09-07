@@ -184,9 +184,13 @@ export function AdminShell({ children, title, activeNav }: AdminShellProps) {
           </Button>
 
           <div className="hidden items-center gap-2 lg:flex">
-            <div className="grid size-9 place-items-center rounded-full bg-lilac/30 font-display text-base font-extrabold text-ink">
-              R
-            </div>
+            <img
+              src="/Rafilla-logo.png"
+              alt=""
+              className="size-9 shrink-0 rounded-2xl shadow-sm"
+              width={36}
+              height={36}
+            />
             {title && (
               <p className="font-display text-xl font-extrabold text-ink">{title}</p>
             )}

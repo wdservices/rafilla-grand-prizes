@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Check, ShieldCheck, BadgeCheck, WalletCards } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type AuthVariant = "login" | "register" | "forgot" | "otp" | "complete";
 
@@ -13,16 +14,19 @@ const trustItems = [
     icon: <ShieldCheck className="size-5" />,
     title: "Fair, verified draws",
     text: "Every result is transparent and independently checkable.",
+    iconColor: "text-raf-green",
   },
   {
     icon: <BadgeCheck className="size-5" />,
     title: "Real prizes delivered",
     text: "Winners receive their prizes with proof of delivery.",
+    iconColor: "text-raf-gold",
   },
   {
     icon: <WalletCards className="size-5" />,
     title: "Secure entries, always",
     text: "Your account and payments are protected end-to-end.",
+    iconColor: "text-coral",
   },
 ];
 
@@ -33,9 +37,13 @@ export function AuthShell({ children, variant = "login" }: AuthShellProps) {
         <div className="mx-auto w-full max-w-[480px] lg:max-w-none lg:grid lg:grid-cols-20 lg:gap-8 lg:items-stretch lg:min-h-[720px]">
           <div className="hidden lg:flex lg:col-span-9 lg:flex-col lg:rounded-[28px] lg:bg-cream lg:p-8 lg:ring-1 lg:ring-ink/5 xl:p-12">
             <div className="flex items-center gap-2">
-              <span className="grid size-10 place-items-center rounded-full bg-lilac font-display text-xl font-extrabold text-ink shadow-sm">
-                R
-              </span>
+              <img
+                src="/Rafilla-logo.png"
+                alt=""
+                className="size-10 shrink-0 rounded-2xl shadow-sm"
+                width={40}
+                height={40}
+              />
               <span className="font-display text-2xl font-extrabold tracking-tight text-ink">
                 Rafilla
               </span>
@@ -56,7 +64,7 @@ export function AuthShell({ children, variant = "login" }: AuthShellProps) {
             <ul className="mt-10 space-y-5 xl:mt-14">
               {trustItems.map((item, i) => (
                 <li key={i} className="flex items-start gap-4">
-                  <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-2xl bg-white/70 text-coral ring-1 ring-ink/5">
+                  <span className={cn("mt-0.5 grid size-9 shrink-0 place-items-center rounded-2xl bg-white/70 ring-1 ring-ink/5", item.iconColor)}>
                     {item.icon}
                   </span>
                   <div>
@@ -65,14 +73,14 @@ export function AuthShell({ children, variant = "login" }: AuthShellProps) {
                       {item.text}
                     </p>
                   </div>
-                  <Check className="mt-1 ml-auto size-4 text-mint" aria-hidden />
+                  <Check className="mt-1 ml-auto size-4 text-raf-green" aria-hidden />
                 </li>
               ))}
             </ul>
 
             <div className="mt-auto pt-10">
               <div className="flex items-center gap-3 rounded-2xl bg-white/60 p-4 ring-1 ring-ink/5">
-                <span className="grid size-10 place-items-center rounded-xl bg-coral text-paper">
+                <span className="grid size-10 place-items-center rounded-xl bg-raf-gold text-ink">
                   <BadgeCheck className="size-5" />
                 </span>
                 <div>

@@ -97,16 +97,11 @@ export function DashboardSecurityPage() {
       ]}
     >
       <div className="space-y-6 max-w-5xl">
-        <div>
-          <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
-            Security
-          </h1>
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/60">
-            Password, two-factor, sessions, and sign-in activity — all in one place.
-          </p>
-        </div>
+        <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
+          Password, two-factor, sessions, and sign-in activity — all in one place.
+        </p>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-center gap-2">
             <Lock className="size-5 text-coral" />
             <h2 className="font-display text-xl font-extrabold text-ink">Change password</h2>

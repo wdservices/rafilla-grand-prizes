@@ -113,14 +113,9 @@ export function DashboardEntriesPage() {
     >
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
-              My Entries
-            </h1>
-            <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/60">
-              All your competition tickets, their status, and ticket numbers.
-            </p>
-          </div>
+          <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
+            All your competition tickets, their status, and ticket numbers.
+          </p>
           <Button
             variant="outline"
             size="md"

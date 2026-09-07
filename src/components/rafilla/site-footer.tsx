@@ -8,9 +8,13 @@ export function SiteFooter() {
       <div className="rounded-[28px] bg-ink p-6 text-cream sm:p-8 lg:flex lg:items-end lg:justify-between">
         <div className="max-w-md">
           <div className="flex items-center gap-2">
-            <span className="grid size-9 place-items-center rounded-full bg-lilac font-display text-lg font-extrabold text-ink">
-              R
-            </span>
+            <img
+              src="/Rafilla-logo.png"
+              alt=""
+              className="size-9 shrink-0 rounded-2xl shadow-sm"
+              width={36}
+              height={36}
+            />
             <span className="font-display text-xl font-extrabold">Rafilla</span>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-cream/70">
@@ -19,10 +23,10 @@ export function SiteFooter() {
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-2 text-xs font-bold text-cream/60">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-cream/15 px-3 py-1.5">
-              <ShieldCheck className="size-3.5 text-mint" /> Verifiable draws
+              <ShieldCheck className="size-3.5 text-raf-lime" /> Verifiable draws
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-cream/15 px-3 py-1.5">
-              <Mail className="size-3.5 text-lemon" /> Secure accounts
+              <Mail className="size-3.5 text-raf-gold" /> Secure accounts
             </span>
           </div>
         </div>

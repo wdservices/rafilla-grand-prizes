@@ -162,16 +162,11 @@ export function DashboardReferralsPage() {
       ]}
     >
       <div className="space-y-6">
-        <div>
-          <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
-            Referrals
-          </h1>
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/60">
-            Invite friends and earn up to 5 levels of commissions every time someone you bring in enters a competition.
-          </p>
-        </div>
+        <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
+          Invite friends and earn up to 5 levels of commissions every time someone you bring in enters a competition.
+        </p>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
             My referral link
           </p>

@@ -107,42 +107,44 @@ export function DashboardOverviewPage() {
       breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Overview" }]}
     >
       <div className="space-y-6">
-        <div className="overflow-hidden rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <section className="overflow-hidden rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-7">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-coral">
+                Welcome back
+              </p>
+              <h2 className="mt-2 font-display text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-4xl">
                 Good afternoon, Tunmise 👋
-              </h1>
-              <p className="mt-3 max-w-xl text-base leading-relaxed text-ink/60">
+              </h2>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink/55">
                 Your next win could be one ticket away.
               </p>
             </div>
-          </div>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <div className="rounded-2xl bg-cream px-5 py-4 ring-1 ring-ink/5">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                My wallet balance
-              </p>
-              <p className="mt-1 font-display text-3xl font-extrabold text-ink">
-                {formatNaira(45000000)}
-              </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="rounded-2xl bg-cream px-4 py-3.5 ring-1 ring-ink/5 min-w-[160px]">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                  Wallet balance
+                </p>
+                <p className="mt-1 font-display text-xl font-extrabold text-ink sm:text-2xl">
+                  {formatNaira(45000000)}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-cream px-4 py-3.5 ring-1 ring-ink/5 min-w-[160px]">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                  Referral earnings
+                </p>
+                <p className="mt-1 font-display text-xl font-extrabold text-ink sm:text-2xl">
+                  {formatNaira(1240000)}
+                </p>
+              </div>
+              <Button asChild variant="primary" size="md">
+                <Link to="/dashboard/competitions">
+                  Browse competitions <ArrowRight className="size-4" />
+                </Link>
+              </Button>
             </div>
-            <div className="rounded-2xl bg-cream px-5 py-4 ring-1 ring-ink/5">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                Referral earnings
-              </p>
-              <p className="mt-1 font-display text-3xl font-extrabold text-ink">
-                {formatNaira(1240000)}
-              </p>
-            </div>
-            <Button asChild variant="primary" size="lg" className="self-end">
-              <Link to="/dashboard/competitions">
-                Browse competitions <ArrowRight className="size-4" />
-              </Link>
-            </Button>
           </div>
-        </div>
+        </section>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
@@ -175,13 +177,13 @@ export function DashboardOverviewPage() {
           />
         </div>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <section className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-7">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Don't miss out
               </p>
-              <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
+              <h2 className="mt-2 font-display text-xl font-extrabold text-ink sm:text-2xl">
                 Upcoming draws
               </h2>
             </div>
@@ -199,29 +201,35 @@ export function DashboardOverviewPage() {
               return (
                 <article
                   key={comp.slug}
-                  className="flex flex-col sm:flex-row overflow-hidden rounded-2xl ring-1 ring-ink/5 bg-cream"
+                  className="flex overflow-hidden rounded-2xl ring-1 ring-ink/5 bg-white hover:ring-coral/20 transition-all"
                 >
-                  <div className="sm:w-3/4 aspect-[4/3] sm:aspect-auto overflow-hidden">
+                  <div className="w-[42%] sm:w-[44%] bg-cream/60 p-3 flex items-center justify-center">
                     <img
                       src={comp.image}
                       alt={`${comp.title} prize`}
                       loading="lazy"
                       decoding="async"
-                      className="h-full w-full object-cover"
+                      className="h-full w-full max-h-[180px] object-contain rounded-xl"
                     />
                   </div>
-                  <div className="flex-1 p-5 flex flex-col justify-between gap-3">
+                  <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between gap-3">
                     <div>
-                      <h3 className="font-display text-lg font-extrabold text-ink leading-tight">
+                      <h3 className="font-display text-base font-extrabold text-ink leading-tight sm:text-lg">
                         {comp.title}
                       </h3>
-                      <div className="mt-2 flex items-center gap-2 text-xs font-bold text-ink/50">
+                      <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-ink/50">
                         <span className="inline-flex items-center gap-1">
-                          <Ticket className="size-3" /> {sold} / {total} entries
+                          <Ticket className="size-3.5" /> {sold.toLocaleString("en-NG")} / {total.toLocaleString("en-NG")} entries
                         </span>
                       </div>
+                      <div className="mt-2 h-1.5 w-full rounded-full bg-cream overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-coral transition-all duration-500"
+                          style={{ width: `${Math.min(100, (sold / total) * 100)}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span className="inline-flex items-center gap-1 rounded-full bg-lemon/30 px-3 py-1 text-[10px] font-extrabold text-ink">
                         <Clock className="size-3" />
                         Ends {comp.closes}
@@ -237,15 +245,15 @@ export function DashboardOverviewPage() {
               );
             })}
           </div>
-        </div>
+        </section>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <section className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-7">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Your ticket trail
               </p>
-              <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
+              <h2 className="mt-2 font-display text-xl font-extrabold text-ink sm:text-2xl">
                 Recent entries
               </h2>
             </div>
@@ -258,20 +266,20 @@ export function DashboardOverviewPage() {
           </div>
 
           <div className="mt-5 overflow-x-auto -mx-4 px-4">
-            <table className="w-full text-left text-sm min-w-[680px]">
-              <thead className="bg-cream text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+            <table className="w-full text-left text-sm min-w-[640px]">
+              <thead className="bg-cream text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45 rounded-2xl">
                 <tr>
-                  <th className="px-4 py-3 rounded-l-2xl">Entry ID</th>
+                  <th className="px-4 py-3 first:rounded-l-2xl last:rounded-r-2xl">Entry ID</th>
                   <th className="px-4 py-3">Competition</th>
-                  <th className="px-4 py-3 text-center">Ticket count</th>
+                  <th className="px-4 py-3 text-center">Tickets</th>
                   <th className="px-4 py-3">Draw date</th>
-                  <th className="px-4 py-3 rounded-r-2xl">Status</th>
+                  <th className="px-4 py-3 first:rounded-l-2xl last:rounded-r-2xl">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/10">
                 {recentEntries.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-cream/40">
-                    <td className="px-4 py-3">
+                  <tr key={entry.id} className="hover:bg-cream/40 transition-colors">
+                    <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-bold text-ink/70">
                           {entry.id}
@@ -294,14 +302,14 @@ export function DashboardOverviewPage() {
                         </button>
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-bold text-ink">{entry.competition}</td>
-                    <td className="px-4 py-3 text-center font-display font-extrabold text-ink">
+                    <td className="px-4 py-3.5 font-bold text-ink">{entry.competition}</td>
+                    <td className="px-4 py-3.5 text-center font-display font-extrabold text-ink">
                       {entry.tickets}
                     </td>
-                    <td className="px-4 py-3 text-xs font-bold text-ink/50">
+                    <td className="px-4 py-3.5 text-xs font-bold text-ink/50">
                       {entry.drawDate}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3.5">
                       <span
                         className={cn(
                           "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
@@ -316,7 +324,7 @@ export function DashboardOverviewPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       </div>
     </DashboardAppShell>
   );

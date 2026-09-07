@@ -6,11 +6,13 @@ import {
   Gift,
   Sparkles,
   ArrowRight,
+  Ticket,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 import { DashboardAppShell } from "@/components/rafilla/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
-import { formatNaira } from "@/lib/rafilla-data";
+import { formatNaira, REWARD_POOL } from "@/lib/rafilla-data";
 import { cn } from "@/lib/utils";
 
 const leaderboard = [
@@ -61,31 +63,26 @@ export function DashboardRewardPoolPage() {
       ]}
     >
       <div className="space-y-6">
-        <div>
-          <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
-            Reward pool
-          </h1>
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/60">
-            A shareable community pool funded by every entry. Invite more friends to earn bigger drops.
-          </p>
-        </div>
+        <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
+          A single community pool funded by every competition entry across Rafilla. Invite more friends to grow your proportional share.
+        </p>
 
-        <div className="overflow-hidden rounded-[28px] bg-coral/5 p-6 ring-1 ring-coral/15 sm:p-8 relative">
+        <div className="overflow-hidden rounded-[24px] bg-coral/5 p-6 ring-1 ring-coral/15 sm:p-8 relative">
           <div className="absolute -top-16 -right-16 size-56 rounded-full bg-lemon/25 blur-3xl" />
           <div className="absolute -bottom-20 -left-10 size-60 rounded-full bg-lilac/25 blur-3xl" />
           <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-ink ring-1 ring-ink/5">
-                <Sparkles className="size-3.5 text-coral" /> Season 4 · Community pool
+                <Sparkles className="size-3.5 text-coral" /> {REWARD_POOL.tagline}
               </div>
               <p className="mt-4 text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
-                Total reward pool
+                {REWARD_POOL.label}
               </p>
               <p className="mt-2 font-display text-[clamp(2.5rem,8vw,5rem)] font-extrabold leading-none tracking-tight text-ink">
-                {formatNaira(1243892000)}
+                {formatNaira(REWARD_POOL.totalKobo)}
               </p>
               <p className="mt-3 text-xs font-bold text-ink/55">
-                Funded by 2,488 participants · refreshed every cycle
+                Funded by {REWARD_POOL.totalParticipants.toLocaleString("en-NG")} participants · grows live with every entry
               </p>
             </div>
 
@@ -114,9 +111,9 @@ export function DashboardRewardPoolPage() {
                 ))}
               </div>
               <Button variant="primary" size="md" className="mt-4 w-full" asChild>
-                <a href="/dashboard/referrals">
+                <Link to="/dashboard/referrals">
                   Grow my share <ArrowRight className="size-4" />
-                </a>
+                </Link>
               </Button>
             </div>
           </div>
@@ -133,7 +130,7 @@ export function DashboardRewardPoolPage() {
               </h2>
             </div>
             <p className="text-xs font-bold text-ink/50">
-              You're ranked <span className="font-display font-extrabold text-coral">#4</span>
+              You're ranked <span className="font-display font-extrabold text-coral">#{REWARD_POOL.rank}</span>
             </p>
           </div>
 
@@ -149,7 +146,7 @@ export function DashboardRewardPoolPage() {
               </thead>
               <tbody className="divide-y divide-ink/10">
                 {leaderboard.map((r) => (
-                  <tr key={r.rank} className={cn(r.rank === 4 && "bg-lemon/10")}>
+                  <tr key={r.rank} className={cn(r.rank === REWARD_POOL.rank && "bg-lemon/10")}>
                     <td className="px-4 py-3">
                       <span className={cn(
                         "inline-grid size-8 place-items-center rounded-xl font-display text-sm font-extrabold text-ink ring-1",
@@ -164,7 +161,7 @@ export function DashboardRewardPoolPage() {
                           {r.avatar}
                         </span>
                         <span className="font-extrabold text-ink">{r.name}</span>
-                        {r.rank === 4 && (
+                        {r.rank === REWARD_POOL.rank && (
                           <span className="rounded-full bg-coral/15 px-2 py-0.5 text-[10px] font-extrabold text-coral">You</span>
                         )}
                       </div>

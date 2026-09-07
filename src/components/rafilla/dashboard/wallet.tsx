@@ -6,7 +6,6 @@ import {
   Plus,
   CreditCard,
   Building2,
-  Smartphone,
   Check,
   Copy,
   ChevronLeft,
@@ -72,7 +71,6 @@ export function FundWalletModal({
   open: boolean;
   onClose: () => void;
 }) {
-  const [tab, setTab] = useState<"paystack" | "flutterwave">("paystack");
   const [amount, setAmount] = useState<string>("25000");
   const [customActive, setCustomActive] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -145,23 +143,6 @@ export function FundWalletModal({
           </div>
         ) : (
           <>
-            <div className="mt-6 inline-flex rounded-2xl bg-cream p-1 ring-1 ring-ink/5 w-full">
-              {(["paystack", "flutterwave"] as const).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={cn(
-                    "flex-1 rounded-xl px-4 py-2 text-xs font-extrabold capitalize transition-colors",
-                    tab === t
-                      ? "bg-white text-ink shadow-sm ring-1 ring-ink/5"
-                      : "text-ink/55 hover:text-ink",
-                  )}
-                >
-                  {t === "paystack" ? "Paystack" : "Flutterwave"}
-                </button>
-              ))}
-            </div>
-
             <div className="mt-6">
               <label className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
                 Amount
@@ -231,13 +212,9 @@ export function FundWalletModal({
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-3">
-                {tab === "paystack" ? (
-                  <CreditCard className="size-5 text-coral" />
-                ) : (
-                  <Smartphone className="size-5 text-coral" />
-                )}
+                <CreditCard className="size-5 text-coral" />
                 <p className="text-xs font-bold leading-relaxed text-ink/65">
-                  Secure payment via {tab === "paystack" ? "Paystack" : "Flutterwave"}. You'll be redirected to complete checkout.
+                  Secure payment. You'll be redirected to complete checkout.
                 </p>
               </div>
             </div>
@@ -288,16 +265,11 @@ export function DashboardWalletPage() {
       ]}
     >
       <div className="space-y-6">
-        <div>
-          <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
-            Wallet
-          </h1>
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/60">
-            Fund your wallet for competition entries. This balance is spend-only.
-          </p>
-        </div>
+        <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
+          Fund your wallet for competition entries. This balance is spend-only.
+        </p>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
@@ -324,7 +296,7 @@ export function DashboardWalletPage() {
             <HowStep
               step="1"
               title="Add money"
-              text="Top up securely with Paystack, Flutterwave, or bank transfer."
+              text="Top up securely with card or bank transfer."
               accent="bg-mint/30 text-ink"
             />
             <HowStep

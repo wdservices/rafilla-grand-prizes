@@ -1,4 +1,4 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+﻿import { createFileRoute, useParams } from "@tanstack/react-router";
 import { DrawVerificationPage } from "@/components/rafilla/draws";
 
 const canonicalBase = "https://rafilla.com";
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/draw-verification/$slug")({
       ],
       links: [
         { rel: "canonical", href: canonical },
-        { rel: "alternate", hreflang: "en", href: canonical },
+        { rel: "alternate", hrefLang: "en", href: canonical },
       ],
     };
   },

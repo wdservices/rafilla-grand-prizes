@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { CompetitionDetailPage } from "@/components/rafilla/public-pages";
 import { formatNaira, getCompetition } from "@/lib/rafilla-data";
 
@@ -94,7 +94,7 @@ export const Route = createFileRoute("/competitions/$slug")({
       ],
       links: [
         { rel: "canonical", href: canonical },
-        { rel: "alternate", hreflang: "en", href: canonical },
+        { rel: "alternate", hrefLang: "en", href: canonical },
       ],
     };
   },

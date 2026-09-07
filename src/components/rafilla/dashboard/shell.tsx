@@ -123,33 +123,40 @@ export function DashboardShell({
   const activeKey = activeNav ?? "";
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-paper/60">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-ink/5 bg-paper lg:flex",
-          "rounded-r-[28px] ring-1 ring-ink/5",
+          "fixed inset-y-0 left-0 z-40 hidden w-[268px] flex-col border-r border-ink/5 bg-white lg:flex",
+          "rounded-r-[32px] ring-1 ring-ink/5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.25)]",
         )}
       >
-        <div className="flex items-center gap-2 p-6 pb-4">
-          <span className="grid size-10 place-items-center rounded-full bg-lilac font-display text-xl font-extrabold text-ink shadow-sm">
-            R
-          </span>
+        <div className="flex items-center gap-3 p-6 pb-5">
+          <img
+            src="/Rafilla-logo.png"
+            alt=""
+            className="size-11 shrink-0 rounded-2xl shadow-sm"
+            width={44}
+            height={44}
+          />
           <div>
-            <span className="block font-display text-xl font-extrabold tracking-tight text-ink">
+            <span className="block font-display text-xl font-extrabold tracking-tight text-ink leading-tight">
               Rafilla
             </span>
-            <span className="block text-xs font-bold text-ink/45">Dashboard</span>
+            <span className="block text-[11px] font-bold text-ink/45">Grand Prizes dashboard</span>
           </div>
         </div>
 
-        <div className="px-4 pb-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-cream p-3 ring-1 ring-ink/5">
-            <div className="grid size-10 shrink-0 place-items-center rounded-full bg-coral/15 font-display text-sm font-extrabold text-coral">
+        <div className="px-3.5 pb-4">
+          <div className="flex items-center gap-3 rounded-2xl bg-cream/60 p-3 ring-1 ring-ink/5">
+            <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-coral text-white shadow-[0_8px_18px_-10px_var(--coral)] font-display text-sm font-extrabold">
               TA
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-extrabold text-ink">Tunmise Adeyemi</p>
-              <p className="truncate text-xs font-bold text-ink/45">t***@********</p>
+              <p className="truncate text-sm font-extrabold text-ink leading-tight">Tunmise Adebayo</p>
+              <p className="truncate text-[11px] font-bold text-ink/45 leading-snug">t***@********</p>
+              <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-coral/10 px-2 py-0.5 text-[10px] font-extrabold text-coral">
+                <ShieldCheck className="size-3" /> Verified
+              </p>
             </div>
           </div>
         </div>
@@ -162,26 +169,33 @@ export function DashboardShell({
                 key={item.key}
                 to={item.to}
                 className={cn(
-                  "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold transition-colors",
+                  "flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition-all",
                   isActive
-                    ? "bg-coral text-cream shadow-[0_8px_20px_-8px_var(--coral)]"
-                    : "text-ink/70 hover:bg-cream hover:text-ink",
+                    ? "bg-coral text-white shadow-[0_8px_24px_-10px_var(--coral)] ring-1 ring-coral/30"
+                    : "text-ink/70 hover:bg-ink/5 hover:text-ink",
                 )}
               >
-                <span className={cn(isActive ? "text-cream" : "text-coral")}>{item.icon}</span>
+                <span
+                  className={cn(
+                    "grid size-8 place-items-center rounded-xl transition-colors",
+                    isActive ? "bg-white/15 text-white" : "bg-coral/10 text-coral",
+                  )}
+                >
+                  {item.icon}
+                </span>
                 {item.label}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4">
+        <div className="p-3.5">
           <button
-            onClick={() => navigate({ to: "/" })}
-            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold text-ink/70 transition-colors hover:bg-cream hover:text-ink"
+            onClick={() => navigate({ to: "/auth" })}
+            className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-extrabold text-ink/70 transition-colors hover:bg-ink/5 hover:text-ink"
           >
-            <LogOut className="size-5 text-coral" />
-            Logout
+            <LogOut className="size-4 text-coral" />
+            Log out
           </button>
         </div>
       </aside>
@@ -196,25 +210,29 @@ export function DashboardShell({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-80 rounded-r-[28px] bg-paper ring-1 ring-ink/5 transition-transform lg:hidden",
+          "fixed inset-y-0 left-0 z-50 w-80 rounded-r-[32px] bg-white ring-1 ring-ink/5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] transition-transform lg:hidden",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex items-center justify-between p-6 pb-4">
-          <div className="flex items-center gap-2">
-            <span className="grid size-10 place-items-center rounded-full bg-lilac font-display text-xl font-extrabold text-ink shadow-sm">
-              R
-            </span>
+          <div className="flex items-center gap-3">
+            <img
+              src="/Rafilla-logo.png"
+              alt=""
+              className="size-10 shrink-0 rounded-2xl shadow-sm"
+              width={40}
+              height={40}
+            />
             <div>
-              <span className="block font-display text-xl font-extrabold tracking-tight text-ink">
+              <span className="block font-display text-lg font-extrabold tracking-tight text-ink leading-tight">
                 Rafilla
               </span>
-              <span className="block text-xs font-bold text-ink/45">Dashboard</span>
+              <span className="block text-[11px] font-bold text-ink/45">Grand Prizes dashboard</span>
             </div>
           </div>
           <button
             onClick={() => setMobileMenuOpen(false)}
-            className="grid size-10 place-items-center rounded-full bg-cream text-ink ring-1 ring-ink/5"
+            className="grid size-10 place-items-center rounded-2xl bg-cream/70 text-ink ring-1 ring-ink/5"
             aria-label="Close menu"
           >
             <X className="size-5" />
@@ -222,13 +240,16 @@ export function DashboardShell({
         </div>
 
         <div className="px-4 pb-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-cream p-3 ring-1 ring-ink/5">
-            <div className="grid size-10 shrink-0 place-items-center rounded-full bg-coral/15 font-display text-sm font-extrabold text-coral">
+          <div className="flex items-center gap-3 rounded-2xl bg-cream/60 p-3 ring-1 ring-ink/5">
+            <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-coral text-white shadow-[0_8px_18px_-10px_var(--coral)] font-display text-sm font-extrabold">
               TA
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-extrabold text-ink">Tunmise Adeyemi</p>
-              <p className="truncate text-xs font-bold text-ink/45">t***@********</p>
+              <p className="truncate text-sm font-extrabold text-ink leading-tight">Tunmise Adebayo</p>
+              <p className="truncate text-[11px] font-bold text-ink/45 leading-snug">t***@********</p>
+              <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-coral/10 px-2 py-0.5 text-[10px] font-extrabold text-coral">
+                <ShieldCheck className="size-3" /> Verified
+              </p>
             </div>
           </div>
         </div>
@@ -242,13 +263,20 @@ export function DashboardShell({
                 to={item.to}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold transition-colors",
+                  "flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition-all",
                   isActive
-                    ? "bg-coral text-cream shadow-[0_8px_20px_-8px_var(--coral)]"
-                    : "text-ink/70 hover:bg-cream hover:text-ink",
+                    ? "bg-coral text-white shadow-[0_8px_24px_-10px_var(--coral)] ring-1 ring-coral/30"
+                    : "text-ink/70 hover:bg-ink/5 hover:text-ink",
                 )}
               >
-                <span className={cn(isActive ? "text-cream" : "text-coral")}>{item.icon}</span>
+                <span
+                  className={cn(
+                    "grid size-8 place-items-center rounded-xl transition-colors",
+                    isActive ? "bg-white/15 text-white" : "bg-coral/10 text-coral",
+                  )}
+                >
+                  {item.icon}
+                </span>
                 {item.label}
               </Link>
             );
@@ -256,45 +284,54 @@ export function DashboardShell({
           <button
             onClick={() => {
               setMobileMenuOpen(false);
-              navigate({ to: "/" });
+              navigate({ to: "/auth" });
             }}
-            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-extrabold text-ink/70 transition-colors hover:bg-cream hover:text-ink"
+            className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold text-ink/70 transition-colors hover:bg-ink/5 hover:text-ink"
           >
-            <LogOut className="size-5 text-coral" />
-            Logout
+            <LogOut className="size-4 text-coral" />
+            Log out
           </button>
         </nav>
       </aside>
 
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink/5 bg-paper/90 px-4 py-3 backdrop-blur lg:hidden sm:px-6">
-        <div className="flex items-center gap-2">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink/5 bg-white/80 px-4 py-3.5 backdrop-blur lg:hidden sm:px-6">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="grid size-10 place-items-center rounded-full bg-cream text-ink ring-1 ring-ink/5"
+            className="grid size-10 place-items-center rounded-2xl bg-cream/70 text-ink ring-1 ring-ink/5"
             aria-label="Open menu"
           >
             <Menu className="size-5" />
           </button>
-          <span className="grid size-10 place-items-center rounded-full bg-lilac font-display text-xl font-extrabold text-ink shadow-sm">
-            R
-          </span>
-          <span className="font-display text-lg font-extrabold tracking-tight text-ink">
-            Rafilla
-          </span>
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/Rafilla-logo.png"
+              alt=""
+              className="size-9 shrink-0 rounded-2xl shadow-sm"
+              width={36}
+              height={36}
+            />
+            <div>
+              <span className="block font-display text-base font-extrabold tracking-tight text-ink leading-none">
+                Rafilla
+              </span>
+              <span className="block text-[10px] font-bold text-ink/45">Dashboard</span>
+            </div>
+          </div>
         </div>
-        <div className="grid size-10 shrink-0 place-items-center rounded-full bg-coral/15 font-display text-sm font-extrabold text-coral ring-1 ring-ink/5">
+        <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-coral text-white font-display text-sm font-extrabold shadow-[0_8px_18px_-10px_var(--coral)]">
           TA
         </div>
       </header>
 
-      <main className="lg:ml-[272px] min-h-screen pt-6 pb-28 px-4 sm:px-6 lg:px-8 lg:pt-8">
+      <main className="lg:ml-[268px] min-h-screen pt-5 pb-28 px-4 sm:px-6 lg:px-8 lg:pt-8">
         {children}
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/5 bg-paper ring-1 ring-ink/5 lg:hidden"
-        style={{ borderTopLeftRadius: "22px", borderTopRightRadius: "22px" }}
+      <nav
+        className="fixed inset-x-0 bottom-3 z-40 mx-auto w-[calc(100%-24px)] max-w-md rounded-[28px] bg-white ring-1 ring-ink/5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)] lg:hidden"
       >
-        <div className="mx-auto grid max-w-lg grid-cols-5 px-2 pb-2 pt-3">
+        <div className="mx-auto grid max-w-lg grid-cols-5 px-1.5 pb-1.5 pt-2">
           {bottomNavItems.map((item) => {
             const isActive = activeKey === item.key;
             return (
@@ -302,14 +339,14 @@ export function DashboardShell({
                 key={item.key}
                 to={item.to}
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-extrabold transition-colors",
+                  "flex flex-col items-center gap-0.5 rounded-2xl px-1 py-2 text-[10px] font-extrabold transition-colors",
                   isActive ? "text-coral" : "text-ink/50 hover:text-ink",
                 )}
               >
                 <span
                   className={cn(
-                    "grid size-9 place-items-center rounded-xl",
-                    isActive ? "bg-coral/15 text-coral" : "text-ink/50",
+                    "grid size-9 place-items-center rounded-xl transition-colors",
+                    isActive ? "bg-coral/10 text-coral" : "text-ink/50",
                   )}
                 >
                   {item.icon}

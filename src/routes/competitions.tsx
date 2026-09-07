@@ -1,5 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { CompetitionsPage } from "@/components/rafilla/public-pages";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { competitions } from "@/lib/rafilla-data";
 
 const canonicalBase = "https://rafilla.com";
@@ -52,9 +51,9 @@ export const Route = createFileRoute("/competitions")({
       ],
       links: [
         { rel: "canonical", href: canonical },
-        { rel: "alternate", hreflang: "en", href: canonical },
+        { rel: "alternate", hrefLang: "en", href: canonical },
       ],
     };
   },
-  component: CompetitionsPage,
+  component: () => <Outlet />,
 });

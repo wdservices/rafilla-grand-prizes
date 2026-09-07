@@ -34,6 +34,7 @@ import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
 import { Route as AdminPayoutsRouteImport } from './routes/admin.payouts'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as CompetitionsIndexRouteImport } from './routes/competitions/index'
 import { Route as CompetitionsSlugRouteImport } from './routes/competitions.$slug'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as DashboardCompetitionsRouteImport } from './routes/dashboard.competitions'
@@ -179,6 +180,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CompetitionsIndexRoute = CompetitionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CompetitionsRoute,
 } as any)
 const CompetitionsSlugRoute = CompetitionsSlugRouteImport.update({
   id: '/$slug',
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/partner/submit': typeof PartnerSubmitRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin/': typeof AdminIndexRoute
+  '/competitions/': typeof CompetitionsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/partner/': typeof PartnerIndexRoute
   '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
@@ -337,7 +344,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/become-a-partner': typeof BecomeAPartnerRoute
   '/competition-rules': typeof CompetitionRulesRoute
-  '/competitions': typeof CompetitionsRouteWithChildren
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -373,6 +379,7 @@ export interface FileRoutesByTo {
   '/partner/submit': typeof PartnerSubmitRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin': typeof AdminIndexRoute
+  '/competitions': typeof CompetitionsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/partner': typeof PartnerIndexRoute
   '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
@@ -421,6 +428,7 @@ export interface FileRoutesById {
   '/partner/submit': typeof PartnerSubmitRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin/': typeof AdminIndexRoute
+  '/competitions/': typeof CompetitionsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/partner/': typeof PartnerIndexRoute
   '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
@@ -470,6 +478,7 @@ export interface FileRouteTypes {
     | '/partner/submit'
     | '/sitemap/xml'
     | '/admin/'
+    | '/competitions/'
     | '/dashboard/'
     | '/partner/'
     | '/dashboard/referrals/payout'
@@ -481,7 +490,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/become-a-partner'
     | '/competition-rules'
-    | '/competitions'
     | '/contact'
     | '/faq'
     | '/how-it-works'
@@ -517,6 +525,7 @@ export interface FileRouteTypes {
     | '/partner/submit'
     | '/sitemap/xml'
     | '/admin'
+    | '/competitions'
     | '/dashboard'
     | '/partner'
     | '/dashboard/referrals/payout'
@@ -564,6 +573,7 @@ export interface FileRouteTypes {
     | '/partner/submit'
     | '/sitemap/xml'
     | '/admin/'
+    | '/competitions/'
     | '/dashboard/'
     | '/partner/'
     | '/dashboard/referrals/payout'
@@ -792,6 +802,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/competitions/': {
+      id: '/competitions/'
+      path: '/'
+      fullPath: '/competitions/'
+      preLoaderRoute: typeof CompetitionsIndexRouteImport
+      parentRoute: typeof CompetitionsRoute
+    }
     '/competitions/$slug': {
       id: '/competitions/$slug'
       path: '/$slug'
@@ -937,10 +954,12 @@ declare module '@tanstack/react-router' {
 
 interface CompetitionsRouteChildren {
   CompetitionsSlugRoute: typeof CompetitionsSlugRoute
+  CompetitionsIndexRoute: typeof CompetitionsIndexRoute
 }
 
 const CompetitionsRouteChildren: CompetitionsRouteChildren = {
   CompetitionsSlugRoute: CompetitionsSlugRoute,
+  CompetitionsIndexRoute: CompetitionsIndexRoute,
 }
 
 const CompetitionsRouteWithChildren = CompetitionsRoute._addFileChildren(
