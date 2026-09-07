@@ -21,18 +21,7 @@ import { cn } from "@/lib/utils";
 type TxTab = "all" | "credits" | "purchases" | "referrals";
 type TxType = "Wallet credit" | "Ticket purchase" | "Referral bonus";
 
-const walletTransactions = [
-  { date: "05 Mar 2026 · 14:32", type: "Ticket purchase" as TxType, desc: "25 entries · Mercedes-Benz C-Class", amount: -2500000, balance: 45000000, ref: "TX-2026-00124" },
-  { date: "05 Mar 2026 · 10:15", type: "Wallet credit" as TxType, desc: "Bank transfer · Wema Bank ****8821", amount: 5000000, balance: 47500000, ref: "TX-2026-00123" },
-  { date: "04 Mar 2026 · 21:08", type: "Ticket purchase" as TxType, desc: "100 entries · Luxury 2-Bed Apartment", amount: -1000000, balance: 42500000, ref: "TX-2026-00122" },
-  { date: "04 Mar 2026 · 17:30", type: "Referral bonus" as TxType, desc: "L1 · Femi K. · Mercedes-Benz C-Class", amount: 200000, balance: 43500000, ref: "TX-2026-00121" },
-  { date: "04 Mar 2026 · 15:44", type: "Ticket purchase" as TxType, desc: "100 entries · Nova X1 Bundle", amount: -500000, balance: 43300000, ref: "TX-2026-00120" },
-  { date: "03 Mar 2026 · 22:11", type: "Referral bonus" as TxType, desc: "L1 · Tola A. · Nova X1 Bundle", amount: 500000, balance: 43800000, ref: "TX-2026-00119" },
-  { date: "03 Mar 2026 · 18:22", type: "Wallet credit" as TxType, desc: "Service credit · support #482", amount: 50000, balance: 43300000, ref: "TX-2026-00118" },
-  { date: "03 Mar 2026 · 09:12", type: "Wallet credit" as TxType, desc: "Card top-up · Paystack Visa ****1234", amount: 2500000, balance: 43250000, ref: "TX-2026-00117" },
-  { date: "02 Mar 2026 · 20:05", type: "Ticket purchase" as TxType, desc: "10 entries · Luxury 2-Bed Apartment", amount: -250000, balance: 40750000, ref: "TX-2026-00116" },
-  { date: "02 Mar 2026 · 11:37", type: "Referral bonus" as TxType, desc: "L2 · Uche J. · Mercedes-Benz C-Class", amount: 100000, balance: 41000000, ref: "TX-2026-00115" },
-];
+const walletTransactions: Array<{ date: string; type: TxType; desc: string; amount: number; balance: number; ref: string }> = [];
 
 const typeStyles: Record<TxType, string> = {
   "Wallet credit": "bg-mint/30 text-ink",
@@ -276,7 +265,7 @@ export function DashboardWalletPage() {
                 Wallet balance
               </p>
               <p className="mt-3 break-all font-display text-[clamp(1.75rem,6vw,4.5rem)] font-extrabold leading-none tracking-tight text-ink">
-                {formatNaira(45000000)}
+                {formatNaira(0)}
               </p>
               <p className="mt-3 max-w-md text-xs font-bold leading-relaxed text-ink/50">
                 For entries only · No withdrawals

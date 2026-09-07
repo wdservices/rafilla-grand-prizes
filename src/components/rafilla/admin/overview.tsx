@@ -94,8 +94,8 @@ function DualChartBars() {
   const w = 720;
   const h = 240;
   const pad = 28;
-  const tickets = [4200, 5100, 4800, 6200, 7100, 6800, 7500, 8200, 7900, 9100, 10200, 9800, 11500, 12400];
-  const revenueBase = [210, 255, 240, 310, 355, 340, 375, 410, 395, 455, 510, 490, 575, 620];
+  const tickets = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const revenueBase = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   const maxT = Math.max(...tickets) * 1.15;
   const maxR = Math.max(...revenueBase) * 1.15;
   const barArea = w - pad * 2;
@@ -148,16 +148,7 @@ function DualChartBars() {
   );
 }
 
-const REGISTRATIONS = [
-  { name: "Aisha Mohammed", email: "aisha.m@rafilla.ng", initials: "AM", tint: "coral" as const, date: "2h ago", verified: true },
-  { name: "Tunde Okafor", email: "tunde.o@mail.ng", initials: "TO", tint: "sky" as const, date: "3h ago", verified: true },
-  { name: "Chidi Kelechi", email: "chidi.k@outlook.com", initials: "CK", tint: "mint" as const, date: "4h ago", verified: false },
-  { name: "Amaka Peace", email: "amaka.p@gmail.com", initials: "AP", tint: "lemon" as const, date: "5h ago", verified: true },
-  { name: "Ifeoma Dike", email: "ifeoma.d@yahoo.com", initials: "ID", tint: "lilac" as const, date: "6h ago", verified: true },
-  { name: "Uche Nwankwo", email: "uche.n@hotmail.com", initials: "UN", tint: "sky" as const, date: "7h ago", verified: false },
-  { name: "Bola Tinubu", email: "bola.t@rafilla.ng", initials: "BT", tint: "coral" as const, date: "8h ago", verified: true },
-  { name: "Zainab Abubakar", email: "zainab.a@gmail.com", initials: "ZA", tint: "mint" as const, date: "9h ago", verified: true },
-];
+const REGISTRATIONS: Array<{ name: string; email: string; initials: string; tint: "coral" | "sky" | "mint" | "lemon" | "lilac"; date: string; verified: boolean }> = [];
 
 const tintBg: Record<string, string> = {
   sky: "bg-sky/30 text-ink",
@@ -168,24 +159,18 @@ const tintBg: Record<string, string> = {
   ink: "bg-ink/10 text-ink",
 };
 
-const PAYOUTS_QUEUE = [
-  { user: "Amaka Peace", initials: "AP", tint: "lemon" as const, amount: 18500000 },
-  { user: "Chidi Kelechi", initials: "CK", tint: "sky" as const, amount: 21000000 },
-  { user: "Ifeoma Dike", initials: "ID", tint: "mint" as const, amount: 9500000 },
-  { user: "Tunde Okafor", initials: "TO", tint: "coral" as const, amount: 32000000 },
-  { user: "Zainab Abubakar", initials: "ZA", tint: "lilac" as const, amount: 15800000 },
-];
+const PAYOUTS_QUEUE: Array<{ user: string; initials: string; tint: "lemon" | "sky" | "mint" | "coral" | "lilac"; amount: number }> = [];
 
 type CompStatus = "DRAFT" | "SCHEDULED" | "LIVE" | "DRAWING" | "RESULTED" | "CLOSED" | "COMPLETED";
 
 const COMP_LIFECYCLE: Array<{ name: string; pct: number; status: CompStatus; action: string }> = [
-  { name: "Mercedes-Benz C-Class 2025", pct: 84, status: "LIVE", action: "Monitor entries" },
-  { name: "Nova X1 Tech Bundle", pct: 94, status: "DRAWING", action: "Start draw now" },
+  { name: "Mercedes-Benz C-Class 2025", pct: 0, status: "LIVE", action: "Monitor entries" },
+  { name: "Nova X1 Tech Bundle", pct: 0, status: "DRAWING", action: "Start draw now" },
   { name: "Luxury 2-Bed Apartment", pct: 0, status: "SCHEDULED", action: "Review asset" },
-  { name: "Ikeja Home Studio", pct: 97, status: "RESULTED", action: "Verify winner" },
-  { name: "Abuja Generator Pack", pct: 100, status: "COMPLETED", action: "Archive" },
-  { name: "PH Laptop Suite", pct: 100, status: "CLOSED", action: "Settle partner" },
-  { name: "Eko Weekend Giveaway", pct: 20, status: "DRAFT", action: "Publish schedule" },
+  { name: "Ikeja Home Studio", pct: 0, status: "RESULTED", action: "Verify winner" },
+  { name: "Abuja Generator Pack", pct: 0, status: "COMPLETED", action: "Archive" },
+  { name: "PH Laptop Suite", pct: 0, status: "CLOSED", action: "Settle partner" },
+  { name: "Eko Weekend Giveaway", pct: 0, status: "DRAFT", action: "Publish schedule" },
   { name: "Lekki Jewelry Set", pct: 0, status: "DRAFT", action: "Add asset" },
 ];
 
@@ -213,12 +198,12 @@ export function AdminOverview() {
       </header>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <KpiCard label="Total users" value="12,480" delta="+12% week" deltaPositive icon={Users} tone="ink" />
-        <KpiCard label="Active competitions" value="32" icon={Trophy} tone="sky" />
-        <KpiCard label="Tickets sold (7 days)" value="124,560" sub={formatNaira(6228000000)} delta="+8.4%" deltaPositive icon={Ticket} tone="lemon" />
-        <KpiCard label="Revenue (MTD)" value={formatNaira(41298000000)} delta="+18.2%" deltaPositive icon={DollarSign} tone="coral" />
-        <KpiCard label="Pending payouts" value="82" sub={formatNaira(2468000000)} icon={Banknote} tone="lilac" />
-        <KpiCard label="Referral pool (all-time)" value={formatNaira(5812000000)} icon={Gift} tone="mint" />
+        <KpiCard label="Total users" value="0" delta="0% week" deltaPositive icon={Users} tone="ink" />
+        <KpiCard label="Active competitions" value="0" icon={Trophy} tone="sky" />
+        <KpiCard label="Tickets sold (7 days)" value="0" sub={formatNaira(0)} delta="0%" deltaPositive icon={Ticket} tone="lemon" />
+        <KpiCard label="Revenue (MTD)" value={formatNaira(0)} delta="0%" deltaPositive icon={DollarSign} tone="coral" />
+        <KpiCard label="Pending payouts" value="0" sub={formatNaira(0)} icon={Banknote} tone="lilac" />
+        <KpiCard label="Referral pool (all-time)" value={formatNaira(0)} icon={Gift} tone="mint" />
       </section>
 
       <section className="mt-6">
@@ -320,7 +305,7 @@ export function AdminOverview() {
                 <h3 className="mt-1 font-display text-xl font-extrabold text-ink">Pending payouts</h3>
               </div>
               <Badge className="rounded-full bg-coral/15 px-2.5 py-1 text-[10px] font-extrabold text-coral ring-0">
-                82 items
+                0 items
               </Badge>
             </div>
             <div className="mt-4 space-y-2.5">

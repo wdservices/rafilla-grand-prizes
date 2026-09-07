@@ -16,16 +16,16 @@ import { formatNaira, REWARD_POOL } from "@/lib/rafilla-data";
 import { cn } from "@/lib/utils";
 
 const leaderboard = [
-  { rank: 1, name: "Amarachi O.", entries: 842, bonus: 8420000, avatar: "AO" },
-  { rank: 2, name: "Chukwuemeka N.", entries: 621, bonus: 6210000, avatar: "CN" },
-  { rank: 3, name: "Zainab I.", entries: 589, bonus: 5890000, avatar: "ZI" },
-  { rank: 4, name: "Tunmise A.", entries: 418, bonus: 4180000, avatar: "TA" },
-  { rank: 5, name: "Ifeoma D.", entries: 355, bonus: 3550000, avatar: "ID" },
-  { rank: 6, name: "Femi K.", entries: 298, bonus: 2980000, avatar: "FK" },
-  { rank: 7, name: "Blessing C.", entries: 244, bonus: 2440000, avatar: "BC" },
-  { rank: 8, name: "Adebayo T.", entries: 211, bonus: 2110000, avatar: "AT" },
-  { rank: 9, name: "Uche J.", entries: 188, bonus: 1880000, avatar: "UJ" },
-  { rank: 10, name: "Yetunde B.", entries: 156, bonus: 1560000, avatar: "YB" },
+  { rank: 1, name: "—", entries: 0, bonus: 0, avatar: "—" },
+  { rank: 2, name: "—", entries: 0, bonus: 0, avatar: "—" },
+  { rank: 3, name: "—", entries: 0, bonus: 0, avatar: "—" },
+  { rank: 4, name: "—", entries: 0, bonus: 0, avatar: "—" },
+  { rank: 5, name: "—", entries: 0, bonus: 0, avatar: "—" },
+  { rank: 6, name: "—", entries: 0, bonus: 0, avatar: "—" },
+  { rank: 7, name: "—", entries: 0, bonus: 0, avatar: "—" },
+  { rank: 8, name: "—", entries: 0, bonus: 0, avatar: "—" },
+  { rank: 9, name: "—", entries: 0, bonus: 0, avatar: "—" },
+  { rank: 10, name: "—", entries: 0, bonus: 0, avatar: "—" },
 ];
 
 const rankTone: Record<number, string> = {

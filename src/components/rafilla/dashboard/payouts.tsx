@@ -40,45 +40,7 @@ const payoutHistory: Array<{
   status: PayoutStatus;
   submitted: string;
   paid?: string;
-}> = [
-  {
-    ref: "PAY-2026-0301-82F",
-    amount: 800000,
-    bank: "GTB",
-    status: "PAID",
-    submitted: "01 Mar",
-    paid: "03 Mar",
-  },
-  {
-    ref: "PAY-2026-0218-44B",
-    amount: 660000,
-    bank: "Access",
-    status: "UNDER REVIEW",
-    submitted: "18 Feb",
-  },
-  {
-    ref: "PAY-2026-0205-19C",
-    amount: 500000,
-    bank: "Zenith",
-    status: "APPROVED",
-    submitted: "05 Feb",
-    paid: "07 Feb",
-  },
-  {
-    ref: "PAY-2026-0122-77D",
-    amount: 300000,
-    bank: "UBA",
-    status: "REJECTED",
-    submitted: "22 Jan",
-  },
-  {
-    ref: "PAY-2026-0108-31E",
-    amount: 150000,
-    bank: "Fidelity",
-    status: "PENDING",
-    submitted: "08 Jan",
-  },
-];
+}> = [];
 
 const statusColor: Record<PayoutStatus, string> = {
   PENDING: "bg-lemon/40 text-ink",
@@ -88,7 +50,7 @@ const statusColor: Record<PayoutStatus, string> = {
   REJECTED: "bg-rose/20 text-ink",
 };
 
-const AVAILABLE_BALANCE = 28400;
+const AVAILABLE_BALANCE = 0;
 
 export function DashboardReferralsPayoutPage() {
   const [amount, setAmount] = useState("");
@@ -327,7 +289,7 @@ export function DashboardReferralsPayoutPage() {
                     Pending
                   </p>
                   <p className="mt-1 font-display text-xl font-extrabold">
-                    {formatNaira(15200)}
+                    {formatNaira(0)}
                   </p>
                 </div>
                 <div>
@@ -335,7 +297,7 @@ export function DashboardReferralsPayoutPage() {
                     Paid
                   </p>
                   <p className="mt-1 font-display text-xl font-extrabold">
-                    {formatNaira(14600)}
+                    {formatNaira(0)}
                   </p>
                 </div>
               </div>

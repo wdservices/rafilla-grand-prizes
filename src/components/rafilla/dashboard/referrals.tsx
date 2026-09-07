@@ -29,10 +29,10 @@ type TreeNode = {
 };
 
 const l2: TreeNode[] = [
-  { name: "Femi K.", initials: "FK", recruits: 2, active: true },
-  { name: "Tola A.", initials: "TA", recruits: 3, active: true },
-  { name: "Amaka O.", initials: "AO", recruits: 1, active: true },
-  { name: "Chidi E.", initials: "CE", recruits: 2, active: true },
+  { name: "Femi K.", initials: "FK", recruits: 0, active: false },
+  { name: "Tola A.", initials: "TA", recruits: 0, active: false },
+  { name: "Amaka O.", initials: "AO", recruits: 0, active: false },
+  { name: "Chidi E.", initials: "CE", recruits: 0, active: false },
 ];
 
 function genL3(l2i: number): TreeNode[] {
@@ -59,18 +59,7 @@ type Commission = {
   status: "PENDING" | "AVAILABLE";
 };
 
-const commissions: Commission[] = [
-  { date: "05 Mar · 16:02", who: "Femi K.", initials: "FK", forWhat: "Mercedes-Benz C-Class ticket purchase", level: 1, amount: 200000, status: "AVAILABLE" },
-  { date: "05 Mar · 12:44", who: "Amaka O.", initials: "AO", forWhat: "Nova X1 Bundle ticket purchase", level: 2, amount: 75000, status: "PENDING" },
-  { date: "04 Mar · 22:11", who: "Tola A.", initials: "TA", forWhat: "Nova X1 Bundle ticket purchase", level: 1, amount: 500000, status: "AVAILABLE" },
-  { date: "04 Mar · 17:30", who: "Wale O.", initials: "WO", forWhat: "Luxury 2-Bed Apt ticket purchase", level: 3, amount: 25000, status: "PENDING" },
-  { date: "04 Mar · 14:05", who: "Uche J.", initials: "UJ", forWhat: "Mercedes-Benz C-Class ticket purchase", level: 2, amount: 100000, status: "AVAILABLE" },
-  { date: "03 Mar · 20:14", who: "Blessing C.", initials: "BC", forWhat: "Nova X1 Bundle ticket purchase", level: 3, amount: 50000, status: "AVAILABLE" },
-  { date: "03 Mar · 11:50", who: "Ifeoma D.", initials: "ID", forWhat: "Luxury 2-Bed Apt ticket purchase", level: 1, amount: 250000, status: "AVAILABLE" },
-  { date: "02 Mar · 18:33", who: "Aisha M.", initials: "AM", forWhat: "Mercedes-Benz C-Class ticket purchase", level: 2, amount: 80000, status: "PENDING" },
-  { date: "02 Mar · 09:18", who: "Onyeka G.", initials: "OG", forWhat: "Nova X1 Bundle ticket purchase", level: 4, amount: 15000, status: "PENDING" },
-  { date: "01 Mar · 21:07", who: "Ngozi S.", initials: "NS", forWhat: "Nova X1 Bundle ticket purchase", level: 1, amount: 500000, status: "AVAILABLE" },
-];
+const commissions: Commission[] = [];
 
 const levelBadge: Record<Commission["level"], string> = {
   1: "bg-coral/15 text-coral",
@@ -140,7 +129,7 @@ export function DashboardReferralsPage() {
     bank: "Wema Bank",
     accountNo: "",
     accountName: "",
-    amount: "920000",
+    amount: "0",
   });
   const [payoutSubmitted, setPayoutSubmitted] = useState(false);
 
@@ -215,11 +204,11 @@ export function DashboardReferralsPage() {
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Invites sent" value="42" tone="bg-mint/30 text-ink" />
-            <StatCard label="Total recruits" value="4 / 20" tone="bg-coral/15 text-coral" />
+            <StatCard label="Invites sent" value="0" tone="bg-mint/30 text-ink" />
+            <StatCard label="Total recruits" value="0 / 0" tone="bg-coral/15 text-coral" />
             <StatCard
               label="Total earned commissions"
-              value={formatNaira(1240000)}
+              value={formatNaira(0)}
               tone="bg-sky/20 text-ink"
             />
             <div className="rounded-[22px] bg-white p-5 ring-1 ring-ink/5">
@@ -227,10 +216,10 @@ export function DashboardReferralsPage() {
                 Available balance
               </span>
               <p className="mt-3 font-display text-2xl font-extrabold text-ink sm:text-3xl">
-                {formatNaira(920000)}
+                {formatNaira(0)}
               </p>
               <p className="mt-1 text-xs font-bold text-ink/45">
-                {formatNaira(320000)} pending
+                {formatNaira(0)} pending
               </p>
             </div>
           </div>
@@ -495,7 +484,7 @@ export function DashboardReferralsPage() {
                     Available
                   </span>
                   <span className="font-display text-xl font-extrabold text-ink">
-                    {formatNaira(920000)}
+                    {formatNaira(0)}
                   </span>
                 </div>
 
@@ -523,10 +512,10 @@ export function DashboardReferralsPage() {
                         Amount
                       </label>
                       <button
-                        onClick={() => setPayoutForm((f) => ({ ...f, amount: "920000" }))}
+                        onClick={() => setPayoutForm((f) => ({ ...f, amount: "0" }))}
                         className="text-[11px] font-extrabold text-coral hover:underline"
                       >
-                        Max · {formatNaira(920000)}
+                        Max · {formatNaira(0)}
                       </button>
                     </div>
                     <div className="flex min-h-11 items-center gap-2 rounded-2xl bg-cream px-4 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral">
@@ -536,7 +525,7 @@ export function DashboardReferralsPage() {
                         type="number"
                         value={payoutForm.amount}
                         onChange={(e) => setPayoutForm((f) => ({ ...f, amount: e.target.value }))}
-                        max={920000}
+                        max={0}
                         className="w-full bg-transparent font-display text-xl font-extrabold text-ink outline-none placeholder:text-ink/30"
                       />
                     </div>

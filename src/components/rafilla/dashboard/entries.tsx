@@ -42,36 +42,7 @@ const initials = (name: string) =>
   name.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
 
 function genTickets(): MockEntry[] {
-  const titles = [
-    { comp: competitions[0], tickets: [12, 5, 3, 8] },
-    { comp: competitions[1], tickets: [25, 10, 15] },
-    { comp: competitions[2], tickets: [50, 20, 5] },
-  ];
-  const all: MockEntry[] = [];
-  let i = 0;
-  const statusPool: EntryStatus[] = ["Entered", "Entered", "Entered", "Entered", "Won", "Lost", "Entered", "Won", "Lost", "Entered", "Entered", "Lost"];
-  titles.forEach(({ comp, tickets }) => {
-    tickets.forEach((tcount) => {
-      const id = `RF-2026-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
-      const nums = Array.from({ length: 5 }, () =>
-        String(Math.floor(Math.random() * 999999)).padStart(6, "0")
-      );
-      const draws = ["18 Mar 2026", "12 Mar 2026", "25 Mar 2026", "04 Feb 2026", "17 Feb 2026", "28 Jan 2026"];
-      all.push({
-        id,
-        competitionTitle: comp.title,
-        competitionSlug: comp.slug,
-        competitionImage: comp.image,
-        competitionImageAlt: comp.imageAlt,
-        ticketCount: tcount,
-        drawDate: draws[i % draws.length],
-        ticketNumbers: nums,
-        status: statusPool[i % statusPool.length],
-      });
-      i++;
-    });
-  });
-  return all;
+  return [];
 }
 
 export function DashboardEntriesPage() {

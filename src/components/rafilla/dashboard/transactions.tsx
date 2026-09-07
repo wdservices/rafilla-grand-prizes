@@ -58,28 +58,7 @@ const sourceIcon: Record<TxSource, { icon: React.ReactNode; bg: string }> = {
   "Bank transfer": { icon: <ArrowUpRight className="size-4" />, bg: "bg-sky/20 text-ink" },
 };
 
-const txPool: Array<Omit<Tx, "id">> = [
-  { date: "05 Mar 2026 · 14:32", type: "Ticket purchase", source: "Wallet", desc: "25 entries · Mercedes-Benz C-Class", amount: -2500000, balance: 45000000 },
-  { date: "05 Mar 2026 · 10:15", type: "Wallet credit", source: "Bank transfer", desc: "Wema Bank transfer · Ref WB2603051422", amount: 5000000, balance: 47500000 },
-  { date: "05 Mar 2026 · 09:02", type: "Payout", source: "Bank transfer", desc: "Referral payout · Access Bank ****7812", amount: -920000, balance: 42500000 },
-  { date: "04 Mar 2026 · 21:08", type: "Ticket purchase", source: "Wallet", desc: "100 entries · Luxury 2-Bed Apartment", amount: -1000000, balance: 43420000 },
-  { date: "04 Mar 2026 · 17:30", type: "Referral bonus", source: "Referral", desc: "L1 commission · Femi K. Mercedes-Benz", amount: 200000, balance: 44420000 },
-  { date: "04 Mar 2026 · 15:44", type: "Ticket purchase", source: "Wallet", desc: "100 entries · Nova X1 Bundle", amount: -500000, balance: 44220000 },
-  { date: "04 Mar 2026 · 12:10", type: "Referral bonus", source: "Referral", desc: "L2 commission · Amaka O. Nova X1 Bundle", amount: 75000, balance: 44720000 },
-  { date: "03 Mar 2026 · 22:11", type: "Referral bonus", source: "Referral", desc: "L1 commission · Tola A. Nova X1 Bundle", amount: 500000, balance: 44645000 },
-  { date: "03 Mar 2026 · 18:22", type: "Wallet credit", source: "Wallet", desc: "Service credit · support #482", amount: 50000, balance: 44145000 },
-  { date: "03 Mar 2026 · 09:12", type: "Wallet credit", source: "Paystack", desc: "Card top-up · Visa ****1234", amount: 2500000, balance: 44095000 },
-  { date: "02 Mar 2026 · 20:05", type: "Ticket purchase", source: "Wallet", desc: "10 entries · Luxury 2-Bed Apartment", amount: -250000, balance: 41595000 },
-  { date: "02 Mar 2026 · 14:40", type: "Referral bonus", source: "Referral", desc: "L3 commission · Wale O. Apartment entry", amount: 25000, balance: 41845000 },
-  { date: "02 Mar 2026 · 11:37", type: "Referral bonus", source: "Referral", desc: "L2 commission · Uche J. Mercedes-Benz", amount: 100000, balance: 41820000 },
-  { date: "02 Mar 2026 · 08:55", type: "Wallet credit", source: "Flutterwave", desc: "Bank transfer · GTB ****8821", amount: 1000000, balance: 41720000 },
-  { date: "01 Mar 2026 · 23:20", type: "Referral bonus", source: "Referral", desc: "L4 commission · Blessing C. network", amount: 15000, balance: 40720000 },
-  { date: "01 Mar 2026 · 19:44", type: "Ticket purchase", source: "Wallet", desc: "50 entries · Mercedes-Benz C-Class", amount: -500000, balance: 40705000 },
-  { date: "01 Mar 2026 · 14:12", type: "Payout", source: "Bank transfer", desc: "Referral payout · UBA ****2301", amount: -460000, balance: 41205000 },
-  { date: "28 Feb 2026 · 22:05", type: "Referral bonus", source: "Referral", desc: "L1 commission · Ifeoma D. Apartment", amount: 250000, balance: 41665000 },
-  { date: "28 Feb 2026 · 11:18", type: "Wallet credit", source: "Paystack", desc: "Card top-up · Mastercard ****4567", amount: 3000000, balance: 41415000 },
-  { date: "27 Feb 2026 · 16:40", type: "Ticket purchase", source: "Wallet", desc: "75 entries · Nova X1 Bundle", amount: -375000, balance: 38415000 },
-];
+const txPool: Array<Omit<Tx, "id">> = [];
 
 const allTransactions: Tx[] = txPool.map((t, i) => ({
   ...t,

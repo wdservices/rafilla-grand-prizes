@@ -47,43 +47,7 @@ function KpiCard({ label, value, sub, icon, iconBg, right }: KpiProps) {
   );
 }
 
-const recentEntries = [
-  {
-    id: "RF-2026-8B4A2C91",
-    competition: "Mercedes-Benz C-Class 2025",
-    tickets: 5,
-    drawDate: "18 Mar 2026",
-    status: "Entered" as const,
-  },
-  {
-    id: "RF-2026-7F3D1E8A",
-    competition: "Nova X1 Bundle",
-    tickets: 10,
-    drawDate: "12 Mar 2026",
-    status: "Entered" as const,
-  },
-  {
-    id: "RF-2026-9C5E3B72",
-    competition: "Luxury 2-Bed Apartment",
-    tickets: 25,
-    drawDate: "02 Feb 2026",
-    status: "Won" as const,
-  },
-  {
-    id: "RF-2026-4A8B6D2F",
-    competition: "Mercedes-Benz C-Class 2025",
-    tickets: 2,
-    drawDate: "15 Jan 2026",
-    status: "Lost" as const,
-  },
-  {
-    id: "RF-2026-2E7A9C14",
-    competition: "Nova X1 Bundle",
-    tickets: 8,
-    drawDate: "28 Jan 2026",
-    status: "Drawn" as const,
-  },
-];
+const recentEntries: Array<{ id: string; competition: string; tickets: number; drawDate: string; status: "Entered" | "Won" | "Lost" | "Drawn" }> = [];
 
 const statusStyles: Record<(typeof recentEntries)[number]["status"], string> = {
   Entered: "bg-mint/30 text-ink",
@@ -126,7 +90,7 @@ export function DashboardOverviewPage() {
                   Wallet balance
                 </p>
                 <p className="mt-1 break-words font-display text-lg font-extrabold text-ink sm:text-xl lg:text-2xl">
-                  {formatNaira(45000000)}
+                  {formatNaira(0)}
                 </p>
               </div>
               <div className="flex-1 rounded-2xl bg-cream px-4 py-3.5 ring-1 ring-ink/5 sm:min-w-[140px] sm:flex-none">
@@ -134,7 +98,7 @@ export function DashboardOverviewPage() {
                   Referral earnings
                 </p>
                 <p className="mt-1 break-words font-display text-lg font-extrabold text-ink sm:text-xl lg:text-2xl">
-                  {formatNaira(1240000)}
+                  {formatNaira(0)}
                 </p>
               </div>
               <Button asChild variant="primary" size="md" className="w-full sm:w-auto">
@@ -149,28 +113,28 @@ export function DashboardOverviewPage() {
         <div className="grid gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label="Total entries"
-            value="87"
-            sub="Across 11 competitions"
+            value="0"
+            sub="Across 0 competitions"
             icon={<Ticket className="size-5 text-coral" />}
             iconBg="bg-sky/20"
           />
           <KpiCard
             label="Active competitions"
-            value="6"
+            value="0"
             sub="Draws coming up"
             icon={<Trophy className="size-5 text-coral" />}
             iconBg="bg-lemon/30"
           />
           <KpiCard
             label="Prizes won"
-            value="2"
-            sub={`${formatNaira(125000000)} value`}
+            value="0"
+            sub={`${formatNaira(0)} value`}
             icon={<Trophy className="size-5 text-coral" />}
             iconBg="bg-mint/30"
           />
           <KpiCard
             label="Referrals recruited"
-            value="4"
+            value="0"
             sub="In your network"
             icon={<Users className="size-5 text-coral" />}
             iconBg="bg-coral/15"

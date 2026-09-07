@@ -128,8 +128,8 @@ const USERS: MockUser[] = Array.from({ length: 25 }, (_, i) => {
     verifiedEmail: i % 5 !== 2,
     verifiedPhone: i % 7 !== 3,
     verifiedKyc: i % 4 !== 0,
-    entries: Math.floor(Math.random() * 480) + 2,
-    wallet: (Math.floor(Math.random() * 950) + 10) * 10000,
+    entries: 0,
+    wallet: 0,
     created: `2025-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
     status: STATUSES[i % STATUSES.length]!,
   };
