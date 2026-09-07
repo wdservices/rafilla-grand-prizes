@@ -91,25 +91,7 @@ const FIRST = ["Amaka", "Chidi", "Ifeoma", "Tunde", "Zainab", "Uche", "Kemi", "B
 const LAST = ["Peace", "Kelechi", "Dike", "Okafor", "Abubakar", "Nwankwo", "Olusanya", "Tinubu", "Homes", "Chukwu", "Adesanya", "Ibe"];
 const BANKS = ["GTBank", "Zenith", "Access", "UBA", "First Bank", "Wema Bank", "Stanbic IBTC", "Fidelity"];
 
-const PAYOUTS: MockPayout[] = Array.from({ length: 20 }, (_, i) => {
-  const type = TYPES[i % TYPES.length]!;
-  const isPartner = type === "PARTNER";
-  const fn = FIRST[i % FIRST.length]!;
-  const ln = LAST[i % LAST.length]!;
-  return {
-    id: `RF-PY-${String(260300 + i)}`,
-    date: `2026-03-${String(12 - (i % 10)).padStart(2, "0")}`,
-    recipient: `${fn} ${isPartner ? "Ltd" : ln}`,
-    recipientType: isPartner ? "PARTNER" : "USER",
-    initials: `${fn[0]!}${(isPartner ? "L" : ln[0]!)}`,
-    tint: TINTS[i % TINTS.length]!,
-    type,
-    amount: (Math.floor(Math.random() * 980) + 20) * 100000,
-    sourceBank: "Rafilla · Providus NG",
-    destination: `${BANKS[i % BANKS.length]!} · ****${String(1000 + i * 37).slice(0, 4)}`,
-    status: STATUSES[i % STATUSES.length]!,
-  };
-});
+const PAYOUTS: MockPayout[] = [];
 
 const tintBg: Record<MockPayout["tint"], string> = {
   sky: "bg-sky/30 text-ink",
