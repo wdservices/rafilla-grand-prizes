@@ -107,9 +107,9 @@ export function CompetitionCard({
 
   if (variant === "list") {
     return (
-      <article className="group rounded-[24px] bg-paper p-3 shadow-sm ring-1 ring-ink/5 transition-transform duration-200 hover:-translate-y-0.5 sm:p-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div className={cn("overflow-hidden rounded-[18px]", accent.surface)}>
+      <article className="group overflow-hidden rounded-[24px] bg-paper p-3 shadow-sm ring-1 ring-ink/5 transition-transform duration-200 hover:-translate-y-0.5 sm:p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div className={cn("overflow-hidden rounded-[18px] shrink-0", accent.surface)}>
             <img
               src={competition.image}
               alt={`${competition.title} prize`}
@@ -117,14 +117,14 @@ export function CompetitionCard({
               height={576}
               loading="lazy"
               decoding="async"
-              className="aspect-[4/3] w-full object-cover sm:size-[180px]"
+              className="aspect-[4/3] w-full object-cover sm:size-[180px] sm:aspect-square"
             />
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="truncate font-display text-xl font-extrabold text-ink sm:text-2xl">
+                  <h3 className="line-clamp-2 font-display text-lg font-extrabold leading-tight text-ink sm:text-xl lg:text-2xl">
                     {competition.title}
                   </h3>
                 </div>
@@ -146,41 +146,41 @@ export function CompetitionCard({
                 {competition.status}
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-3 text-sm sm:grid-cols-4">
-              <div>
+            <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+              <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
                   Entry
                 </p>
-                <p className="font-display text-lg font-extrabold text-ink">
+                <p className="break-words font-display text-base font-extrabold text-ink sm:text-lg">
                   {formatNaira(competition.entryPrice)}
                 </p>
               </div>
-              <div className="hidden sm:block">
+              <div className="hidden min-w-0 sm:block">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
                   Prize value
                 </p>
-                <p className="font-bold text-ink">{formatNaira(competition.prizeValueKobo)}</p>
+                <p className="break-words font-bold text-ink text-xs sm:text-sm">{formatNaira(competition.prizeValueKobo)}</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
                   Tickets left
                 </p>
-                <p className="font-bold text-coral">
+                <p className="font-bold text-coral text-xs sm:text-sm">
                   {(competition.totalEntries - competition.entriesSold).toLocaleString("en-NG")}
                 </p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
                   Closes
                 </p>
-                <p className="inline-flex items-center gap-1 font-bold text-ink">
-                  <CalendarDays className="size-3.5" />{" "}
-                  {competition.closes.split("·")[0]}
+                <p className="inline-flex items-center gap-1 font-bold text-ink text-xs sm:text-sm">
+                  <CalendarDays className="size-3.5 shrink-0" />{" "}
+                  <span className="truncate">{competition.closes.split("·")[0]}</span>
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 pt-1 md:grid-cols-5 md:items-end">
-              <div className="min-w-0 md:col-span-2">
+            <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2 md:grid-cols-5 md:items-end">
+              <div className="min-w-0 sm:col-span-2 md:col-span-2">
                 <div className="mb-1 flex items-center justify-between gap-2 text-xs font-bold">
                   <span className="truncate text-ink/60">
                     {competition.entriesSold.toLocaleString("en-NG")} of{" "}
@@ -194,34 +194,36 @@ export function CompetitionCard({
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <p className="mt-2 rounded-2xl bg-raf-lime/25 px-3 py-1.5 text-[11px] font-extrabold text-ink ring-1 ring-raf-lime/40">
+                <p className="mt-2 break-words rounded-2xl bg-raf-lime/25 px-3 py-1.5 text-[11px] font-extrabold text-ink ring-1 ring-raf-lime/40">
                   <Ticket className="mr-1 inline size-3.5 text-raf-green" />
                   {chanceDisplay}
                 </p>
               </div>
-              <QuantityStepper
-                value={qty}
-                onChange={(v) => setQty(Math.max(1, Math.min(maxQty, v)))}
-                min={1}
-                max={maxQty}
-              />
-              <div className="text-right">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-ink/40">
-                  Total
-                </p>
-                <p className="font-display text-lg font-extrabold text-ink tabular-nums">
-                  {formatNaira(entryTotalKobo)}
-                </p>
+              <div className="flex items-center justify-between gap-2 sm:col-span-2 md:col-span-3 lg:contents">
+                <QuantityStepper
+                  value={qty}
+                  onChange={(v) => setQty(Math.max(1, Math.min(maxQty, v)))}
+                  min={1}
+                  max={maxQty}
+                />
+                <div className="text-right min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-ink/40">
+                    Total
+                  </p>
+                  <p className="break-words font-display text-base font-extrabold text-ink tabular-nums sm:text-lg">
+                    {formatNaira(entryTotalKobo)}
+                  </p>
+                </div>
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="w-full sm:w-auto md:col-span-1 shadow-[0_12px_28px_-12px_var(--coral)]"
+                  onClick={() => onEnterDraw?.(qty)}
+                  disabled={!onEnterDraw || ticketsLeft === 0}
+                >
+                  <Ticket className="size-4" /> Enter draw
+                </Button>
               </div>
-              <Button
-                variant="primary"
-                size="md"
-                className="w-full md:col-span-1 shadow-[0_12px_28px_-12px_var(--coral)]"
-                onClick={() => onEnterDraw?.(qty)}
-                disabled={!onEnterDraw || ticketsLeft === 0}
-              >
-                <Ticket className="size-4" /> Enter draw
-              </Button>
             </div>
           </div>
         </div>
@@ -230,7 +232,7 @@ export function CompetitionCard({
   }
 
   return (
-    <article className="group rounded-[22px] bg-paper p-3 shadow-sm ring-1 ring-ink/5 transition-transform duration-200 hover:-translate-y-1">
+    <article className="group flex min-w-0 flex-col overflow-hidden rounded-[22px] bg-paper p-3 shadow-sm ring-1 ring-ink/5 transition-transform duration-200 hover:-translate-y-1">
       <div className="flex items-center gap-3">
         <img
           src={competition.image}
@@ -275,7 +277,7 @@ export function CompetitionCard({
           </div>
         </div>
       </div>
-      <div className="mt-3 space-y-3 border-t border-ink/10 pt-3">
+      <div className="mt-3 flex flex-1 flex-col space-y-3 border-t border-ink/10 pt-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <QuantityStepper
             value={qty}
@@ -283,23 +285,23 @@ export function CompetitionCard({
             min={1}
             max={maxQty}
           />
-          <div className="text-right">
+          <div className="text-right min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-ink/40">
               {`${qty} ticket${qty === 1 ? "" : "s"} · Total`}
             </p>
-            <p className="font-display text-lg font-extrabold text-ink tabular-nums">
+            <p className="break-words font-display text-lg font-extrabold text-ink tabular-nums">
               {formatNaira(entryTotalKobo)}
             </p>
           </div>
         </div>
         <div className="rounded-2xl bg-raf-lime/25 px-3 py-2 ring-1 ring-raf-lime/40">
-          <p className="text-[11px] font-extrabold text-ink">
+          <p className="break-words text-[11px] font-extrabold text-ink">
             <Ticket className="mr-1 inline size-3.5 text-raf-green" />
             {chanceDisplay}
           </p>
         </div>
-        <div className="flex items-center justify-between gap-2">
-          <Button asChild variant="ghost" size="sm" className="flex-1">
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm" className="flex-1 min-w-0">
             <Link to="/competitions/$slug" params={{ slug: competition.slug }}>
               View <ArrowUpRight className="ml-1 size-3.5" />
             </Link>
@@ -307,11 +309,11 @@ export function CompetitionCard({
           <Button
             variant="primary"
             size="md"
-            className="flex-[1.5] shadow-[0_12px_28px_-12px_var(--coral)]"
+            className="flex-[1.5] min-w-0 shadow-[0_12px_28px_-12px_var(--coral)]"
             onClick={() => onEnterDraw?.(qty)}
             disabled={!onEnterDraw || ticketsLeft === 0}
           >
-            <Ticket className="size-4" /> Enter draw
+            <Ticket className="size-4 shrink-0" /> <span className="truncate">Enter draw</span>
           </Button>
         </div>
       </div>

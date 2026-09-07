@@ -145,8 +145,8 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-h-screen pb-24 sm:pb-28">
-        <header className="sticky top-0 z-30 bg-paper/90 backdrop-blur border-b border-ink/10 px-4 sm:px-6 py-3 flex items-center gap-3">
+      <div className="flex-1 flex min-w-0 flex-col min-h-screen overflow-x-hidden pb-24 sm:pb-28">
+        <header className="sticky top-0 z-30 bg-paper/90 backdrop-blur border-b border-ink/10 px-4 sm:px-6 py-3 flex items-center gap-2 sm:gap-3 overflow-x-hidden">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden rounded-full" aria-label="Open partner menu">
@@ -160,7 +160,7 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
             </SheetContent>
           </Sheet>
 
-          <Link to="/partner" className="flex items-center gap-2 shrink-0">
+          <Link to="/partner" className="flex min-w-0 items-center gap-1.5 shrink-0 sm:gap-2">
             <img
               src="/Rafilla-logo.png"
               alt=""
@@ -168,18 +168,18 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
               width={32}
               height={32}
             />
-            <span className="font-display text-ink text-lg hidden sm:block">Rafilla</span>
-            <Badge variant="outline" className="rounded-full border-coral/30 bg-coral/10 text-coral text-[10px] hidden sm:inline-flex">
+            <span className="font-display text-ink text-base hidden sm:block sm:text-lg">Rafilla</span>
+            <Badge variant="outline" className="hidden shrink-0 rounded-full border-coral/30 bg-coral/10 text-coral text-[10px] sm:inline-flex">
               Partner
             </Badge>
           </Link>
 
-          <div className="font-display text-ink text-lg sm:text-xl truncate ml-1">
-            <span className="text-ink/30 mx-2 hidden sm:inline">/</span>
-            {title}
+          <div className="min-w-0 flex-1 font-display text-ink text-base sm:text-xl truncate ml-1">
+            <span className="text-ink/30 mx-1 hidden sm:inline sm:mx-2">/</span>
+            <span className="truncate">{title}</span>
           </div>
 
-          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-3 ml-auto">
             <div className="hidden md:block relative w-64 lg:w-80">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40" />
               <Input
@@ -187,18 +187,20 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
                 placeholder="Search listings, entries..."
               />
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full relative" aria-label="Partner notifications">
+            <Button variant="ghost" size="icon" className="rounded-full relative shrink-0" aria-label="Partner notifications">
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-coral border-2 border-paper" aria-hidden="true" />
             </Button>
-            <Avatar className="w-9 h-9 lg:hidden">
+            <Avatar className="w-9 h-9 shrink-0 lg:hidden">
               <AvatarFallback className="bg-mint/40 text-ink font-display font-bold text-xs">MA</AvatarFallback>
             </Avatar>
           </div>
         </header>
 
-        <div className="flex-1 p-5 sm:p-7">
-          {children}
+        <div className="flex-1 min-w-0 p-4 sm:p-6 lg:p-7 overflow-x-hidden">
+          <div className="mx-auto w-full max-w-full min-w-0">
+            {children}
+          </div>
         </div>
       </div>
     </div>

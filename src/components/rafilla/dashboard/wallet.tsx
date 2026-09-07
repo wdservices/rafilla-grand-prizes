@@ -271,18 +271,18 @@ export function DashboardWalletPage() {
 
         <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Wallet balance
               </p>
-              <p className="mt-3 font-display text-[clamp(2.5rem,7vw,4.5rem)] font-extrabold leading-none tracking-tight text-ink">
+              <p className="mt-3 break-all font-display text-[clamp(1.75rem,6vw,4.5rem)] font-extrabold leading-none tracking-tight text-ink">
                 {formatNaira(45000000)}
               </p>
               <p className="mt-3 max-w-md text-xs font-bold leading-relaxed text-ink/50">
                 For entries only · No withdrawals
               </p>
             </div>
-            <Button variant="primary" size="lg" onClick={() => setModalOpen(true)}>
+            <Button variant="primary" size="lg" onClick={() => setModalOpen(true)} className="w-full sm:w-auto shrink-0">
               <Plus className="size-4" /> Fund wallet
             </Button>
           </div>
@@ -292,7 +292,7 @@ export function DashboardWalletPage() {
           <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45 mb-3">
             How wallet works
           </p>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
             <HowStep
               step="1"
               title="Add money"
@@ -392,8 +392,8 @@ export function DashboardWalletPage() {
             ))}
           </div>
 
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
+          <div className="mt-5 overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
+            <table className="w-full min-w-[640px] text-left text-sm sm:min-w-[760px]">
               <thead className="bg-cream text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
                 <tr>
                   <th className="px-4 py-3">Date</th>

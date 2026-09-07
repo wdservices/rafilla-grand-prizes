@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, CheckCircle2, Sparkles, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DEFAULT_CREDENTIALS, type UserRole } from "@/lib/auth-store";
+import { useAuthActions } from "@/hooks/useAuthSession";
 import { cn } from "@/lib/utils";
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -38,6 +40,8 @@ function authInputBase(error?: string) {
   );
 }
 
+type AuthErrors = { email?: string; password?: string; global?: string };
+
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,10 +49,13 @@ export function LoginForm() {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [successRole, setSuccessRole] = useState<UserRole | null>(null);
+  const [errors, setErrors] = useState<AuthErrors>({});
+
+  const { signIn, signInQuick } = useAuthActions();
 
   function validate() {
-    const next: typeof errors = {};
+    const next: AuthErrors = {};
     if (!email) next.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = "Enter a valid email address";
     if (!password) next.password = "Password is required";
@@ -57,28 +64,54 @@ export function LoginForm() {
     return Object.keys(next).length === 0;
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setErrors({});
+    const res = await signIn({ email, password });
+    setLoading(false);
+    if (!res.ok) {
+      setErrors({
+        global:
+          res.code === "invalid_credentials"
+            ? res.message
+            : res.message,
+      });
+    } else {
+      setSuccessRole(res.user.role);
       setSuccess(true);
-    }, 1400);
+    }
+  }
+
+  async function onQuick(role: "user" | "admin") {
+    setLoading(true);
+    const res = await signInQuick(role);
+    if (res.ok) {
+      setSuccessRole(res.user.role);
+      setSuccess(true);
+    }
+    setLoading(false);
   }
 
   if (success) {
+    const effectiveRole = successRole ?? "user";
+    const redirect = effectiveRole === "admin" ? "/admin" : "/dashboard";
+    const title = effectiveRole === "admin" ? "Admin console ready" : "Welcome back!";
+    const subtitle =
+      effectiveRole === "admin"
+        ? "You are now signed in to the Rafilla super admin console."
+        : "You are now signed in to your Rafilla account.";
+    const cta = effectiveRole === "admin" ? "Open admin dashboard" : "Browse competitions";
     return (
       <div className="py-6 text-center">
         <div className="mx-auto grid size-16 place-items-center rounded-full bg-mint/30">
           <CheckCircle2 className="size-8 text-mint" />
         </div>
-        <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">Welcome back!</h3>
-        <p className="mt-2 text-sm leading-relaxed text-ink/60">
-          You are now signed in to your Rafilla account.
-        </p>
+        <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">{title}</h3>
+        <p className="mt-2 text-sm leading-relaxed text-ink/60">{subtitle}</p>
         <Button asChild variant="dark" size="md" className="mt-6">
-          <Link to="/competitions">Browse competitions</Link>
+          <Link to={redirect}>{cta}</Link>
         </Button>
       </div>
     );
@@ -93,7 +126,61 @@ export function LoginForm() {
         <p className="mt-2 text-sm text-ink/60">Sign in to continue your Rafilla journey.</p>
       </header>
 
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => onQuick("user")}
+          className="group relative overflow-hidden rounded-2xl border-2 border-ink/10 bg-cream/60 px-4 py-3 text-left transition-all hover:border-coral/40 hover:bg-white disabled:opacity-60"
+        >
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-xl bg-coral/15 text-coral shadow-sm">
+              <Sparkles className="size-4.5" />
+            </span>
+            <div>
+              <p className="text-sm font-extrabold text-ink">Demo user</p>
+              <p className="text-[11px] font-bold text-ink/55">→ My dashboard (player)</p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => onQuick("admin")}
+          className="group relative overflow-hidden rounded-2xl border-2 border-ink/10 bg-ink/[0.04] px-4 py-3 text-left transition-all hover:border-ink/40 hover:bg-white disabled:opacity-60"
+        >
+          <div className="flex items-center gap-3">
+            <span className="grid size-10 place-items-center rounded-xl bg-ink text-cream shadow-sm">
+              <ShieldCheck className="size-4.5" />
+            </span>
+            <div>
+              <p className="text-sm font-extrabold text-ink">Demo admin</p>
+              <p className="text-[11px] font-bold text-ink/55">→ Super admin console</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div className="relative py-1.5">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-dashed border-ink/15" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-white px-3 font-extrabold uppercase tracking-[0.14em] text-ink/35">
+            or sign in manually
+          </span>
+        </div>
+      </div>
+
+      {errors.global && (
+        <div className="rounded-2xl border-2 border-coral/30 bg-coral/10 px-4 py-3 text-sm font-bold text-coral">
+          {errors.global}
+        </div>
+      )}
+
       <div className="space-y-1">
+        <label htmlFor="email" className="sr-only">Email address</label>
         <input
           id="email"
           type="email"
@@ -102,6 +189,7 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className={cn(authInputBase(errors.email), "w-full")}
+          autoFocus
         />
         {errors.email ? <p className="px-1 text-xs font-bold text-coral">{errors.email}</p> : null}
       </div>
@@ -129,7 +217,11 @@ export function LoginForm() {
         <div className="flex items-center justify-between px-1">
           {errors.password ? (
             <p className="text-xs font-bold text-coral">{errors.password}</p>
-          ) : <span />}
+          ) : (
+            <span className="text-[11px] font-bold text-ink/45">
+              Default: <span className="font-extrabold text-ink/70">{DEFAULT_CREDENTIALS.user.email}</span> · {DEFAULT_CREDENTIALS.user.password}
+            </span>
+          )}
           <Link
             to="/auth"
             search={{ mode: "forgot" }}
@@ -171,7 +263,7 @@ export function LoginForm() {
         </div>
       </div>
 
-      <Button type="button" variant="outline" size="lg" className="w-full">
+      <Button type="button" variant="outline" size="lg" className="w-full" disabled>
         <GoogleIcon className="size-4.5" />
         Continue with Google
       </Button>

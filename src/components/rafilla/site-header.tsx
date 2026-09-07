@@ -1,9 +1,10 @@
-import { Menu, X } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuthActions, useAuthSession } from "@/hooks/useAuthSession";
 
 const links = [
   { label: "Home", to: "/" as const },
@@ -22,11 +23,13 @@ const links = [
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const { isAuthenticated, role, user } = useAuthSession();
+  const { signOut } = useAuthActions();
 
   return (
     <header className="relative z-30 mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
-      <div className="flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2" aria-label="Rafilla home">
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <Link to="/" className="flex min-w-0 items-center gap-2" aria-label="Rafilla home">
           <img
             src="/Rafilla-logo.png"
             alt=""
@@ -34,7 +37,7 @@ export function SiteHeader() {
             width={40}
             height={40}
           />
-          <span className="font-display text-2xl font-extrabold tracking-tight text-ink">
+          <span className="font-display truncate text-xl font-extrabold tracking-tight text-ink sm:text-2xl">
             Rafilla
           </span>
         </Link>
@@ -61,15 +64,38 @@ export function SiteHeader() {
           >
             About
           </Link>
-          <Button asChild variant="dark" size="sm">
-            <Link to="/auth">Join Rafilla</Link>
-          </Button>
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to={role === "admin" ? "/admin" : "/dashboard"}>
+                  <LayoutDashboard className="size-4" />
+                  {role === "admin" ? "Admin" : "Dashboard"}
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => signOut({ to: "/" })}>
+                <LogOut className="size-4" />
+                Sign out
+              </Button>
+            </div>
+          ) : (
+            <Button asChild variant="dark" size="sm">
+              <Link to="/auth">Join Rafilla</Link>
+            </Button>
+          )}
         </nav>
 
         <div className="flex items-center gap-2 lg:hidden">
-          <Button asChild variant="dark" size="sm">
-            <Link to="/auth">Join</Link>
-          </Button>
+          {isAuthenticated ? (
+            <Button asChild variant="outline" size="sm">
+              <Link to={role === "admin" ? "/admin" : "/dashboard"}>
+                {role === "admin" ? "Admin" : "Dashboard"}
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild variant="dark" size="sm">
+              <Link to="/auth">Join</Link>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="icon"
@@ -84,30 +110,53 @@ export function SiteHeader() {
 
       {open ? (
         <nav
-          className="absolute left-4 right-4 top-16 rounded-[22px] bg-paper p-3 shadow-xl ring-1 ring-ink/10 lg:hidden"
+          className="absolute left-4 right-4 top-16 max-h-[calc(100vh-5rem)] overflow-y-auto rounded-[22px] bg-paper p-3 shadow-xl ring-1 ring-ink/10 lg:hidden"
           aria-label="Mobile navigation"
         >
-          {links.map((link) => (
+          <div className="max-h-[50vh] overflow-y-auto pr-1 scrollbar-none sm:max-h-none sm:overflow-visible">
+            {links.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setOpen(false)}
+                className={cn(
+                  "block rounded-2xl px-4 py-3 text-sm font-bold text-ink/65 hover:bg-lilac/15 hover:text-ink",
+                  pathname === link.to && "bg-lilac/15 text-ink",
+                )}
+                aria-current={pathname === link.to ? "page" : undefined}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+          {isAuthenticated ? (
+            <>
+              <Link
+                to={role === "admin" ? "/admin" : "/dashboard"}
+                onClick={() => setOpen(false)}
+                className="mt-1 block rounded-2xl bg-ink px-4 py-3 text-center text-sm font-extrabold text-paper"
+              >
+                Go to {role === "admin" ? "Admin" : "Dashboard"}
+              </Link>
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  signOut({ to: "/" });
+                }}
+                className="mt-2 block w-full rounded-2xl border border-ink/10 bg-white px-4 py-3 text-center text-sm font-extrabold text-ink"
+              >
+                Sign out {user ? `· ${user.firstName}` : ""}
+              </button>
+            </>
+          ) : (
             <Link
-              key={link.to}
-              to={link.to}
+              to="/auth"
               onClick={() => setOpen(false)}
-              className={cn(
-                "block rounded-2xl px-4 py-3 text-sm font-bold text-ink/65 hover:bg-lilac/15 hover:text-ink",
-                pathname === link.to && "bg-lilac/15 text-ink",
-              )}
-              aria-current={pathname === link.to ? "page" : undefined}
+              className="mt-1 block rounded-2xl bg-coral px-4 py-3 text-center text-sm font-extrabold text-paper"
             >
-              {link.label}
+              Login / join
             </Link>
-          ))}
-          <Link
-            to="/auth"
-            onClick={() => setOpen(false)}
-            className="mt-1 block rounded-2xl bg-coral px-4 py-3 text-center text-sm font-extrabold text-paper"
-          >
-            Login / join
-          </Link>
+          )}
         </nav>
       ) : null}
     </header>

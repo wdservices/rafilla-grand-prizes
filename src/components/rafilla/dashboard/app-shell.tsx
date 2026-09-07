@@ -19,6 +19,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuthActions, useAuthSession, initialsOf } from "@/hooks/useAuthSession";
 
 type NavItem = {
   label: string;
@@ -92,6 +93,20 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
   const [mobileUserDropdown, setMobileUserDropdown] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuthSession();
+  const { signOut } = useAuthActions();
+
+  const monogram = user?.avatarMonogram ?? (user ? initialsOf(user) : "U");
+  const fullName = user ? `${user.firstName} ${user.lastName}` : "Rafilla user";
+  const email = user?.email ?? "user@rafilla.com";
+  const verified = user?.verified ?? false;
+
+  const runLogout = () => {
+    setUserDropdownOpen(false);
+    setMobileUserDropdown(false);
+    setMobileMenuOpen(false);
+    signOut({ to: "/auth" });
+  };
 
   const isActive = (to: string) => {
     if (to === "/dashboard") return location.pathname === "/dashboard";
@@ -156,13 +171,13 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
             className="flex w-full items-center gap-3 rounded-2xl bg-cream/60 p-3 ring-1 ring-ink/5 hover:ring-coral/20 hover:bg-white transition-all"
           >
             <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-coral text-white shadow-[0_8px_18px_-10px_var(--coral)] font-display text-sm font-extrabold">
-              TA
+              {monogram}
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-sm font-extrabold text-ink leading-tight">Tunmise Adebayo</p>
-              <p className="truncate text-[11px] font-bold text-ink/45 leading-snug">tunmise.adebayo@example.com</p>
+              <p className="truncate text-sm font-extrabold text-ink leading-tight">{fullName}</p>
+              <p className="truncate text-[11px] font-bold text-ink/45 leading-snug">{email}</p>
               <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-coral/10 px-2 py-0.5 text-[10px] font-extrabold text-coral">
-                <ShieldCheck className="size-3" /> Verified
+                <ShieldCheck className="size-3" /> {verified ? "Verified" : "Account"}
               </p>
             </div>
             <ChevronDown className={cn("size-4 text-ink/35 transition-transform", userDropdownOpen && "rotate-180")} />
@@ -170,10 +185,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
           {userDropdownOpen && (
             <div className="absolute bottom-full left-3 right-3 mb-2 rounded-2xl bg-white p-1.5 ring-1 ring-ink/10 shadow-[0_20px_50px_-25px_rgba(0,0,0,0.25)]">
               <button
-                onClick={() => {
-                  setUserDropdownOpen(false);
-                  navigate({ to: "/auth" });
-                }}
+                onClick={runLogout}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-extrabold text-ink/70 transition-colors hover:bg-cream hover:text-ink"
               >
                 <LogOut className="size-4 text-coral" />
@@ -231,13 +243,13 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
             className="flex w-full items-center gap-3 rounded-2xl bg-cream/60 p-3 ring-1 ring-ink/5"
           >
             <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-coral text-white shadow-[0_8px_18px_-10px_var(--coral)] font-display text-sm font-extrabold">
-              TA
+              {monogram}
             </div>
             <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-sm font-extrabold text-ink leading-tight">Tunmise Adebayo</p>
-              <p className="truncate text-[11px] font-bold text-ink/45 leading-snug">tunmise.adebayo@example.com</p>
+              <p className="truncate text-sm font-extrabold text-ink leading-tight">{fullName}</p>
+              <p className="truncate text-[11px] font-bold text-ink/45 leading-snug">{email}</p>
               <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-coral/10 px-2 py-0.5 text-[10px] font-extrabold text-coral">
-                <ShieldCheck className="size-3" /> Verified
+                <ShieldCheck className="size-3" /> {verified ? "Verified" : "Account"}
               </p>
             </div>
             <ChevronDown className={cn("size-4 text-ink/35 transition-transform", mobileUserDropdown && "rotate-180")} />
@@ -245,11 +257,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
           {mobileUserDropdown && (
             <div className="mt-2 rounded-2xl bg-white p-1.5 ring-1 ring-ink/10 shadow-lg">
               <button
-                onClick={() => {
-                  setMobileUserDropdown(false);
-                  setMobileMenuOpen(false);
-                  navigate({ to: "/auth" });
-                }}
+                onClick={runLogout}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-extrabold text-ink/70 hover:bg-cream hover:text-ink"
               >
                 <LogOut className="size-4 text-coral" />
@@ -310,12 +318,12 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
           </Link>
         </div>
         <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-coral text-white font-display text-sm font-extrabold shadow-[0_8px_18px_-10px_var(--coral)]">
-          TA
+          {monogram}
         </div>
       </header>
 
-      <main className="lg:ml-[260px] min-h-screen px-4 py-6 lg:px-8 lg:py-8 pb-28">
-        <div className="mx-auto max-w-7xl space-y-6">
+      <main className="min-w-0 lg:ml-[260px] min-h-screen overflow-x-hidden px-4 py-6 lg:px-8 lg:py-8 pb-28">
+        <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6">
           {(title || breadcrumbs) && (
             <div className="space-y-1.5">
               {breadcrumbs && breadcrumbs.length > 0 && (

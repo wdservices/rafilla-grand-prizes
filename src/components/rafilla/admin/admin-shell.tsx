@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAuthActions, useAuthSession, initialsOf } from "@/hooks/useAuthSession";
 
 export type AdminNavKey =
   | "dashboard"
@@ -47,23 +48,29 @@ export type AdminNavKey =
   | "crm"
   | "notifications";
 
-const NAV_ITEMS: Array<{
+const OPS_GROUP: Array<{
   key: AdminNavKey;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  emoji: string;
 }> = [
-  { key: "dashboard", label: "Dashboard", icon: LayoutGrid, emoji: "📊" },
-  { key: "users", label: "Users", icon: Users, emoji: "👥" },
-  { key: "partners", label: "Partners", icon: Handshake, emoji: "🤝" },
-  { key: "competitions", label: "Competitions", icon: Trophy, emoji: "🏆" },
-  { key: "payouts", label: "Payouts", icon: Banknote, emoji: "💸" },
-  { key: "reports", label: "Reports", icon: BarChart3, emoji: "📈" },
-  { key: "config", label: "Config", icon: Settings2, emoji: "⚙" },
-  { key: "audit-logs", label: "Audit logs", icon: ClipboardList, emoji: "🔐" },
-  { key: "fraud", label: "Fraud queue", icon: ShieldAlert, emoji: "🛡" },
-  { key: "crm", label: "CRM", icon: UserSearch, emoji: "🧑" },
-  { key: "notifications", label: "Notifications", icon: Bell, emoji: "🔔" },
+  { key: "dashboard", label: "Dashboard", icon: LayoutGrid },
+  { key: "users", label: "Users", icon: Users },
+  { key: "partners", label: "Partners", icon: Handshake },
+  { key: "competitions", label: "Competitions", icon: Trophy },
+  { key: "payouts", label: "Payouts", icon: Banknote },
+  { key: "reports", label: "Reports", icon: BarChart3 },
+];
+
+const CONFIG_GROUP: Array<{
+  key: AdminNavKey;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}> = [
+  { key: "config", label: "Config", icon: Settings2 },
+  { key: "audit-logs", label: "Audit logs", icon: ClipboardList },
+  { key: "fraud", label: "Fraud queue", icon: ShieldAlert },
+  { key: "crm", label: "CRM", icon: UserSearch },
+  { key: "notifications", label: "Notifications", icon: Bell },
 ];
 
 const navRoute: Record<AdminNavKey, string> = {
@@ -86,79 +93,121 @@ interface AdminShellProps {
   activeNav: AdminNavKey;
 }
 
+interface NavGroupProps {
+  label: string;
+  items: typeof OPS_GROUP;
+  activeNav: AdminNavKey;
+  onNavigate?: () => void;
+}
+
+function NavGroup({ label, items, activeNav, onNavigate }: NavGroupProps) {
+  return (
+    <div className="space-y-1">
+      <p className="px-3.5 pt-1 pb-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-cream/35">
+        {label}
+      </p>
+      <div className="space-y-0.5">
+        {items.map(({ key, label: itemLabel, icon: Icon }) => {
+          const active = key === activeNav;
+          return (
+            <Link
+              key={key}
+              to={navRoute[key]}
+              onClick={onNavigate}
+              className={cn(
+                "group flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-bold transition-all duration-200",
+                active
+                  ? "bg-white text-ink shadow-[0_1px_0_rgba(255,255,255,0.08)_inset,0_6px_20px_-8px_rgba(0,0,0,0.4)]"
+                  : "text-cream/70 hover:bg-white/10 hover:text-cream",
+              )}
+              aria-current={active ? "page" : undefined}
+            >
+              <Icon
+                className={cn(
+                  "size-4.5 shrink-0",
+                  active ? "text-coral" : "text-cream/55 group-hover:text-cream/85",
+                )}
+              />
+              <span className="tracking-tight">{itemLabel}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function AdminShell({ children, title, activeNav }: AdminShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuthSession();
+  const { signOut } = useAuthActions();
+
+  const monogram = user?.avatarMonogram ?? (user ? initialsOf(user) : "AA");
+  const fullName = user ? `${user.firstName} ${user.lastName}` : "Admin Aisha";
+  const roleBadge = user?.role === "admin" ? "Super Admin" : "Staff";
+  const runLogout = () => signOut({ to: "/auth" });
+  const closeMobile = () => setMobileOpen(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-paper">
+    <div className="flex h-screen overflow-hidden bg-cream/40">
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col bg-ink text-cream transition-transform duration-300 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col transition-transform duration-300 lg:static lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
+        style={{ backgroundColor: "oklch(0.22 0.04 162)" }}
       >
-        <div className="flex items-center gap-3 px-5 pt-7 pb-5">
-          <div className="grid size-10 place-items-center rounded-full bg-coral font-display text-lg font-extrabold text-ink">
-            R
-          </div>
+        <div className="flex items-center gap-3.5 px-5 pt-7 pb-5">
+          <img
+            src="/Rafilla-logo.png"
+            alt=""
+            className="size-10 shrink-0 rounded-2xl shadow-[0_4px_14px_-4px_rgba(0,0,0,0.5)]"
+            width={40}
+            height={40}
+          />
           <div>
-            <p className="font-display text-lg font-extrabold leading-tight">Rafilla Admin</p>
-            <p className="text-[10px] font-bold text-cream/50">Super admin console</p>
+            <p className="font-display text-lg font-extrabold leading-tight text-cream tracking-tight">Rafilla Admin</p>
+            <p className="text-[10px] font-bold text-cream/45">Super admin console</p>
           </div>
         </div>
 
-        <div className="px-4 pb-4">
-          <div className="flex items-center gap-3 rounded-full bg-cream/10 px-3 py-2.5">
+        <div className="px-4 pb-5">
+          <div className="flex items-center gap-3 rounded-2xl bg-white/8 px-3.5 py-3 ring-1 ring-white/10">
             <Avatar className="size-9 ring-2 ring-coral/60">
-              <AvatarFallback className="bg-coral text-ink font-extrabold">AA</AvatarFallback>
+              <AvatarFallback className="bg-coral text-ink font-extrabold">{monogram}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-extrabold">Admin Aisha</p>
-              <Badge className="mt-0.5 rounded-full bg-coral px-2 py-0 text-[9px] font-extrabold uppercase tracking-wider text-ink ring-0">
-                Super Admin
+              <p className="truncate text-sm font-extrabold text-cream leading-tight">{fullName}</p>
+              <Badge className="mt-1 rounded-full bg-coral/90 px-2.5 py-0 text-[9px] font-extrabold uppercase tracking-wider text-ink ring-0">
+                {roleBadge}
               </Badge>
             </div>
-            <ChevronDown className="size-4 text-cream/50" />
+            <ChevronDown className="size-4 text-cream/40" />
           </div>
         </div>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4" aria-label="Admin navigation">
-          {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
-            const active = key === activeNav;
-            return (
-              <Link
-                key={key}
-                to={navRoute[key]}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "group flex items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-bold transition-colors",
-                  active
-                    ? "bg-coral text-white"
-                    : "text-cream/70 hover:bg-coral/20 hover:text-cream",
-                )}
-                aria-current={active ? "page" : undefined}
-              >
-                <Icon
-                  className={cn(
-                    "size-4.5 shrink-0",
-                    active ? "text-white" : "text-cream/60 group-hover:text-cream",
-                  )}
-                />
-                <span>{label}</span>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label="Admin navigation">
+          <NavGroup label="Operations" items={OPS_GROUP} activeNav={activeNav} onNavigate={closeMobile} />
+          <div className="my-4 mx-2 h-px bg-white/8" />
+          <NavGroup label="Platform configuration" items={CONFIG_GROUP} activeNav={activeNav} onNavigate={closeMobile} />
         </nav>
 
-        <div className="space-y-0.5 border-t border-cream/10 px-3 py-4">
+        <div className="border-t border-white/10 px-3 py-4 space-y-1">
           <a
             href="/"
-            className="flex items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-bold text-cream/70 transition-colors hover:bg-cream/10 hover:text-cream"
+            onClick={closeMobile}
+            className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-cream/65 transition-colors hover:bg-white/10 hover:text-cream"
           >
-            <ExternalLink className="size-4.5 text-cream/60" />
+            <ExternalLink className="size-4.5 text-cream/50" />
             Back to site
           </a>
-          <button className="flex w-full items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-bold text-cream/70 transition-colors hover:bg-cream/10 hover:text-cream">
-            <LogOut className="size-4.5 text-cream/60" />
+          <button
+            onClick={() => {
+              closeMobile();
+              runLogout();
+            }}
+            className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-coral/90 transition-colors hover:bg-coral/15 hover:text-coral"
+          >
+            <LogOut className="size-4.5 text-coral/80" />
             Log out
           </button>
         </div>
@@ -172,67 +221,73 @@ export function AdminShell({ children, title, activeNav }: AdminShellProps) {
       )}
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-ink/5 bg-paper px-5 py-4">
+        <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-ink/8 bg-white px-5 py-4">
           <Button
             variant="outline"
             size="icon"
-            className="size-10 lg:hidden"
+            className="size-10 lg:hidden rounded-xl"
             onClick={() => setMobileOpen((v) => !v)}
             aria-label={mobileOpen ? "Close admin menu" : "Open admin menu"}
           >
             {mobileOpen ? <X className="size-4.5" /> : <Menu className="size-4.5" />}
           </Button>
 
-          <div className="hidden items-center gap-2 lg:flex">
+          <div className="hidden items-center gap-2.5 lg:flex">
             <img
               src="/Rafilla-logo.png"
               alt=""
-              className="size-9 shrink-0 rounded-2xl shadow-sm"
+              className="size-9 shrink-0 rounded-2xl shadow-sm ring-1 ring-ink/8"
               width={36}
               height={36}
             />
             {title && (
-              <p className="font-display text-xl font-extrabold text-ink">{title}</p>
+              <p className="font-display text-xl font-extrabold text-ink tracking-tight">{title}</p>
             )}
           </div>
 
           <div className="flex-1 max-w-md ml-auto">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink/40" />
+              <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink/40" />
               <Input
                 placeholder="Search users, partners, competitions…"
-                className="h-10 rounded-full border-0 bg-cream pl-9 pr-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral"
+                className="h-11 rounded-full border-0 bg-cream/60 ring-1 ring-ink/10 pl-11 pr-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral focus-visible:ring-2 focus-visible:bg-white"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="relative size-10" aria-label="Admin notifications">
+            <Button variant="outline" size="icon" className="relative size-11 rounded-full ring-1 ring-ink/10" aria-label="Admin notifications">
               <Bell className="size-4.5" />
-              <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-coral" aria-hidden="true" />
+              <span className="absolute right-3 top-3 size-2 rounded-full bg-coral ring-2 ring-white" aria-hidden="true" />
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-10 lg:hidden">
+                <Button variant="ghost" size="icon" className="size-11 lg:hidden rounded-full">
                   <Avatar className="size-9 ring-2 ring-coral/60">
-                    <AvatarFallback className="bg-coral text-ink font-extrabold">AA</AvatarFallback>
+                    <AvatarFallback className="bg-coral text-ink font-extrabold">{monogram}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-[22px] bg-paper p-2">
-                <DropdownMenuLabel className="rounded-xl bg-cream px-3 py-2.5">
-                  <p className="font-extrabold text-ink">Admin Aisha</p>
-                  <Badge className="mt-1 rounded-full bg-coral px-2 py-0 text-[9px] font-extrabold uppercase tracking-wider text-ink ring-0">
-                    Super Admin
+              <DropdownMenuContent align="end" className="w-60 rounded-[24px] bg-white p-2 ring-1 ring-ink/10 shadow-lg">
+                <DropdownMenuLabel className="rounded-2xl bg-cream/60 px-3.5 py-3">
+                  <p className="font-extrabold text-ink">{fullName}</p>
+                  <Badge className="mt-1 rounded-full bg-coral px-2.5 py-0 text-[9px] font-extrabold uppercase tracking-wider text-ink ring-0">
+                    {roleBadge}
                   </Badge>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-ink/8" />
                 <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/70 focus:bg-lilac/20 focus:text-ink">
                   <ExternalLink className="mr-2 size-4" />
                   Back to site
                 </DropdownMenuItem>
-                <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/70 focus:bg-lilac/20 focus:text-ink">
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    runLogout();
+                  }}
+                  className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15"
+                >
                   <LogOut className="mr-2 size-4" />
                   Log out
                 </DropdownMenuItem>
@@ -241,7 +296,7 @@ export function AdminShell({ children, title, activeNav }: AdminShellProps) {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto bg-paper p-5 sm:p-6 lg:p-7 pb-24 sm:pb-28">
+        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7 pb-24 sm:pb-28">
           {children}
         </div>
       </div>

@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 
 import {
@@ -11,6 +11,7 @@ import {
   CompleteProfileForm,
 } from "@/components/rafilla/auth";
 import type { AuthTab } from "@/components/rafilla/auth/tabs";
+import { getSession } from "@/lib/auth-store";
 
 type AuthMode = "forgot" | "otp" | "complete";
 
@@ -60,6 +61,15 @@ function AuthPage() {
 }
 
 export const Route = createFileRoute("/auth")({
+  beforeLoad: () => {
+    const session = typeof window !== "undefined" ? getSession() : null;
+    if (session?.user.role === "admin") {
+      throw redirect({ to: "/admin" });
+    }
+    if (session?.user.role === "user") {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   head: () => {
     const pathname = "/auth";
     const canonical = `${canonicalBase}${pathname}`;

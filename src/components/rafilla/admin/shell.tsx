@@ -222,8 +222,10 @@ export function AdminShell({ children, activeNav }: AdminShellProps) {
         </div>
       )}
 
-      <main className="lg:ml-[304px] px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-10">
-        {children}
+      <main className="min-w-0 lg:ml-[304px] px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-10 overflow-x-hidden">
+        <div className="mx-auto w-full max-w-full min-w-0">
+          {children}
+        </div>
       </main>
     </div>
   );

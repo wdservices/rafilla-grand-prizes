@@ -324,8 +324,10 @@ export function DashboardShell({
         </div>
       </header>
 
-      <main className="lg:ml-[268px] min-h-screen pt-5 pb-28 px-4 sm:px-6 lg:px-8 lg:pt-8">
-        {children}
+      <main className="min-w-0 overflow-x-hidden lg:ml-[268px] min-h-screen pt-5 pb-28 px-4 sm:px-6 lg:px-8 lg:pt-8">
+        <div className="mx-auto w-full max-w-full min-w-0">
+          {children}
+        </div>
       </main>
 
       <nav

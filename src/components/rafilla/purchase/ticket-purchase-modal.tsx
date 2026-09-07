@@ -188,7 +188,7 @@ export function TicketPurchaseModal({
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <div
-          className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] bg-white ring-1 ring-ink/10 sm:rounded-[28px]"
+          className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] bg-white ring-1 ring-ink/10 sm:rounded-[28px] mx-0 sm:mx-4 max-h-[92vh] sm:max-h-[90vh]"
           style={{ maxHeight: "92vh" }}
         >
           {step === 3 && (
@@ -205,17 +205,17 @@ export function TicketPurchaseModal({
             <X className="h-4 w-4" />
           </button>
 
-          <div className="border-b border-ink/10 px-6 pb-4 pt-6">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5">
+          <div className="border-b border-ink/10 px-4 pb-4 pt-6 sm:px-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-1 sm:gap-1.5">
                 {(Object.keys(stepLabels) as unknown as Step[]).map((s) => {
                   const stepNum = Number(s) as Step;
                   const isActive = step >= stepNum;
                   return (
-                    <div key={s} className="flex items-center gap-1.5">
+                    <div key={s} className="flex items-center gap-1 sm:gap-1.5">
                       <div
                         className={cn(
-                          "grid size-8 place-items-center rounded-full font-display text-xs font-extrabold transition-colors",
+                          "grid size-7 place-items-center rounded-full font-display text-[11px] font-extrabold transition-colors sm:size-8 sm:text-xs",
                           isActive
                             ? "bg-coral text-white"
                             : "bg-cream text-ink/40 ring-1 ring-ink/10",
@@ -226,7 +226,7 @@ export function TicketPurchaseModal({
                       {stepNum < 4 && (
                         <div
                           className={cn(
-                            "h-[2px] w-6 rounded-full transition-colors",
+                            "h-[2px] w-3 rounded-full transition-colors sm:w-6",
                             step > stepNum ? "bg-coral" : "bg-ink/10",
                           )}
                         />
@@ -243,7 +243,7 @@ export function TicketPurchaseModal({
 
           <div
             key={stepAnimKey}
-            className="raf-rise flex-1 overflow-y-auto px-6 pb-6"
+            className="raf-rise flex-1 overflow-y-auto px-4 pb-6 sm:px-6"
             style={{ animationDuration: "320ms" }}
           >
             {step === 1 && (
@@ -303,20 +303,20 @@ export function TicketPurchaseModal({
                   <p className="text-xs font-extrabold uppercase tracking-widest text-ink/45">
                     How many tickets?
                   </p>
-                  <div className="mt-3 flex items-center justify-between rounded-2xl bg-white p-2 ring-1 ring-ink/10">
+                  <div className="mt-3 flex items-center justify-between gap-2 rounded-2xl bg-white p-2 ring-1 ring-ink/10">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setQty((v) => Math.max(1, v - 1))}
                       disabled={qty <= 1}
-                      className="text-ink/70 disabled:opacity-40"
+                      className="shrink-0 text-ink/70 disabled:opacity-40"
                       aria-label="Decrease ticket quantity"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <div className="flex items-center gap-2">
-                      <Ticket className="h-5 w-5 text-coral" />
-                      <span className="font-display text-3xl font-extrabold tabular-nums text-ink">
+                    <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                      <Ticket className="h-5 w-5 shrink-0 text-coral" />
+                      <span className="truncate font-display text-xl font-extrabold tabular-nums text-ink sm:text-3xl">
                         {`${qty} ticket${qty === 1 ? "" : "s"}`}
                       </span>
                     </div>
@@ -325,7 +325,7 @@ export function TicketPurchaseModal({
                       size="icon"
                       onClick={() => setQty((v) => Math.min(MAX_QTY, v + 1))}
                       disabled={qty >= MAX_QTY}
-                      className="text-ink/70 disabled:opacity-40"
+                      className="shrink-0 text-ink/70 disabled:opacity-40"
                       aria-label="Increase ticket quantity"
                     >
                       <Plus className="h-4 w-4" />

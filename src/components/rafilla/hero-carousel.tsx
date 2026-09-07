@@ -73,7 +73,7 @@ function FeaturedSlide({ competition }: { competition: Competition }) {
   const accent = accentStyles[competition.accent];
   const progress = getProgress(competition);
   return (
-    <article className={cn("rounded-[28px] p-3 ring-1 ring-ink/5 sm:p-4", accent.surface)}>
+    <article className={cn("overflow-hidden rounded-[28px] p-3 ring-1 ring-ink/5 sm:p-4", accent.surface)}>
       <div className="overflow-hidden rounded-[22px] bg-paper p-3 shadow-sm ring-1 ring-ink/5 sm:p-4">
         <img
           src={competition.image}
@@ -86,30 +86,30 @@ function FeaturedSlide({ competition }: { competition: Competition }) {
           className="aspect-[16/10] w-full rounded-[18px] object-cover"
         />
         <div className="space-y-3 pt-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="font-display text-2xl font-extrabold leading-tight text-ink sm:text-3xl">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <h2 className="line-clamp-2 font-display text-xl font-extrabold leading-tight text-ink sm:text-2xl lg:text-3xl">
                 {competition.title}
               </h2>
-              <p className="mt-1 text-xs font-bold text-ink/50">
+              <p className="mt-1 break-words text-xs font-bold leading-relaxed text-ink/50">
                 {competition.category} · {formatNaira(competition.prizeValueKobo)} prize value ·{" "}
                 {competition.partner}
               </p>
             </div>
-            <span className="shrink-0 rounded-full bg-mint/30 px-2.5 py-1 text-[11px] font-extrabold text-ink">
+            <span className="w-fit shrink-0 rounded-full bg-mint/30 px-2.5 py-1 text-[11px] font-extrabold text-ink">
               {competition.status}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
+            <div className="min-w-0">
               <p className="font-bold text-ink/55">Entry price</p>
-              <p className="font-display text-xl font-extrabold text-ink">
+              <p className="break-words font-display text-lg font-extrabold text-ink sm:text-xl">
                 {formatNaira(competition.entryPrice)}
               </p>
             </div>
-            <div className="text-right">
+            <div className="min-w-0 text-right">
               <p className="font-bold text-ink/55">Draw date</p>
-              <p className="font-bold text-ink">{competition.drawDate}</p>
+              <p className="break-words font-bold text-ink text-xs sm:text-sm">{competition.drawDate}</p>
             </div>
           </div>
           <ProgressDetails competition={competition} progress={progress} />

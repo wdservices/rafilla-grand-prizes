@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { getPasswordStrength, passwordStrengthLabels } from "@/lib/password-strength";
+import { useAuthActions } from "@/hooks/useAuthSession";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -105,6 +106,8 @@ export function RegisterForm() {
     terms?: string;
   }>({});
 
+  const { signInQuick } = useAuthActions();
+
   const strength = useMemo(
     () => (password ? ((Math.min(3, getPasswordStrength(password)) + 1) as PasswordStrength) : 0),
     [password],
@@ -151,9 +154,10 @@ export function RegisterForm() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setLoading(false);
       setSuccess(true);
+      await signInQuick("user");
     }, 1800);
   }
 
@@ -165,10 +169,10 @@ export function RegisterForm() {
         </div>
         <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">Account created!</h3>
         <p className="mt-2 text-sm leading-relaxed text-ink/60">
-          Check your email for a verification link.
+          Welcome to Rafilla — taking you to your dashboard now.
         </p>
         <Button asChild variant="dark" size="md" className="mt-6">
-          <Link to="/auth" search={{ mode: undefined }}>Back to Log in</Link>
+          <Link to="/dashboard">Go to my dashboard</Link>
         </Button>
       </div>
     );

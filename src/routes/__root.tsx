@@ -5,6 +5,7 @@ import {
   HeadContent,
   Scripts,
   useLocation,
+  redirect,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
@@ -14,6 +15,7 @@ import { SiteFooter } from "@/components/rafilla/site-footer";
 import { SiteHeader } from "@/components/rafilla/site-header";
 import { CookieConsentBanner } from "@/components/rafilla/cookie";
 import { ErrorPage } from "@/components/rafilla/error-page";
+import { canAccessRoute } from "@/lib/auth-store";
 
 function NotFoundComponent() {
   return (
@@ -72,6 +74,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  beforeLoad: ({ location }) => {
+    const gate = canAccessRoute({ pathname: location.pathname });
+    if (!gate.allowed) {
+      throw redirect({ to: gate.redirect as any });
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },

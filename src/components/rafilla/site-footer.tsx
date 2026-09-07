@@ -5,8 +5,8 @@ import { showCookieBanner } from "@/components/rafilla/cookie";
 export function SiteFooter() {
   return (
     <footer className="mx-auto mt-16 w-full max-w-7xl px-4 pb-28 sm:px-6 lg:px-8 lg:pb-10">
-      <div className="rounded-[28px] bg-ink p-6 text-cream sm:p-8 lg:flex lg:items-end lg:justify-between">
-        <div className="max-w-md">
+      <div className="flex flex-col gap-8 rounded-[28px] bg-ink p-6 text-cream sm:p-8 lg:flex-row lg:items-start lg:justify-between">
+        <div className="w-full max-w-md shrink-0">
           <div className="flex items-center gap-2">
             <img
               src="/Rafilla-logo.png"
@@ -30,42 +30,42 @@ export function SiteFooter() {
             </span>
           </div>
         </div>
-        <div className="mt-8 grid grid-cols-2 gap-x-10 gap-y-3 text-sm font-bold text-cream/65 sm:grid-cols-3 lg:mt-0 lg:grid-cols-4">
-          <Link to="/competitions" className="hover:text-cream">
+        <div className="grid w-full grid-cols-2 gap-x-6 gap-y-3 text-sm font-bold text-cream/65 xs:grid-cols-2 sm:grid-cols-3 lg:mt-0 lg:max-w-xl lg:grid-cols-3">
+          <Link to="/competitions" className="hover:text-cream break-words">
             Competitions
           </Link>
-          <Link to="/how-it-works" className="hover:text-cream">
+          <Link to="/how-it-works" className="hover:text-cream break-words">
             How it works
           </Link>
-          <Link to="/winners" className="hover:text-cream">
+          <Link to="/winners" className="hover:text-cream break-words">
             Winners
           </Link>
-          <Link to="/terms-and-conditions" className="hover:text-cream">
+          <Link to="/terms-and-conditions" className="hover:text-cream break-words">
             Terms
           </Link>
-          <Link to="/become-a-partner" className="hover:text-cream">
+          <Link to="/become-a-partner" className="hover:text-cream break-words">
             Partners
           </Link>
-          <Link to="/faq" className="hover:text-cream">
+          <Link to="/faq" className="hover:text-cream break-words">
             FAQ
           </Link>
-          <Link to="/privacy-policy" className="hover:text-cream">
+          <Link to="/privacy-policy" className="hover:text-cream break-words">
             Privacy
           </Link>
           <a
             href="mailto:hello@raffila.com"
-            className="inline-flex items-center gap-1 hover:text-cream"
+            className="inline-flex items-center gap-1 hover:text-cream break-words"
           >
-            Contact <ArrowUpRight className="size-3.5" />
+            Contact <ArrowUpRight className="size-3.5 shrink-0" />
           </a>
           <a
             href="https://instagram.com"
-            className="inline-flex items-center gap-1 hover:text-cream"
+            className="inline-flex items-center gap-1 hover:text-cream break-words"
             aria-label="Rafilla on Instagram"
           >
-            Instagram <Instagram className="size-3.5" />
+            Instagram <Instagram className="size-3.5 shrink-0" />
           </a>
-          <Link to="/competition-rules" className="hover:text-cream">
+          <Link to="/competition-rules" className="hover:text-cream break-words">
             Competition rules
           </Link>
         </div>

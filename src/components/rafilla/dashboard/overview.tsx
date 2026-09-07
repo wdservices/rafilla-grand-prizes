@@ -109,35 +109,35 @@ export function DashboardOverviewPage() {
       <div className="space-y-6">
         <section className="overflow-hidden rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-7">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-coral">
                 Welcome back
               </p>
-              <h2 className="mt-2 font-display text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-4xl">
+              <h2 className="mt-2 break-words font-display text-2xl font-extrabold leading-tight tracking-tight text-ink sm:text-3xl lg:text-4xl">
                 Good afternoon, Tunmise 👋
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink/55">
                 Your next win could be one ticket away.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="rounded-2xl bg-cream px-4 py-3.5 ring-1 ring-ink/5 min-w-[160px]">
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:w-auto">
+              <div className="flex-1 rounded-2xl bg-cream px-4 py-3.5 ring-1 ring-ink/5 sm:min-w-[140px] sm:flex-none">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
                   Wallet balance
                 </p>
-                <p className="mt-1 font-display text-xl font-extrabold text-ink sm:text-2xl">
+                <p className="mt-1 break-words font-display text-lg font-extrabold text-ink sm:text-xl lg:text-2xl">
                   {formatNaira(45000000)}
                 </p>
               </div>
-              <div className="rounded-2xl bg-cream px-4 py-3.5 ring-1 ring-ink/5 min-w-[160px]">
+              <div className="flex-1 rounded-2xl bg-cream px-4 py-3.5 ring-1 ring-ink/5 sm:min-w-[140px] sm:flex-none">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
                   Referral earnings
                 </p>
-                <p className="mt-1 font-display text-xl font-extrabold text-ink sm:text-2xl">
+                <p className="mt-1 break-words font-display text-lg font-extrabold text-ink sm:text-xl lg:text-2xl">
                   {formatNaira(1240000)}
                 </p>
               </div>
-              <Button asChild variant="primary" size="md">
+              <Button asChild variant="primary" size="md" className="w-full sm:w-auto">
                 <Link to="/dashboard/competitions">
                   Browse competitions <ArrowRight className="size-4" />
                 </Link>
@@ -146,7 +146,7 @@ export function DashboardOverviewPage() {
           </div>
         </section>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label="Total entries"
             value="87"
@@ -194,32 +194,32 @@ export function DashboardOverviewPage() {
             </Button>
           </div>
 
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="mt-5 grid gap-4 grid-cols-1 lg:grid-cols-2">
             {competitions.slice(0, 2).map((comp) => {
               const sold = comp.entriesSold;
               const total = comp.totalEntries;
               return (
                 <article
                   key={comp.slug}
-                  className="flex overflow-hidden rounded-2xl ring-1 ring-ink/5 bg-white hover:ring-coral/20 transition-all"
+                  className="flex flex-col overflow-hidden rounded-2xl ring-1 ring-ink/5 bg-white hover:ring-coral/20 transition-all sm:flex-row"
                 >
-                  <div className="w-[42%] sm:w-[44%] bg-cream/60 p-3 flex items-center justify-center">
+                  <div className="bg-cream/60 p-3 flex items-center justify-center sm:w-[42%] sm:shrink-0">
                     <img
                       src={comp.image}
                       alt={`${comp.title} prize`}
                       loading="lazy"
                       decoding="async"
-                      className="h-full w-full max-h-[180px] object-contain rounded-xl"
+                      className="h-[160px] w-full object-contain rounded-xl sm:h-full sm:max-h-[180px]"
                     />
                   </div>
-                  <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between gap-3">
-                    <div>
-                      <h3 className="font-display text-base font-extrabold text-ink leading-tight sm:text-lg">
+                  <div className="flex flex-1 flex-col justify-between gap-3 p-4 sm:p-5">
+                    <div className="min-w-0">
+                      <h3 className="line-clamp-2 font-display text-base font-extrabold leading-tight text-ink sm:text-lg">
                         {comp.title}
                       </h3>
                       <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-ink/50">
                         <span className="inline-flex items-center gap-1">
-                          <Ticket className="size-3.5" /> {sold.toLocaleString("en-NG")} / {total.toLocaleString("en-NG")} entries
+                          <Ticket className="size-3.5 shrink-0" /> {sold.toLocaleString("en-NG")} / {total.toLocaleString("en-NG")} entries
                         </span>
                       </div>
                       <div className="mt-2 h-1.5 w-full rounded-full bg-cream overflow-hidden">
@@ -229,9 +229,9 @@ export function DashboardOverviewPage() {
                         />
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-1 rounded-full bg-lemon/30 px-3 py-1 text-[10px] font-extrabold text-ink">
-                        <Clock className="size-3" />
+                        <Clock className="size-3 shrink-0" />
                         Ends {comp.closes}
                       </span>
                       <Button asChild variant="primary" size="sm">
@@ -265,7 +265,7 @@ export function DashboardOverviewPage() {
             </Link>
           </div>
 
-          <div className="mt-5 overflow-x-auto -mx-4 px-4">
+          <div className="mt-5 overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0">
             <table className="w-full text-left text-sm min-w-[640px]">
               <thead className="bg-cream text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45 rounded-2xl">
                 <tr>

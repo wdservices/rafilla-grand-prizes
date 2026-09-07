@@ -140,7 +140,7 @@ export function HomePage() {
             Built for Nigeria
           </div>
         </div>
-        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)] lg:items-start">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] lg:items-start">
           <HeroFeaturedCarousel />
           <div className="hidden space-y-4 lg:block">
             <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5">
@@ -448,14 +448,14 @@ export function CompetitionsFilterBar({
               })}
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Select
               value={state.sort}
               onValueChange={(v) =>
                 setState((s) => ({ ...s, sort: v as SortKey, page: 1 }))
               }
             >
-              <SelectTrigger className="h-11 w-[180px] rounded-full border-0 bg-lilac/20 px-4 text-xs font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral/60">
+              <SelectTrigger className="h-11 w-full rounded-full border-0 bg-lilac/20 px-4 text-xs font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral/60 sm:w-[160px] lg:w-[180px]">
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent className="rounded-2xl border-0 bg-paper p-1 font-body shadow-lg ring-1 ring-ink/10">
@@ -473,7 +473,7 @@ export function CompetitionsFilterBar({
                 setState((s) => ({ ...s, status: v as StatusKey, page: 1 }))
               }
             >
-              <SelectTrigger className="h-11 w-[180px] rounded-full border-0 bg-mint/25 px-4 text-xs font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral/60">
+              <SelectTrigger className="h-11 w-full rounded-full border-0 bg-mint/25 px-4 text-xs font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral/60 sm:w-[160px] lg:w-[180px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent className="rounded-2xl border-0 bg-paper p-1 font-body shadow-lg ring-1 ring-ink/10">
@@ -772,7 +772,7 @@ export function CompetitionsPage() {
           <div
             className={cn(
               "mt-8 gap-4",
-              state.view === "grid" ? "grid md:grid-cols-2 lg:grid-cols-3" : "flex flex-col",
+              state.view === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "flex flex-col",
             )}
           >
             {paged.map((competition) => (
@@ -964,7 +964,7 @@ export function CompetitionDetailPage() {
     <>
       <div
         className={cn(
-          "sticky top-[72px] md:top-[64px] z-40 w-full border-b border-ink/10 bg-cream/95 backdrop-blur transition-all duration-300",
+          "sticky top-[64px] z-40 w-full border-b border-ink/10 bg-cream/95 backdrop-blur transition-all duration-300",
           showStickyBar ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0 pointer-events-none",
         )}
       >
@@ -983,8 +983,8 @@ export function CompetitionDetailPage() {
               </span>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="hidden text-right lg:block">
+          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+            <div className="hidden text-right sm:block lg:block">
               <p className="text-[10px] font-bold uppercase tracking-wider text-ink/40">
                 {`${safeQty} ticket${safeQty === 1 ? "" : "s"} · Total`}
               </p>
@@ -1048,8 +1048,8 @@ export function CompetitionDetailPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <div ref={heroRef} className="mt-6 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-          <div className="overflow-hidden rounded-[28px] bg-lilac/30 p-3 ring-1 ring-ink/5">
+        <div ref={heroRef} className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-8">
+          <div className="overflow-hidden rounded-[28px] bg-lilac/30 p-2 ring-1 ring-ink/5 sm:p-3">
             <img
               src={competition.image}
               alt={`${competition.title} prize`}
@@ -1058,7 +1058,7 @@ export function CompetitionDetailPage() {
               className="aspect-[4/3] w-full rounded-[22px] object-cover"
             />
           </div>
-          <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5 sm:p-8">
+          <div className="rounded-[28px] bg-paper p-5 ring-1 ring-ink/5 sm:p-6 lg:p-8">
             <div className="flex flex-wrap items-center gap-2">
               <Pill {...(competition.accent === "coral" ? { tone: "coral" } : {})}>
                 {competition.category}
@@ -1074,16 +1074,16 @@ export function CompetitionDetailPage() {
               {competition.title}
             </h1>
             <p className="mt-3 text-base leading-relaxed text-ink/60">{competition.description}</p>
-            <div className="mt-7 grid grid-cols-2 gap-4 border-y border-ink/10 py-5">
-              <div>
+            <div className="mt-7 grid grid-cols-2 gap-3 border-y border-ink/10 py-5 sm:gap-4">
+              <div className="min-w-0">
                 <p className="text-xs font-bold text-ink/45">Entry price</p>
-                <p className="mt-1 font-display text-2xl font-extrabold text-ink">
+                <p className="mt-1 break-words font-display text-xl font-extrabold text-ink sm:text-2xl">
                   {formatNaira(competition.entryPrice)}
                 </p>
               </div>
-              <div>
+              <div className="min-w-0 text-right sm:text-left">
                 <p className="text-xs font-bold text-ink/45">Prize value</p>
-                <p className="mt-1 font-display text-2xl font-extrabold text-ink">
+                <p className="mt-1 break-words font-display text-xl font-extrabold text-ink sm:text-2xl">
                   {formatNaira(competition.prizeValueKobo)}
                 </p>
               </div>
@@ -1101,12 +1101,12 @@ export function CompetitionDetailPage() {
                 {ticketsLeft.toLocaleString("en-NG")} entries remaining
               </p>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-4 grid grid-cols-1 gap-3 xs:grid-cols-2">
               <div className="rounded-2xl bg-cream p-3 ring-1 ring-ink/5">
                 <div className="text-[10px] font-extrabold uppercase tracking-wide text-ink/45">
                   Ends in
                 </div>
-                <div className="mt-1.5 flex gap-1.5">
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
                   <div className="rounded-lg bg-paper px-2 py-1 text-xs font-extrabold tabular-nums ring-1 ring-ink/10">
                     {cd.d}d
                   </div>
@@ -1126,8 +1126,8 @@ export function CompetitionDetailPage() {
               </div>
             </div>
             <div className="mt-6 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-cream p-4 ring-1 ring-ink/5">
-                <div>
+              <div className="flex flex-col gap-3 rounded-2xl bg-cream p-4 ring-1 ring-ink/5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40">
                     Your tickets
                   </p>
@@ -1142,11 +1142,11 @@ export function CompetitionDetailPage() {
                   max={maxQty}
                   size="md"
                 />
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40">
                     Total
                   </p>
-                  <p className="font-display text-2xl font-extrabold text-ink tabular-nums">
+                  <p className="break-words font-display text-2xl font-extrabold text-ink tabular-nums">
                     {formatNaira(totalKobo)}
                   </p>
                 </div>
@@ -1178,7 +1178,7 @@ export function CompetitionDetailPage() {
             </div>
           </div>
         </div>
-        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-3 grid-cols-1 xs:grid-cols-2 lg:grid-cols-4">
           <Card className="rounded-2xl border-0 bg-paper p-5 shadow-sm ring-1 ring-ink/5">
             <div className="flex items-center gap-2">
               <span className="grid size-8 place-items-center rounded-xl bg-mint/30 text-ink">
@@ -1260,8 +1260,8 @@ export function CompetitionDetailPage() {
         </div>
         <section className="mt-10">
           <Tabs defaultValue="description" className="w-full">
-            <div className="mb-5 overflow-x-auto rounded-full bg-cream px-2 py-2 ring-1 ring-ink/5">
-              <TabsList className="h-auto w-max gap-1 bg-transparent p-0">
+            <div className="mb-5 overflow-x-auto rounded-full bg-cream px-2 py-2 ring-1 ring-ink/5 scrollbar-none">
+              <TabsList className="h-auto w-max min-w-full gap-1 bg-transparent p-0">
                 {([
                   ["description", "Description"],
                   ["specs", "Prize specs"],
@@ -1351,7 +1351,7 @@ export function CompetitionDetailPage() {
                 <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
                   Everything you need to know
                 </h2>
-                <div className="mt-6 grid gap-px overflow-hidden rounded-2xl bg-ink/10 ring-1 ring-ink/10 sm:grid-cols-2">
+                <div className="mt-6 grid gap-px overflow-hidden rounded-2xl bg-ink/10 ring-1 ring-ink/10 grid-cols-1 sm:grid-cols-2">
                   {[
                     ["Category", competition.category],
                     ["Condition", competition.prizeCondition],
@@ -1389,7 +1389,7 @@ export function CompetitionDetailPage() {
                 <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
                   How entries and the draw work
                 </h2>
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div className="mt-6 grid gap-4 grid-cols-1 sm:grid-cols-2">
                   {[
                     ["Ticket price", formatNaira(competition.entryPrice)],
                     ["Total tickets available", competition.totalEntries.toLocaleString("en-NG")],
@@ -1603,7 +1603,7 @@ export function CompetitionDetailPage() {
               </Link>
             </Button>
           </div>
-          <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {related.map((c) => (
               <CompetitionCard key={c.slug} competition={c} />
             ))}
@@ -1652,7 +1652,7 @@ export function HowItWorksPage() {
         title="A clear path from prize to draw."
         text="Rafilla is built to make the important details easy to see, understand, and revisit."
       />
-      <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-10 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {[
           "Create your account",
           "Fund your Rafilla Wallet",
@@ -1741,7 +1741,7 @@ export function PartnerPage() {
         title="Put a premium asset in the spotlight."
         text="Rafilla gives approved partners a clear way to submit, monitor, and grow campaigns around exceptional products and experiences."
       />
-      <div className="mt-10 grid gap-4 lg:grid-cols-3">
+      <div className="mt-10 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {[
           {
             icon: <Ticket />,
@@ -1799,7 +1799,7 @@ export function AboutPage() {
         title="A better way to discover what’s next."
         text="Rafilla is a Nigerian prize-competition platform designed around premium products, transparent journeys, and fair chances."
       />
-      <div className="mt-10 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="mt-10 grid gap-6 grid-cols-1 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5 sm:p-8">
           <p className="text-base leading-relaxed text-ink/65">
             We believe a competition experience should feel closer to a premium product marketplace

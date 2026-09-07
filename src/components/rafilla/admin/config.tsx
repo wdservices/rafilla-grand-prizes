@@ -36,12 +36,12 @@ interface GroupProps {
 }
 
 const toneBg: Record<string, string> = {
-  coral: "bg-coral/18",
-  sky: "bg-sky/25",
-  mint: "bg-mint/30",
-  lemon: "bg-lemon/35",
-  lilac: "bg-lilac/30",
-  ink: "bg-ink/5",
+  coral: "bg-coral/15",
+  sky: "bg-sky/20",
+  mint: "bg-mint/25",
+  lemon: "bg-lemon/30",
+  lilac: "bg-lilac/25",
+  ink: "bg-ink/8",
 };
 const toneText: Record<string, string> = {
   coral: "text-coral",
@@ -54,25 +54,25 @@ const toneText: Record<string, string> = {
 
 function ConfigGroup({ title, description, icon: Icon, tone, children, onSave, showSave = true }: GroupProps) {
   return (
-    <Card className="rounded-[26px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
-      <CardContent className="p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0 flex-1">
-            <div className={cn("grid size-11 shrink-0 place-items-center rounded-2xl", toneBg[tone])}>
+    <Card className="rounded-[24px] border-0 bg-white p-0 ring-1 ring-ink/8 shadow-sm">
+      <CardContent className="p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-4 min-w-0 flex-1">
+            <div className={cn("grid size-12 shrink-0 place-items-center rounded-2xl", toneBg[tone])}>
               <Icon className={cn("size-5", toneText[tone])} />
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 pt-0.5">
               <h3 className="font-display text-lg font-extrabold text-ink">{title}</h3>
-              <p className="mt-1 text-xs font-bold text-ink/55">{description}</p>
+              <p className="mt-1 text-xs font-bold text-ink/55 leading-relaxed">{description}</p>
             </div>
           </div>
           {showSave && (
-            <Button variant="outline" size="sm" onClick={onSave}>
-              <Save className="size-3.5" /> Save changes
+            <Button variant="outline" size="sm" onClick={onSave} className="rounded-full h-10 px-4">
+              <Save className="size-3.5 mr-1.5" /> Save changes
             </Button>
           )}
         </div>
-        <Separator className="my-5" />
+        <Separator className="my-5 bg-ink/8" />
         {children}
       </CardContent>
     </Card>
@@ -125,8 +125,8 @@ export function AdminPlatformConfigPage() {
           <Badge className="rounded-full bg-cream px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-ink/60 ring-1 ring-ink/10">
             <Wrench className="mr-1 size-3" /> Config v247
           </Badge>
-          <Button variant="primary" onClick={saveAll} disabled={saving}>
-            {saving ? <RefreshCw className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+          <Button variant="primary" onClick={saveAll} disabled={saving} className="rounded-full h-11 px-5">
+            {saving ? <RefreshCw className="size-4 animate-spin mr-1.5" /> : <CheckCircle2 className="size-4 mr-1.5" />}
             {saving ? "Publishing…" : "Save all"}
           </Button>
         </div>
@@ -140,26 +140,26 @@ export function AdminPlatformConfigPage() {
           tone="lemon"
           onSave={() => groupSave("Referral rates")}
         >
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
             {[
-              { label: "Level 1", val: l1, set: setL1, tint: "bg-coral/20 text-coral" },
-              { label: "Level 2", val: l2, set: setL2, tint: "bg-sky/25 text-ink" },
-              { label: "Level 3", val: l3, set: setL3, tint: "bg-mint/30 text-ink" },
-              { label: "Level 4", val: l4, set: setL4, tint: "bg-lemon/35 text-ink" },
-              { label: "Level 5", val: l5, set: setL5, tint: "bg-lilac/30 text-ink" },
+              { label: "Level 1", val: l1, set: setL1, tint: "bg-coral/15 text-coral" },
+              { label: "Level 2", val: l2, set: setL2, tint: "bg-sky/20 text-ink" },
+              { label: "Level 3", val: l3, set: setL3, tint: "bg-mint/25 text-ink" },
+              { label: "Level 4", val: l4, set: setL4, tint: "bg-lemon/30 text-ink" },
+              { label: "Level 5", val: l5, set: setL5, tint: "bg-lilac/25 text-ink" },
             ].map((t) => (
-              <div key={t.label} className="space-y-2">
+              <div key={t.label} className="space-y-2.5">
                 <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">{t.label}</Label>
                 <div className="relative">
                   <Input
                     type="number"
                     value={t.val}
                     onChange={(e) => t.set(e.target.value)}
-                    className="h-12 rounded-2xl border-0 bg-cream pr-7 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral text-right"
+                    className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pr-9 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2 text-right"
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">%</span>
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">%</span>
                 </div>
-                <div className={cn("rounded-xl px-2 py-1 text-center text-[10px] font-extrabold uppercase tracking-wider", t.tint)}>
+                <div className={cn("rounded-xl px-2 py-1.5 text-center text-[10px] font-extrabold uppercase tracking-wider", t.tint)}>
                   Referrer share
                 </div>
               </div>
@@ -174,26 +174,26 @@ export function AdminPlatformConfigPage() {
           tone="coral"
           onSave={() => groupSave("Reward pool")}
         >
-          <div className="space-y-4">
-            <div className="space-y-2">
+          <div className="space-y-5">
+            <div className="space-y-2.5">
               <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Contribution rate · % of ticket value</Label>
               <div className="relative">
                 <Input
                   type="number"
                   value={poolPct}
                   onChange={(e) => setPoolPct(e.target.value)}
-                  className="h-12 rounded-2xl border-0 bg-cream pr-7 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral"
+                  className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pr-9 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">%</span>
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">%</span>
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Distribution rules</Label>
               <Textarea
                 rows={4}
                 value={poolRules}
                 onChange={(e) => setPoolRules(e.target.value)}
-                className="rounded-2xl border-0 bg-cream p-4 text-sm font-bold text-ink focus-visible:ring-coral"
+                className="rounded-2xl border-0 bg-white ring-1 ring-ink/10 p-4 text-sm font-bold text-ink focus-visible:ring-coral focus-visible:ring-2 resize-none"
               />
             </div>
           </div>
@@ -206,8 +206,8 @@ export function AdminPlatformConfigPage() {
           tone="mint"
           onSave={() => groupSave("Minimum thresholds")}
         >
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-2.5">
               <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Min payout</Label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">₦</span>
@@ -215,12 +215,12 @@ export function AdminPlatformConfigPage() {
                   type="number"
                   value={minPayout}
                   onChange={(e) => setMinPayout(e.target.value)}
-                  className="h-12 rounded-2xl border-0 bg-cream pl-8 pr-4 text-base font-extrabold text-ink focus-visible:ring-coral"
+                  className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pl-9 pr-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2"
                 />
               </div>
-              <p className="text-[11px] font-bold text-ink/50">{formatNaira(parseInt(minPayout || "0", 10) * 100)} floor</p>
+              <p className="text-[11px] font-bold text-ink/50 mt-1">{formatNaira(parseInt(minPayout || "0", 10) * 100)} floor</p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Min wallet top-up</Label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">₦</span>
@@ -228,10 +228,10 @@ export function AdminPlatformConfigPage() {
                   type="number"
                   value={minTopup}
                   onChange={(e) => setMinTopup(e.target.value)}
-                  className="h-12 rounded-2xl border-0 bg-cream pl-8 pr-4 text-base font-extrabold text-ink focus-visible:ring-coral"
+                  className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pl-9 pr-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2"
                 />
               </div>
-              <p className="text-[11px] font-bold text-ink/50">{formatNaira(parseInt(minTopup || "0", 10) * 100)} minimum</p>
+              <p className="text-[11px] font-bold text-ink/50 mt-1">{formatNaira(parseInt(minTopup || "0", 10) * 100)} minimum</p>
             </div>
           </div>
         </ConfigGroup>
@@ -243,32 +243,32 @@ export function AdminPlatformConfigPage() {
           tone="sky"
           onSave={() => groupSave("Draw settings")}
         >
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-2.5">
               <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Live delay · seconds</Label>
               <div className="relative">
                 <Input
                   type="number"
                   value={liveDelay}
                   onChange={(e) => setLiveDelay(e.target.value)}
-                  className="h-12 rounded-2xl border-0 bg-cream pr-14 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral"
+                  className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pr-14 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">s</span>
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">s</span>
               </div>
-              <p className="text-[11px] font-bold text-ink/50">Broadcast buffer</p>
+              <p className="text-[11px] font-bold text-ink/50 mt-1">Broadcast buffer</p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Confirmation window · hours</Label>
               <div className="relative">
                 <Input
                   type="number"
                   value={confirmWindow}
                   onChange={(e) => setConfirmWindow(e.target.value)}
-                  className="h-12 rounded-2xl border-0 bg-cream pr-12 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral"
+                  className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pr-12 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">hrs</span>
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">hrs</span>
               </div>
-              <p className="text-[11px] font-bold text-ink/50">Claim deadline</p>
+              <p className="text-[11px] font-bold text-ink/50 mt-1">Claim deadline</p>
             </div>
           </div>
         </ConfigGroup>
@@ -280,16 +280,16 @@ export function AdminPlatformConfigPage() {
           tone="lilac"
           onSave={() => groupSave("Notification defaults")}
         >
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {[
               { label: "Email notifications", desc: "Receipts, draws, results, marketing opt-in.", val: emailNotif, set: setEmailNotif },
               { label: "SMS notifications", desc: "High-priority OTP, winner, payout alerts only.", val: smsNotif, set: setSmsNotif },
               { label: "In-app notifications", desc: "Activity feed, badges, live draw reminders.", val: inappNotif, set: setInappNotif },
             ].map((n) => (
-              <div key={n.label} className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3.5">
-                <div>
+              <div key={n.label} className="flex items-center justify-between rounded-2xl bg-white ring-1 ring-ink/10 px-4.5 py-3.5">
+                <div className="pr-4">
                   <p className="text-sm font-extrabold text-ink">{n.label}</p>
-                  <p className="text-xs font-bold text-ink/55">{n.desc}</p>
+                  <p className="text-xs font-bold text-ink/55 mt-0.5">{n.desc}</p>
                 </div>
                 <Switch checked={n.val} onCheckedChange={(v) => n.set(!!v)} />
               </div>
@@ -304,34 +304,34 @@ export function AdminPlatformConfigPage() {
           tone="ink"
           showSave={false}
         >
-          <div className="space-y-3">
-            <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3.5">
-              <div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between rounded-2xl bg-white ring-1 ring-ink/10 px-4.5 py-3.5">
+              <div className="pr-4">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-extrabold text-ink">Maintenance mode</p>
                   {maintenance && <Badge className="rounded-full bg-coral/15 px-2 py-0 text-[10px] font-extrabold uppercase text-coral ring-0">Active</Badge>}
                 </div>
-                <p className="text-xs font-bold text-ink/55">Public pages show maintenance landing · admin only available.</p>
+                <p className="text-xs font-bold text-ink/55 mt-0.5">Public pages show maintenance landing · admin only available.</p>
               </div>
               <Switch checked={maintenance} onCheckedChange={(v) => setMaintenance(!!v)} />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Maintenance message</Label>
               <Textarea
                 rows={3}
                 value={maintenanceMsg}
                 onChange={(e) => setMaintenanceMsg(e.target.value)}
-                className="rounded-2xl border-0 bg-cream p-4 text-sm font-bold text-ink focus-visible:ring-coral"
+                className="rounded-2xl border-0 bg-white ring-1 ring-ink/10 p-4 text-sm font-bold text-ink focus-visible:ring-coral focus-visible:ring-2 resize-none"
               />
             </div>
-            <Separator className="my-2" />
-            <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3.5">
-              <div>
+            <Separator className="bg-ink/8" />
+            <div className="flex items-center justify-between rounded-2xl bg-white ring-1 ring-ink/10 px-4.5 py-3.5">
+              <div className="pr-4">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-extrabold text-ink">Test mode</p>
-                  {testMode && <Badge className="rounded-full bg-lemon/40 px-2 py-0 text-[10px] font-extrabold uppercase text-ink ring-0"><TestTube className="mr-1 size-2.5" /> Sandbox</Badge>}
+                  {testMode && <Badge className="rounded-full bg-lemon/30 px-2 py-0 text-[10px] font-extrabold uppercase text-ink ring-0"><TestTube className="mr-1 size-2.5" /> Sandbox</Badge>}
                 </div>
-                <p className="text-xs font-bold text-ink/55">Mocks all banks and payouts · no real money moves.</p>
+                <p className="text-xs font-bold text-ink/55 mt-0.5">Mocks all banks and payouts · no real money moves.</p>
               </div>
               <Switch checked={testMode} onCheckedChange={(v) => setTestMode(!!v)} />
             </div>
@@ -340,8 +340,8 @@ export function AdminPlatformConfigPage() {
       </div>
 
       <div className="mt-6 flex justify-end">
-        <Button variant="primary" size="lg" onClick={saveAll} disabled={saving}>
-          {saving ? <RefreshCw className="size-4 animate-spin" /> : <CheckCircle2 className="size-4.5" />}
+        <Button variant="primary" size="lg" onClick={saveAll} disabled={saving} className="rounded-full h-12 px-7">
+          {saving ? <RefreshCw className="size-4 animate-spin mr-2" /> : <CheckCircle2 className="size-4.5 mr-2" />}
           {saving ? "Publishing all changes…" : "Publish all changes"}
         </Button>
       </div>
