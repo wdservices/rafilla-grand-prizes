@@ -136,22 +136,22 @@ export function AdminReportsPage() {
     setTimeout(() => toast.success(`${r.label}.${fmt} ready`, { description: "Download queued in your browser." }), 900);
   };
 
-  const revenueByMonth = [48, 54, 62, 78, 82, 95, 110, 104, 128, 142, 165, 180];
+  const revenueByMonth = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   const ticketsByCat = [
-    { name: "Auto", val: 42150 },
-    { name: "Tech", val: 38420 },
-    { name: "Property", val: 21600 },
-    { name: "Jewelry", val: 15200 },
-    { name: "Home", val: 12800 },
-    { name: "Experience", val: 9400 },
+    { name: "Auto", val: 0 },
+    { name: "Tech", val: 0 },
+    { name: "Property", val: 0 },
+    { name: "Jewelry", val: 0 },
+    { name: "Home", val: 0 },
+    { name: "Experience", val: 0 },
   ];
   const topCompetitions = [
-    { name: "Mercedes C-Class 2025", val: 421000000 },
-    { name: "Nova X1 Tech Bundle", val: 389200000 },
-    { name: "Lagos 2-Bed Apt", val: 285000000 },
-    { name: "Ikeja Home Studio", val: 187000000 },
-    { name: "Abuja Generator Pack", val: 142000000 },
-    { name: "PH Laptop Suite", val: 98000000 },
+    { name: "Mercedes C-Class 2025", val: 0 },
+    { name: "Nova X1 Tech Bundle", val: 0 },
+    { name: "Lagos 2-Bed Apt", val: 0 },
+    { name: "Ikeja Home Studio", val: 0 },
+    { name: "Abuja Generator Pack", val: 0 },
+    { name: "PH Laptop Suite", val: 0 },
   ];
 
   return (
