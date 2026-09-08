@@ -78,9 +78,14 @@ export function SiteHeader() {
               </Button>
             </div>
           ) : (
-            <Button asChild variant="dark" size="sm">
-              <Link to="/auth">Join Rafilla</Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/auth">Log in</Link>
+              </Button>
+              <Button asChild variant="dark" size="sm">
+                <Link to="/auth">Create account</Link>
+              </Button>
+            </div>
           )}
         </nav>
 
@@ -92,9 +97,14 @@ export function SiteHeader() {
               </Link>
             </Button>
           ) : (
-            <Button asChild variant="dark" size="sm">
-              <Link to="/auth">Join</Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/auth">Log in</Link>
+              </Button>
+              <Button asChild variant="dark" size="sm">
+                <Link to="/auth">Create account</Link>
+              </Button>
+            </div>
           )}
           <Button
             variant="outline"

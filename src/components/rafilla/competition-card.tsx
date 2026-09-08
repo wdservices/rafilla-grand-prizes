@@ -162,13 +162,7 @@ export function CompetitionCard({
                 <p className="break-words font-bold text-ink text-xs sm:text-sm">{formatNaira(competition.prizeValueKobo)}</p>
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
-                  Tickets left
-                </p>
-                <p className="font-bold text-coral text-xs sm:text-sm">
-                  {(competition.totalEntries - competition.entriesSold).toLocaleString("en-NG")}
-                </p>
-              </div>
+                </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
                   Closes
@@ -183,8 +177,7 @@ export function CompetitionCard({
               <div className="min-w-0 sm:col-span-2 md:col-span-2">
                 <div className="mb-1 flex items-center justify-between gap-2 text-xs font-bold">
                   <span className="truncate text-ink/60">
-                    {competition.entriesSold.toLocaleString("en-NG")} of{" "}
-                    {competition.totalEntries.toLocaleString("en-NG")} sold
+                    Sales progress
                   </span>
                   <span className="shrink-0">{progress}%</span>
                 </div>
@@ -259,7 +252,7 @@ export function CompetitionCard({
           </div>
           <p className="text-xs font-bold text-ink/55">
             {formatNaira(competition.entryPrice)} / ticket ·{" "}
-            {competition.entriesSold.toLocaleString("en-NG")} sold
+            {progress}% sold
           </p>
           <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
             <div
@@ -268,9 +261,7 @@ export function CompetitionCard({
             />
           </div>
           <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-ink/45">
-            <span>
-              {(competition.totalEntries - competition.entriesSold).toLocaleString("en-NG")} left
-            </span>
+            <span>{progress}% sold</span>
             <span className="inline-flex items-center gap-1">
               <CalendarDays className="size-3" /> {competition.closes.split("·")[0]}
             </span>
@@ -332,8 +323,7 @@ function ProgressDetails({
     <div>
       <div className="mb-1.5 flex items-center justify-between gap-2 text-xs font-bold">
         <span className="text-ink/60">
-          {competition.entriesSold.toLocaleString("en-NG")} of{" "}
-          {competition.totalEntries.toLocaleString("en-NG")} entries sold
+          Sales progress
         </span>
         <span className="text-ink">{progress}%</span>
       </div>
@@ -343,9 +333,7 @@ function ProgressDetails({
           style={{ width: `${progress}%` }}
         />
       </div>
-      <p className="mt-1.5 text-xs font-extrabold text-coral">
-        {(competition.totalEntries - competition.entriesSold).toLocaleString("en-NG")} entries left
-      </p>
+      <p className="mt-1.5 text-xs font-extrabold text-coral">{progress}% sold</p>
     </div>
   );
 }
