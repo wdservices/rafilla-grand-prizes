@@ -1808,18 +1808,7 @@ export function AboutPage() {
         text="Raffila is an African prize marketplace designed around premium products, transparent journeys, and fair chances."
       />
       <div className="mt-10 grid gap-6 grid-cols-1 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5 sm:p-8">
-          <p className="text-base leading-relaxed text-ink/65">
-            We believe a competition experience should feel closer to a premium product marketplace
-            than a betting website. That means clear pricing, visible availability, secure accounts,
-            and draw information people can come back to.
-          </p>
-          <p className="mt-5 text-base leading-relaxed text-ink/65">
-            Raffila is being built incrementally, with the web platform first and a future backend
-            architecture that can support mobile applications when that phase is commissioned.
-          </p>
-        </div>
-        <div className="rounded-[28px] bg-lilac/30 p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5 sm:p-8 lg:col-span-2">
           <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
             Our principles
           </p>
