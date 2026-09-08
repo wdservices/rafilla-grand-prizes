@@ -71,8 +71,8 @@
   --color-raf-green: var(--raf-green);
   --color-raf-lime: var(--raf-lime);
   --color-raf-gold: var(--raf-gold);
-  --font-display: "Baloo 2", ui-rounded, system-ui, sans-serif;
-  --font-body: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "DM Serif Display", Georgia, serif;
+  --font-body: "Work Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {

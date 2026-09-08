@@ -49,6 +49,12 @@ export function SiteFooter() {
           <Link to="/faq" className="hover:text-cream break-words">
             FAQ
           </Link>
+          <Link to="/auth" className="hover:text-cream break-words">
+            Log in
+          </Link>
+          <Link to="/auth" className="font-extrabold text-cream hover:text-raf-lime break-words">
+            Create account
+          </Link>
           <Link to="/privacy-policy" className="hover:text-cream break-words">
             Privacy
           </Link>

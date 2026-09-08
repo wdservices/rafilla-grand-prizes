@@ -47,10 +47,7 @@ function ProgressDetails({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3 text-xs font-bold text-ink/55">
-        <span>
-          {competition.entriesSold.toLocaleString("en-NG")} of{" "}
-          {competition.totalEntries.toLocaleString("en-NG")} entries
-        </span>
+        <span>Sales progress</span>
         <span className="font-extrabold text-ink">{progress}%</span>
       </div>
       <Progress
@@ -58,9 +55,7 @@ function ProgressDetails({
         className={cn("h-2.5 rounded-full bg-ink/8 [&>div]:rounded-full", accentStyles[competition.accent].fill)}
       />
       <div className="flex items-center justify-between gap-3 text-[11px] font-bold text-ink/50">
-        <span>
-          {(competition.totalEntries - competition.entriesSold).toLocaleString("en-NG")} entries left
-        </span>
+        <span>{progress}% of allocation sold</span>
         <span className="flex items-center gap-1">
           <ShieldAlert className="size-3 text-coral" /> Ends {competition.closes}
         </span>

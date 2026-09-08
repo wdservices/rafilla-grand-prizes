@@ -32,11 +32,11 @@ export function AuthTabs({ activeTab: controlledTab, defaultTab = "login", onTab
             aria-controls={`auth-panel-${tab}`}
             onClick={() => handleChange(tab)}
             className={cn(
-              "group relative flex-1 pb-3 pt-1 text-sm font-extrabold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:pointer-events-none disabled:opacity-50",
+              "group relative flex-1 pb-3 pt-1 text-sm font-extrabold uppercase tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:pointer-events-none disabled:opacity-50",
               isActive ? "text-ink" : "text-ink/45",
             )}
           >
-            {tab === "login" ? "Log in" : "Create account"}
+            {tab === "login" ? "LOGIN" : "CREATE ACCOUNT"}
             <span
               className={cn(
                 "absolute inset-x-0 bottom-0 h-[3px] rounded-full bg-coral transition-transform duration-300 ease-out",
