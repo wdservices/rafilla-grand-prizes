@@ -165,7 +165,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
           ))}
         </nav>
 
-        <div className="p-3.5 relative">
+        <div className="p-3.5 relative space-y-2">
           <button
             onClick={() => setUserDropdownOpen((v) => !v)}
             className="flex w-full items-center gap-3 rounded-2xl bg-cream/60 p-3 ring-1 ring-ink/5 hover:ring-coral/20 hover:bg-white transition-all"
@@ -186,13 +186,21 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
             <div className="absolute bottom-full left-3 right-3 mb-2 rounded-2xl bg-white p-1.5 ring-1 ring-ink/10 shadow-[0_20px_50px_-25px_rgba(0,0,0,0.25)]">
               <button
                 onClick={runLogout}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-extrabold text-ink/70 transition-colors hover:bg-cream hover:text-ink"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-extrabold text-coral transition-colors hover:bg-coral/10"
               >
                 <LogOut className="size-4 text-coral" />
-                Log out
+                Log out / Exit
               </button>
             </div>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={runLogout}
+            className="w-full justify-center rounded-full border-coral/20 bg-white text-xs font-extrabold text-coral hover:bg-coral hover:text-white"
+          >
+            <LogOut className="size-3.5" /> Log out / Exit
+          </Button>
         </div>
       </aside>
 
@@ -290,8 +298,8 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
         </nav>
       </aside>
 
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink/5 bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-ink/5 bg-white/80 px-3 py-3 backdrop-blur lg:hidden">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="grid size-10 place-items-center rounded-2xl bg-cream/70 text-ink ring-1 ring-ink/5"
@@ -299,7 +307,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
           >
             <Menu className="size-5" />
           </button>
-          <Link to="/" className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2">
             <img
               src="/Rafilla-logo.png"
               alt=""
@@ -307,7 +315,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
               width={36}
               height={36}
             />
-            <div className="min-w-0">
+            <div className="min-w-0 hidden xs:block">
               <span className="block font-display text-base font-extrabold tracking-tight text-ink leading-none">
                 Rafilla
               </span>
@@ -317,13 +325,34 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
             </div>
           </Link>
         </div>
-        <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-coral text-white font-display text-sm font-extrabold shadow-[0_8px_18px_-10px_var(--coral)]">
-          {monogram}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={runLogout}
+            aria-label="Log out"
+            className="rounded-full bg-coral px-3 py-2 text-xs font-extrabold text-white hover:bg-coral/90"
+          >
+            <LogOut className="size-3.5" /> Exit
+          </Button>
+          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-coral text-white font-display text-sm font-extrabold shadow-[0_8px_18px_-10px_var(--coral)]">
+            {monogram}
+          </div>
         </div>
       </header>
 
       <main className="min-w-0 lg:ml-[260px] min-h-screen overflow-x-hidden px-4 py-6 lg:px-8 lg:py-8 pb-28">
         <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6">
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={runLogout}
+              className="rounded-full border-coral/20 bg-white px-4 py-2 text-xs font-extrabold text-coral hover:bg-coral hover:text-white"
+            >
+              <LogOut className="size-3.5" /> Exit / Log out
+            </Button>
+          </div>
           {(title || breadcrumbs) && (
             <div className="space-y-1.5">
               {breadcrumbs && breadcrumbs.length > 0 && (

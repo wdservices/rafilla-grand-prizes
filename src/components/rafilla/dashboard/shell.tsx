@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
+import { useAuthActions } from "@/hooks/useAuthSession";
 import {
   LayoutDashboard,
   Trophy,
@@ -118,7 +119,9 @@ export function DashboardShell({
   activeNav?: string;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
+  const { signOut } = useAuthActions();
+
+  const handleLogout = () => signOut({ to: "/auth" });
 
   const activeKey = activeNav ?? "";
 
@@ -189,9 +192,17 @@ export function DashboardShell({
           })}
         </nav>
 
-        <div className="p-3.5">
+        <div className="p-3.5 space-y-2">
           <button
-            onClick={() => navigate({ to: "/auth" })}
+            onClick={handleLogout}
+            aria-label="Log out of dashboard"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-coral px-3 py-2.5 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-coral/90"
+          >
+            <LogOut className="size-4" />
+            Log out / Exit
+          </button>
+          <button
+            onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-extrabold text-ink/70 transition-colors hover:bg-ink/5 hover:text-ink"
           >
             <LogOut className="size-4 text-coral" />
@@ -284,18 +295,18 @@ export function DashboardShell({
           <button
             onClick={() => {
               setMobileMenuOpen(false);
-              navigate({ to: "/auth" });
+              handleLogout();
             }}
-            className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold text-ink/70 transition-colors hover:bg-ink/5 hover:text-ink"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-coral px-3.5 py-2.5 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-coral/90"
           >
-            <LogOut className="size-4 text-coral" />
-            Log out
+            <LogOut className="size-4" />
+            Log out / Exit
           </button>
         </nav>
       </aside>
 
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink/5 bg-white/80 px-4 py-3.5 backdrop-blur lg:hidden sm:px-6">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-ink/5 bg-white/80 px-4 py-3.5 backdrop-blur lg:hidden sm:px-6">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="grid size-10 place-items-center rounded-2xl bg-cream/70 text-ink ring-1 ring-ink/5"
@@ -303,7 +314,7 @@ export function DashboardShell({
           >
             <Menu className="size-5" />
           </button>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <img
               src="/Rafilla-logo.png"
               alt=""
@@ -311,7 +322,7 @@ export function DashboardShell({
               width={36}
               height={36}
             />
-            <div>
+            <div className="hidden xs:block">
               <span className="block font-display text-base font-extrabold tracking-tight text-ink leading-none">
                 Rafilla
               </span>
@@ -319,12 +330,27 @@ export function DashboardShell({
             </div>
           </div>
         </div>
-        <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-coral text-white font-display text-sm font-extrabold shadow-[0_8px_18px_-10px_var(--coral)]">
-          TA
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="rounded-full bg-coral px-3 py-2 text-xs font-extrabold text-white hover:bg-coral/90"
+          >
+            <LogOut className="size-3.5" /> Exit
+          </Button>
+          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-coral text-white font-display text-sm font-extrabold shadow-[0_8px_18px_-10px_var(--coral)]">
+            TA
+          </div>
         </div>
       </header>
 
       <main className="min-w-0 overflow-x-hidden lg:ml-[268px] min-h-screen pt-5 pb-28 px-4 sm:px-6 lg:px-8 lg:pt-8">
+        <div className="mb-4 flex justify-end">
+          <Button variant="outline" size="sm" onClick={handleLogout} className="rounded-full border-coral/20 bg-white px-4 py-2 text-xs font-extrabold text-coral hover:bg-coral hover:text-white">
+            <LogOut className="size-3.5" /> Exit / Log out
+          </Button>
+        </div>
         <div className="mx-auto w-full max-w-full min-w-0">
           {children}
         </div>

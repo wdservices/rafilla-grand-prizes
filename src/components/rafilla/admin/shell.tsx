@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useAuthActions } from "@/hooks/useAuthSession";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,9 @@ interface AdminShellProps {
 
 export function AdminShell({ children, activeNav }: AdminShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { signOut } = useAuthActions();
+
+  const handleLogout = () => signOut({ to: "/auth" });
 
   return (
     <div className="min-h-screen bg-cream">
@@ -147,24 +151,37 @@ export function AdminShell({ children, activeNav }: AdminShellProps) {
             <ExternalLink className="size-4.5 text-cream/60" />
             Back to site
           </a>
-          <button className="flex w-full items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-bold text-cream/70 transition-colors hover:bg-cream/10 hover:text-cream">
-            <LogOut className="size-4.5 text-cream/60" />
-            Log out
+          <button
+            onClick={handleLogout}
+            aria-label="Log out of admin dashboard"
+            className="flex w-full items-center gap-3 rounded-full bg-coral px-3.5 py-2.5 text-sm font-extrabold text-ink shadow-sm transition-colors hover:bg-coral/90"
+          >
+            <LogOut className="size-4.5 text-ink" />
+            Log out / Exit
           </button>
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-ink/5 bg-cream/90 px-4 py-3 backdrop-blur lg:hidden">
-        <div className="grid size-10 place-items-center rounded-full bg-ink text-cream">
+      <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-ink/5 bg-cream/90 px-3 py-3 backdrop-blur lg:hidden">
+        <div className="grid size-10 shrink-0 place-items-center rounded-full bg-ink text-cream">
           <span className="font-display text-lg font-extrabold">R</span>
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-base font-extrabold text-ink">Rafilla Admin</p>
           <p className="truncate text-[11px] font-bold text-ink/50">Control centre</p>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleLogout}
+          aria-label="Exit admin dashboard"
+          className="hidden sm:inline-flex shrink-0 rounded-full bg-coral px-3 py-2 text-xs font-extrabold text-ink hover:bg-coral/90"
+        >
+          <LogOut className="size-3.5" /> Exit
+        </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-10">
+            <Button variant="ghost" size="icon" className="size-10 shrink-0">
               <Avatar className="size-9 ring-2 ring-coral/60">
                 <AvatarFallback className="bg-coral text-ink font-extrabold">AA</AvatarFallback>
               </Avatar>
@@ -176,20 +193,26 @@ export function AdminShell({ children, activeNav }: AdminShellProps) {
               <p className="text-[11px] font-bold text-ink/50">Super Admin</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/70 focus:bg-lilac/20 focus:text-ink">
+            <DropdownMenuItem
+              onClick={() => (window.location.href = "/")}
+              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/70 focus:bg-lilac/20 focus:text-ink"
+            >
               <ExternalLink className="mr-2 size-4" />
               Back to site
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/70 focus:bg-lilac/20 focus:text-ink">
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15 focus:text-coral"
+            >
               <LogOut className="mr-2 size-4" />
-              Log out
+              Log out / Exit
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <Button
           variant="outline"
           size="icon"
-          className="size-10"
+          className="size-10 shrink-0"
           onClick={() => setMobileOpen((v) => !v)}
         >
           {mobileOpen ? <X className="size-4.5" /> : <Menu className="size-4.5" />}
@@ -223,6 +246,16 @@ export function AdminShell({ children, activeNav }: AdminShellProps) {
       )}
 
       <main className="min-w-0 lg:ml-[304px] px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-10 overflow-x-hidden">
+        <div className="mb-4 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            className="rounded-full border-coral/20 bg-white px-4 py-2 text-xs font-extrabold text-coral hover:bg-coral hover:text-white"
+          >
+            <LogOut className="size-3.5" /> Exit / Log out
+          </Button>
+        </div>
         <div className="mx-auto w-full max-w-full min-w-0">
           {children}
         </div>
