@@ -1,17 +1,17 @@
 ﻿import { createFileRoute, useParams } from "@tanstack/react-router";
-import { DrawVerificationPage } from "@/components/rafilla/draws";
+import { DrawVerificationPage } from "@/components/raffila/draws";
 
-const canonicalBase = "https://rafilla.com";
-const ogImageDefault = "https://rafilla.com/og-default.png";
+const canonicalBase = "https://raffila.com";
+const ogImageDefault = "https://raffila.com/og-default.png";
 
 export const Route = createFileRoute("/draw-verification/$slug")({
   head: ({ params }) => {
     const pathname = `/draw-verification/${params.slug}`;
     const canonical = `${canonicalBase}${pathname}`;
     const formattedSlug = params.slug.replaceAll("-", " ");
-    const title = `Draw verification: ${formattedSlug} — Rafilla`;
+    const title = `Draw verification: ${formattedSlug} — Raffila`;
     const description =
-      `Public draw verification record for ${formattedSlug}. Published snapshot hash, NIST beacon seed, HMAC_DRBG algorithm details, and the verified winning entry. rafilla.com`;
+      `Public draw verification record for ${formattedSlug}. Published snapshot hash, NIST beacon seed, HMAC_DRBG algorithm details, and the verified winning entry. raffila.com`;
 
     return {
       meta: [
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/draw-verification/$slug")({
         { property: "og:description", content: description },
         { property: "og:type", content: "article" },
         { property: "og:url", content: canonical },
-        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:site_name", content: "Raffila" },
         { property: "og:image", content: ogImageDefault },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
@@ -31,8 +31,8 @@ export const Route = createFileRoute("/draw-verification/$slug")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: ogImageDefault },
-        { name: "twitter:site", content: "@rafillang" },
-        { name: "twitter:creator", content: "@rafillang" },
+        { name: "twitter:site", content: "@raffilang" },
+        { name: "twitter:creator", content: "@raffilang" },
       ],
       links: [
         { rel: "canonical", href: canonical },

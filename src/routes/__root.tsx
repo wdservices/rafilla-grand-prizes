@@ -11,10 +11,10 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { SiteFooter } from "@/components/rafilla/site-footer";
-import { SiteHeader } from "@/components/rafilla/site-header";
-import { CookieConsentBanner } from "@/components/rafilla/cookie";
-import { ErrorPage } from "@/components/rafilla/error-page";
+import { SiteFooter } from "@/components/raffila/site-footer";
+import { SiteHeader } from "@/components/raffila/site-header";
+import { CookieConsentBanner } from "@/components/raffila/cookie";
+import { ErrorPage } from "@/components/raffila/error-page";
 import { canAccessRoute } from "@/lib/auth-store";
 
 function NotFoundComponent() {
@@ -85,7 +85,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#0E1021" },
-      { name: "author", content: "Rafilla" },
+      { name: "author", content: "Raffila" },
     ],
     links: [
       {
@@ -96,7 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Work+Sans:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],

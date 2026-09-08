@@ -1,16 +1,16 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { competitions } from "@/lib/rafilla-data";
+import { competitions } from "@/lib/raffila-data";
 
-const canonicalBase = "https://rafilla.com";
-const ogImageDefault = "https://rafilla.com/og-default.png";
+const canonicalBase = "https://raffila.com";
+const ogImageDefault = "https://raffila.com/og-default.png";
 
 export const Route = createFileRoute("/competitions")({
   head: () => {
     const pathname = "/competitions";
     const canonical = `${canonicalBase}${pathname}`;
-    const title = "Competitions — Win cars, electronics, homes & more · Rafilla";
+    const title = "Competitions — Win cars, electronics, homes & more · Raffila";
     const description =
-      "Browse all live prize competitions on Rafilla — cars, homes, electronics, jewelry, business grants, travel and more. Transparent entry prices, fair verified draws. rafilla.com";
+      "Browse all live prize competitions on Raffila — cars, homes, electronics, jewelry, business grants, travel and more. Transparent entry prices, fair verified draws. raffila.com";
 
     const itemList = competitions.slice(0, 32).map((c, i) => ({
       "@type": "ListItem",
@@ -23,8 +23,8 @@ export const Route = createFileRoute("/competitions")({
       "@type": "ItemList",
       itemListElement: itemList,
       numberOfItems: itemList.length,
-      name: "Rafilla Live Competitions",
-      description: "Live and upcoming prize competitions on Rafilla Grand Prizes",
+      name: "Raffila Live Competitions",
+      description: "Live and upcoming prize competitions on Raffila",
     });
 
     return {
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/competitions")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: canonical },
-        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:site_name", content: "Raffila" },
         { property: "og:image", content: ogImageDefault },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
@@ -45,8 +45,8 @@ export const Route = createFileRoute("/competitions")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: ogImageDefault },
-        { name: "twitter:site", content: "@rafillang" },
-        { name: "twitter:creator", content: "@rafillang" },
+        { name: "twitter:site", content: "@raffilang" },
+        { name: "twitter:creator", content: "@raffilang" },
         { "data-head-children": true, __html: `<script type="application/ld+json">${itemListJsonLd}</script>` } as any,
       ],
       links: [

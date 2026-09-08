@@ -1,23 +1,23 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
 
-import { HomePage } from "@/components/rafilla/public-pages";
+import { HomePage } from "@/components/raffila/public-pages";
 
-const canonicalBase = "https://rafilla.com";
-const ogImageDefault = "https://rafilla.com/og-default.png";
+const canonicalBase = "https://raffila.com";
+const ogImageDefault = "https://raffila.com/og-default.png";
 
 export const Route = createFileRoute("/")({
   head: () => {
     const pathname = "/";
     const canonical = `${canonicalBase}${pathname}`;
-    const title = "Rafilla Grand Prizes — Fair draws. Real prizes.";
+    const title = "Raffila — Fair draws. Real prizes.";
     const description =
-      "Premium prize competitions in Nigeria — win cars, homes, electronics, cash grants and more. Fair verified draws, secure entries, real prizes delivered. rafilla.com";
+      "Premium prize competitions across Africa — win cars, homes, electronics, cash grants and more. Fair verified draws, secure entries, real prizes delivered. raffila.com";
     const organizationJsonLd = JSON.stringify({
       "@context": "https://schema.org",
       "@type": "Organization",
-      name: "Rafilla Grand Prizes",
+      name: "Raffila",
       url: canonicalBase,
-      logo: "https://rafilla.com/logo.png",
+      logo: "https://raffila.com/logo.png",
       image: ogImageDefault,
       description:
         "Premium prize competitions with publicly verifiable draws.",
@@ -30,16 +30,16 @@ export const Route = createFileRoute("/")({
       },
       contactPoint: {
         "@type": "ContactPoint",
-        email: "support@rafilla.com",
+        email: "support@raffila.com",
         contactType: "customer support",
         areaServed: "NG",
         availableLanguage: ["English"],
       },
       sameAs: [
-        "https://facebook.com/rafillang",
-        "https://instagram.com/rafillang",
-        "https://twitter.com/rafillang",
-        "https://x.com/rafillang",
+        "https://facebook.com/raffilang",
+        "https://instagram.com/raffilang",
+        "https://twitter.com/raffilang",
+        "https://x.com/raffilang",
       ],
     });
 
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: canonical },
-        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:site_name", content: "Raffila" },
         { property: "og:image", content: ogImageDefault },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
@@ -61,8 +61,8 @@ export const Route = createFileRoute("/")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: ogImageDefault },
-        { name: "twitter:site", content: "@rafillang" },
-        { name: "twitter:creator", content: "@rafillang" },
+        { name: "twitter:site", content: "@raffilang" },
+        { name: "twitter:creator", content: "@raffilang" },
         { "data-head-children": true, __html: `<script type="application/ld+json">${organizationJsonLd}</script>` } as any,
       ],
       links: [

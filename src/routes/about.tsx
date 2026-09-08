@@ -1,16 +1,16 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
-import { AboutPage } from "@/components/rafilla/public-pages";
+import { AboutPage } from "@/components/raffila/public-pages";
 
-const canonicalBase = "https://rafilla.com";
-const ogImageDefault = "https://rafilla.com/og-default.png";
+const canonicalBase = "https://raffila.com";
+const ogImageDefault = "https://raffila.com/og-default.png";
 
 export const Route = createFileRoute("/about")({
   head: () => {
     const pathname = "/about";
     const canonical = `${canonicalBase}${pathname}`;
-    const title = "About us — Fair draws, real prizes, Nigeria-built · Rafilla";
+    const title = "About us — Fair draws, real prizes, Africa-built · Raffila";
     const description =
-      "About Rafilla Grand Prizes — a Nigerian prize competition platform dedicated to fair, publicly verifiable draws, premium prizes, and transparent delivery. rafilla.com";
+      "About Raffila — an African prize marketplace dedicated to fair, publicly verifiable draws, premium prizes, and transparent delivery. raffila.com";
 
     const aboutArticleJsonLd = JSON.stringify({
       "@context": "https://schema.org",
@@ -19,12 +19,12 @@ export const Route = createFileRoute("/about")({
       description,
       author: {
         "@type": "Organization",
-        name: "Rafilla Grand Prizes",
+        name: "Raffila",
         url: canonicalBase,
       },
       publisher: {
         "@type": "Organization",
-        name: "Rafilla Grand Prizes",
+        name: "Raffila",
         url: canonicalBase,
       },
       datePublished: "2025-01-01",
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/about")({
       mainEntityOfPage: canonical,
       image: ogImageDefault,
       articleBody:
-        "Rafilla Grand Prizes is Nigeria's most trusted premium prize competition platform with publicly verifiable draws, HMAC_DRBG algorithm, insured prizes, and happy winners across the nation.",
+        "Raffila is Africa's most trusted premium prize competition platform with publicly verifiable draws, HMAC_DRBG algorithm, insured prizes, and happy winners across the nation.",
     });
 
     return {
@@ -44,7 +44,7 @@ export const Route = createFileRoute("/about")({
         { property: "og:description", content: description },
         { property: "og:type", content: "article" },
         { property: "og:url", content: canonical },
-        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:site_name", content: "Raffila" },
         { property: "og:image", content: ogImageDefault },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
@@ -53,8 +53,8 @@ export const Route = createFileRoute("/about")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: ogImageDefault },
-        { name: "twitter:site", content: "@rafillang" },
-        { name: "twitter:creator", content: "@rafillang" },
+        { name: "twitter:site", content: "@raffilang" },
+        { name: "twitter:creator", content: "@raffilang" },
         { "data-head-children": true, __html: `<script type="application/ld+json">${aboutArticleJsonLd}</script>` } as any,
       ],
       links: [

@@ -4,19 +4,19 @@ import { Home, Ticket, Mail, Search, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SiteHeader } from "@/components/rafilla/site-header";
-import { SiteFooter } from "@/components/rafilla/site-footer";
+import { SiteHeader } from "@/components/raffila/site-header";
+import { SiteFooter } from "@/components/raffila/site-footer";
 
-const canonicalBase = "https://rafilla.com";
-const ogImageDefault = "https://rafilla.com/og-default.png";
+const canonicalBase = "https://raffila.com";
+const ogImageDefault = "https://raffila.com/og-default.png";
 
 export const Route = createFileRoute("/$")({
   head: () => {
     const pathname = "/404";
     const canonical = `${canonicalBase}${pathname}`;
-    const title = "Page not found — Rafilla";
+    const title = "Page not found — Raffila";
     const description =
-      "Page not found (404). The competition, prize or page you requested has ended, been moved or never existed. Browse live draws and prizes on Rafilla Grand Prizes. rafilla.com";
+      "Page not found (404). The competition, prize or page you requested has ended, been moved or never existed. Browse live draws and prizes on Raffila. raffila.com";
     return {
       meta: [
         { title },
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/$")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: canonical },
-        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:site_name", content: "Raffila" },
         { property: "og:image", content: ogImageDefault },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
@@ -35,8 +35,8 @@ export const Route = createFileRoute("/$")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: ogImageDefault },
-        { name: "twitter:site", content: "@rafillang" },
-        { name: "twitter:creator", content: "@rafillang" },
+        { name: "twitter:site", content: "@raffilang" },
+        { name: "twitter:creator", content: "@raffilang" },
       ],
       links: [
         { rel: "canonical", href: canonical },

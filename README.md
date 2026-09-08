@@ -1,4 +1,4 @@
-# Rafilla Grand Prizes
+# Raffila Grand Prizes
 
 ============================================================
 
@@ -52,7 +52,7 @@ Native Android and iOS applications are excluded/deferred and will use the same 
 
 ============================================================
 
-Rafilla is a modern Nigerian prize-competition platform where users can participate in competitions featuring premium products/assets such as:
+Raffila is a modern Nigerian prize-competition platform where users can participate in competitions featuring premium products/assets such as:
 
 - Cars
 
@@ -86,7 +86,7 @@ Users purchase entries.
 
 When the competition closes, the system conducts a verifiable random draw and one eligible entrant wins the prize, subject to the applicable competition rules and regulatory requirements.
 
-Rafilla should feel:
+Raffila should feel:
 
 - Premium
 
@@ -150,7 +150,7 @@ Users can:
 
 - View competition details
 
-- Fund Rafilla Wallet
+- Fund Raffila Wallet
 
 - Purchase entries
 
@@ -270,7 +270,7 @@ Every privileged operation must be authorized server-side.
 
 ============================================================
 
-Build the public-facing Rafilla marketplace.
+Build the public-facing Raffila marketplace.
 
 Primary navigation:
 
@@ -382,7 +382,7 @@ Create your account
 
 Step 2:
 
-Fund your Rafilla Wallet
+Fund your Raffila Wallet
 
 Step 3:
 
@@ -466,7 +466,7 @@ CTA for businesses/assets owners.
 
 "Have a premium asset to list?"
 
-"Partner with Rafilla."
+"Partner with Raffila."
 
 ---
 
@@ -786,7 +786,7 @@ Before account creation:
 
 Required checkbox:
 
-"I have read and agree to the Rafilla Terms & Conditions and Privacy Policy."
+"I have read and agree to the Raffila Terms & Conditions and Privacy Policy."
 
 Links:
 
@@ -860,7 +860,7 @@ Dashboard should show:
 
 Welcome message
 
-Rafilla Wallet
+Raffila Wallet
 
 Referral Earnings
 
@@ -900,7 +900,7 @@ SECURITY
 
 IMPORTANT:
 
-The Rafilla Wallet is a SPEND-ONLY wallet.
+The Raffila Wallet is a SPEND-ONLY wallet.
 
 Users can:
 
@@ -916,7 +916,7 @@ Users cannot:
 
 - Transfer normal wallet balance to a bank account
 
-DO NOT display a withdrawal button for the standard Rafilla Wallet.
+DO NOT display a withdrawal button for the standard Raffila Wallet.
 
 Wallet page:
 
@@ -1028,7 +1028,7 @@ Do not use floating-point money calculations.
 
 ============================================================
 
-Rafilla has a five-level referral structure.
+Raffila has a five-level referral structure.
 
 Level 1
 
@@ -1104,7 +1104,7 @@ Do not create commissions based only on frontend events.
 
 IMPORTANT:
 
-Referral earnings are separate from the normal Rafilla Wallet.
+Referral earnings are separate from the normal Raffila Wallet.
 
 User dashboard:
 
@@ -2724,7 +2724,7 @@ Reason where appropriate
 
 ============================================================
 
-Project infrastructure must be configured so that Rafilla owns the relevant accounts.
+Project infrastructure must be configured so that Raffila owns the relevant accounts.
 
 Accounts include:
 
@@ -2746,7 +2746,7 @@ Repository
 
 Other production services
 
-Where possible, use Rafilla's official company details.
+Where possible, use Raffila's official company details.
 
 The final handover must include required ownership/admin credentials.
 
@@ -2758,7 +2758,7 @@ Do not make the platform dependent on a developer-owned account.
 
 ============================================================
 
-Repository should be owned by Rafilla from project commencement where possible.
+Repository should be owned by Raffila from project commencement where possible.
 
 Maintain clean:
 
@@ -3248,7 +3248,7 @@ Complete profile
 
 ↓
 
-Fund Rafilla Wallet
+Fund Raffila Wallet
 
 ↓
 
@@ -3416,7 +3416,7 @@ Do not build native mobile apps in this phase.
 
 Do not add unapproved features that materially expand the agreed scope.
 
-Build Rafilla as a secure, scalable, production-quality platform rather than a visual prototype.
+Build Raffila as a secure, scalable, production-quality platform rather than a visual prototype.
 
 This project was built with [Lovable](https://lovable.dev).
 

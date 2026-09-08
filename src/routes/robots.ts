@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/robots")({
   loader: async () => {
-    const baseUrl = "https://rafilla.com";
+    const baseUrl = "https://raffila.com";
 
     const content = `User-agent: *
 Allow: /

@@ -1,16 +1,16 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
-import { PartnerPage } from "@/components/rafilla/public-pages";
+import { PartnerPage } from "@/components/raffila/public-pages";
 
-const canonicalBase = "https://rafilla.com";
-const ogImageDefault = "https://rafilla.com/og-default.png";
+const canonicalBase = "https://raffila.com";
+const ogImageDefault = "https://raffila.com/og-default.png";
 
 export const Route = createFileRoute("/become-a-partner")({
   head: () => {
     const pathname = "/become-a-partner";
     const canonical = `${canonicalBase}${pathname}`;
-    const title = "Become a partner — List your assets as prizes · Rafilla";
+    const title = "Become a partner — List your assets as prizes · Raffila";
     const description =
-      "Become a Rafilla prize partner: list cars, electronics, homes, jewelry, fashion, travel packages and reach millions of engaged Nigerians. Weekly settlements, full analytics. rafilla.com";
+      "Become a Raffila prize partner: list cars, electronics, homes, jewelry, fashion, travel packages and reach millions across Africa. Weekly settlements, full analytics. raffila.com";
 
     return {
       meta: [
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/become-a-partner")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: canonical },
-        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:site_name", content: "Raffila" },
         { property: "og:image", content: ogImageDefault },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
@@ -30,8 +30,8 @@ export const Route = createFileRoute("/become-a-partner")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: ogImageDefault },
-        { name: "twitter:site", content: "@rafillang" },
-        { name: "twitter:creator", content: "@rafillang" },
+        { name: "twitter:site", content: "@raffilang" },
+        { name: "twitter:creator", content: "@raffilang" },
       ],
       links: [
         { rel: "canonical", href: canonical },

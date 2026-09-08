@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { competitions } from "@/lib/rafilla-data";
+import { competitions } from "@/lib/raffila-data";
 
 export const Route = createFileRoute("/sitemap/xml")({
   loader: async () => {
-    const baseUrl = "https://rafilla.com";
+    const baseUrl = "https://raffila.com";
     const today = new Date().toISOString().split("T")[0];
 
     const staticRoutes = [

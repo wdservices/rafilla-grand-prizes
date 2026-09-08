@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
-import type { RafillaUser, Session } from "@/lib/auth-store";
+import type { RaffilaUser, Session } from "@/lib/auth-store";
 import {
   canAccessRoute,
   getSession,
@@ -62,6 +62,6 @@ export function useAuthActions() {
   };
 }
 
-export function initialsOf(user: RafillaUser | { firstName: string; lastName: string }) {
+export function initialsOf(user: RaffilaUser | { firstName: string; lastName: string }) {
   return (user.firstName.slice(0, 1) + user.lastName.slice(0, 1)).toUpperCase();
 }

@@ -1,16 +1,16 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
-import { PartnerSettlementsPage } from "@/components/rafilla/partner";
+import { PartnerSettlementsPage } from "@/components/raffila/partner";
 
-const canonicalBase = "https://rafilla.com";
-const ogImageDefault = "https://rafilla.com/og-default.png";
+const canonicalBase = "https://raffila.com";
+const ogImageDefault = "https://raffila.com/og-default.png";
 
 export const Route = createFileRoute("/partner/settlements")({
   head: () => {
     const pathname = "/partner/settlements";
     const canonical = `${canonicalBase}${pathname}`;
-    const title = "Settlements — Partner · Rafilla";
+    const title = "Settlements — Partner · Raffila";
     const description =
-      "Partner settlement centre: weekly payout schedules, invoice downloads, transaction-level cash flow breakdown, pending/paid status, bank transfer confirmations and Rafilla revenue statements. rafilla.com";
+      "Partner settlement centre: weekly payout schedules, invoice downloads, transaction-level cash flow breakdown, pending/paid status, bank transfer confirmations and Raffila revenue statements. raffila.com";
     return {
       meta: [
         { title },
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/partner/settlements")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: canonical },
-        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:site_name", content: "Raffila" },
         { property: "og:image", content: ogImageDefault },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
@@ -29,8 +29,8 @@ export const Route = createFileRoute("/partner/settlements")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: ogImageDefault },
-        { name: "twitter:site", content: "@rafillang" },
-        { name: "twitter:creator", content: "@rafillang" },
+        { name: "twitter:site", content: "@raffilang" },
+        { name: "twitter:creator", content: "@raffilang" },
       ],
       links: [
         { rel: "canonical", href: canonical },

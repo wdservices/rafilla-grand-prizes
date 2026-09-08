@@ -1,17 +1,17 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
-import { WinnersPage } from "@/components/rafilla/public-pages";
-import { winnerCards } from "@/lib/rafilla-data";
+import { WinnersPage } from "@/components/raffila/public-pages";
+import { winnerCards } from "@/lib/raffila-data";
 
-const canonicalBase = "https://rafilla.com";
-const ogImageDefault = "https://rafilla.com/og-default.png";
+const canonicalBase = "https://raffila.com";
+const ogImageDefault = "https://raffila.com/og-default.png";
 
 export const Route = createFileRoute("/winners")({
   head: () => {
     const pathname = "/winners";
     const canonical = `${canonicalBase}${pathname}`;
-    const title = "Verified winners — Real prizes, real people · Rafilla";
+    const title = "Verified winners — Real prizes, real people · Raffila";
     const description =
-      "See all verified Rafilla competition winners with full draw verification. Real prizes delivered to real Nigerians across Lagos, Abuja, PH and beyond. rafilla.com";
+      "See all verified Raffila competition winners with full draw verification. Real prizes delivered to real winners across Africa across Lagos, Abuja, PH and beyond. raffila.com";
 
     const personList = winnerCards.map((w) => ({
       "@type": "Person",
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/winners")({
         awardDate: w.drawDate,
         sponsor: {
           "@type": "Organization",
-          name: "Rafilla Grand Prizes",
+          name: "Raffila",
         },
       },
       image: w.image,
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/winners")({
         item: p,
       })),
       numberOfItems: personList.length,
-      name: "Rafilla Verified Winners",
+      name: "Raffila Verified Winners",
     });
 
     return {
@@ -54,7 +54,7 @@ export const Route = createFileRoute("/winners")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: canonical },
-        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:site_name", content: "Raffila" },
         { property: "og:image", content: ogImageDefault },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
@@ -63,8 +63,8 @@ export const Route = createFileRoute("/winners")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: ogImageDefault },
-        { name: "twitter:site", content: "@rafillang" },
-        { name: "twitter:creator", content: "@rafillang" },
+        { name: "twitter:site", content: "@raffilang" },
+        { name: "twitter:creator", content: "@raffilang" },
         { "data-head-children": true, __html: `<script type="application/ld+json">${winnerListJsonLd}</script>` } as any,
       ],
       links: [

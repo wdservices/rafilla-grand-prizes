@@ -1,16 +1,16 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
-import { DashboardWalletPage } from "@/components/rafilla/dashboard";
+import { DashboardWalletPage } from "@/components/raffila/dashboard";
 
-const canonicalBase = "https://rafilla.com";
-const ogImageDefault = "https://rafilla.com/og-default.png";
+const canonicalBase = "https://raffila.com";
+const ogImageDefault = "https://raffila.com/og-default.png";
 
 export const Route = createFileRoute("/dashboard/wallet")({
   head: () => {
     const pathname = "/dashboard/wallet";
     const canonical = `${canonicalBase}${pathname}`;
-    const title = "My wallet — Rafilla";
+    const title = "My wallet — Raffila";
     const description =
-      "Private wallet: fund Rafilla wallet, view balance, top up history and entry deductions. Noindex private user area. rafilla.com";
+      "Private wallet: fund Raffila wallet, view balance, top up history and entry deductions. Noindex private user area. raffila.com";
     return {
       meta: [
         { title },
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/dashboard/wallet")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { property: "og:url", content: canonical },
-        { property: "og:site_name", content: "Rafilla Grand Prizes" },
+        { property: "og:site_name", content: "Raffila" },
         { property: "og:image", content: ogImageDefault },
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
@@ -29,8 +29,8 @@ export const Route = createFileRoute("/dashboard/wallet")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: ogImageDefault },
-        { name: "twitter:site", content: "@rafillang" },
-        { name: "twitter:creator", content: "@rafillang" },
+        { name: "twitter:site", content: "@raffilang" },
+        { name: "twitter:creator", content: "@raffilang" },
       ],
       links: [
         { rel: "canonical", href: canonical },

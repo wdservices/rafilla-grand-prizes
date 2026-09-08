@@ -1,6 +1,6 @@
 export type UserRole = "user" | "admin";
 
-export type RafillaUser = {
+export type RaffilaUser = {
   id: string;
   role: UserRole;
   firstName: string;
@@ -13,27 +13,27 @@ export type RafillaUser = {
   tagline?: string;
 };
 
-type DefaultCredential = { email: string; password: string; user: RafillaUser };
+type DefaultCredential = { email: string; password: string; user: RaffilaUser };
 
 export const DEFAULT_CREDENTIALS: Record<UserRole, DefaultCredential> = {
   user: {
-    email: "user@rafilla.com",
-    password: "Rafilla2026!",
+    email: "user@raffila.com",
+    password: "Raffila2026!",
     user: {
       id: "usr_tunmise_adebayo_001",
       role: "user",
       firstName: "Tunmise",
       lastName: "Adebayo",
       handle: "tunmise_adebayo",
-      email: "tunmise.adebayo@rafilla.com",
+      email: "tunmise.adebayo@raffila.com",
       phone: "+234 801 234 5678",
       avatarMonogram: "TA",
       verified: true,
-      tagline: "Verified Rafilla player",
+      tagline: "Verified Raffila player",
     },
   },
   admin: {
-    email: "admin@rafilla.com",
+    email: "admin@raffila.com",
     password: "Admin2026!",
     user: {
       id: "adm_aisha_ola_001",
@@ -41,18 +41,18 @@ export const DEFAULT_CREDENTIALS: Record<UserRole, DefaultCredential> = {
       firstName: "Aisha",
       lastName: "Olamide",
       handle: "admin_aisha",
-      email: "aisha.olamide@rafilla.com",
+      email: "aisha.olamide@raffila.com",
       phone: "+234 802 345 6789",
       avatarMonogram: "AA",
       verified: true,
-      tagline: "Super admin · Rafilla ops",
+      tagline: "Super admin · Raffila ops",
     },
   },
 };
 
-const STORAGE_KEY = "rafilla:auth:session:v1";
+const STORAGE_KEY = "raffila:auth:session:v1";
 
-type Session = { user: RafillaUser; createdAt: string } | null;
+type Session = { user: RaffilaUser; createdAt: string } | null;
 
 function readSession(): Session {
   if (typeof window === "undefined") return null;
@@ -85,7 +85,7 @@ function emit(s: Session) {
 }
 
 export type SignInResult =
-  | { ok: true; user: RafillaUser; redirect: string }
+  | { ok: true; user: RaffilaUser; redirect: string }
   | { ok: false; code: "invalid_credentials" | "invalid_input"; message: string };
 
 export function signInWithCredentials(input: {
@@ -123,7 +123,7 @@ export function signInWithCredentials(input: {
   return {
     ok: false,
     code: "invalid_credentials",
-    message: "Incorrect email or password. Use the default Rafilla credentials.",
+    message: "Incorrect email or password. Use the default Raffila credentials.",
   };
 }
 
