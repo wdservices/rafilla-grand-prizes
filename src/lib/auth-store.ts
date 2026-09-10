@@ -1,3 +1,10 @@
+import {
+  onAuthChange,
+  getUserProfile,
+  firebaseUserToRaffilaUser,
+  type FirebaseUser,
+} from "./firebase-auth";
+
 export type UserRole = "user" | "admin";
 
 export type RaffilaUser = {
@@ -5,12 +12,14 @@ export type RaffilaUser = {
   role: UserRole;
   firstName: string;
   lastName: string;
-  handle?: string;
+  handle?: string | undefined;
   email: string;
   phone: string;
   avatarMonogram: string;
-  verified?: boolean;
-  tagline?: string;
+  verified?: boolean | undefined;
+  tagline?: string | undefined;
+  isGoogleUser?: boolean | undefined;
+  profileComplete?: boolean | undefined;
 };
 
 type DefaultCredential = { email: string; password: string; user: RaffilaUser };
@@ -43,7 +52,7 @@ export const DEFAULT_CREDENTIALS: Record<UserRole, DefaultCredential> = {
       handle: "admin_aisha",
       email: "aisha.olamide@raffila.com",
       phone: "+234 802 345 6789",
-      avatarMonogram: "AA",
+      avatarMonogram: "AO",
       verified: true,
       tagline: "Super admin · Raffila ops",
     },
@@ -52,7 +61,7 @@ export const DEFAULT_CREDENTIALS: Record<UserRole, DefaultCredential> = {
 
 const STORAGE_KEY = "raffila:auth:session:v1";
 
-type Session = { user: RaffilaUser; createdAt: string } | null;
+export type Session = { user: RaffilaUser; createdAt: string } | null;
 
 function readSession(): Session {
   if (typeof window === "undefined") return null;
@@ -126,6 +135,12 @@ export function signInAs(role: UserRole): SignInResult {
   return { ok: true, user: cred.user, redirect: role === "admin" ? "/admin" : "/dashboard" };
 }
 
+export function setFirebaseSession(user: RaffilaUser) {
+  const session: Session = { user, createdAt: new Date().toISOString() };
+  writeSession(session);
+  emit(session);
+}
+
 export function signOut() {
   writeSession(null);
   emit(null);
@@ -139,6 +154,45 @@ export function subscribe(listener: Listener) {
   listeners.add(listener);
   listener(inMemorySession);
   return () => listeners.delete(listener);
+}
+
+let firebaseUnsubscribe: (() => void) | null = null;
+
+export function initFirebaseAuthListener() {
+  if (firebaseUnsubscribe) return firebaseUnsubscribe;
+
+  firebaseUnsubscribe = onAuthChange(async (fbUser: FirebaseUser | null) => {
+    if (!fbUser) {
+      const current = getSession();
+      if (current && current.user.id.startsWith("firebase_")) {
+        signOut();
+      }
+      return;
+    }
+
+    // Skip if session was set by demo credentials
+    const current = getSession();
+    if (current && !current.user.id.startsWith("firebase_") && !current.user.id.startsWith("usr_") && !current.user.id.startsWith("adm_")) {
+      return;
+    }
+
+    try {
+      const profile = await getUserProfile(fbUser.uid);
+      const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
+      const firebaseUser: RaffilaUser = {
+        ...raffilaUser,
+        id: `firebase_${fbUser.uid}`,
+      };
+
+      const session: Session = { user: firebaseUser, createdAt: new Date().toISOString() };
+      writeSession(session);
+      emit(session);
+    } catch (err) {
+      console.error("Failed to load Firebase user profile:", err);
+    }
+  });
+
+  return firebaseUnsubscribe;
 }
 
 type AuthGateResult =

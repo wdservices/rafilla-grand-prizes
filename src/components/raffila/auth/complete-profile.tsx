@@ -5,6 +5,7 @@ import { ArrowLeft, User, Loader2, CheckCircle2, AlertCircle, Camera } from "luc
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useAuthActions, useAuthSession } from "@/hooks/useAuthSession";
 
 function authInputBase(error?: string) {
   return cn(
@@ -67,7 +68,11 @@ function isAdult(dob: string): boolean {
 }
 
 export function CompleteProfileForm() {
-  const [username, setUsername] = useState("tunmise_ade");
+  const { user } = useAuthSession();
+  const { completeGoogleProfile } = useAuthActions();
+
+  const defaultUsername = user?.handle || user?.firstName?.toLowerCase().replace(/\s+/g, "_") || "";
+  const [username, setUsername] = useState(defaultUsername);
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [dob, setDob] = useState("");
@@ -79,6 +84,7 @@ export function CompleteProfileForm() {
     phone?: string;
     address?: string;
     dob?: string;
+    global?: string;
   }>({});
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -103,14 +109,25 @@ export function CompleteProfileForm() {
     return Object.keys(next).length === 0;
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess(true);
-    }, 1600);
+    setErrors({});
+
+    const result = await completeGoogleProfile({
+      phone,
+      address,
+      dob,
+      handle: username,
+    });
+
+    setLoading(false);
+    if (!result.ok) {
+      setErrors({ global: result.message });
+      return;
+    }
+    setSuccess(true);
   }
 
   return (
@@ -151,6 +168,12 @@ export function CompleteProfileForm() {
               We just need a few more details to set up your account.
             </p>
           </header>
+
+          {errors.global && (
+            <div className="rounded-2xl border-2 border-coral/30 bg-coral/10 px-4 py-3 text-sm font-bold text-coral">
+              {errors.global}
+            </div>
+          )}
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-5 rounded-[20px] border-2 border-ink/10 bg-cream/30 p-4 sm:p-5">
             <label htmlFor="cp-avatar" className="relative cursor-pointer group">

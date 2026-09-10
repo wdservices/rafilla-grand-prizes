@@ -59,7 +59,7 @@ function authTextareaBase(error?: string) {
   );
 }
 
-function ErrorRow({ error, hint }: { error?: string; hint?: string }) {
+function ErrorRow({ error, hint }: { error?: string | undefined; hint?: string }) {
   if (error)
     return (
       <p className="flex items-center gap-1 px-1 text-xs font-bold text-coral">
@@ -104,9 +104,10 @@ export function RegisterForm() {
     address?: string;
     dob?: string;
     terms?: string;
+    global?: string;
   }>({});
 
-  const { signInQuick } = useAuthActions();
+  const { signInQuick, registerWithFirebase, signInWithGoogle } = useAuthActions();
 
   const strength = useMemo(
     () => (password ? ((Math.min(3, getPasswordStrength(password)) + 1) as PasswordStrength) : 0),
@@ -150,15 +151,52 @@ export function RegisterForm() {
     return Object.keys(next).length === 0;
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    setTimeout(async () => {
+    setErrors({});
+
+    const result = await registerWithFirebase({
+      email,
+      password,
+      displayName: `${username} ${username}`,
+    });
+
+    if (!result.ok) {
       setLoading(false);
-      setSuccess(true);
-      await signInQuick("user");
-    }, 1800);
+      setErrors({ global: result.message });
+      return;
+    }
+
+    // Save additional profile data to Firestore
+    const { createUserProfile } = await import("@/lib/firebase-auth");
+    const uid = result.user.id.replace("firebase_", "");
+    await createUserProfile(uid, {
+      phone,
+      address,
+      dob,
+      handle: username,
+    });
+
+    setLoading(false);
+    setSuccess(true);
+  }
+
+  async function onGoogleSignUp() {
+    setLoading(true);
+    setErrors({});
+    const res = await signInWithGoogle();
+    setLoading(false);
+    if (!res.ok) {
+      setErrors({ global: res.message });
+      return;
+    }
+    if (res.needsProfile) {
+      window.location.href = "/auth?mode=complete";
+      return;
+    }
+    setSuccess(true);
   }
 
   if (success) {
@@ -188,6 +226,12 @@ export function RegisterForm() {
           Join Raffila and start playing for life-changing prizes.
         </p>
       </header>
+
+      {errors.global && (
+        <div className="rounded-2xl border-2 border-coral/30 bg-coral/10 px-4 py-3 text-sm font-bold text-coral">
+          {errors.global}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1">
@@ -391,7 +435,14 @@ export function RegisterForm() {
         </div>
       </div>
 
-      <Button type="button" variant="outline" size="lg" className="w-full">
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        className="w-full"
+        disabled={loading}
+        onClick={onGoogleSignUp}
+      >
         <GoogleIcon className="size-4.5" />
         Continue with Google
       </Button>

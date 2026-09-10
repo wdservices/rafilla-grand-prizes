@@ -52,7 +52,7 @@ export function LoginForm() {
   const [successRole, setSuccessRole] = useState<UserRole | null>(null);
   const [errors, setErrors] = useState<AuthErrors>({});
 
-  const { signIn, signInQuick } = useAuthActions();
+  const { signIn, signInQuick, signInWithGoogle } = useAuthActions();
 
   function validate() {
     const next: AuthErrors = {};
@@ -72,9 +72,7 @@ export function LoginForm() {
     const res = await signIn({ email, password });
     setLoading(false);
     if (!res.ok) {
-      setErrors({
-        global: res.code === "invalid_credentials" ? res.message : res.message,
-      });
+      setErrors({ global: res.message });
     } else {
       setSuccessRole(res.user.role);
       setSuccess(true);
@@ -89,6 +87,23 @@ export function LoginForm() {
       setSuccess(true);
     }
     setLoading(false);
+  }
+
+  async function onGoogleSignIn() {
+    setLoading(true);
+    setErrors({});
+    const res = await signInWithGoogle();
+    setLoading(false);
+    if (!res.ok) {
+      setErrors({ global: res.message });
+      return;
+    }
+    if (res.needsProfile) {
+      window.location.href = "/auth?mode=complete";
+      return;
+    }
+    setSuccessRole(res.user.role);
+    setSuccess(true);
   }
 
   if (success) {
@@ -218,7 +233,7 @@ export function LoginForm() {
             <p className="text-xs font-bold text-coral">{errors.password}</p>
           ) : (
             <span className="text-[11px] font-bold text-ink/45">
-              Default:{" "}
+              Demo:{" "}
               <span className="font-extrabold text-ink/70">{DEFAULT_CREDENTIALS.user.email}</span> ·{" "}
               {DEFAULT_CREDENTIALS.user.password}
             </span>
@@ -264,7 +279,14 @@ export function LoginForm() {
         </div>
       </div>
 
-      <Button type="button" variant="outline" size="lg" className="w-full" disabled>
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        className="w-full"
+        disabled={loading}
+        onClick={onGoogleSignIn}
+      >
         <GoogleIcon className="size-4.5" />
         Continue with Google
       </Button>
