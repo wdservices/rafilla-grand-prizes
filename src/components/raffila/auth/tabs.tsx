@@ -24,10 +24,17 @@ export function AuthTabs({
 
   return (
     <div
-      className="relative flex w-full gap-0 border-b border-ink/10"
+      className="relative flex w-full rounded-xl bg-cream/50 p-1"
       role="tablist"
       aria-label="Authentication tabs"
     >
+      <span
+        className={cn(
+          "absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-ink shadow-sm transition-transform duration-300 ease-out",
+          active === "login" ? "translate-x-0" : "translate-x-full",
+        )}
+        aria-hidden
+      />
       {(["login", "register"] as AuthTab[]).map((tab) => {
         const isActive = active === tab;
         return (
@@ -40,18 +47,11 @@ export function AuthTabs({
             aria-controls={`auth-panel-${tab}`}
             onClick={() => handleChange(tab)}
             className={cn(
-              "group relative flex-1 pb-3 pt-1 text-sm font-extrabold uppercase tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:pointer-events-none disabled:opacity-50",
-              isActive ? "text-ink" : "text-ink/45",
+              "relative z-10 flex-1 py-2.5 text-xs font-extrabold tracking-wide transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+              isActive ? "text-white" : "text-ink/40 hover:text-ink/60",
             )}
           >
-            {tab === "login" ? "LOGIN" : "CREATE ACCOUNT"}
-            <span
-              className={cn(
-                "absolute inset-x-0 bottom-0 h-[3px] rounded-full bg-coral transition-transform duration-300 ease-out",
-                isActive ? "scale-x-100" : "scale-x-0",
-              )}
-              aria-hidden
-            />
+            {tab === "login" ? "Sign in" : "Create account"}
           </button>
         );
       })}

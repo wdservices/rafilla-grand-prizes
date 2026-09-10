@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, User, Loader2, CheckCircle2, AlertCircle, Camera } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, User, Loader2, AlertCircle, Camera } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -70,6 +70,7 @@ function isAdult(dob: string): boolean {
 export function CompleteProfileForm() {
   const { user } = useAuthSession();
   const { completeGoogleProfile } = useAuthActions();
+  const navigate = useNavigate();
 
   const defaultUsername = user?.handle || user?.firstName?.toLowerCase().replace(/\s+/g, "_") || "";
   const [username, setUsername] = useState(defaultUsername);
@@ -130,6 +131,13 @@ export function CompleteProfileForm() {
     setSuccess(true);
   }
 
+  useEffect(() => {
+    if (!success) return;
+    navigate({ to: "/dashboard" });
+  }, [success, navigate]);
+
+  if (success) return <Loader2 className="size-6 animate-spin mx-auto mt-12" />;
+
   return (
     <div className="space-y-6">
       <Link
@@ -140,23 +148,7 @@ export function CompleteProfileForm() {
         <ArrowLeft className="size-4" /> Back
       </Link>
 
-      {success ? (
-        <div className="py-4 text-center">
-          <div className="mx-auto grid size-16 place-items-center rounded-full bg-mint/30">
-            <CheckCircle2 className="size-8 text-mint" />
-          </div>
-          <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight text-ink">
-            Profile complete!
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-ink/60">
-            Your Raffila account is ready to go.
-          </p>
-          <Button asChild variant="dark" size="md" className="mt-6">
-            <Link to="/competitions">Browse competitions</Link>
-          </Button>
-        </div>
-      ) : (
-        <form noValidate onSubmit={onSubmit} className="space-y-4.5">
+      <form noValidate onSubmit={onSubmit} className="space-y-4.5">
           <header>
             <div className="mx-auto grid size-12 place-items-center rounded-full bg-coral/20 sm:mx-0">
               <User className="size-6 text-coral" />
@@ -285,7 +277,6 @@ export function CompleteProfileForm() {
             {loading ? "Saving profile..." : "Save and continue"}
           </Button>
         </form>
-      )}
     </div>
   );
 }
