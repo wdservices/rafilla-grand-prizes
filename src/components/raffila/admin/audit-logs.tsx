@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { AdminShell } from "./admin-shell";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -159,8 +154,7 @@ const riskBadge = (r: RiskLevel) => {
 const eventIcon = (e: EventType) => {
   if (e.startsWith("AUTH")) {
     if (e === "AUTH_LOGIN") return <LogIn className="w-3.5 h-3.5" />;
-    if (e === "AUTH_REGISTER" || e === "USER_CREATE")
-      return <UserPlus className="w-3.5 h-3.5" />;
+    if (e === "AUTH_REGISTER" || e === "USER_CREATE") return <UserPlus className="w-3.5 h-3.5" />;
     if (e === "AUTH_OTP" || e.startsWith("AUTH_2FA") || e === "AUTH_PASSWORD_RESET")
       return <KeyRound className="w-3.5 h-3.5" />;
     return <Lock className="w-3.5 h-3.5" />;
@@ -173,7 +167,11 @@ const eventIcon = (e: EventType) => {
   if (e.startsWith("PARTNER")) return <Users className="w-3.5 h-3.5" />;
   if (e.startsWith("COMPETITION")) return <Trophy className="w-3.5 h-3.5" />;
   if (e.startsWith("NOTIFICATION"))
-    return e === "NOTIFICATION_SEND" ? <Mail className="w-3.5 h-3.5" /> : <Bell className="w-3.5 h-3.5" />;
+    return e === "NOTIFICATION_SEND" ? (
+      <Mail className="w-3.5 h-3.5" />
+    ) : (
+      <Bell className="w-3.5 h-3.5" />
+    );
   if (e.startsWith("REFERRAL")) return <Users className="w-3.5 h-3.5" />;
   if (e.startsWith("FRAUD")) return <ShieldAlert className="w-3.5 h-3.5" />;
   if (e.startsWith("CRM")) return <FileText className="w-3.5 h-3.5" />;
@@ -181,26 +179,25 @@ const eventIcon = (e: EventType) => {
 };
 
 const eventBadge = (e: EventType) => {
-  const tint =
-    e.startsWith("AUTH")
-      ? "bg-sky/20 text-ink border-sky"
-      : e.startsWith("TICKET")
+  const tint = e.startsWith("AUTH")
+    ? "bg-sky/20 text-ink border-sky"
+    : e.startsWith("TICKET")
       ? "bg-coral/20 text-ink border-coral"
       : e.startsWith("PAYOUT")
-      ? "bg-mint/20 text-ink border-mint"
-      : e.startsWith("WALLET")
-      ? "bg-lemon/30 text-ink border-lemon"
-      : e.startsWith("CONFIG")
-      ? "bg-lilac/20 text-ink border-lilac"
-      : e.startsWith("USER")
-      ? "bg-sky/20 text-ink border-sky"
-      : e.startsWith("PARTNER")
-      ? "bg-mint/20 text-ink border-mint"
-      : e.startsWith("COMPETITION")
-      ? "bg-coral/20 text-ink border-coral"
-      : e.startsWith("FRAUD")
-      ? "bg-coral/20 text-ink border-coral"
-      : "bg-ink/10 text-ink border-ink/30";
+        ? "bg-mint/20 text-ink border-mint"
+        : e.startsWith("WALLET")
+          ? "bg-lemon/30 text-ink border-lemon"
+          : e.startsWith("CONFIG")
+            ? "bg-lilac/20 text-ink border-lilac"
+            : e.startsWith("USER")
+              ? "bg-sky/20 text-ink border-sky"
+              : e.startsWith("PARTNER")
+                ? "bg-mint/20 text-ink border-mint"
+                : e.startsWith("COMPETITION")
+                  ? "bg-coral/20 text-ink border-coral"
+                  : e.startsWith("FRAUD")
+                    ? "bg-coral/20 text-ink border-coral"
+                    : "bg-ink/10 text-ink border-ink/30";
   return (
     <Badge variant="outline" className={`${tint} font-mono text-[10px]`}>
       {eventIcon(e)}
@@ -224,7 +221,18 @@ const ACTOR_NAMES = [
   "Zainab Aliyu",
 ];
 
-const TARGET_TYPES = ["user_id", "ticket_id", "payout_id", "wallet_id", "config_key", "competition_id", "partner_id", "entry_id", "notification_id", "session_id"];
+const TARGET_TYPES = [
+  "user_id",
+  "ticket_id",
+  "payout_id",
+  "wallet_id",
+  "config_key",
+  "competition_id",
+  "partner_id",
+  "entry_id",
+  "notification_id",
+  "session_id",
+];
 
 function makeLogs(count: number): AuditLog[] {
   const logs: AuditLog[] = [];
@@ -399,7 +407,10 @@ export function AdminAuditLogsPage() {
                 <Label className="font-body text-xs text-ink/60 uppercase tracking-wider">
                   Event type
                 </Label>
-                <Select value={eventFilter} onValueChange={(v) => setEventFilter(v as EventType | "all")}>
+                <Select
+                  value={eventFilter}
+                  onValueChange={(v) => setEventFilter(v as EventType | "all")}
+                >
                   <SelectTrigger className="rounded-full">
                     <SelectValue placeholder="All events" />
                   </SelectTrigger>
@@ -417,7 +428,10 @@ export function AdminAuditLogsPage() {
                 <Label className="font-body text-xs text-ink/60 uppercase tracking-wider">
                   Risk level
                 </Label>
-                <Select value={riskFilter} onValueChange={(v) => setRiskFilter(v as RiskLevel | "all")}>
+                <Select
+                  value={riskFilter}
+                  onValueChange={(v) => setRiskFilter(v as RiskLevel | "all")}
+                >
                   <SelectTrigger className="rounded-full">
                     <SelectValue placeholder="All risks" />
                   </SelectTrigger>
@@ -482,10 +496,14 @@ export function AdminAuditLogsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-body text-xs uppercase text-ink/50">Timestamp</TableHead>
+                    <TableHead className="font-body text-xs uppercase text-ink/50">
+                      Timestamp
+                    </TableHead>
                     <TableHead className="font-body text-xs uppercase text-ink/50">Actor</TableHead>
                     <TableHead className="font-body text-xs uppercase text-ink/50">Event</TableHead>
-                    <TableHead className="font-body text-xs uppercase text-ink/50">Target</TableHead>
+                    <TableHead className="font-body text-xs uppercase text-ink/50">
+                      Target
+                    </TableHead>
                     <TableHead className="font-body text-xs uppercase text-ink/50">Delta</TableHead>
                     <TableHead className="font-body text-xs uppercase text-ink/50">Risk</TableHead>
                     <TableHead></TableHead>
@@ -495,12 +513,21 @@ export function AdminAuditLogsPage() {
                   {pageLogs.map((l) => (
                     <TableRow key={l.id}>
                       <TableCell className="font-body text-sm whitespace-nowrap">
-                        <div className="text-ink">{new Date(l.timestamp).toLocaleString("en-NG", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</div>
+                        <div className="text-ink">
+                          {new Date(l.timestamp).toLocaleString("en-NG", {
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
                         <div className="text-ink/40 text-[11px]">{l.id}</div>
                       </TableCell>
                       <TableCell>
                         <div className="font-body text-sm text-ink">{l.actorName}</div>
-                        <div className="text-[11px] text-ink/40 font-mono">{l.actorId} · {l.actorIp}</div>
+                        <div className="text-[11px] text-ink/40 font-mono">
+                          {l.actorId} · {l.actorIp}
+                        </div>
                       </TableCell>
                       <TableCell>{eventBadge(l.eventType)}</TableCell>
                       <TableCell>
@@ -511,12 +538,18 @@ export function AdminAuditLogsPage() {
                         <div className="flex items-center gap-1.5 text-[11px]">
                           {l.oldValue ? (
                             <>
-                              <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-mono">-old</span>
+                              <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-mono">
+                                -old
+                              </span>
                               <ChevronRight className="w-3 h-3 text-ink/30" />
-                              <span className="px-1.5 py-0.5 rounded bg-mint/30 text-ink font-mono">+new</span>
+                              <span className="px-1.5 py-0.5 rounded bg-mint/30 text-ink font-mono">
+                                +new
+                              </span>
                             </>
                           ) : (
-                            <span className="px-2 py-0.5 rounded bg-ink/5 text-ink/50 font-mono">CREATE</span>
+                            <span className="px-2 py-0.5 rounded bg-ink/5 text-ink/50 font-mono">
+                              CREATE
+                            </span>
                           )}
                         </div>
                       </TableCell>
@@ -623,22 +656,28 @@ export function AdminAuditLogsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 rounded-full text-[10px]">
+                    <Badge
+                      variant="outline"
+                      className="bg-red-100 text-red-700 border-red-200 rounded-full text-[10px]"
+                    >
                       <ChevronLeft className="w-3 h-3 mr-1" /> OLD VALUE
                     </Badge>
                   </div>
                   <pre className="bg-ink text-cream p-4 rounded-xl text-[11px] overflow-x-auto font-mono leading-relaxed">
-{JSON.stringify(diffLog.oldValue ?? null, null, 2)}
+                    {JSON.stringify(diffLog.oldValue ?? null, null, 2)}
                   </pre>
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className="bg-mint/30 text-ink border-mint rounded-full text-[10px]">
+                    <Badge
+                      variant="outline"
+                      className="bg-mint/30 text-ink border-mint rounded-full text-[10px]"
+                    >
                       NEW VALUE <ChevronRight className="w-3 h-3 ml-1" />
                     </Badge>
                   </div>
                   <pre className="bg-ink text-cream p-4 rounded-xl text-[11px] overflow-x-auto font-mono leading-relaxed">
-{JSON.stringify(diffLog.newValue ?? null, null, 2)}
+                    {JSON.stringify(diffLog.newValue ?? null, null, 2)}
                   </pre>
                 </div>
               </div>

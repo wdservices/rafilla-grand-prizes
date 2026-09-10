@@ -1,13 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  BadgeCheck,
-  CalendarDays,
-  MapPin,
-  Search,
-  Trophy,
-  ExternalLink,
-} from "lucide-react";
+import { BadgeCheck, CalendarDays, MapPin, Search, Trophy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 import { WinnerCard } from "@/components/raffila/winner-card";
@@ -204,8 +197,7 @@ export function WinnersPagePolished() {
         w.prize.toLowerCase().includes(query.toLowerCase()) ||
         w.location.toLowerCase().includes(query.toLowerCase());
 
-      const matchesYear =
-        year === "ALL" || w.drawDate.includes(year);
+      const matchesYear = year === "ALL" || w.drawDate.includes(year);
 
       const catMap: Record<string, CategoryFilter> = {
         "Mercedes-Benz C-Class 2025": "Auto",
@@ -215,8 +207,7 @@ export function WinnersPagePolished() {
       const winnerCat = catMap[w.prize] ?? "ALL";
       const matchesCategory = category === "ALL" || category === winnerCat;
 
-      const matchesStatus =
-        status === "ALL" || statusForWinner[w.id] === status;
+      const matchesStatus = status === "ALL" || statusForWinner[w.id] === status;
 
       return matchesQuery && matchesYear && matchesCategory && matchesStatus;
     });
@@ -249,7 +240,9 @@ export function WinnersPagePolished() {
       />
 
       <div className="mt-6 flex items-center justify-between">
-        <p className="text-sm font-bold text-ink/50">{filtered.length} winner{filtered.length === 1 ? "" : "s"}</p>
+        <p className="text-sm font-bold text-ink/50">
+          {filtered.length} winner{filtered.length === 1 ? "" : "s"}
+        </p>
         <Badge className="border-0 bg-mint/30 text-ink">
           <BadgeCheck className="mr-1 size-3 text-mint" /> Every draw is verified
         </Badge>

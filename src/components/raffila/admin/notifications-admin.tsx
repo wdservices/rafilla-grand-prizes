@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { AdminShell } from "./admin-shell";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -16,12 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
@@ -85,25 +75,122 @@ const ICONS = [
 ];
 
 const TITLES: { t: string; p: string; iconIdx: number }[] = [
-  { t: "🏆 Winner confirmed — RF-CMP-88472", p: "Chidi Eze has won the 2024 Lexus RX 350. Prize value ₦48,500,000. Initiate payout workflow.", iconIdx: 0 },
-  { t: "Wallet funded — ₦1,250,000", p: "Amaka Okafor (RF-USR-20041) topped up via Paystack. Ref: PYS-99288173.", iconIdx: 1 },
-  { t: "New partner application", p: "Victoria Island Motors submitted asset listing for 2024 Mercedes GLE450. Awaiting KYC review.", iconIdx: 2 },
-  { t: "🚨 Competition goes LIVE in 30min", p: "“Land in Lekki Phase 1” — RF-CMP-90112 final entries window. Last push notification queued.", iconIdx: 3 },
-  { t: "💸 Payout batch #482 complete", p: "12 winners settled totalling ₦18,420,000. 1 item failed — see fraud queue.", iconIdx: 4 },
-  { t: "⚠ Suspicious activity flagged", p: "FRQ-100414 score 91/99. 6 accounts sharing AS4123 VPN node. Review now.", iconIdx: 5 },
-  { t: "Platform config updated", p: "Referral L1 rate changed 8% → 10% by Admin Console (Super Admin). Effective immediately.", iconIdx: 6 },
-  { t: "New KYC submissions (14)", p: "Partners & VIP tier users submitted identity verification. SLA 24h — 8 overdue.", iconIdx: 7 },
-  { t: "🎁 Referral bonus pool released", p: "₦4,820,000 distributed across L1-L5 for week 37. Top referrer: RF-USR-18820.", iconIdx: 8 },
-  { t: "🛡 Security: 2FA bulk enabled", p: "1,284 users activated TOTP this week. Coverage now 62.4% (target 80%).", iconIdx: 9 },
-  { t: "Milestone: 125,000 tickets sold (7d)", p: "Beat target 100k. +₦62.28M revenue vs LW. Consider extending LIVE draws.", iconIdx: 10 },
-  { t: "⭐ VIP upgrade — Kemi Hassan", p: "Lifetime spend threshold hit (₦10M+). Tier: Champion. Auto-added to private draws.", iconIdx: 11 },
-  { t: "Draw engine: RESULTED", p: "“iPhone 15 Pro Max x 5” completed. 5 winners picked (draw id: DRAW-24-09-331).", iconIdx: 0 },
-  { t: "Dispute opened — payout #PY-8874", p: "User claims wrong bank. Evidence uploaded. Assign to finance.", iconIdx: 4 },
-  { t: "SMS delivery report: 98.2%", p: "Campaign “Weekend Mega” reached 8,412 recipients. 152 bounces cleaned.", iconIdx: 2 },
+  {
+    t: "🏆 Winner confirmed — RF-CMP-88472",
+    p: "Chidi Eze has won the 2024 Lexus RX 350. Prize value ₦48,500,000. Initiate payout workflow.",
+    iconIdx: 0,
+  },
+  {
+    t: "Wallet funded — ₦1,250,000",
+    p: "Amaka Okafor (RF-USR-20041) topped up via Paystack. Ref: PYS-99288173.",
+    iconIdx: 1,
+  },
+  {
+    t: "New partner application",
+    p: "Victoria Island Motors submitted asset listing for 2024 Mercedes GLE450. Awaiting KYC review.",
+    iconIdx: 2,
+  },
+  {
+    t: "🚨 Competition goes LIVE in 30min",
+    p: "“Land in Lekki Phase 1” — RF-CMP-90112 final entries window. Last push notification queued.",
+    iconIdx: 3,
+  },
+  {
+    t: "💸 Payout batch #482 complete",
+    p: "12 winners settled totalling ₦18,420,000. 1 item failed — see fraud queue.",
+    iconIdx: 4,
+  },
+  {
+    t: "⚠ Suspicious activity flagged",
+    p: "FRQ-100414 score 91/99. 6 accounts sharing AS4123 VPN node. Review now.",
+    iconIdx: 5,
+  },
+  {
+    t: "Platform config updated",
+    p: "Referral L1 rate changed 8% → 10% by Admin Console (Super Admin). Effective immediately.",
+    iconIdx: 6,
+  },
+  {
+    t: "New KYC submissions (14)",
+    p: "Partners & VIP tier users submitted identity verification. SLA 24h — 8 overdue.",
+    iconIdx: 7,
+  },
+  {
+    t: "🎁 Referral bonus pool released",
+    p: "₦4,820,000 distributed across L1-L5 for week 37. Top referrer: RF-USR-18820.",
+    iconIdx: 8,
+  },
+  {
+    t: "🛡 Security: 2FA bulk enabled",
+    p: "1,284 users activated TOTP this week. Coverage now 62.4% (target 80%).",
+    iconIdx: 9,
+  },
+  {
+    t: "Milestone: 125,000 tickets sold (7d)",
+    p: "Beat target 100k. +₦62.28M revenue vs LW. Consider extending LIVE draws.",
+    iconIdx: 10,
+  },
+  {
+    t: "⭐ VIP upgrade — Kemi Hassan",
+    p: "Lifetime spend threshold hit (₦10M+). Tier: Champion. Auto-added to private draws.",
+    iconIdx: 11,
+  },
+  {
+    t: "Draw engine: RESULTED",
+    p: "“iPhone 15 Pro Max x 5” completed. 5 winners picked (draw id: DRAW-24-09-331).",
+    iconIdx: 0,
+  },
+  {
+    t: "Dispute opened — payout #PY-8874",
+    p: "User claims wrong bank. Evidence uploaded. Assign to finance.",
+    iconIdx: 4,
+  },
+  {
+    t: "SMS delivery report: 98.2%",
+    p: "Campaign “Weekend Mega” reached 8,412 recipients. 152 bounces cleaned.",
+    iconIdx: 2,
+  },
 ];
 
-const FIRST = ["Amaka", "Tunde", "Funmi", "Chidi", "Sade", "Kemi", "Bola", "Ifeoma", "Dele", "Zainab", "Emeka", "Ngozi", "Seun", "Tobi", "Wale", "Aisha", "Musa", "Ebi", "Dapo", "Rita"];
-const LAST = ["Okafor", "Bakare", "Adeyemi", "Eze", "Lawal", "Hassan", "Tinubu", "Dike", "Ogun", "Aliyu", "Nwosu", "Obi", "Adeyinka", "Balogun", "Olayiwola"];
+const FIRST = [
+  "Amaka",
+  "Tunde",
+  "Funmi",
+  "Chidi",
+  "Sade",
+  "Kemi",
+  "Bola",
+  "Ifeoma",
+  "Dele",
+  "Zainab",
+  "Emeka",
+  "Ngozi",
+  "Seun",
+  "Tobi",
+  "Wale",
+  "Aisha",
+  "Musa",
+  "Ebi",
+  "Dapo",
+  "Rita",
+];
+const LAST = [
+  "Okafor",
+  "Bakare",
+  "Adeyemi",
+  "Eze",
+  "Lawal",
+  "Hassan",
+  "Tinubu",
+  "Dike",
+  "Ogun",
+  "Aliyu",
+  "Nwosu",
+  "Obi",
+  "Adeyinka",
+  "Balogun",
+  "Olayiwola",
+];
 const TINTS = ["coral", "mint", "lemon", "sky", "lilac"];
 
 function mkList(channel: Channel): NTFY[] {
@@ -145,8 +232,16 @@ function mkList(channel: Channel): NTFY[] {
 }
 
 const INAPP = mkList("inapp");
-const EMAIL = mkList("email").map((n) => ({ ...n, title: "[Raffila] " + n.title, unread: n.unread || n.id.endsWith("1") }));
-const SMS = mkList("sms").map((n, i) => ({ ...n, preview: n.preview.slice(0, 70) + "…", unread: i < 4 }));
+const EMAIL = mkList("email").map((n) => ({
+  ...n,
+  title: "[Raffila] " + n.title,
+  unread: n.unread || n.id.endsWith("1"),
+}));
+const SMS = mkList("sms").map((n, i) => ({
+  ...n,
+  preview: n.preview.slice(0, 70) + "…",
+  unread: i < 4,
+}));
 
 function fmtTime(iso: string) {
   const d = new Date(iso);
@@ -188,7 +283,8 @@ export function AdminNotificationsCenterPage() {
         !n.title.toLowerCase().includes(q) &&
         !n.preview.toLowerCase().includes(q) &&
         !n.recipient.toLowerCase().includes(q)
-      ) return false;
+      )
+        return false;
     }
     return true;
   });
@@ -233,10 +329,19 @@ export function AdminNotificationsCenterPage() {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" className="rounded-full" onClick={() => toast.info("Compose notification — draft wizard (mock)")}>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => toast.info("Compose notification — draft wizard (mock)")}
+            >
               <Bell className="w-4 h-4 mr-2" /> Compose
             </Button>
-            <Button variant="outline" className="rounded-full" onClick={markAllRead} disabled={totalUnread === 0}>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={markAllRead}
+              disabled={totalUnread === 0}
+            >
               <CheckCheck className="w-4 h-4 mr-2" /> Mark all read ({totalUnread})
             </Button>
           </div>
@@ -253,15 +358,21 @@ export function AdminNotificationsCenterPage() {
             >
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2.5 rounded-2xl border ${
-                    ch === "inapp" ? "bg-coral/20 border-coral text-coral"
-                    : ch === "email" ? "bg-sky/20 border-sky text-sky"
-                    : "bg-mint/30 border-mint text-ink"
-                  }`}>
+                  <div
+                    className={`p-2.5 rounded-2xl border ${
+                      ch === "inapp"
+                        ? "bg-coral/20 border-coral text-coral"
+                        : ch === "email"
+                          ? "bg-sky/20 border-sky text-sky"
+                          : "bg-mint/30 border-mint text-ink"
+                    }`}
+                  >
                     <ChannelIcon ch={ch} />
                   </div>
                   <div>
-                    <p className="font-display text-ink text-lg capitalize">{ch === "inapp" ? "In-app" : ch}</p>
+                    <p className="font-display text-ink text-lg capitalize">
+                      {ch === "inapp" ? "In-app" : ch}
+                    </p>
                     <p className="text-xs font-body text-ink/50">{allItems.length} total</p>
                   </div>
                 </div>
@@ -281,7 +392,10 @@ export function AdminNotificationsCenterPage() {
               <Tabs value={tab} onValueChange={(v) => setTab(v as Channel)} className="w-full">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <TabsList className="rounded-full">
-                    <TabsTrigger value="inapp" className="rounded-full data-[state=active]:bg-coral data-[state=active]:text-white px-5">
+                    <TabsTrigger
+                      value="inapp"
+                      className="rounded-full data-[state=active]:bg-coral data-[state=active]:text-white px-5"
+                    >
                       <Bell className="w-4 h-4 mr-1.5" /> In-app
                       {unreadCounts.inapp > 0 && (
                         <Badge className="ml-2 rounded-full bg-coral/20 text-coral border-0 text-[10px]">
@@ -289,7 +403,10 @@ export function AdminNotificationsCenterPage() {
                         </Badge>
                       )}
                     </TabsTrigger>
-                    <TabsTrigger value="email" className="rounded-full data-[state=active]:bg-coral data-[state=active]:text-white px-5">
+                    <TabsTrigger
+                      value="email"
+                      className="rounded-full data-[state=active]:bg-coral data-[state=active]:text-white px-5"
+                    >
                       <Mail className="w-4 h-4 mr-1.5" /> Email
                       {unreadCounts.email > 0 && (
                         <Badge className="ml-2 rounded-full bg-coral/20 text-coral border-0 text-[10px]">
@@ -297,7 +414,10 @@ export function AdminNotificationsCenterPage() {
                         </Badge>
                       )}
                     </TabsTrigger>
-                    <TabsTrigger value="sms" className="rounded-full data-[state=active]:bg-coral data-[state=active]:text-white px-5">
+                    <TabsTrigger
+                      value="sms"
+                      className="rounded-full data-[state=active]:bg-coral data-[state=active]:text-white px-5"
+                    >
                       <Smartphone className="w-4 h-4 mr-1.5" /> SMS
                       {unreadCounts.sms > 0 && (
                         <Badge className="ml-2 rounded-full bg-coral/20 text-coral border-0 text-[10px]">
@@ -355,7 +475,9 @@ export function AdminNotificationsCenterPage() {
                           }`}
                         >
                           <div className="relative shrink-0">
-                            <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center ${n.iconTint}`}>
+                            <div
+                              className={`w-11 h-11 rounded-2xl border flex items-center justify-center ${n.iconTint}`}
+                            >
                               {n.icon}
                             </div>
                             {n.unread && (
@@ -366,7 +488,9 @@ export function AdminNotificationsCenterPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
                               <div className="flex items-center gap-2 flex-wrap min-w-0">
-                                <h3 className={`font-display text-base truncate ${n.unread ? "text-ink" : "text-ink/70"}`}>
+                                <h3
+                                  className={`font-display text-base truncate ${n.unread ? "text-ink" : "text-ink/70"}`}
+                                >
                                   {n.title}
                                 </h3>
                                 {n.unread && (
@@ -376,9 +500,14 @@ export function AdminNotificationsCenterPage() {
                                 )}
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <Badge variant="outline" className="rounded-full text-[10px] bg-ink/5 border-ink/15 text-ink/60">
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full text-[10px] bg-ink/5 border-ink/15 text-ink/60"
+                                >
                                   <ChannelIcon ch={n.channel} />
-                                  <span className="ml-1 capitalize">{n.channel === "inapp" ? "In-app" : n.channel}</span>
+                                  <span className="ml-1 capitalize">
+                                    {n.channel === "inapp" ? "In-app" : n.channel}
+                                  </span>
                                 </Badge>
                                 <span className="text-[11px] text-ink/40 font-mono whitespace-nowrap">
                                   {fmtTime(n.time)}
@@ -394,35 +523,59 @@ export function AdminNotificationsCenterPage() {
                               <div className="flex items-center gap-3 flex-wrap">
                                 <div className="flex items-center gap-2">
                                   <Avatar className="w-7 h-7 border border-ink/10">
-                                    <AvatarFallback className={`bg-${n.recipientTint} text-ink font-display font-semibold text-xs`}>
+                                    <AvatarFallback
+                                      className={`bg-${n.recipientTint} text-ink font-display font-semibold text-xs`}
+                                    >
                                       {n.recipientInitials}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
-                                    <p className="text-[11px] text-ink/50 font-body uppercase tracking-wider">Recipient</p>
-                                    <p className="font-body text-xs text-ink font-semibold">{n.recipient}</p>
+                                    <p className="text-[11px] text-ink/50 font-body uppercase tracking-wider">
+                                      Recipient
+                                    </p>
+                                    <p className="font-body text-xs text-ink font-semibold">
+                                      {n.recipient}
+                                    </p>
                                   </div>
                                 </div>
                                 {n.metricLabel && (
                                   <>
                                     <Separator orientation="vertical" className="h-8" />
                                     <div>
-                                      <p className="text-[11px] text-ink/50 font-body uppercase tracking-wider">{n.metricLabel}</p>
-                                      <p className="font-display text-sm text-coral font-bold">{n.metricValue}</p>
+                                      <p className="text-[11px] text-ink/50 font-body uppercase tracking-wider">
+                                        {n.metricLabel}
+                                      </p>
+                                      <p className="font-display text-sm text-coral font-bold">
+                                        {n.metricValue}
+                                      </p>
                                     </div>
                                   </>
                                 )}
                               </div>
                               <div className="flex items-center gap-1.5">
                                 {n.unread && (
-                                  <Button variant="ghost" size="sm" className="rounded-full" onClick={() => markOneRead(n.id)}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="rounded-full"
+                                    onClick={() => markOneRead(n.id)}
+                                  >
                                     <CheckCheck className="w-3.5 h-3.5 mr-1" /> Read
                                   </Button>
                                 )}
-                                <Button variant="ghost" size="sm" className="rounded-full" onClick={() => resend(n)}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="rounded-full"
+                                  onClick={() => resend(n)}
+                                >
                                   <RotateCcw className="w-3.5 h-3.5 mr-1" /> Resend
                                 </Button>
-                                <Button variant="ghost" size="sm" className="rounded-full text-ink/40 hover:text-coral">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="rounded-full text-ink/40 hover:text-coral"
+                                >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
                               </div>

@@ -88,10 +88,7 @@ export type SignInResult =
   | { ok: true; user: RaffilaUser; redirect: string }
   | { ok: false; code: "invalid_credentials" | "invalid_input"; message: string };
 
-export function signInWithCredentials(input: {
-  email: string;
-  password: string;
-}): SignInResult {
+export function signInWithCredentials(input: { email: string; password: string }): SignInResult {
   const email = input.email.trim().toLowerCase();
   const password = input.password;
   if (!email || !password) {
@@ -99,10 +96,7 @@ export function signInWithCredentials(input: {
   }
 
   const admin = DEFAULT_CREDENTIALS.admin;
-  if (
-    email === admin.email.toLowerCase() &&
-    password === admin.password
-  ) {
+  if (email === admin.email.toLowerCase() && password === admin.password) {
     const session: Session = { user: admin.user, createdAt: new Date().toISOString() };
     writeSession(session);
     emit(session);
@@ -110,10 +104,7 @@ export function signInWithCredentials(input: {
   }
 
   const user = DEFAULT_CREDENTIALS.user;
-  if (
-    email === user.email.toLowerCase() &&
-    password === user.password
-  ) {
+  if (email === user.email.toLowerCase() && password === user.password) {
     const session: Session = { user: user.user, createdAt: new Date().toISOString() };
     writeSession(session);
     emit(session);
@@ -154,15 +145,12 @@ type AuthGateResult =
   | { allowed: true }
   | { allowed: false; reason: "unauthenticated" | "unauthorized"; redirect: string };
 
-export function canAccessRoute(input: {
-  pathname: string;
-}): AuthGateResult {
+export function canAccessRoute(input: { pathname: string }): AuthGateResult {
   const session = getSession();
   const isAdminRoute = input.pathname === "/admin" || input.pathname.startsWith("/admin/");
   const isDashboardRoute =
     input.pathname === "/dashboard" || input.pathname.startsWith("/dashboard/");
-  const isPartnerRoute =
-    input.pathname === "/partner" || input.pathname.startsWith("/partner/");
+  const isPartnerRoute = input.pathname === "/partner" || input.pathname.startsWith("/partner/");
 
   if (!isAdminRoute && !isDashboardRoute && !isPartnerRoute) {
     return { allowed: true };

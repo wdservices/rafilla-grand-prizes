@@ -38,14 +38,18 @@ function writeConsent(value: string) {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(COOKIE_KEY, value);
-  } catch {}
+  } catch {
+    /* ignore storage error */
+  }
 }
 
 export function showCookieBanner() {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(COOKIE_KEY);
-  } catch {}
+  } catch {
+    /* ignore storage error */
+  }
   document.dispatchEvent(new CustomEvent(EVENT_OPEN));
 }
 
@@ -79,7 +83,9 @@ export function CookieConsentBanner() {
           const parsed = JSON.parse(stored) as Partial<CookiePrefs>;
           setFunctional(parsed.functional ?? true);
           setAnalytics(parsed.analytics ?? false);
-        } catch {}
+        } catch {
+          /* ignore parse error */
+        }
       }
       setPrefsOpen(true);
     };
@@ -120,7 +126,9 @@ export function CookieConsentBanner() {
         const parsed = JSON.parse(stored) as Partial<CookiePrefs>;
         setFunctional(parsed.functional ?? true);
         setAnalytics(parsed.analytics ?? false);
-      } catch {}
+      } catch {
+        /* ignore parse error */
+      }
     }
     setPrefsOpen(true);
   };

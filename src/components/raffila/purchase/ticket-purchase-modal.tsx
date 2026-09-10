@@ -58,10 +58,7 @@ function generateRFIDs(count: number): string[] {
 }
 
 function generateTicketNumbers(count: number): string[] {
-  return Array.from(
-    { length: count },
-    () => String(Math.floor(Math.random() * 900000) + 100000),
-  );
+  return Array.from({ length: count }, () => String(Math.floor(Math.random() * 900000) + 100000));
 }
 
 function copyToClipboard(value: string, label = "Copied") {
@@ -135,7 +132,10 @@ export function TicketPurchaseModal({
     if (open) {
       setStep(1);
       const q = competition
-        ? Math.max(1, Math.min(50, competition.totalEntries - competition.entriesSold, initialQuantity))
+        ? Math.max(
+            1,
+            Math.min(50, competition.totalEntries - competition.entriesSold, initialQuantity),
+          )
         : Math.max(1, Math.min(50, initialQuantity));
       setQty(q);
       setAgreeChecked(false);
@@ -265,7 +265,8 @@ export function TicketPurchaseModal({
                     {competition.title}
                   </h3>
                   <p className="mt-1 text-sm font-bold text-ink/55">
-                    Prize value · <span className="text-ink">{formatNaira(competition.prizeValueKobo)}</span> ·{" "}
+                    Prize value ·{" "}
+                    <span className="text-ink">{formatNaira(competition.prizeValueKobo)}</span> ·{" "}
                     <span className="text-coral">
                       {formatNaira(competition.entryPrice)} / ticket
                     </span>
@@ -359,9 +360,7 @@ export function TicketPurchaseModal({
                   <Separator className="my-3 bg-ink/10" />
                   <div className="flex items-center justify-between font-display text-xl font-extrabold text-ink">
                     <span>Subtotal</span>
-                    <span className="text-coral">
-                      {formatNairaKobo(entryPriceKobo * qty)}
-                    </span>
+                    <span className="text-coral">{formatNairaKobo(entryPriceKobo * qty)}</span>
                   </div>
                 </div>
 
@@ -373,12 +372,7 @@ export function TicketPurchaseModal({
                   </p>
                 </div>
 
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => nextStep(2)}
-                >
+                <Button variant="primary" size="lg" className="w-full" onClick={() => nextStep(2)}>
                   Next: Choose how to pay <ArrowRight className="size-4" />
                 </Button>
               </div>
@@ -414,9 +408,7 @@ export function TicketPurchaseModal({
                     <span
                       className={cn(
                         "grid size-11 shrink-0 place-items-center rounded-2xl",
-                        paymentSource === "wallet"
-                          ? "bg-mint/40 text-ink"
-                          : "bg-sky/20 text-sky",
+                        paymentSource === "wallet" ? "bg-mint/40 text-ink" : "bg-sky/20 text-sky",
                       )}
                     >
                       <Wallet className="size-5" />
@@ -518,13 +510,23 @@ export function TicketPurchaseModal({
                         <div className="mt-2 grid gap-2 text-[11px] font-bold text-ink/55">
                           <div className="flex items-center justify-between rounded-xl bg-white/50 px-2.5 py-1.5 ring-1 ring-ink/5">
                             <span>Wallet</span>
-                            <span className={cn("font-extrabold", walletInsufficient ? "text-coral" : "text-ink")}>
+                            <span
+                              className={cn(
+                                "font-extrabold",
+                                walletInsufficient ? "text-coral" : "text-ink",
+                              )}
+                            >
                               {formatNairaKobo(WALLET_BALANCE_KOBO)}
                             </span>
                           </div>
                           <div className="flex items-center justify-between rounded-xl bg-white/50 px-2.5 py-1.5 ring-1 ring-ink/5">
                             <span>Referrals</span>
-                            <span className={cn("font-extrabold", referralInsufficient ? "text-coral" : "text-ink")}>
+                            <span
+                              className={cn(
+                                "font-extrabold",
+                                referralInsufficient ? "text-coral" : "text-ink",
+                              )}
+                            >
                               {formatNairaKobo(REFERRAL_BALANCE_KOBO)}
                             </span>
                           </div>
@@ -632,10 +634,7 @@ export function TicketPurchaseModal({
                       </p>
                       <p className="text-xs font-bold text-ink/55">{competition.category}</p>
                     </div>
-                    <Badge
-                      className={cn("border-0 shrink-0", accent.badge)}
-                      variant="secondary"
-                    >
+                    <Badge className={cn("border-0 shrink-0", accent.badge)} variant="secondary">
                       {competition.status}
                     </Badge>
                   </div>
@@ -822,10 +821,7 @@ export function TicketPurchaseModal({
                     size="md"
                     onClick={() => {
                       const text = `I just entered to win ${competition.title} on Raffila! ${qty} tickets secured. 🎟️`;
-                      window.open(
-                        `https://wa.me/?text=${encodeURIComponent(text)}`,
-                        "_blank",
-                      );
+                      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
                     }}
                   >
                     <MessageCircle className="size-4" />
@@ -834,24 +830,12 @@ export function TicketPurchaseModal({
                 </div>
 
                 <div className="grid gap-3 pt-1">
-                  <Button
-                    asChild
-                    variant="primary"
-                    size="lg"
-                    className="w-full"
-                    onClick={onClose}
-                  >
+                  <Button asChild variant="primary" size="lg" className="w-full" onClick={onClose}>
                     <Link to="/dashboard/entries">
                       View all entries <ArrowRight className="size-4" />
                     </Link>
                   </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="lg"
-                    className="w-full"
-                    onClick={onClose}
-                  >
+                  <Button asChild variant="outline" size="lg" className="w-full" onClick={onClose}>
                     <Link to="/competitions">Back to competitions</Link>
                   </Button>
                 </div>

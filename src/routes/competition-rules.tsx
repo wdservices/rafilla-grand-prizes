@@ -53,7 +53,10 @@ export const Route = createFileRoute("/competition-rules")({
         { name: "twitter:image", content: ogImageDefault },
         { name: "twitter:site", content: "@raffilang" },
         { name: "twitter:creator", content: "@raffilang" },
-        { "data-head-children": true, __html: `<script type="application/ld+json">${rulesArticleJsonLd}</script>` } as any,
+        {
+          "data-head-children": true,
+          __html: `<script type="application/ld+json">${rulesArticleJsonLd}</script>`,
+        } as any,
       ],
       links: [
         { rel: "canonical", href: canonical },

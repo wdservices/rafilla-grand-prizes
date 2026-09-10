@@ -10,6 +10,7 @@ Exit code: **2 (non-zero, pre-existing errors only)**
 Summary: ~46 pre-existing TS errors. No new type errors introduced by the G4–G8 edits. The single new-type error from the `fetchpriority` HTML attribute case was corrected to JSX camelCase `fetchPriority`.
 
 ### Errors flagged (all pre-existing, not new from this batch)
+
 - `src/components/rafilla/admin/shell.tsx:11` — lucide-react `Contacts` export renamed upstream
 - `src/components/rafilla/dashboard/app-shell.tsx:17` — lucide-react `Breadcrumb` export renamed upstream
 - `src/components/rafilla/dashboard/entries.tsx` — 6 errors: possibly undefined accessors
@@ -37,6 +38,7 @@ Exit code: **0** ✅
 ```
 
 Breakdown:
+
 - `tests/unit/utils.test.ts` — formatNaira() → 9 tests (zero, small, thousand, 450k, large decimal, negative, undefined, null, NaN)
 - `tests/unit/countdown.test.ts` — useCountdown hook → 4 tests (init breakdown, 1s step, expires at zero, zero input)
 - `tests/unit/filter.test.ts` — applySort() helper → 11 tests (6 sort keys × 1 + identity + empty + 6 count preservation)
@@ -50,6 +52,7 @@ Full log: [`build-artifacts/test-output.log`](./test-output.log)
 Exit code: **0** ✅
 
 Stack:
+
 - Vite 8.1.5
 - @tanstack/react-start 1.168.32 (Nitro/TanStack adapter)
 - Nitro preset: cloudflare-module default
@@ -66,6 +69,7 @@ Stack:
   - `…` + 30+ route chunks
 
 Build output structure:
+
 ```
 .output/
 ├── public/              (static assets, _headers, favicon, etc.)
@@ -86,6 +90,7 @@ Full log: [`build-artifacts/build-output.log`](./build-output.log)
 Command: `npx playwright test --list`
 Exit code: **0** ✅
 Tests detected: 4 smoke tests in `tests/e2e/smoke.spec.ts`
+
 1. Home page loads with title and hero copy
 2. Navigate to Competitions shows grid of cards
 3. Enter competition detail from first thumbnail/card

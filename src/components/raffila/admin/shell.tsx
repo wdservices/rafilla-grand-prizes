@@ -98,7 +98,10 @@ export function AdminShell({ children, activeNav }: AdminShellProps) {
 
   return (
     <div className="min-h-screen bg-cream">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col bg-ink text-cream lg:flex" style={{ borderRadius: "0 22px 22px 0" }}>
+      <aside
+        className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col bg-ink text-cream lg:flex"
+        style={{ borderRadius: "0 22px 22px 0" }}
+      >
         <div className="flex items-center gap-3 px-6 pt-8 pb-6">
           <div className="grid size-11 place-items-center rounded-full bg-coral font-display text-xl font-extrabold text-ink">
             R
@@ -131,12 +134,15 @@ export function AdminShell({ children, activeNav }: AdminShellProps) {
                 to={navRoute[key]}
                 className={cn(
                   "group flex items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-bold transition-colors",
-                  active
-                    ? "bg-coral text-ink"
-                    : "text-cream/70 hover:bg-cream/10 hover:text-cream",
+                  active ? "bg-coral text-ink" : "text-cream/70 hover:bg-cream/10 hover:text-cream",
                 )}
               >
-                <Icon className={cn("size-4.5 shrink-0", active ? "text-ink" : "text-cream/60 group-hover:text-cream")} />
+                <Icon
+                  className={cn(
+                    "size-4.5 shrink-0",
+                    active ? "text-ink" : "text-cream/60 group-hover:text-cream",
+                  )}
+                />
                 <span>{label}</span>
               </Link>
             );
@@ -256,9 +262,7 @@ export function AdminShell({ children, activeNav }: AdminShellProps) {
             <LogOut className="size-3.5" /> Exit / Log out
           </Button>
         </div>
-        <div className="mx-auto w-full max-w-full min-w-0">
-          {children}
-        </div>
+        <div className="mx-auto w-full max-w-full min-w-0">{children}</div>
       </main>
     </div>
   );

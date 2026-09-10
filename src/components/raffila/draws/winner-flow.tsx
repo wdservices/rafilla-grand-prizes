@@ -36,13 +36,7 @@ import {
 import { winnerCards } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
 
-type WinnerStatus =
-  | "SELECTED"
-  | "CONTACTED"
-  | "CONFIRMED"
-  | "CLAIMED"
-  | "FULFILLED"
-  | "ARCHIVED";
+type WinnerStatus = "SELECTED" | "CONTACTED" | "CONFIRMED" | "CLAIMED" | "FULFILLED" | "ARCHIVED";
 
 const STATUS_ORDER: WinnerStatus[] = [
   "SELECTED",
@@ -253,9 +247,7 @@ export function WinnerFlow() {
             <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
               Winner management
             </p>
-            <h1 className="font-display text-2xl font-extrabold text-ink">
-              {winner.campaignName}
-            </h1>
+            <h1 className="font-display text-2xl font-extrabold text-ink">{winner.campaignName}</h1>
           </div>
         </div>
         <Badge
@@ -452,11 +444,7 @@ export function WinnerFlow() {
                         : "cursor-pointer bg-cream ring-ink/5 text-ink/40 hover:bg-lilac/15 hover:text-coral",
                     )}
                   >
-                    {n === 1 ? (
-                      <CheckCircle2 className="size-7" />
-                    ) : (
-                      <Upload className="size-6" />
-                    )}
+                    {n === 1 ? <CheckCircle2 className="size-7" /> : <Upload className="size-6" />}
                   </div>
                 ))}
               </div>
@@ -467,11 +455,7 @@ export function WinnerFlow() {
                 <Label className="text-[11px] font-extrabold uppercase tracking-wider text-ink/45">
                   Delivery timestamp
                 </Label>
-                <Input
-                  defaultValue="2026-03-10 14:22 WAT"
-                  className="mt-1.5 rounded-xl"
-                  readOnly
-                />
+                <Input defaultValue="2026-03-10 14:22 WAT" className="mt-1.5 rounded-xl" readOnly />
               </div>
               <div>
                 <Label className="text-[11px] font-extrabold uppercase tracking-wider text-ink/45">
@@ -503,8 +487,7 @@ export function WinnerFlow() {
                   "Use when prize delivery is complete and proof of delivery has been uploaded."}
                 {nextStatus === "ARCHIVED" &&
                   "Close and archive the record once all taxes, releases, and settlements are complete."}
-                {!nextStatus &&
-                  "This record is read-only. Revert to a prior status for changes."}
+                {!nextStatus && "This record is read-only. Revert to a prior status for changes."}
               </p>
               <div className="flex flex-col-reverse gap-2 sm:flex-row">
                 <Button

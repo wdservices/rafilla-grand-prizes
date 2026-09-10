@@ -1,0 +1,6 @@
+{
+  "name": "Raffila Grand Prizes",
+  "description": "Premium prize competitions with publicly verifiable draws, secure entries, and real prizes delivered.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

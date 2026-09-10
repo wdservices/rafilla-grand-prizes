@@ -84,6 +84,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "Raffila Grand Prizes — Fair draws. Real prizes." },
+      {
+        name: "description",
+        content:
+          "Premium prize competitions with publicly verifiable draws, secure entries, and real prizes delivered.",
+      },
+      { property: "og:title", content: "Raffila Grand Prizes — Fair draws. Real prizes." },
+      {
+        property: "og:description",
+        content:
+          "Premium prize competitions with publicly verifiable draws, secure entries, and real prizes delivered.",
+      },
       { name: "theme-color", content: "#0E1021" },
       { name: "author", content: "Raffila" },
     ],
@@ -109,11 +121,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>

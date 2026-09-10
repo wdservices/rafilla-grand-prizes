@@ -31,17 +31,15 @@ export function CompetitionCard({
   const progress = getProgress(competition);
   const ticketsLeft = Math.max(0, competition.totalEntries - competition.entriesSold);
   const maxQty = Math.max(1, Math.min(50, ticketsLeft));
-  const [qty, setQty] = useState<number>(() =>
-    Math.max(1, Math.min(maxQty, defaultQuantity)),
-  );
+  const [qty, setQty] = useState<number>(() => Math.max(1, Math.min(maxQty, defaultQuantity)));
   const entryTotalKobo = competition.entryPrice * qty;
-  const baseChancePct =
-    competition.totalEntries > 0 ? (qty / competition.totalEntries) * 100 : 0;
-  const chanceDisplay = qty <= 1
-    ? "Buy more tickets to improve your odds"
-    : baseChancePct >= 10
-      ? `${baseChancePct.toFixed(1)}% chance of winning`
-      : `${qty.toLocaleString("en-NG")}× better chance than 1 ticket`;
+  const baseChancePct = competition.totalEntries > 0 ? (qty / competition.totalEntries) * 100 : 0;
+  const chanceDisplay =
+    qty <= 1
+      ? "Buy more tickets to improve your odds"
+      : baseChancePct >= 10
+        ? `${baseChancePct.toFixed(1)}% chance of winning`
+        : `${qty.toLocaleString("en-NG")}× better chance than 1 ticket`;
 
   if (featured) {
     return (
@@ -148,9 +146,7 @@ export function CompetitionCard({
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
-                  Entry
-                </p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">Entry</p>
                 <p className="break-words font-display text-base font-extrabold text-ink sm:text-lg">
                   {formatNaira(competition.entryPrice)}
                 </p>
@@ -159,18 +155,16 @@ export function CompetitionCard({
                 <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
                   Prize value
                 </p>
-                <p className="break-words font-bold text-ink text-xs sm:text-sm">{formatNaira(competition.prizeValueKobo)}</p>
+                <p className="break-words font-bold text-ink text-xs sm:text-sm">
+                  {formatNaira(competition.prizeValueKobo)}
+                </p>
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
-                  Sold
-                </p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">Sold</p>
                 <p className="font-bold text-coral text-xs sm:text-sm">{progress}%</p>
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
-                  Closes
-                </p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">Closes</p>
                 <p className="inline-flex items-center gap-1 font-bold text-ink text-xs sm:text-sm">
                   <CalendarDays className="size-3.5 shrink-0" />{" "}
                   <span className="truncate">{competition.closes.split("·")[0]}</span>
@@ -180,9 +174,7 @@ export function CompetitionCard({
             <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2 md:grid-cols-5 md:items-end">
               <div className="min-w-0 sm:col-span-2 md:col-span-2">
                 <div className="mb-1 flex items-center justify-between gap-2 text-xs font-bold">
-                  <span className="truncate text-ink/60">
-                    Sales progress
-                  </span>
+                  <span className="truncate text-ink/60">Sales progress</span>
                   <span className="shrink-0">{progress}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-ink/10">
@@ -255,8 +247,7 @@ export function CompetitionCard({
             </span>
           </div>
           <p className="text-xs font-bold text-ink/55">
-            {formatNaira(competition.entryPrice)} / ticket ·{" "}
-            {progress}% sold
+            {formatNaira(competition.entryPrice)} / ticket · {progress}% sold
           </p>
           <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
             <div
@@ -326,16 +317,11 @@ function ProgressDetails({
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between gap-2 text-xs font-bold">
-        <span className="text-ink/60">
-          Sales progress
-        </span>
+        <span className="text-ink/60">Sales progress</span>
         <span className="text-ink">{progress}%</span>
       </div>
       <div className="h-3 overflow-hidden rounded-full bg-ink/10">
-        <div
-          className="h-full rounded-full bg-coral"
-          style={{ width: `${progress}%` }}
-        />
+        <div className="h-full rounded-full bg-coral" style={{ width: `${progress}%` }} />
       </div>
       <p className="mt-1.5 text-xs font-extrabold text-coral">{progress}% sold</p>
     </div>
@@ -363,18 +349,13 @@ export function QuantityStepper({
   max?: number;
   size?: "sm" | "md" | "lg";
 }) {
-  const dims =
-    size === "lg"
-      ? "h-12 w-12"
-      : size === "sm"
-      ? "h-9 w-9"
-      : "h-11 w-11";
+  const dims = size === "lg" ? "h-12 w-12" : size === "sm" ? "h-9 w-9" : "h-11 w-11";
   const labelSize =
     size === "lg"
       ? "font-display text-2xl"
       : size === "sm"
-      ? "font-display text-base"
-      : "font-display text-xl";
+        ? "font-display text-base"
+        : "font-display text-xl";
   const safeMin = Math.max(1, min);
   const safeMax = Math.max(safeMin, max);
   const safeValue = Math.max(safeMin, Math.min(safeMax, value));

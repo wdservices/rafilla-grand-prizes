@@ -17,11 +17,7 @@ import { cn } from "@/lib/utils";
 
 type TxTab = "all" | "credits" | "purchases" | "referrals" | "payouts";
 
-type TxType =
-  | "Wallet credit"
-  | "Ticket purchase"
-  | "Referral bonus"
-  | "Payout";
+type TxType = "Wallet credit" | "Ticket purchase" | "Referral bonus" | "Payout";
 
 type TxSource = "Wallet" | "Paystack" | "Referral" | "Flutterwave" | "Bank transfer";
 
@@ -84,10 +80,7 @@ export function DashboardTransactionsPage() {
   return (
     <DashboardAppShell
       title="Transactions"
-      breadcrumbs={[
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Transactions" },
-      ]}
+      breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Transactions" }]}
     >
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -103,7 +96,7 @@ export function DashboardTransactionsPage() {
                 filtered
                   .map(
                     (t) =>
-                      `"${t.date}","${t.type}","${t.id}","${t.source}","${t.desc}",${t.amount},${t.balance}`
+                      `"${t.date}","${t.type}","${t.id}","${t.source}","${t.desc}",${t.amount},${t.balance}`,
                   )
                   .join("\n");
               const blob = new Blob([csv], { type: "text/csv" });
@@ -128,7 +121,7 @@ export function DashboardTransactionsPage() {
                 "rounded-xl px-5 py-2.5 text-sm font-extrabold transition-colors",
                 tab === key
                   ? "bg-coral text-white shadow-[0_8px_20px_-8px_var(--coral)]"
-                  : "text-ink/60 hover:text-ink"
+                  : "text-ink/60 hover:text-ink",
               )}
             >
               {label}
@@ -170,8 +163,8 @@ export function DashboardTransactionsPage() {
         </div>
 
         <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
-        <div className="overflow-x-auto -mx-4 px-4">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <div className="overflow-x-auto -mx-4 px-4">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="bg-cream text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
                 <tr>
                   <th className="px-4 py-3">Date</th>
@@ -196,20 +189,18 @@ export function DashboardTransactionsPage() {
                         <span
                           className={cn(
                             "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
-                            typeBadge[tx.type]
+                            typeBadge[tx.type],
                           )}
                         >
                           {tx.type.toUpperCase()}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs font-bold text-ink/70">
-                        {tx.id}
-                      </td>
+                      <td className="px-4 py-3 font-mono text-xs font-bold text-ink/70">{tx.id}</td>
                       <td className="px-4 py-3">
                         <span
                           className={cn(
                             "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold",
-                            meta.bg
+                            meta.bg,
                           )}
                         >
                           {meta.icon}
@@ -222,7 +213,7 @@ export function DashboardTransactionsPage() {
                       <td
                         className={cn(
                           "whitespace-nowrap px-4 py-3 text-right font-display text-base font-extrabold",
-                          tx.amount >= 0 ? "text-mint" : "text-coral"
+                          tx.amount >= 0 ? "text-mint" : "text-coral",
                         )}
                       >
                         {tx.amount >= 0 ? "+" : "-"}

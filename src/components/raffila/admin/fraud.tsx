@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { AdminShell } from "./admin-shell";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -111,28 +105,127 @@ interface FraudCase {
 }
 
 const SIGNAL_META: Record<SignalType, { label: string; icon: React.ReactNode; tint: string }> = {
-  multiple_entry: { label: "Multi-account entries", icon: <Users className="w-3 h-3" />, tint: "bg-coral/20 border-coral text-ink" },
-  duplicate_ip: { label: "Shared IP address", icon: <MapPin className="w-3 h-3" />, tint: "bg-lemon/30 border-lemon text-ink" },
-  duplicate_device: { label: "Duplicate device", icon: <Activity className="w-3 h-3" />, tint: "bg-lemon/30 border-lemon text-ink" },
-  duplicate_bank: { label: "Shared bank account", icon: <Wallet className="w-3 h-3" />, tint: "bg-coral/20 border-coral text-ink" },
-  bot_pattern: { label: "Bot behavioral pattern", icon: <Bot className="w-3 h-3" />, tint: "bg-coral border-coral text-white" },
-  high_velocity: { label: "High-velocity purchases", icon: <Zap className="w-3 h-3" />, tint: "bg-sky/20 border-sky text-ink" },
-  unusual_geography: { label: "Unusual geography", icon: <MapPin className="w-3 h-3" />, tint: "bg-lemon/30 border-lemon text-ink" },
-  new_account_spend: { label: "New account high spend", icon: <Wallet className="w-3 h-3" />, tint: "bg-sky/20 border-sky text-ink" },
-  ticket_stuffing: { label: "Ticket stuffing", icon: <Ticket className="w-3 h-3" />, tint: "bg-coral border-coral text-white" },
-  refund_abuse: { label: "Refund abuse", icon: <XCircle className="w-3 h-3" />, tint: "bg-coral/20 border-coral text-ink" },
-  referral_farm: { label: "Referral farm", icon: <Users className="w-3 h-3" />, tint: "bg-coral/20 border-coral text-ink" },
-  proxy_vpn: { label: "Proxy / VPN detected", icon: <ShieldX className="w-3 h-3" />, tint: "bg-coral border-coral text-white" },
+  multiple_entry: {
+    label: "Multi-account entries",
+    icon: <Users className="w-3 h-3" />,
+    tint: "bg-coral/20 border-coral text-ink",
+  },
+  duplicate_ip: {
+    label: "Shared IP address",
+    icon: <MapPin className="w-3 h-3" />,
+    tint: "bg-lemon/30 border-lemon text-ink",
+  },
+  duplicate_device: {
+    label: "Duplicate device",
+    icon: <Activity className="w-3 h-3" />,
+    tint: "bg-lemon/30 border-lemon text-ink",
+  },
+  duplicate_bank: {
+    label: "Shared bank account",
+    icon: <Wallet className="w-3 h-3" />,
+    tint: "bg-coral/20 border-coral text-ink",
+  },
+  bot_pattern: {
+    label: "Bot behavioral pattern",
+    icon: <Bot className="w-3 h-3" />,
+    tint: "bg-coral border-coral text-white",
+  },
+  high_velocity: {
+    label: "High-velocity purchases",
+    icon: <Zap className="w-3 h-3" />,
+    tint: "bg-sky/20 border-sky text-ink",
+  },
+  unusual_geography: {
+    label: "Unusual geography",
+    icon: <MapPin className="w-3 h-3" />,
+    tint: "bg-lemon/30 border-lemon text-ink",
+  },
+  new_account_spend: {
+    label: "New account high spend",
+    icon: <Wallet className="w-3 h-3" />,
+    tint: "bg-sky/20 border-sky text-ink",
+  },
+  ticket_stuffing: {
+    label: "Ticket stuffing",
+    icon: <Ticket className="w-3 h-3" />,
+    tint: "bg-coral border-coral text-white",
+  },
+  refund_abuse: {
+    label: "Refund abuse",
+    icon: <XCircle className="w-3 h-3" />,
+    tint: "bg-coral/20 border-coral text-ink",
+  },
+  referral_farm: {
+    label: "Referral farm",
+    icon: <Users className="w-3 h-3" />,
+    tint: "bg-coral/20 border-coral text-ink",
+  },
+  proxy_vpn: {
+    label: "Proxy / VPN detected",
+    icon: <ShieldX className="w-3 h-3" />,
+    tint: "bg-coral border-coral text-white",
+  },
 };
 
-const FIRST_NAMES = ["Amaka", "Tunde", "Funmi", "Chidi", "Sade", "Kemi", "Bola", "Ifeoma", "Dele", "Zainab", "Emeka", "Ngozi", "Seun", "Tobi", "Wale", "Aisha", "Musa", "Ebi", "Dapo", "Rita"];
-const LAST_NAMES = ["Okafor", "Bakare", "Adeyemi", "Eze", "Lawal", "Hassan", "Tinubu", "Dike", "Ogun", "Aliyu", "Nwosu", "Obi", "Adeyinka", "Balogun", "Olayiwola", "Musa", "Sani", "Abubakar", "Okoro", "Ezeigbo"];
+const FIRST_NAMES = [
+  "Amaka",
+  "Tunde",
+  "Funmi",
+  "Chidi",
+  "Sade",
+  "Kemi",
+  "Bola",
+  "Ifeoma",
+  "Dele",
+  "Zainab",
+  "Emeka",
+  "Ngozi",
+  "Seun",
+  "Tobi",
+  "Wale",
+  "Aisha",
+  "Musa",
+  "Ebi",
+  "Dapo",
+  "Rita",
+];
+const LAST_NAMES = [
+  "Okafor",
+  "Bakare",
+  "Adeyemi",
+  "Eze",
+  "Lawal",
+  "Hassan",
+  "Tinubu",
+  "Dike",
+  "Ogun",
+  "Aliyu",
+  "Nwosu",
+  "Obi",
+  "Adeyinka",
+  "Balogun",
+  "Olayiwola",
+  "Musa",
+  "Sani",
+  "Abubakar",
+  "Okoro",
+  "Ezeigbo",
+];
 const TINTS = ["coral", "mint", "lemon", "sky", "lilac"];
 const EMAILS = ["gmail.com", "yahoo.com", "outlook.com", "proton.me", "hotmail.com"];
 const ALL_SIGNALS: SignalType[] = [
-  "multiple_entry", "duplicate_ip", "duplicate_device", "duplicate_bank",
-  "bot_pattern", "high_velocity", "unusual_geography", "new_account_spend",
-  "ticket_stuffing", "refund_abuse", "referral_farm", "proxy_vpn",
+  "multiple_entry",
+  "duplicate_ip",
+  "duplicate_device",
+  "duplicate_bank",
+  "bot_pattern",
+  "high_velocity",
+  "unusual_geography",
+  "new_account_spend",
+  "ticket_stuffing",
+  "refund_abuse",
+  "referral_farm",
+  "proxy_vpn",
 ];
 
 function makeCases(count: number): FraudCase[] {
@@ -143,10 +236,13 @@ function makeCases(count: number): FraudCase[] {
     const severity: Severity =
       sevRoll <= 3 ? "low" : sevRoll <= 6 ? "medium" : sevRoll === 7 ? "high" : "critical";
     const baseScore =
-      severity === "low" ? 18 + (i % 17)
-      : severity === "medium" ? 40 + (i % 22)
-      : severity === "high" ? 68 + (i % 17)
-      : 88 + (i % 12);
+      severity === "low"
+        ? 18 + (i % 17)
+        : severity === "medium"
+          ? 40 + (i % 22)
+          : severity === "high"
+            ? 68 + (i % 17)
+            : 88 + (i % 12);
     const signalCount = severity === "low" ? 1 : severity === "medium" ? 2 + (i % 2) : 3 + (i % 3);
     const signals: SignalType[] = [];
     for (let s = 0; s < signalCount; s++) {
@@ -160,15 +256,23 @@ function makeCases(count: number): FraudCase[] {
       timestamp: new Date(now - (i * 86400000 + idx * 3600000)).toISOString(),
       type: st,
       detail:
-        st === "duplicate_ip" ? `192.168.${(i * 3) % 255}.${(i * 7) % 255} shared with ${3 + i % 5} other users`
-        : st === "high_velocity" ? `${120 + i * 17} purchases in 60min window`
-        : st === "multiple_entry" ? `${2 + i % 6} linked accounts entered same competition`
-        : st === "bot_pattern" ? "Keystroke timing variance < 2σ across 40+ interactions"
-        : st === "ticket_stuffing" ? `${500 + i * 37} entries in single competition (>3σ mean)`
-        : st === "proxy_vpn" ? `Exit node AS${14000 + i * 13} tagged VPN (MaxMind)`
-        : st === "referral_farm" ? `${7 + i % 4} L1 referrals from same /24 subnet`
-        : `Triggered ${SIGNAL_META[st].label.toLowerCase()} heuristic`,
-      scoreContribution: severity === "critical" ? 12 + idx * 4 : severity === "high" ? 8 + idx * 3 : 4 + idx * 2,
+        st === "duplicate_ip"
+          ? `192.168.${(i * 3) % 255}.${(i * 7) % 255} shared with ${3 + (i % 5)} other users`
+          : st === "high_velocity"
+            ? `${120 + i * 17} purchases in 60min window`
+            : st === "multiple_entry"
+              ? `${2 + (i % 6)} linked accounts entered same competition`
+              : st === "bot_pattern"
+                ? "Keystroke timing variance < 2σ across 40+ interactions"
+                : st === "ticket_stuffing"
+                  ? `${500 + i * 37} entries in single competition (>3σ mean)`
+                  : st === "proxy_vpn"
+                    ? `Exit node AS${14000 + i * 13} tagged VPN (MaxMind)`
+                    : st === "referral_farm"
+                      ? `${7 + (i % 4)} L1 referrals from same /24 subnet`
+                      : `Triggered ${SIGNAL_META[st].label.toLowerCase()} heuristic`,
+      scoreContribution:
+        severity === "critical" ? 12 + idx * 4 : severity === "high" ? 8 + idx * 3 : 4 + idx * 2,
     }));
     cases.push({
       id: `FRQ-${String(100000 + i).slice(0, 6)}`,
@@ -226,7 +330,9 @@ function severityBadge(s: Severity) {
 
 export function AdminFraudQueuePage() {
   const [severityFilter, setSeverityFilter] = useState<Severity | "all">("all");
-  const [statusFilter, setStatusFilter] = useState<"open" | "reviewing" | "resolved" | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<"open" | "reviewing" | "resolved" | "all">(
+    "all",
+  );
   const [signalFilter, setSignalFilter] = useState<SignalType | "all">("all");
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState("");
@@ -363,7 +469,10 @@ export function AdminFraudQueuePage() {
                 <Label className="font-body text-xs text-ink/60 uppercase tracking-wider">
                   Severity
                 </Label>
-                <Select value={severityFilter} onValueChange={(v) => setSeverityFilter(v as Severity | "all")}>
+                <Select
+                  value={severityFilter}
+                  onValueChange={(v) => setSeverityFilter(v as Severity | "all")}
+                >
                   <SelectTrigger className="rounded-full">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
@@ -380,7 +489,10 @@ export function AdminFraudQueuePage() {
                 <Label className="font-body text-xs text-ink/60 uppercase tracking-wider">
                   Status
                 </Label>
-                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+                >
                   <SelectTrigger className="rounded-full">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
@@ -396,13 +508,23 @@ export function AdminFraudQueuePage() {
                 <Label className="font-body text-xs text-ink/60 uppercase tracking-wider flex items-center gap-1">
                   <Calendar className="w-3 h-3" /> From
                 </Label>
-                <Input type="date" className="rounded-full" value={from} onChange={(e) => setFrom(e.target.value)} />
+                <Input
+                  type="date"
+                  className="rounded-full"
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="font-body text-xs text-ink/60 uppercase tracking-wider flex items-center gap-1">
                   <Calendar className="w-3 h-3" /> To
                 </Label>
-                <Input type="date" className="rounded-full" value={to} onChange={(e) => setTo(e.target.value)} />
+                <Input
+                  type="date"
+                  className="rounded-full"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                />
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -441,11 +563,21 @@ export function AdminFraudQueuePage() {
                   <TableRow>
                     <TableHead className="font-body text-xs uppercase text-ink/50">Risk</TableHead>
                     <TableHead className="font-body text-xs uppercase text-ink/50">User</TableHead>
-                    <TableHead className="font-body text-xs uppercase text-ink/50">Signals</TableHead>
-                    <TableHead className="font-body text-xs uppercase text-ink/50">Tickets</TableHead>
-                    <TableHead className="font-body text-xs uppercase text-ink/50">At risk</TableHead>
-                    <TableHead className="font-body text-xs uppercase text-ink/50">First seen</TableHead>
-                    <TableHead className="font-body text-xs uppercase text-ink/50">Severity</TableHead>
+                    <TableHead className="font-body text-xs uppercase text-ink/50">
+                      Signals
+                    </TableHead>
+                    <TableHead className="font-body text-xs uppercase text-ink/50">
+                      Tickets
+                    </TableHead>
+                    <TableHead className="font-body text-xs uppercase text-ink/50">
+                      At risk
+                    </TableHead>
+                    <TableHead className="font-body text-xs uppercase text-ink/50">
+                      First seen
+                    </TableHead>
+                    <TableHead className="font-body text-xs uppercase text-ink/50">
+                      Severity
+                    </TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -456,7 +588,14 @@ export function AdminFraudQueuePage() {
                         <div className="flex items-center gap-2">
                           <div className="relative w-12 h-12 shrink-0">
                             <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
-                              <circle cx="18" cy="18" r="15.915" fill="none" stroke="oklch(0.93 0.018 78)" strokeWidth="3" />
+                              <circle
+                                cx="18"
+                                cy="18"
+                                r="15.915"
+                                fill="none"
+                                stroke="oklch(0.93 0.018 78)"
+                                strokeWidth="3"
+                              />
                               <circle
                                 cx="18"
                                 cy="18"
@@ -466,10 +605,10 @@ export function AdminFraudQueuePage() {
                                   c.severity === "critical"
                                     ? "oklch(0.75 0.14 35)"
                                     : c.severity === "high"
-                                    ? "oklch(0.75 0.14 35)"
-                                    : c.severity === "medium"
-                                    ? "oklch(0.87 0.14 88)"
-                                    : "oklch(0.87 0.12 165)"
+                                      ? "oklch(0.75 0.14 35)"
+                                      : c.severity === "medium"
+                                        ? "oklch(0.87 0.14 88)"
+                                        : "oklch(0.87 0.12 165)"
                                 }
                                 strokeWidth="3"
                                 strokeDasharray={`${c.riskScore} 100`}
@@ -497,8 +636,12 @@ export function AdminFraudQueuePage() {
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
-                            <div className="font-body text-sm text-ink font-semibold truncate">{c.userName}</div>
-                            <div className="text-[11px] text-ink/40 truncate font-mono">{c.userId}</div>
+                            <div className="font-body text-sm text-ink font-semibold truncate">
+                              {c.userName}
+                            </div>
+                            <div className="text-[11px] text-ink/40 truncate font-mono">
+                              {c.userId}
+                            </div>
                             <div className="text-[11px] text-ink/40 truncate">{c.userEmail}</div>
                           </div>
                         </div>
@@ -518,29 +661,45 @@ export function AdminFraudQueuePage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-display text-ink">{c.ticketsInvolved.toLocaleString()}</div>
+                        <div className="font-display text-ink">
+                          {c.ticketsInvolved.toLocaleString()}
+                        </div>
                         <div className="text-[10px] text-ink/40 font-body uppercase">entries</div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-display font-bold text-coral">{formatNaira(c.valueAtRiskKobo)}</div>
+                        <div className="font-display font-bold text-coral">
+                          {formatNaira(c.valueAtRiskKobo)}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="font-body text-xs text-ink whitespace-nowrap">
-                          {new Date(c.firstSeen).toLocaleDateString("en-NG", { day: "2-digit", month: "short" })}
+                          {new Date(c.firstSeen).toLocaleDateString("en-NG", {
+                            day: "2-digit",
+                            month: "short",
+                          })}
                         </div>
                         <div className="text-[10px] text-ink/40 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          Last {new Date(c.lastSeen).toLocaleDateString("en-NG", { day: "2-digit", month: "short" })}
+                          Last{" "}
+                          {new Date(c.lastSeen).toLocaleDateString("en-NG", {
+                            day: "2-digit",
+                            month: "short",
+                          })}
                         </div>
                       </TableCell>
                       <TableCell>{severityBadge(c.severity)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`rounded-full text-[10px] ${
-                            c.status === "open" ? "bg-cream text-ink"
-                            : c.status === "reviewing" ? "bg-sky/20 border-sky text-ink"
-                            : "bg-mint/30 border-mint text-ink"
-                          }`}>
+                          <Badge
+                            variant="outline"
+                            className={`rounded-full text-[10px] ${
+                              c.status === "open"
+                                ? "bg-cream text-ink"
+                                : c.status === "reviewing"
+                                  ? "bg-sky/20 border-sky text-ink"
+                                  : "bg-mint/30 border-mint text-ink"
+                            }`}
+                          >
                             {c.status[0]!.toUpperCase() + c.status.slice(1)}
                           </Badge>
                           <Button
@@ -579,12 +738,16 @@ export function AdminFraudQueuePage() {
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center gap-3">
                       <Avatar className="w-14 h-14 border-2 border-paper">
-                        <AvatarFallback className={`bg-${reviewCase.userTint} text-ink font-display font-bold text-lg`}>
+                        <AvatarFallback
+                          className={`bg-${reviewCase.userTint} text-ink font-display font-bold text-lg`}
+                        >
                           {reviewCase.userInitials}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="font-display text-lg text-ink truncate">{reviewCase.userName}</p>
+                        <p className="font-display text-lg text-ink truncate">
+                          {reviewCase.userName}
+                        </p>
                         <p className="text-xs font-mono text-ink/50">{reviewCase.userId}</p>
                         <p className="text-xs text-ink/50 truncate">{reviewCase.userEmail}</p>
                         <p className="text-xs text-ink/50">{reviewCase.userPhone}</p>
@@ -592,10 +755,24 @@ export function AdminFraudQueuePage() {
                     </div>
                     <Separator />
                     <div className="space-y-1.5 text-sm font-body">
-                      <div className="flex justify-between"><span className="text-ink/50">Risk score</span><span className="font-bold text-coral">{reviewCase.riskScore}/99</span></div>
-                      <div className="flex justify-between"><span className="text-ink/50">Severity</span>{severityBadge(reviewCase.severity)}</div>
-                      <div className="flex justify-between"><span className="text-ink/50">Tickets</span><span>{reviewCase.ticketsInvolved.toLocaleString()}</span></div>
-                      <div className="flex justify-between"><span className="text-ink/50">Value at risk</span><span className="font-bold text-coral">{formatNaira(reviewCase.valueAtRiskKobo)}</span></div>
+                      <div className="flex justify-between">
+                        <span className="text-ink/50">Risk score</span>
+                        <span className="font-bold text-coral">{reviewCase.riskScore}/99</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ink/50">Severity</span>
+                        {severityBadge(reviewCase.severity)}
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ink/50">Tickets</span>
+                        <span>{reviewCase.ticketsInvolved.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ink/50">Value at risk</span>
+                        <span className="font-bold text-coral">
+                          {formatNaira(reviewCase.valueAtRiskKobo)}
+                        </span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -610,20 +787,37 @@ export function AdminFraudQueuePage() {
                     <ol className="relative border-s-2 border-ink/10 ms-2 space-y-4">
                       {reviewCase.signalDetails.map((sg, idx) => (
                         <li key={sg.id} className="ms-5">
-                          <span className={`absolute -start-[9px] flex items-center justify-center w-4 h-4 rounded-full ${
-                            idx === 0 ? "bg-coral" : idx === reviewCase.signalDetails.length - 1 ? "bg-lemon" : "bg-sky"
-                          } text-white`}>
+                          <span
+                            className={`absolute -start-[9px] flex items-center justify-center w-4 h-4 rounded-full ${
+                              idx === 0
+                                ? "bg-coral"
+                                : idx === reviewCase.signalDetails.length - 1
+                                  ? "bg-lemon"
+                                  : "bg-sky"
+                            } text-white`}
+                          >
                             {SIGNAL_META[sg.type].icon}
                           </span>
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className={`${SIGNAL_META[sg.type].tint} rounded-full text-[10px]`}>
+                            <Badge
+                              variant="outline"
+                              className={`${SIGNAL_META[sg.type].tint} rounded-full text-[10px]`}
+                            >
                               {SIGNAL_META[sg.type].label}
                             </Badge>
-                            <Badge variant="outline" className="rounded-full text-[10px] bg-ink/5 border-ink/20 text-ink">
+                            <Badge
+                              variant="outline"
+                              className="rounded-full text-[10px] bg-ink/5 border-ink/20 text-ink"
+                            >
                               +{sg.scoreContribution} pts
                             </Badge>
                             <span className="text-[11px] text-ink/40 font-mono ml-auto">
-                              {new Date(sg.timestamp).toLocaleString("en-NG", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                              {new Date(sg.timestamp).toLocaleString("en-NG", {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </span>
                           </div>
                           <p className="text-sm font-body text-ink/80">{sg.detail}</p>
@@ -659,23 +853,55 @@ export function AdminFraudQueuePage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="flex items-start gap-2 p-3 rounded-xl border border-ink/10 bg-cream/30">
-                      <Checkbox id="hold" checked={holdFunds} onCheckedChange={(v) => setHoldFunds(!!v)} className="mt-0.5" />
+                      <Checkbox
+                        id="hold"
+                        checked={holdFunds}
+                        onCheckedChange={(v) => setHoldFunds(!!v)}
+                        className="mt-0.5"
+                      />
                       <div>
-                        <Label htmlFor="hold" className="font-body text-sm text-ink font-semibold cursor-pointer">Hold funds</Label>
-                        <p className="text-[11px] text-ink/50">Freeze wallet balance pending investigation</p>
+                        <Label
+                          htmlFor="hold"
+                          className="font-body text-sm text-ink font-semibold cursor-pointer"
+                        >
+                          Hold funds
+                        </Label>
+                        <p className="text-[11px] text-ink/50">
+                          Freeze wallet balance pending investigation
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-2 p-3 rounded-xl border border-ink/10 bg-cream/30">
-                      <Checkbox id="logout" checked={logoutSessions} onCheckedChange={(v) => setLogoutSessions(!!v)} className="mt-0.5" />
+                      <Checkbox
+                        id="logout"
+                        checked={logoutSessions}
+                        onCheckedChange={(v) => setLogoutSessions(!!v)}
+                        className="mt-0.5"
+                      />
                       <div>
-                        <Label htmlFor="logout" className="font-body text-sm text-ink font-semibold cursor-pointer">Logout all sessions</Label>
+                        <Label
+                          htmlFor="logout"
+                          className="font-body text-sm text-ink font-semibold cursor-pointer"
+                        >
+                          Logout all sessions
+                        </Label>
                         <p className="text-[11px] text-ink/50">Terminate every active auth token</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-2 p-3 rounded-xl border border-ink/10 bg-cream/30">
-                      <Checkbox id="comply" checked={notifyCompliance} onCheckedChange={(v) => setNotifyCompliance(!!v)} className="mt-0.5" />
+                      <Checkbox
+                        id="comply"
+                        checked={notifyCompliance}
+                        onCheckedChange={(v) => setNotifyCompliance(!!v)}
+                        className="mt-0.5"
+                      />
                       <div>
-                        <Label htmlFor="comply" className="font-body text-sm text-ink font-semibold cursor-pointer">Notify compliance</Label>
+                        <Label
+                          htmlFor="comply"
+                          className="font-body text-sm text-ink font-semibold cursor-pointer"
+                        >
+                          Notify compliance
+                        </Label>
                         <p className="text-[11px] text-ink/50">Open ticket in compliance queue</p>
                       </div>
                     </div>
@@ -684,16 +910,45 @@ export function AdminFraudQueuePage() {
                   <Separator />
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <Button variant="outline" className="rounded-full" onClick={() => { toast.success("Case dismissed"); setReviewCase(null); }}>
+                    <Button
+                      variant="outline"
+                      className="rounded-full"
+                      onClick={() => {
+                        toast.success("Case dismissed");
+                        setReviewCase(null);
+                      }}
+                    >
                       <ThumbsUp className="w-4 h-4 mr-2" /> Dismiss
                     </Button>
-                    <Button variant="outline" className="rounded-full" onClick={() => { toast.info("Warning issued to user"); setReviewCase(null); }}>
+                    <Button
+                      variant="outline"
+                      className="rounded-full"
+                      onClick={() => {
+                        toast.info("Warning issued to user");
+                        setReviewCase(null);
+                      }}
+                    >
                       <MessageSquareWarning className="w-4 h-4 mr-2" /> Warning
                     </Button>
-                    <Button variant="outline" className="rounded-full border-coral text-coral hover:bg-coral hover:text-white" onClick={() => { toast.error("User suspended"); setReviewCase(null); }}>
+                    <Button
+                      variant="outline"
+                      className="rounded-full border-coral text-coral hover:bg-coral hover:text-white"
+                      onClick={() => {
+                        toast.error("User suspended");
+                        setReviewCase(null);
+                      }}
+                    >
                       <Ban className="w-4 h-4 mr-2" /> Suspend user
                     </Button>
-                    <Button className="rounded-full bg-coral hover:bg-coral/90 text-white" onClick={() => { toast("Funds held & account restricted", { icon: <Hand className="w-4 h-4" /> }); setReviewCase(null); }}>
+                    <Button
+                      className="rounded-full bg-coral hover:bg-coral/90 text-white"
+                      onClick={() => {
+                        toast("Funds held & account restricted", {
+                          icon: <Hand className="w-4 h-4" />,
+                        });
+                        setReviewCase(null);
+                      }}
+                    >
                       <Hand className="w-4 h-4 mr-2" /> Hold funds
                     </Button>
                   </div>

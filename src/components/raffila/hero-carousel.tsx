@@ -52,7 +52,10 @@ function ProgressDetails({
       </div>
       <Progress
         value={progress}
-        className={cn("h-2.5 rounded-full bg-ink/8 [&>div]:rounded-full", accentStyles[competition.accent].fill)}
+        className={cn(
+          "h-2.5 rounded-full bg-ink/8 [&>div]:rounded-full",
+          accentStyles[competition.accent].fill,
+        )}
       />
       <div className="flex items-center justify-between gap-3 text-[11px] font-bold text-ink/50">
         <span>{progress}% of allocation sold</span>
@@ -68,7 +71,9 @@ function FeaturedSlide({ competition }: { competition: Competition }) {
   const accent = accentStyles[competition.accent];
   const progress = getProgress(competition);
   return (
-    <article className={cn("overflow-hidden rounded-[28px] p-3 ring-1 ring-ink/5 sm:p-4", accent.surface)}>
+    <article
+      className={cn("overflow-hidden rounded-[28px] p-3 ring-1 ring-ink/5 sm:p-4", accent.surface)}
+    >
       <div className="overflow-hidden rounded-[22px] bg-paper p-3 shadow-sm ring-1 ring-ink/5 sm:p-4">
         <img
           src={competition.image}
@@ -104,7 +109,9 @@ function FeaturedSlide({ competition }: { competition: Competition }) {
             </div>
             <div className="min-w-0 text-right">
               <p className="font-bold text-ink/55">Draw date</p>
-              <p className="break-words font-bold text-ink text-xs sm:text-sm">{competition.drawDate}</p>
+              <p className="break-words font-bold text-ink text-xs sm:text-sm">
+                {competition.drawDate}
+              </p>
             </div>
           </div>
           <ProgressDetails competition={competition} progress={progress} />
@@ -190,7 +197,8 @@ export function HeroFeaturedCarousel() {
     };
   }, [api, current, count, userPaused]);
 
-  const slides = featuredCompetitions.length > 0 ? featuredCompetitions : allCompetitions.slice(0, 8);
+  const slides =
+    featuredCompetitions.length > 0 ? featuredCompetitions : allCompetitions.slice(0, 8);
 
   if (!mounted) {
     const c = slides[0]!;

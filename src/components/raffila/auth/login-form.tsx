@@ -73,10 +73,7 @@ export function LoginForm() {
     setLoading(false);
     if (!res.ok) {
       setErrors({
-        global:
-          res.code === "invalid_credentials"
-            ? res.message
-            : res.message,
+        global: res.code === "invalid_credentials" ? res.message : res.message,
       });
     } else {
       setSuccessRole(res.user.role);
@@ -180,7 +177,9 @@ export function LoginForm() {
       )}
 
       <div className="space-y-1">
-        <label htmlFor="email" className="sr-only">Email address</label>
+        <label htmlFor="email" className="sr-only">
+          Email address
+        </label>
         <input
           id="email"
           type="email"
@@ -219,7 +218,9 @@ export function LoginForm() {
             <p className="text-xs font-bold text-coral">{errors.password}</p>
           ) : (
             <span className="text-[11px] font-bold text-ink/45">
-              Default: <span className="font-extrabold text-ink/70">{DEFAULT_CREDENTIALS.user.email}</span> · {DEFAULT_CREDENTIALS.user.password}
+              Default:{" "}
+              <span className="font-extrabold text-ink/70">{DEFAULT_CREDENTIALS.user.email}</span> ·{" "}
+              {DEFAULT_CREDENTIALS.user.password}
             </span>
           )}
           <Link

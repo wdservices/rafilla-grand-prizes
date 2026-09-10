@@ -4,11 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import {
   LayoutDashboard,
@@ -29,12 +25,7 @@ import {
 } from "lucide-react";
 
 export type PartnerNavKey =
-  | "overview"
-  | "listings"
-  | "submit"
-  | "analytics"
-  | "settlements"
-  | "profile";
+  "overview" | "listings" | "submit" | "analytics" | "settlements" | "profile";
 
 interface NavItem {
   key: PartnerNavKey;
@@ -44,12 +35,42 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { key: "overview", label: "Overview", icon: <LayoutDashboard className="w-5 h-5" />, path: "/partner" },
-  { key: "listings", label: "My listings", icon: <ListOrdered className="w-5 h-5" />, path: "/partner/listings" },
-  { key: "submit", label: "Submit asset", icon: <Upload className="w-5 h-5" />, path: "/partner/submit" },
-  { key: "analytics", label: "Analytics", icon: <BarChart3 className="w-5 h-5" />, path: "/partner/analytics" },
-  { key: "settlements", label: "Settlements", icon: <Landmark className="w-5 h-5" />, path: "/partner/settlements" },
-  { key: "profile", label: "Profile", icon: <UserCircle2 className="w-5 h-5" />, path: "/partner/profile" },
+  {
+    key: "overview",
+    label: "Overview",
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    path: "/partner",
+  },
+  {
+    key: "listings",
+    label: "My listings",
+    icon: <ListOrdered className="w-5 h-5" />,
+    path: "/partner/listings",
+  },
+  {
+    key: "submit",
+    label: "Submit asset",
+    icon: <Upload className="w-5 h-5" />,
+    path: "/partner/submit",
+  },
+  {
+    key: "analytics",
+    label: "Analytics",
+    icon: <BarChart3 className="w-5 h-5" />,
+    path: "/partner/analytics",
+  },
+  {
+    key: "settlements",
+    label: "Settlements",
+    icon: <Landmark className="w-5 h-5" />,
+    path: "/partner/settlements",
+  },
+  {
+    key: "profile",
+    label: "Profile",
+    icon: <UserCircle2 className="w-5 h-5" />,
+    path: "/partner/profile",
+  },
 ];
 
 interface PartnerShellProps {
@@ -68,9 +89,7 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
         <Car className="w-6 h-6" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-display text-ink text-base leading-tight truncate">
-          Lekki Luxury Autos
-        </p>
+        <p className="font-display text-ink text-base leading-tight truncate">Lekki Luxury Autos</p>
         <Badge className="rounded-full bg-mint/40 border-mint text-ink text-[10px] font-bold mt-0.5">
           <ShieldCheck className="w-3 h-3 mr-1" /> Approved Partner
         </Badge>
@@ -83,7 +102,8 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
       {NAV_ITEMS.map((item) => {
         const isActive =
           item.key === activeNav ||
-          (item.key === "overview" && (location.pathname === "/partner" || location.pathname === "/partner/"));
+          (item.key === "overview" &&
+            (location.pathname === "/partner" || location.pathname === "/partner/"));
         return (
           <Link
             key={item.key}
@@ -96,7 +116,9 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
             }`}
             aria-current={isActive ? "page" : undefined}
           >
-            <span className={`${isActive ? "text-white" : "text-ink/60 group-hover:text-coral"} transition`}>
+            <span
+              className={`${isActive ? "text-white" : "text-ink/60 group-hover:text-coral"} transition`}
+            >
               {item.icon}
             </span>
             <span className="font-semibold">{item.label}</span>
@@ -138,7 +160,12 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
               <p className="font-body text-sm font-semibold text-ink truncate">Mrs. Adaeze</p>
               <p className="text-[11px] text-ink/50 truncate">adaeze@lekkiluxury.ng</p>
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full text-ink/50 hover:text-coral" aria-label="Sign out">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full text-ink/50 hover:text-coral"
+              aria-label="Sign out"
+            >
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
@@ -149,7 +176,12 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
         <header className="sticky top-0 z-30 bg-paper/90 backdrop-blur border-b border-ink/10 px-4 sm:px-6 py-3 flex items-center gap-2 sm:gap-3 overflow-x-hidden">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden rounded-full" aria-label="Open partner menu">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden rounded-full"
+                aria-label="Open partner menu"
+              >
                 <Menu className="w-5 h-5" />
               </Button>
             </SheetTrigger>
@@ -168,8 +200,13 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
               width={32}
               height={32}
             />
-            <span className="font-display text-ink text-base hidden sm:block sm:text-lg">Raffila</span>
-            <Badge variant="outline" className="hidden shrink-0 rounded-full border-coral/30 bg-coral/10 text-coral text-[10px] sm:inline-flex">
+            <span className="font-display text-ink text-base hidden sm:block sm:text-lg">
+              Raffila
+            </span>
+            <Badge
+              variant="outline"
+              className="hidden shrink-0 rounded-full border-coral/30 bg-coral/10 text-coral text-[10px] sm:inline-flex"
+            >
               Partner
             </Badge>
           </Link>
@@ -187,20 +224,28 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
                 placeholder="Search listings, entries..."
               />
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full relative shrink-0" aria-label="Partner notifications">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full relative shrink-0"
+              aria-label="Partner notifications"
+            >
               <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-coral border-2 border-paper" aria-hidden="true" />
+              <span
+                className="absolute top-2 right-2 w-2 h-2 rounded-full bg-coral border-2 border-paper"
+                aria-hidden="true"
+              />
             </Button>
             <Avatar className="w-9 h-9 shrink-0 lg:hidden">
-              <AvatarFallback className="bg-mint/40 text-ink font-display font-bold text-xs">MA</AvatarFallback>
+              <AvatarFallback className="bg-mint/40 text-ink font-display font-bold text-xs">
+                MA
+              </AvatarFallback>
             </Avatar>
           </div>
         </header>
 
         <div className="flex-1 min-w-0 p-4 sm:p-6 lg:p-7 overflow-x-hidden">
-          <div className="mx-auto w-full max-w-full min-w-0">
-            {children}
-          </div>
+          <div className="mx-auto w-full max-w-full min-w-0">{children}</div>
         </div>
       </div>
     </div>

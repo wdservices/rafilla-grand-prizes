@@ -21,7 +21,14 @@ import { cn } from "@/lib/utils";
 type TxTab = "all" | "credits" | "purchases" | "referrals";
 type TxType = "Wallet credit" | "Ticket purchase" | "Referral bonus";
 
-const walletTransactions: Array<{ date: string; type: TxType; desc: string; amount: number; balance: number; ref: string }> = [];
+const walletTransactions: Array<{
+  date: string;
+  type: TxType;
+  desc: string;
+  amount: number;
+  balance: number;
+  ref: string;
+}> = [];
 
 const typeStyles: Record<TxType, string> = {
   "Wallet credit": "bg-mint/30 text-ink",
@@ -44,7 +51,12 @@ function HowStep({
 }) {
   return (
     <div className="rounded-2xl bg-white p-5 ring-1 ring-ink/5">
-      <div className={cn("inline-flex size-9 items-center justify-center rounded-xl font-display text-sm font-extrabold", accent)}>
+      <div
+        className={cn(
+          "inline-flex size-9 items-center justify-center rounded-xl font-display text-sm font-extrabold",
+          accent,
+        )}
+      >
         {step}
       </div>
       <h3 className="mt-4 font-display text-base font-extrabold text-ink">{title}</h3>
@@ -53,13 +65,7 @@ function HowStep({
   );
 }
 
-export function FundWalletModal({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+export function FundWalletModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [amount, setAmount] = useState<string>("25000");
   const [customActive, setCustomActive] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -84,19 +90,18 @@ export function FundWalletModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center" onClick={close}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center"
+      onClick={close}
+    >
       <div
         className="w-full max-w-md rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
-              Top up
-            </p>
-            <h2 className="mt-1 font-display text-2xl font-extrabold text-ink">
-              Fund Wallet
-            </h2>
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Top up</p>
+            <h2 className="mt-1 font-display text-2xl font-extrabold text-ink">Fund Wallet</h2>
           </div>
           <button
             onClick={close}
@@ -112,21 +117,14 @@ export function FundWalletModal({
             <div className="mx-auto grid size-20 place-items-center rounded-full bg-mint/30">
               <Check className="size-10 text-coral" />
             </div>
-            <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">
-              Wallet credited
-            </h3>
+            <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">Wallet credited</h3>
             <p className="mt-2 font-display text-3xl font-extrabold text-coral">
               {formatNaira(Number(amount || 0) * 100)}
             </p>
             <p className="mt-1 text-xs font-bold text-ink/55">
               Ready to use for competition entries
             </p>
-            <Button
-              variant="primary"
-              size="lg"
-              className="mt-6 w-full"
-              onClick={close}
-            >
+            <Button variant="primary" size="lg" className="mt-6 w-full" onClick={close}>
               Done
             </Button>
           </div>
@@ -173,9 +171,7 @@ export function FundWalletModal({
                   }}
                   className={cn(
                     "rounded-full px-4 py-1.5 text-xs font-extrabold ring-1 ring-ink/10 transition-colors",
-                    customActive
-                      ? "bg-coral text-white"
-                      : "bg-white text-ink/70 hover:bg-cream",
+                    customActive ? "bg-coral text-white" : "bg-white text-ink/70 hover:bg-cream",
                   )}
                 >
                   Custom
@@ -248,10 +244,7 @@ export function DashboardWalletPage() {
   return (
     <DashboardAppShell
       title="Wallet"
-      breadcrumbs={[
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Wallet" },
-      ]}
+      breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Wallet" }]}
     >
       <div className="space-y-6">
         <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
@@ -271,7 +264,12 @@ export function DashboardWalletPage() {
                 For entries only · No withdrawals
               </p>
             </div>
-            <Button variant="primary" size="lg" onClick={() => setModalOpen(true)} className="w-full sm:w-auto shrink-0">
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => setModalOpen(true)}
+              className="w-full sm:w-auto shrink-0"
+            >
               <Plus className="size-4" /> Fund wallet
             </Button>
           </div>
@@ -314,24 +312,25 @@ export function DashboardWalletPage() {
               </h2>
               <div className="mt-5 space-y-3">
                 <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/5">
-                  <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">Bank</span>
+                  <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                    Bank
+                  </span>
                   <span className="text-sm font-extrabold text-ink">Wema Bank</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/5">
-                  <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">Account no</span>
+                  <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                    Account no
+                  </span>
                   <span className="font-mono text-sm font-extrabold text-ink">0123456789</span>
                 </div>
                 <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/5">
-                  <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">Account name</span>
+                  <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                    Account name
+                  </span>
                   <span className="text-sm font-extrabold text-ink">Raffila Ltd</span>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="md"
-                className="mt-5"
-                onClick={copyDetails}
-              >
+              <Button variant="outline" size="md" className="mt-5" onClick={copyDetails}>
                 {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
                 {copied ? "Copied!" : "Copy details"}
               </Button>
@@ -340,7 +339,8 @@ export function DashboardWalletPage() {
               <div className="flex items-start gap-3">
                 <Building2 className="size-5 text-coral shrink-0 mt-0.5" />
                 <p className="text-xs font-bold leading-relaxed text-ink/75">
-                  Transfers take 2–5 minutes to reflect automatically. You'll see the credit in your ledger with the bank reference.
+                  Transfers take 2–5 minutes to reflect automatically. You'll see the credit in your
+                  ledger with the bank reference.
                 </p>
               </div>
             </div>
@@ -353,19 +353,19 @@ export function DashboardWalletPage() {
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Wallet ledger
               </p>
-              <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
-                Transactions
-              </h2>
+              <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">Transactions</h2>
             </div>
           </div>
 
           <div className="mt-5 inline-flex flex-wrap gap-1 rounded-2xl bg-cream p-1 ring-1 ring-ink/5">
-            {([
-              ["all", "All transactions"],
-              ["credits", "Credits"],
-              ["purchases", "Purchases"],
-              ["referrals", "Referral bonuses"],
-            ] as Array<[TxTab, string]>).map(([key, label]) => (
+            {(
+              [
+                ["all", "All transactions"],
+                ["credits", "Credits"],
+                ["purchases", "Purchases"],
+                ["referrals", "Referral bonuses"],
+              ] as Array<[TxTab, string]>
+            ).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setTab(key)}
@@ -408,9 +408,7 @@ export function DashboardWalletPage() {
                         {tx.type.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm font-bold text-ink">
-                      {tx.desc}
-                    </td>
+                    <td className="px-4 py-3 text-sm font-bold text-ink">{tx.desc}</td>
                     <td
                       className={cn(
                         "whitespace-nowrap px-4 py-3 text-right font-display text-base font-extrabold",
@@ -440,7 +438,12 @@ export function DashboardWalletPage() {
               Showing {filtered.length} of {walletTransactions.length}
             </p>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" aria-label="Prev" onClick={() => setPage((p) => Math.max(1, p - 1))}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Prev"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
                 <ChevronLeft className="size-5" />
               </Button>
               <button className="grid size-9 place-items-center rounded-full bg-coral text-xs font-extrabold text-white">
@@ -449,7 +452,12 @@ export function DashboardWalletPage() {
               <button className="grid size-9 place-items-center rounded-full text-xs font-extrabold text-ink/50 hover:bg-cream">
                 2
               </button>
-              <Button variant="ghost" size="icon" aria-label="Next" onClick={() => setPage((p) => p + 1)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Next"
+                onClick={() => setPage((p) => p + 1)}
+              >
                 <ChevronRight className="size-5" />
               </Button>
             </div>

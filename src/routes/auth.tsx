@@ -21,9 +21,10 @@ const ogImageDefault = "https://raffila.com/og-default.png";
 function AuthPage() {
   const search = Route.useSearch() as Record<string, unknown>;
   const rawMode = search["mode"];
-  const mode = (rawMode === "forgot" || rawMode === "otp" || rawMode === "complete")
-    ? (rawMode as AuthMode)
-    : undefined;
+  const mode =
+    rawMode === "forgot" || rawMode === "otp" || rawMode === "complete"
+      ? (rawMode as AuthMode)
+      : undefined;
 
   const [tab, setTab] = useState<AuthTab>("login");
 

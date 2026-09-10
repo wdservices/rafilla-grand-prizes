@@ -64,7 +64,12 @@ export function AuthShell({ children, variant = "login" }: AuthShellProps) {
             <ul className="mt-10 space-y-5 xl:mt-14">
               {trustItems.map((item, i) => (
                 <li key={i} className="flex items-start gap-4">
-                  <span className={cn("mt-0.5 grid size-9 shrink-0 place-items-center rounded-2xl bg-white/70 ring-1 ring-ink/5", item.iconColor)}>
+                  <span
+                    className={cn(
+                      "mt-0.5 grid size-9 shrink-0 place-items-center rounded-2xl bg-white/70 ring-1 ring-ink/5",
+                      item.iconColor,
+                    )}
+                  >
                     {item.icon}
                   </span>
                   <div>

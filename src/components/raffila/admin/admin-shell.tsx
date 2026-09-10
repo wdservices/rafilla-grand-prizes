@@ -165,7 +165,9 @@ export function AdminShell({ children, title, activeNav }: AdminShellProps) {
             height={40}
           />
           <div>
-            <p className="font-display text-lg font-extrabold leading-tight text-cream tracking-tight">Raffila Admin</p>
+            <p className="font-display text-lg font-extrabold leading-tight text-cream tracking-tight">
+              Raffila Admin
+            </p>
             <p className="text-[10px] font-bold text-cream/45">Super admin console</p>
           </div>
         </div>
@@ -173,7 +175,9 @@ export function AdminShell({ children, title, activeNav }: AdminShellProps) {
         <div className="px-4 pb-5">
           <div className="flex items-center gap-3 rounded-2xl bg-white/8 px-3.5 py-3 ring-1 ring-white/10">
             <Avatar className="size-9 ring-2 ring-coral/60">
-              <AvatarFallback className="bg-coral text-ink font-extrabold">{monogram}</AvatarFallback>
+              <AvatarFallback className="bg-coral text-ink font-extrabold">
+                {monogram}
+              </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-extrabold text-cream leading-tight">{fullName}</p>
@@ -186,9 +190,19 @@ export function AdminShell({ children, title, activeNav }: AdminShellProps) {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 pb-4" aria-label="Admin navigation">
-          <NavGroup label="Operations" items={OPS_GROUP} activeNav={activeNav} onNavigate={closeMobile} />
+          <NavGroup
+            label="Operations"
+            items={OPS_GROUP}
+            activeNav={activeNav}
+            onNavigate={closeMobile}
+          />
           <div className="my-4 mx-2 h-px bg-white/8" />
-          <NavGroup label="Platform configuration" items={CONFIG_GROUP} activeNav={activeNav} onNavigate={closeMobile} />
+          <NavGroup
+            label="Platform configuration"
+            items={CONFIG_GROUP}
+            activeNav={activeNav}
+            onNavigate={closeMobile}
+          />
         </nav>
 
         <div className="border-t border-white/10 px-3 py-4 space-y-1">
@@ -256,20 +270,33 @@ export function AdminShell({ children, title, activeNav }: AdminShellProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="relative size-11 rounded-full ring-1 ring-ink/10" aria-label="Admin notifications">
+            <Button
+              variant="outline"
+              size="icon"
+              className="relative size-11 rounded-full ring-1 ring-ink/10"
+              aria-label="Admin notifications"
+            >
               <Bell className="size-4.5" />
-              <span className="absolute right-3 top-3 size-2 rounded-full bg-coral ring-2 ring-white" aria-hidden="true" />
+              <span
+                className="absolute right-3 top-3 size-2 rounded-full bg-coral ring-2 ring-white"
+                aria-hidden="true"
+              />
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="size-11 lg:hidden rounded-full">
                   <Avatar className="size-9 ring-2 ring-coral/60">
-                    <AvatarFallback className="bg-coral text-ink font-extrabold">{monogram}</AvatarFallback>
+                    <AvatarFallback className="bg-coral text-ink font-extrabold">
+                      {monogram}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-60 rounded-[24px] bg-white p-2 ring-1 ring-ink/10 shadow-lg">
+              <DropdownMenuContent
+                align="end"
+                className="w-60 rounded-[24px] bg-white p-2 ring-1 ring-ink/10 shadow-lg"
+              >
                 <DropdownMenuLabel className="rounded-2xl bg-cream/60 px-3.5 py-3">
                   <p className="font-extrabold text-ink">{fullName}</p>
                   <Badge className="mt-1 rounded-full bg-coral px-2.5 py-0 text-[9px] font-extrabold uppercase tracking-wider text-ink ring-0">

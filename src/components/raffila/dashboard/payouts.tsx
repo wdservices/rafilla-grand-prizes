@@ -26,12 +26,7 @@ const banks = [
   "Other bank",
 ];
 
-type PayoutStatus =
-  | "PENDING"
-  | "UNDER REVIEW"
-  | "APPROVED"
-  | "PAID"
-  | "REJECTED";
+type PayoutStatus = "PENDING" | "UNDER REVIEW" | "APPROVED" | "PAID" | "REJECTED";
 
 const payoutHistory: Array<{
   ref: string;
@@ -62,11 +57,7 @@ export function DashboardReferralsPayoutPage() {
 
   const numAmount = Number(amount) || 0;
   const overMax = numAmount > AVAILABLE_BALANCE;
-  const disabled =
-    !numAmount ||
-    overMax ||
-    !accountName ||
-    accountNumber.length < 10;
+  const disabled = !numAmount || overMax || !accountName || accountNumber.length < 10;
 
   const submit = () => {
     if (disabled) return;
@@ -91,7 +82,8 @@ export function DashboardReferralsPayoutPage() {
             Request Payout
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/60">
-            Turn your available referral earnings into a bank transfer. Payouts are reviewed within 24–48 hours.
+            Turn your available referral earnings into a bank transfer. Payouts are reviewed within
+            24–48 hours.
           </p>
         </div>
 
@@ -187,7 +179,8 @@ export function DashboardReferralsPayoutPage() {
                   </div>
                   {overMax && (
                     <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-rose/15 px-2.5 py-1 text-[10px] font-extrabold text-ink">
-                      <AlertCircle className="size-3" /> Available balance is {formatNaira(AVAILABLE_BALANCE)}
+                      <AlertCircle className="size-3" /> Available balance is{" "}
+                      {formatNaira(AVAILABLE_BALANCE)}
                     </p>
                   )}
                 </div>
@@ -228,7 +221,9 @@ export function DashboardReferralsPayoutPage() {
                     </label>
                     <input
                       value={accountNumber}
-                      onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      onChange={(e) =>
+                        setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 10))
+                      }
                       placeholder="10-digit NUBAN"
                       inputMode="numeric"
                       className="min-h-12 w-full rounded-2xl bg-cream px-4 font-mono text-sm font-bold text-ink ring-1 ring-ink/5 outline-none placeholder:text-ink/35 focus:ring-2 focus:ring-coral"
@@ -238,7 +233,10 @@ export function DashboardReferralsPayoutPage() {
 
                 <div>
                   <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                    Note <span className="font-bold text-ink/35 normal-case tracking-normal">(optional)</span>
+                    Note{" "}
+                    <span className="font-bold text-ink/35 normal-case tracking-normal">
+                      (optional)
+                    </span>
                   </label>
                   <textarea
                     value={note}
@@ -252,7 +250,8 @@ export function DashboardReferralsPayoutPage() {
                 <div className="flex items-start gap-3 rounded-2xl bg-cream p-4 ring-1 ring-ink/5">
                   <ShieldCheck className="mt-0.5 shrink-0 size-5 text-coral" />
                   <div className="text-[11px] font-bold leading-relaxed text-ink/55">
-                    Payouts are reviewed for compliance. Bank names must exactly match your verified profile to avoid rejection.
+                    Payouts are reviewed for compliance. Bank names must exactly match your verified
+                    profile to avoid rejection.
                   </div>
                 </div>
 
@@ -288,17 +287,13 @@ export function DashboardReferralsPayoutPage() {
                   <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-cream/60">
                     Pending
                   </p>
-                  <p className="mt-1 font-display text-xl font-extrabold">
-                    {formatNaira(0)}
-                  </p>
+                  <p className="mt-1 font-display text-xl font-extrabold">{formatNaira(0)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-cream/60">
                     Paid
                   </p>
-                  <p className="mt-1 font-display text-xl font-extrabold">
-                    {formatNaira(0)}
-                  </p>
+                  <p className="mt-1 font-display text-xl font-extrabold">{formatNaira(0)}</p>
                 </div>
               </div>
             </div>
@@ -321,9 +316,7 @@ export function DashboardReferralsPayoutPage() {
                     {payoutHistory.map((p) => (
                       <tr key={p.ref} className="hover:bg-cream/40">
                         <td className="px-3 py-2.5">
-                          <p className="font-mono text-[10px] font-bold text-ink/70">
-                            {p.ref}
-                          </p>
+                          <p className="font-mono text-[10px] font-bold text-ink/70">{p.ref}</p>
                           <p className="text-[10px] font-bold text-ink/45">
                             {p.bank} · Submitted {p.submitted}
                             {p.paid && <> · Paid {p.paid}</>}

@@ -29,21 +29,76 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Home", icon: <Home className="size-5" />, to: "/dashboard", group: "Account" },
-  { label: "Competitions", icon: <Trophy className="size-5" />, to: "/dashboard/competitions", group: "Account" },
-  { label: "Wallet", icon: <Wallet className="size-5" />, to: "/dashboard/wallet", group: "Account" },
-  { label: "Entries", icon: <Ticket className="size-5" />, to: "/dashboard/entries", group: "Account" },
-  { label: "Referrals", icon: <Users className="size-5" />, to: "/dashboard/referrals", group: "Rewards" },
-  { label: "Reward pool", icon: <Award className="size-5" />, to: "/dashboard/reward-pool", group: "Rewards" },
-  { label: "Profile", icon: <UserCircle2 className="size-5" />, to: "/dashboard/profile", group: "Settings" },
-  { label: "Security", icon: <ShieldCheck className="size-5" />, to: "/dashboard/security", group: "Settings" },
+  {
+    label: "Competitions",
+    icon: <Trophy className="size-5" />,
+    to: "/dashboard/competitions",
+    group: "Account",
+  },
+  {
+    label: "Wallet",
+    icon: <Wallet className="size-5" />,
+    to: "/dashboard/wallet",
+    group: "Account",
+  },
+  {
+    label: "Entries",
+    icon: <Ticket className="size-5" />,
+    to: "/dashboard/entries",
+    group: "Account",
+  },
+  {
+    label: "Referrals",
+    icon: <Users className="size-5" />,
+    to: "/dashboard/referrals",
+    group: "Rewards",
+  },
+  {
+    label: "Reward pool",
+    icon: <Award className="size-5" />,
+    to: "/dashboard/reward-pool",
+    group: "Rewards",
+  },
+  {
+    label: "Profile",
+    icon: <UserCircle2 className="size-5" />,
+    to: "/dashboard/profile",
+    group: "Settings",
+  },
+  {
+    label: "Security",
+    icon: <ShieldCheck className="size-5" />,
+    to: "/dashboard/security",
+    group: "Settings",
+  },
 ];
 
 const bottomNavItems: NavItem[] = [
   { label: "Home", icon: <Home className="size-5" />, to: "/dashboard", group: "Account" },
-  { label: "Competitions", icon: <Trophy className="size-5" />, to: "/dashboard/competitions", group: "Account" },
-  { label: "Wallet", icon: <Wallet className="size-5" />, to: "/dashboard/wallet", group: "Account" },
-  { label: "Entries", icon: <Ticket className="size-5" />, to: "/dashboard/entries", group: "Account" },
-  { label: "Account", icon: <User className="size-5" />, to: "/dashboard/profile", group: "Settings" },
+  {
+    label: "Competitions",
+    icon: <Trophy className="size-5" />,
+    to: "/dashboard/competitions",
+    group: "Account",
+  },
+  {
+    label: "Wallet",
+    icon: <Wallet className="size-5" />,
+    to: "/dashboard/wallet",
+    group: "Account",
+  },
+  {
+    label: "Entries",
+    icon: <Ticket className="size-5" />,
+    to: "/dashboard/entries",
+    group: "Account",
+  },
+  {
+    label: "Account",
+    icon: <User className="size-5" />,
+    to: "/dashboard/profile",
+    group: "Settings",
+  },
 ];
 
 const navGroups: Array<NavItem["group"]> = ["Account", "Rewards", "Settings"];
@@ -113,7 +168,11 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
   };
 
   const activeBottom = (to: string) => {
-    if (to === "/dashboard/profile") return location.pathname.startsWith("/dashboard/profile") || location.pathname.startsWith("/dashboard/security");
+    if (to === "/dashboard/profile")
+      return (
+        location.pathname.startsWith("/dashboard/profile") ||
+        location.pathname.startsWith("/dashboard/security")
+      );
     return isActive(to);
   };
 
@@ -137,9 +196,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
             <span className="block font-display text-xl font-extrabold tracking-tight text-ink leading-tight">
               Raffila
             </span>
-            <span className="block text-[11px] font-bold text-ink/45">
-              Dashboard
-            </span>
+            <span className="block text-[11px] font-bold text-ink/45">Dashboard</span>
           </div>
         </Link>
 
@@ -153,11 +210,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
                 {navItems
                   .filter((item) => item.group === group)
                   .map((item) => (
-                    <DashboardNavLink
-                      key={item.label}
-                      item={item}
-                      active={isActive(item.to)}
-                    />
+                    <DashboardNavLink key={item.label} item={item} active={isActive(item.to)} />
                   ))}
               </div>
             </div>
@@ -179,7 +232,12 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
                 <ShieldCheck className="size-3" /> {verified ? "Verified" : "Account"}
               </p>
             </div>
-            <ChevronDown className={cn("size-4 text-ink/35 transition-transform", userDropdownOpen && "rotate-180")} />
+            <ChevronDown
+              className={cn(
+                "size-4 text-ink/35 transition-transform",
+                userDropdownOpen && "rotate-180",
+              )}
+            />
           </button>
           {userDropdownOpen && (
             <div className="absolute bottom-full left-3 right-3 mb-2 rounded-2xl bg-white p-1.5 ring-1 ring-ink/10 shadow-[0_20px_50px_-25px_rgba(0,0,0,0.25)]">
@@ -230,9 +288,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
               <span className="block font-display text-lg font-extrabold tracking-tight text-ink leading-tight">
                 Raffila
               </span>
-              <span className="block text-[11px] font-bold text-ink/45">
-                Dashboard
-              </span>
+              <span className="block text-[11px] font-bold text-ink/45">Dashboard</span>
             </div>
           </Link>
           <button
@@ -259,7 +315,12 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
                 <ShieldCheck className="size-3" /> {verified ? "Verified" : "Account"}
               </p>
             </div>
-            <ChevronDown className={cn("size-4 text-ink/35 transition-transform", mobileUserDropdown && "rotate-180")} />
+            <ChevronDown
+              className={cn(
+                "size-4 text-ink/35 transition-transform",
+                mobileUserDropdown && "rotate-180",
+              )}
+            />
           </button>
           {mobileUserDropdown && (
             <div className="mt-2 rounded-2xl bg-white p-1.5 ring-1 ring-ink/10 shadow-lg">
@@ -318,9 +379,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
               <span className="block font-display text-base font-extrabold tracking-tight text-ink leading-none">
                 Raffila
               </span>
-              <span className="block text-[10px] font-bold text-ink/45">
-                Dashboard
-              </span>
+              <span className="block text-[10px] font-bold text-ink/45">Dashboard</span>
             </div>
           </Link>
         </div>

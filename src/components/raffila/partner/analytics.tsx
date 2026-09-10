@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { PartnerShell } from "./partner-shell";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -38,17 +32,41 @@ import {
 import { formatNaira } from "@/lib/utils";
 
 const ENTRIES_30D = [
-  312, 408, 354, 498, 432, 514, 587, 612, 678, 540, 604, 698, 722, 645, 710,
-  788, 822, 744, 810, 895, 932, 848, 916, 985, 1020, 940, 1005, 1088, 1145, 1204,
+  312, 408, 354, 498, 432, 514, 587, 612, 678, 540, 604, 698, 722, 645, 710, 788, 822, 744, 810,
+  895, 932, 848, 916, 985, 1020, 940, 1005, 1088, 1145, 1204,
 ];
 const DAYS = Array.from({ length: 30 }, (_, i) => `D${i + 1}`);
 
 const TOP_LISTINGS = [
-  { name: "Rolex Daytona 126500LN Panda", entries: 4700, valueKobo: 3850000000, pct: 94, tint: "bg-coral" },
-  { name: "2024 Lexus RX 350 F-Sport", entries: 4350, valueKobo: 4850000000, pct: 87, tint: "bg-sky" },
+  {
+    name: "Rolex Daytona 126500LN Panda",
+    entries: 4700,
+    valueKobo: 3850000000,
+    pct: 94,
+    tint: "bg-coral",
+  },
+  {
+    name: "2024 Lexus RX 350 F-Sport",
+    entries: 4350,
+    valueKobo: 4850000000,
+    pct: 87,
+    tint: "bg-sky",
+  },
   { name: "2024 Mercedes GLE 450", entries: 3100, valueKobo: 6200000000, pct: 62, tint: "bg-mint" },
-  { name: "Land Lekki Phase 1 600sqm", entries: 1900, valueKobo: 5500000000, pct: 38, tint: "bg-lemon" },
-  { name: "Italian Leather Sectional", entries: 1100, valueKobo: 32000000, pct: 55, tint: "bg-lilac" },
+  {
+    name: "Land Lekki Phase 1 600sqm",
+    entries: 1900,
+    valueKobo: 5500000000,
+    pct: 38,
+    tint: "bg-lemon",
+  },
+  {
+    name: "Italian Leather Sectional",
+    entries: 1100,
+    valueKobo: 32000000,
+    pct: 55,
+    tint: "bg-lilac",
+  },
 ];
 
 function EntriesChart() {
@@ -61,13 +79,20 @@ function EntriesChart() {
           const isPeak = v === max;
           const isLast = i === ENTRIES_30D.length - 1;
           return (
-            <div key={i} className="flex-1 min-w-[12px] flex flex-col items-center gap-1 group shrink-0">
+            <div
+              key={i}
+              className="flex-1 min-w-[12px] flex flex-col items-center gap-1 group shrink-0"
+            >
               <span className="text-[9px] font-mono font-bold text-coral opacity-0 group-hover:opacity-100 whitespace-nowrap">
                 {v.toLocaleString()}
               </span>
               <div
                 className={`w-full rounded-t-lg transition-all ${
-                  isPeak ? "bg-gradient-to-t from-coral to-coral/70" : isLast ? "bg-gradient-to-t from-mint/60 to-mint" : "bg-gradient-to-t from-sky/30 to-sky/80"
+                  isPeak
+                    ? "bg-gradient-to-t from-coral to-coral/70"
+                    : isLast
+                      ? "bg-gradient-to-t from-mint/60 to-mint"
+                      : "bg-gradient-to-t from-sky/30 to-sky/80"
                 } group-hover:from-coral group-hover:to-coral/80`}
                 style={{ height: `${h}%` }}
                 title={`${DAYS[i]}: ${v.toLocaleString()} entries`}
@@ -93,12 +118,48 @@ export function PartnerAnalyticsPage() {
   const [granularity, setGranularity] = useState("30d");
 
   const stats = [
-    { label: "Entries (period)", value: "22,844", delta: "+32.4%", tint: "bg-coral/20 text-coral", icon: <Ticket className="w-5 h-5" /> },
-    { label: "Unique players", value: "9,182", delta: "+14.1%", tint: "bg-sky/20 text-sky", icon: <Users className="w-5 h-5" /> },
-    { label: "Revenue share", value: formatNaira(4824000000), delta: "+41.8%", tint: "bg-mint/30 text-ink", icon: <Wallet className="w-5 h-5" /> },
-    { label: "Avg conversion", value: "6.82%", delta: "+0.9pp", tint: "bg-lemon/30 text-ink", icon: <Target className="w-5 h-5" /> },
-    { label: "Listings views", value: "618,340", delta: "+57.2%", tint: "bg-lilac/20 text-lilac", icon: <Eye className="w-5 h-5" /> },
-    { label: "Prizes delivered", value: "5", delta: "+2 YoY", tint: "bg-coral/15 text-coral", icon: <Trophy className="w-5 h-5" /> },
+    {
+      label: "Entries (period)",
+      value: "22,844",
+      delta: "+32.4%",
+      tint: "bg-coral/20 text-coral",
+      icon: <Ticket className="w-5 h-5" />,
+    },
+    {
+      label: "Unique players",
+      value: "9,182",
+      delta: "+14.1%",
+      tint: "bg-sky/20 text-sky",
+      icon: <Users className="w-5 h-5" />,
+    },
+    {
+      label: "Revenue share",
+      value: formatNaira(4824000000),
+      delta: "+41.8%",
+      tint: "bg-mint/30 text-ink",
+      icon: <Wallet className="w-5 h-5" />,
+    },
+    {
+      label: "Avg conversion",
+      value: "6.82%",
+      delta: "+0.9pp",
+      tint: "bg-lemon/30 text-ink",
+      icon: <Target className="w-5 h-5" />,
+    },
+    {
+      label: "Listings views",
+      value: "618,340",
+      delta: "+57.2%",
+      tint: "bg-lilac/20 text-lilac",
+      icon: <Eye className="w-5 h-5" />,
+    },
+    {
+      label: "Prizes delivered",
+      value: "5",
+      delta: "+2 YoY",
+      tint: "bg-coral/15 text-coral",
+      icon: <Trophy className="w-5 h-5" />,
+    },
   ];
 
   return (
@@ -128,13 +189,25 @@ export function PartnerAnalyticsPage() {
             <div className="flex items-center gap-2 flex-wrap">
               <Calendar className="w-4 h-4 text-coral" />
               <div className="flex items-center gap-2">
-                <Input type="date" className="rounded-full w-40 h-9 text-sm" value={from} onChange={(e) => setFrom(e.target.value)} />
+                <Input
+                  type="date"
+                  className="rounded-full w-40 h-9 text-sm"
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                />
                 <span className="text-ink/40 font-body">to</span>
-                <Input type="date" className="rounded-full w-40 h-9 text-sm" value={to} onChange={(e) => setTo(e.target.value)} />
+                <Input
+                  type="date"
+                  className="rounded-full w-40 h-9 text-sm"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                />
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <Label className="text-xs text-ink/50 uppercase tracking-wider font-body hidden sm:block">Granularity</Label>
+              <Label className="text-xs text-ink/50 uppercase tracking-wider font-body hidden sm:block">
+                Granularity
+              </Label>
               <Select value={granularity} onValueChange={setGranularity}>
                 <SelectTrigger className="rounded-full w-32 h-9 text-sm">
                   <SelectValue />
@@ -161,7 +234,10 @@ export function PartnerAnalyticsPage() {
                   <div className={`p-2.5 rounded-2xl border border-current/20 ${s.tint}`}>
                     {s.icon}
                   </div>
-                  <Badge variant="outline" className="rounded-full text-[10px] bg-mint/20 border-mint text-ink font-bold">
+                  <Badge
+                    variant="outline"
+                    className="rounded-full text-[10px] bg-mint/20 border-mint text-ink font-bold"
+                  >
                     <TrendingUp className="w-3 h-3 mr-1" /> {s.delta}
                   </Badge>
                 </div>
@@ -186,7 +262,8 @@ export function PartnerAnalyticsPage() {
                 </div>
                 <div className="flex items-center gap-3 text-xs font-body">
                   <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 rounded-sm bg-gradient-to-t from-sky/30 to-sky/80" /> Avg
+                    <span className="w-3 h-3 rounded-sm bg-gradient-to-t from-sky/30 to-sky/80" />{" "}
+                    Avg
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded-sm bg-coral" /> Peak
@@ -202,13 +279,27 @@ export function PartnerAnalyticsPage() {
               <Separator className="my-4 bg-ink/10" />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 {[
-                  { k: "Total entries", v: ENTRIES_30D.reduce((a, b) => a + b, 0).toLocaleString(), t: "text-coral" },
-                  { k: "Avg / day", v: Math.round(ENTRIES_30D.reduce((a, b) => a + b, 0) / 30).toLocaleString(), t: "text-ink" },
-                  { k: "Best day", v: `D${ENTRIES_30D.indexOf(Math.max(...ENTRIES_30D)) + 1}`, t: "text-mint" },
+                  {
+                    k: "Total entries",
+                    v: ENTRIES_30D.reduce((a, b) => a + b, 0).toLocaleString(),
+                    t: "text-coral",
+                  },
+                  {
+                    k: "Avg / day",
+                    v: Math.round(ENTRIES_30D.reduce((a, b) => a + b, 0) / 30).toLocaleString(),
+                    t: "text-ink",
+                  },
+                  {
+                    k: "Best day",
+                    v: `D${ENTRIES_30D.indexOf(Math.max(...ENTRIES_30D)) + 1}`,
+                    t: "text-mint",
+                  },
                   { k: "Growth WoW", v: "+32.4%", t: "text-sky" },
                 ].map((x) => (
                   <div key={x.k} className="p-3 rounded-xl bg-cream/50">
-                    <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">{x.k}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">
+                      {x.k}
+                    </p>
                     <p className={`font-display text-xl mt-0.5 ${x.t}`}>{x.v}</p>
                   </div>
                 ))}
@@ -223,7 +314,9 @@ export function PartnerAnalyticsPage() {
                   <CardTitle className="font-display text-ink text-lg flex items-center gap-2">
                     <Award className="w-5 h-5 text-coral" /> Top 5 listings
                   </CardTitle>
-                  <CardDescription className="font-body text-sm">Ranked by entries driven</CardDescription>
+                  <CardDescription className="font-body text-sm">
+                    Ranked by entries driven
+                  </CardDescription>
                 </div>
                 <Star className="w-5 h-5 text-lemon fill-lemon" />
               </div>
@@ -235,14 +328,25 @@ export function PartnerAnalyticsPage() {
                 return (
                   <div key={l.name} className="space-y-1.5">
                     <div className="flex items-center gap-3">
-                      <Badge variant="outline" className={`rounded-full w-7 h-7 p-0 justify-center shrink-0 ${
-                        i === 0 ? "bg-coral text-white border-coral font-bold" : i === 1 ? "bg-lemon/40 border-lemon font-bold" : i === 2 ? "bg-mint/30 border-mint font-bold" : "bg-cream border-ink/20 text-ink/60"
-                      }`}>
+                      <Badge
+                        variant="outline"
+                        className={`rounded-full w-7 h-7 p-0 justify-center shrink-0 ${
+                          i === 0
+                            ? "bg-coral text-white border-coral font-bold"
+                            : i === 1
+                              ? "bg-lemon/40 border-lemon font-bold"
+                              : i === 2
+                                ? "bg-mint/30 border-mint font-bold"
+                                : "bg-cream border-ink/20 text-ink/60"
+                        }`}
+                      >
                         {i + 1}
                       </Badge>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="font-body text-sm text-ink font-semibold truncate">{l.name}</p>
+                          <p className="font-body text-sm text-ink font-semibold truncate">
+                            {l.name}
+                          </p>
                           <p className="font-display text-sm text-coral font-bold whitespace-nowrap">
                             {l.entries.toLocaleString()}
                           </p>
@@ -274,7 +378,9 @@ export function PartnerAnalyticsPage() {
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">Audience</p>
+                  <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">
+                    Audience
+                  </p>
                   <p className="font-display text-xl text-ink font-bold">Player demographics</p>
                 </div>
               </div>
@@ -308,7 +414,9 @@ export function PartnerAnalyticsPage() {
                   <Landmark className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">Settlements</p>
+                  <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">
+                    Settlements
+                  </p>
                   <p className="font-display text-xl text-ink font-bold">Cash-flow summary</p>
                 </div>
               </div>
@@ -344,7 +452,9 @@ export function PartnerAnalyticsPage() {
                   <Trophy className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-cream/60 font-body">Partner tier</p>
+                  <p className="text-[10px] uppercase tracking-wider text-cream/60 font-body">
+                    Partner tier
+                  </p>
                   <p className="font-display text-xl text-cream font-bold">Gold · Top 8%</p>
                 </div>
               </div>
@@ -356,7 +466,10 @@ export function PartnerAnalyticsPage() {
                     <span className="font-semibold text-coral">₦15.2M / ₦50M</span>
                   </div>
                   <div className="h-3 bg-cream/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-lemon via-coral to-coral rounded-full transition-all" style={{ width: "30%" }} />
+                    <div
+                      className="h-full bg-gradient-to-r from-lemon via-coral to-coral rounded-full transition-all"
+                      style={{ width: "30%" }}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm font-body">

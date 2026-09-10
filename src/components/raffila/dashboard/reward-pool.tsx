@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  Trophy,
-  Clock,
-  Users,
-  Gift,
-  Sparkles,
-  ArrowRight,
-  Ticket,
-} from "lucide-react";
+import { Trophy, Clock, Users, Gift, Sparkles, ArrowRight, Ticket } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
@@ -42,9 +34,18 @@ export function DashboardRewardPoolPage() {
       setTime((t) => {
         let { d, h, m, s } = t;
         s--;
-        if (s < 0) { s = 59; m--; }
-        if (m < 0) { m = 59; h--; }
-        if (h < 0) { h = 23; d--; }
+        if (s < 0) {
+          s = 59;
+          m--;
+        }
+        if (m < 0) {
+          m = 59;
+          h--;
+        }
+        if (h < 0) {
+          h = 23;
+          d--;
+        }
         if (d < 0) d = 0;
         return { d, h, m, s };
       });
@@ -57,14 +58,12 @@ export function DashboardRewardPoolPage() {
   return (
     <DashboardAppShell
       title="Reward pool"
-      breadcrumbs={[
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Reward pool" },
-      ]}
+      breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Reward pool" }]}
     >
       <div className="space-y-6">
         <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
-          A single community pool funded by every competition entry across Raffila. Invite more friends to grow your proportional share.
+          A single community pool funded by every competition entry across Raffila. Invite more
+          friends to grow your proportional share.
         </p>
 
         <div className="overflow-hidden rounded-[24px] bg-coral/5 p-6 ring-1 ring-coral/15 sm:p-8 relative">
@@ -82,7 +81,8 @@ export function DashboardRewardPoolPage() {
                 {formatNaira(REWARD_POOL.totalKobo)}
               </p>
               <p className="mt-3 text-xs font-bold text-ink/55">
-                Funded by {REWARD_POOL.totalParticipants.toLocaleString("en-NG")} participants · grows live with every entry
+                Funded by {REWARD_POOL.totalParticipants.toLocaleString("en-NG")} participants ·
+                grows live with every entry
               </p>
             </div>
 
@@ -100,7 +100,10 @@ export function DashboardRewardPoolPage() {
                   ["M", time.m],
                   ["S", time.s],
                 ].map(([l, v]) => (
-                  <div key={l as string} className="rounded-2xl bg-cream p-3 text-center ring-1 ring-ink/5">
+                  <div
+                    key={l as string}
+                    className="rounded-2xl bg-cream p-3 text-center ring-1 ring-ink/5"
+                  >
                     <p className="font-display text-2xl font-extrabold text-ink tabular-nums">
                       {pad(v as number)}
                     </p>
@@ -130,7 +133,8 @@ export function DashboardRewardPoolPage() {
               </h2>
             </div>
             <p className="text-xs font-bold text-ink/50">
-              You're ranked <span className="font-display font-extrabold text-coral">#{REWARD_POOL.rank}</span>
+              You're ranked{" "}
+              <span className="font-display font-extrabold text-coral">#{REWARD_POOL.rank}</span>
             </p>
           </div>
 
@@ -148,10 +152,12 @@ export function DashboardRewardPoolPage() {
                 {leaderboard.map((r) => (
                   <tr key={r.rank} className={cn(r.rank === REWARD_POOL.rank && "bg-lemon/10")}>
                     <td className="px-4 py-3">
-                      <span className={cn(
-                        "inline-grid size-8 place-items-center rounded-xl font-display text-sm font-extrabold text-ink ring-1",
-                        rankTone[r.rank] ?? "bg-cream ring-ink/10"
-                      )}>
+                      <span
+                        className={cn(
+                          "inline-grid size-8 place-items-center rounded-xl font-display text-sm font-extrabold text-ink ring-1",
+                          rankTone[r.rank] ?? "bg-cream ring-ink/10",
+                        )}
+                      >
                         {r.rank}
                       </span>
                     </td>
@@ -162,7 +168,9 @@ export function DashboardRewardPoolPage() {
                         </span>
                         <span className="font-extrabold text-ink">{r.name}</span>
                         {r.rank === REWARD_POOL.rank && (
-                          <span className="rounded-full bg-coral/15 px-2 py-0.5 text-[10px] font-extrabold text-coral">You</span>
+                          <span className="rounded-full bg-coral/15 px-2 py-0.5 text-[10px] font-extrabold text-coral">
+                            You
+                          </span>
                         )}
                       </div>
                     </td>

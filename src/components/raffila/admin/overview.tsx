@@ -75,12 +75,21 @@ function KpiCard({ label, value, sub, delta, deltaPositive, icon: Icon, tone }: 
                   deltaPositive ? "bg-mint/30 text-ink" : "bg-coral/20 text-ink",
                 )}
               >
-                {deltaPositive ? <TrendingUp className="size-3" /> : <TrendingUp className="size-3 rotate-180" />}
+                {deltaPositive ? (
+                  <TrendingUp className="size-3" />
+                ) : (
+                  <TrendingUp className="size-3 rotate-180" />
+                )}
                 {delta}
               </div>
             )}
           </div>
-          <div className={cn("grid size-12 shrink-0 place-items-center rounded-2xl sm:size-14", toneBg[tone])}>
+          <div
+            className={cn(
+              "grid size-12 shrink-0 place-items-center rounded-2xl sm:size-14",
+              toneBg[tone],
+            )}
+          >
             <Icon className={cn("size-5 sm:size-6", toneIcon[tone])} />
           </div>
         </div>
@@ -103,7 +112,22 @@ function DualChartBars() {
   const gap = (barArea / days) * 0.62;
   const toYT = (v: number) => h - pad - (v / maxT) * (h - pad * 2);
   const toYR = (v: number) => h - pad - (v / maxR) * (h - pad * 2);
-  const labels = ["Mon 1", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Mon 8", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const labels = [
+    "Mon 1",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Sun",
+    "Mon 8",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Sun",
+  ];
   const coralOklch = "oklch(0.75 0.14 35)";
   const skyOklch = "oklch(0.76 0.12 255)";
   const gridOklch = "oklch(0.929 0.013 255.508)";
@@ -121,13 +145,35 @@ function DualChartBars() {
         const x = pad + i * (bw + gap) + gap / 2;
         const bh = (v / maxT) * (h - pad * 2);
         const y = h - pad - bh;
-        return <rect key={`t${i}`} x={x} y={y} width={bw} height={bh} rx={bw / 2} fill={coralOklch} opacity="0.85" />;
+        return (
+          <rect
+            key={`t${i}`}
+            x={x}
+            y={y}
+            width={bw}
+            height={bh}
+            rx={bw / 2}
+            fill={coralOklch}
+            opacity="0.85"
+          />
+        );
       })}
       {revenueBase.map((v, i) => {
         const x = pad + i * (bw + gap) + gap / 2 + bw;
         const bh = (v / maxR) * (h - pad * 2);
         const y = h - pad - bh;
-        return <rect key={`r${i}`} x={x} y={y} width={bw} height={bh} rx={bw / 2} fill={skyOklch} opacity="0.75" />;
+        return (
+          <rect
+            key={`r${i}`}
+            x={x}
+            y={y}
+            width={bw}
+            height={bh}
+            rx={bw / 2}
+            fill={skyOklch}
+            opacity="0.75"
+          />
+        );
       })}
       {[0, 3, 6, 9, 13].map((i) => (
         <text
@@ -142,13 +188,30 @@ function DualChartBars() {
           {labels[i]}
         </text>
       ))}
-      <circle cx={pad + 13 * (bw + gap) + gap / 2 + bw / 2} cy={toYT(tickets[13]!)} r="3.5" fill={coralOklch} />
-      <circle cx={pad + 13 * (bw + gap) + gap / 2 + bw + bw / 2} cy={toYR(revenueBase[13]!)} r="3.5" fill={skyOklch} />
+      <circle
+        cx={pad + 13 * (bw + gap) + gap / 2 + bw / 2}
+        cy={toYT(tickets[13]!)}
+        r="3.5"
+        fill={coralOklch}
+      />
+      <circle
+        cx={pad + 13 * (bw + gap) + gap / 2 + bw + bw / 2}
+        cy={toYR(revenueBase[13]!)}
+        r="3.5"
+        fill={skyOklch}
+      />
     </svg>
   );
 }
 
-const REGISTRATIONS: Array<{ name: string; email: string; initials: string; tint: "coral" | "sky" | "mint" | "lemon" | "lilac"; date: string; verified: boolean }> = [];
+const REGISTRATIONS: Array<{
+  name: string;
+  email: string;
+  initials: string;
+  tint: "coral" | "sky" | "mint" | "lemon" | "lilac";
+  date: string;
+  verified: boolean;
+}> = [];
 
 const tintBg: Record<string, string> = {
   sky: "bg-sky/30 text-ink",
@@ -159,7 +222,12 @@ const tintBg: Record<string, string> = {
   ink: "bg-ink/10 text-ink",
 };
 
-const PAYOUTS_QUEUE: Array<{ user: string; initials: string; tint: "lemon" | "sky" | "mint" | "coral" | "lilac"; amount: number }> = [];
+const PAYOUTS_QUEUE: Array<{
+  user: string;
+  initials: string;
+  tint: "lemon" | "sky" | "mint" | "coral" | "lilac";
+  amount: number;
+}> = [];
 
 type CompStatus = "DRAFT" | "SCHEDULED" | "LIVE" | "DRAWING" | "RESULTED" | "CLOSED" | "COMPLETED";
 
@@ -188,7 +256,9 @@ export function AdminOverview() {
   return (
     <AdminShell activeNav="dashboard" title="Dashboard">
       <header className="mb-6">
-        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">Admin · Overview</p>
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">
+          Admin · Overview
+        </p>
         <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
           Dashboard
         </h1>
@@ -198,11 +268,39 @@ export function AdminOverview() {
       </header>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <KpiCard label="Total users" value="0" delta="0% week" deltaPositive icon={Users} tone="ink" />
+        <KpiCard
+          label="Total users"
+          value="0"
+          delta="0% week"
+          deltaPositive
+          icon={Users}
+          tone="ink"
+        />
         <KpiCard label="Active competitions" value="0" icon={Trophy} tone="sky" />
-        <KpiCard label="Tickets sold (7 days)" value="0" sub={formatNaira(0)} delta="0%" deltaPositive icon={Ticket} tone="lemon" />
-        <KpiCard label="Revenue (MTD)" value={formatNaira(0)} delta="0%" deltaPositive icon={DollarSign} tone="coral" />
-        <KpiCard label="Pending payouts" value="0" sub={formatNaira(0)} icon={Banknote} tone="lilac" />
+        <KpiCard
+          label="Tickets sold (7 days)"
+          value="0"
+          sub={formatNaira(0)}
+          delta="0%"
+          deltaPositive
+          icon={Ticket}
+          tone="lemon"
+        />
+        <KpiCard
+          label="Revenue (MTD)"
+          value={formatNaira(0)}
+          delta="0%"
+          deltaPositive
+          icon={DollarSign}
+          tone="coral"
+        />
+        <KpiCard
+          label="Pending payouts"
+          value="0"
+          sub={formatNaira(0)}
+          icon={Banknote}
+          tone="lilac"
+        />
         <KpiCard label="Referral pool (all-time)" value={formatNaira(0)} icon={Gift} tone="mint" />
       </section>
 
@@ -242,7 +340,9 @@ export function AdminOverview() {
                 <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
                   Sign-ups
                 </p>
-                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">Recent registrations</h3>
+                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">
+                  Recent registrations
+                </h3>
               </div>
               <Button variant="outline" size="sm">
                 <UserPlus className="size-3.5" /> Invite
@@ -255,7 +355,9 @@ export function AdminOverview() {
                     <TableHead className="px-0 py-3 font-extrabold text-ink/65">User</TableHead>
                     <TableHead className="py-3 font-extrabold text-ink/65">Date</TableHead>
                     <TableHead className="py-3 font-extrabold text-ink/65">Verified</TableHead>
-                    <TableHead className="py-3 text-right font-extrabold text-ink/65">Action</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                      Action
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-ink/10">
@@ -264,7 +366,11 @@ export function AdminOverview() {
                       <TableCell className="px-0 py-3">
                         <div className="flex items-center gap-3">
                           <Avatar className={cn("size-9 ring-2 ring-paper", tintBg[r.tint])}>
-                            <AvatarFallback className={cn("text-xs font-extrabold", tintBg[r.tint])}>{r.initials}</AvatarFallback>
+                            <AvatarFallback
+                              className={cn("text-xs font-extrabold", tintBg[r.tint])}
+                            >
+                              {r.initials}
+                            </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
                             <p className="truncate text-sm font-extrabold text-ink">{r.name}</p>
@@ -273,13 +379,20 @@ export function AdminOverview() {
                         </div>
                       </TableCell>
                       <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1"><Clock className="size-3" />{r.date}</span>
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="size-3" />
+                          {r.date}
+                        </span>
                       </TableCell>
                       <TableCell className="py-3">
                         {r.verified ? (
-                          <Badge className="rounded-full bg-mint/30 px-2 py-0.5 text-[10px] font-extrabold text-ink ring-0">Verified</Badge>
+                          <Badge className="rounded-full bg-mint/30 px-2 py-0.5 text-[10px] font-extrabold text-ink ring-0">
+                            Verified
+                          </Badge>
                         ) : (
-                          <Badge className="rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-extrabold text-ink ring-0">Pending</Badge>
+                          <Badge className="rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-extrabold text-ink ring-0">
+                            Pending
+                          </Badge>
                         )}
                       </TableCell>
                       <TableCell className="py-3 text-right">
@@ -302,7 +415,9 @@ export function AdminOverview() {
                 <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
                   Finance
                 </p>
-                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">Pending payouts</h3>
+                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">
+                  Pending payouts
+                </h3>
               </div>
               <Badge className="rounded-full bg-coral/15 px-2.5 py-1 text-[10px] font-extrabold text-coral ring-0">
                 0 items
@@ -310,13 +425,20 @@ export function AdminOverview() {
             </div>
             <div className="mt-4 space-y-2.5">
               {PAYOUTS_QUEUE.map((p, i) => (
-                <div key={i} className="flex items-center gap-3 rounded-2xl bg-cream/50 px-3 py-2.5">
+                <div
+                  key={i}
+                  className="flex items-center gap-3 rounded-2xl bg-cream/50 px-3 py-2.5"
+                >
                   <Avatar className={cn("size-9 ring-2 ring-paper", tintBg[p.tint])}>
-                    <AvatarFallback className={cn("text-xs font-extrabold", tintBg[p.tint])}>{p.initials}</AvatarFallback>
+                    <AvatarFallback className={cn("text-xs font-extrabold", tintBg[p.tint])}>
+                      {p.initials}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-extrabold text-ink">{p.user}</p>
-                    <p className="truncate text-[11px] font-bold text-ink/55">{formatNaira(p.amount)}</p>
+                    <p className="truncate text-[11px] font-bold text-ink/55">
+                      {formatNaira(p.amount)}
+                    </p>
                   </div>
                   <Badge className="rounded-full bg-lemon/40 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-ink ring-0">
                     Pending
@@ -337,7 +459,9 @@ export function AdminOverview() {
                 <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
                   Competitions
                 </p>
-                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">Lifecycle status</h3>
+                <h3 className="mt-1 font-display text-xl font-extrabold text-ink">
+                  Lifecycle status
+                </h3>
               </div>
               <Button asChild variant="outline" size="sm">
                 <a href="/admin/competitions">View all</a>
@@ -350,14 +474,18 @@ export function AdminOverview() {
                     <TableHead className="px-0 py-3 font-extrabold text-ink/65">Name</TableHead>
                     <TableHead className="py-3 font-extrabold text-ink/65">Entries</TableHead>
                     <TableHead className="py-3 font-extrabold text-ink/65">Status</TableHead>
-                    <TableHead className="py-3 text-right font-extrabold text-ink/65">Next</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                      Next
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-ink/10">
                   {COMP_LIFECYCLE.map((c, i) => (
                     <TableRow key={i} className="hover:bg-lilac/10">
                       <TableCell className="px-0 py-3">
-                        <p className="truncate text-sm font-extrabold text-ink max-w-[220px]">{c.name}</p>
+                        <p className="truncate text-sm font-extrabold text-ink max-w-[220px]">
+                          {c.name}
+                        </p>
                       </TableCell>
                       <TableCell className="py-3">
                         <div className="flex items-center gap-2">
@@ -368,7 +496,12 @@ export function AdminOverview() {
                         </div>
                       </TableCell>
                       <TableCell className="py-3">
-                        <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0", statusTone[c.status])}>
+                        <Badge
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                            statusTone[c.status],
+                          )}
+                        >
                           {c.status}
                         </Badge>
                       </TableCell>

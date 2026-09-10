@@ -38,12 +38,24 @@ const l2: TreeNode[] = [
 function genL3(l2i: number): TreeNode[] {
   const names = [
     ["Wale O.", "Bisi A.", "Uche J.", "Aisha M.", "Tunde L.", "Zainab I.", "Kunle O.", "Remi S."],
-    ["Blessing C.", "Emeka N.", "Fatima A.", "Segun O.", "Adebayo T.", "Nosa E.", "Ibrahim K.", "Temitope R."],
+    [
+      "Blessing C.",
+      "Emeka N.",
+      "Fatima A.",
+      "Segun O.",
+      "Adebayo T.",
+      "Nosa E.",
+      "Ibrahim K.",
+      "Temitope R.",
+    ],
   ];
   const use = names[l2i % 2];
   return use.map((n, i) => ({
     name: n,
-    initials: n.split(" ").map((s) => s[0]).join(""),
+    initials: n
+      .split(" ")
+      .map((s) => s[0])
+      .join(""),
     recruits: Math.floor(Math.random() * 2),
     active: i < (l2i === 0 ? 2 : l2i === 1 ? 3 : l2i === 2 ? 1 : 2),
   }));
@@ -111,12 +123,18 @@ function NodeCard({
         className={cn(
           "grid size-12 shrink-0 place-items-center rounded-full font-display text-xs font-extrabold ring-2",
           earning ? levelRing[level] : "ring-ink/10",
-          n.active ? (level <= 4 ? "bg-coral/10 text-coral" : "bg-lilac/25 text-ink") : "bg-ink/5 text-ink/50 opacity-70"
+          n.active
+            ? level <= 4
+              ? "bg-coral/10 text-coral"
+              : "bg-lilac/25 text-ink"
+            : "bg-ink/5 text-ink/50 opacity-70",
         )}
       >
         {n.initials}
       </div>
-      <p className="mt-2 text-[11px] font-extrabold text-ink truncate max-w-[80px] text-center">{n.name}</p>
+      <p className="mt-2 text-[11px] font-extrabold text-ink truncate max-w-[80px] text-center">
+        {n.name}
+      </p>
       <p className="text-[10px] font-bold text-ink/45">{n.recruits} recruits</p>
     </div>
   );
@@ -145,14 +163,12 @@ export function DashboardReferralsPage() {
   return (
     <DashboardAppShell
       title="Referrals"
-      breadcrumbs={[
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Referrals" },
-      ]}
+      breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Referrals" }]}
     >
       <div className="space-y-6">
         <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
-          Invite friends and earn up to 5 levels of commissions every time someone you bring in enters a competition.
+          Invite friends and earn up to 5 levels of commissions every time someone you bring in
+          enters a competition.
         </p>
 
         <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
@@ -166,36 +182,51 @@ export function DashboardReferralsPage() {
               </span>
             </div>
             <div className="flex gap-2 flex-wrap">
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => copy("url", refUrl)}
-              >
+              <Button variant="primary" size="md" onClick={() => copy("url", refUrl)}>
                 {copied === "url" ? (
-                  <><Check className="size-4" /> Copied</>
+                  <>
+                    <Check className="size-4" /> Copied
+                  </>
                 ) : (
-                  <><Copy className="size-4" /> Copy</>
+                  <>
+                    <Copy className="size-4" /> Copy
+                  </>
                 )}
               </Button>
               <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-ink/5">
                 <button
                   className="grid size-10 place-items-center rounded-full text-ink/60 hover:bg-green-100 hover:text-green-700 transition-colors"
                   aria-label="Share on WhatsApp"
-                  onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent("Join Raffila and win big prizes! " + refUrl)}`, "_blank")}
+                  onClick={() =>
+                    window.open(
+                      `https://wa.me/?text=${encodeURIComponent("Join Raffila and win big prizes! " + refUrl)}`,
+                      "_blank",
+                    )
+                  }
                 >
                   <MessageCircle className="size-4" />
                 </button>
                 <button
                   className="grid size-10 place-items-center rounded-full text-ink/60 hover:bg-sky/20 hover:text-sky-700 transition-colors"
                   aria-label="Share on Telegram"
-                  onClick={() => window.open(`https://t.me/share/url?url=${encodeURIComponent(refUrl)}&text=${encodeURIComponent("Join Raffila!")}`, "_blank")}
+                  onClick={() =>
+                    window.open(
+                      `https://t.me/share/url?url=${encodeURIComponent(refUrl)}&text=${encodeURIComponent("Join Raffila!")}`,
+                      "_blank",
+                    )
+                  }
                 >
                   <Send className="size-4" />
                 </button>
                 <button
                   className="grid size-10 place-items-center rounded-full text-ink/60 hover:bg-ink/5 transition-colors"
                   aria-label="Share on Twitter"
-                  onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(refUrl)}&text=${encodeURIComponent("Join Raffila and win big prizes!")}`, "_blank")}
+                  onClick={() =>
+                    window.open(
+                      `https://twitter.com/intent/tweet?url=${encodeURIComponent(refUrl)}&text=${encodeURIComponent("Join Raffila and win big prizes!")}`,
+                      "_blank",
+                    )
+                  }
                 >
                   <Twitter className="size-4" />
                 </button>
@@ -218,9 +249,7 @@ export function DashboardReferralsPage() {
               <p className="mt-3 font-display text-2xl font-extrabold text-ink sm:text-3xl">
                 {formatNaira(0)}
               </p>
-              <p className="mt-1 text-xs font-bold text-ink/45">
-                {formatNaira(0)} pending
-              </p>
+              <p className="mt-1 text-xs font-bold text-ink/45">{formatNaira(0)} pending</p>
             </div>
           </div>
         </div>
@@ -245,7 +274,7 @@ export function DashboardReferralsPage() {
                   className={cn(
                     "rounded-full px-2.5 py-1 ring-2",
                     levelRing[lv],
-                    lv <= 4 ? "bg-coral/10 text-coral" : "bg-ink/5 text-ink/50"
+                    lv <= 4 ? "bg-coral/10 text-coral" : "bg-ink/5 text-ink/50",
                   )}
                 >
                   L{lv} · {levelPct[lv as Commission["level"]]}
@@ -257,10 +286,12 @@ export function DashboardReferralsPage() {
           <div className="mt-8 space-y-10">
             <div className="flex justify-center">
               <div className="flex flex-col items-center">
-                <div className={cn(
-                  "grid size-14 place-items-center rounded-full bg-coral text-white font-display text-sm font-extrabold ring-4",
-                  levelRing[1]
-                )}>
+                <div
+                  className={cn(
+                    "grid size-14 place-items-center rounded-full bg-coral text-white font-display text-sm font-extrabold ring-4",
+                    levelRing[1],
+                  )}
+                >
                   TA
                 </div>
                 <p className="mt-2 text-[11px] font-extrabold text-ink">Tunmise A. (You)</p>
@@ -290,9 +321,11 @@ export function DashboardReferralsPage() {
 
             <div className="flex justify-center">
               <div className="flex flex-wrap gap-5 justify-center max-w-[680px]">
-                {l2.flatMap((_, l2i) => genL3(l2i).slice(0, 2)).map((n, i) => (
-                  <NodeCard key={"l3" + i} node={n} level={3} />
-                ))}
+                {l2
+                  .flatMap((_, l2i) => genL3(l2i).slice(0, 2))
+                  .map((n, i) => (
+                    <NodeCard key={"l3" + i} node={n} level={3} />
+                  ))}
               </div>
             </div>
 
@@ -307,14 +340,26 @@ export function DashboardReferralsPage() {
             <div className="flex justify-center">
               <div className="flex flex-wrap gap-4 justify-center max-w-[760px] opacity-70">
                 {Array.from({ length: 8 }).map((_, i) => {
-                  const names = ["Kola B.", "Rita M.", "Ayo J.", "Halima U.", "Samuel F.", "Chioma O.", "Musa D.", "Onyeka G."];
+                  const names = [
+                    "Kola B.",
+                    "Rita M.",
+                    "Ayo J.",
+                    "Halima U.",
+                    "Samuel F.",
+                    "Chioma O.",
+                    "Musa D.",
+                    "Onyeka G.",
+                  ];
                   const n = names[i];
                   return (
                     <NodeCard
                       key={"l4" + i}
                       node={{
                         name: n,
-                        initials: n.split(" ").map((s) => s[0]).join(""),
+                        initials: n
+                          .split(" ")
+                          .map((s) => s[0])
+                          .join(""),
                         recruits: 0,
                         active: i < 5,
                       }}
@@ -381,7 +426,7 @@ export function DashboardReferralsPage() {
                         <span
                           className={cn(
                             "inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold",
-                            levelBadge[c.level]
+                            levelBadge[c.level],
                           )}
                         >
                           L{c.level}
@@ -401,7 +446,7 @@ export function DashboardReferralsPage() {
                       <span
                         className={cn(
                           "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
-                          c.status === "AVAILABLE" ? "bg-mint/30 text-ink" : "bg-lemon/40 text-ink"
+                          c.status === "AVAILABLE" ? "bg-mint/30 text-ink" : "bg-lemon/40 text-ink",
                         )}
                       >
                         {c.status}
@@ -432,7 +477,13 @@ export function DashboardReferralsPage() {
       </div>
 
       {payoutOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center" onClick={() => { setPayoutOpen(false); setPayoutSubmitted(false); }}>
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center"
+          onClick={() => {
+            setPayoutOpen(false);
+            setPayoutSubmitted(false);
+          }}
+        >
           <div
             className="w-full max-w-md rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
@@ -447,7 +498,10 @@ export function DashboardReferralsPage() {
                 </h2>
               </div>
               <button
-                onClick={() => { setPayoutOpen(false); setPayoutSubmitted(false); }}
+                onClick={() => {
+                  setPayoutOpen(false);
+                  setPayoutSubmitted(false);
+                }}
                 className="grid size-10 shrink-0 place-items-center rounded-full bg-cream text-ink ring-1 ring-ink/5"
               >
                 <X className="size-5" />
@@ -472,7 +526,10 @@ export function DashboardReferralsPage() {
                   variant="primary"
                   size="lg"
                   className="mt-6 w-full"
-                  onClick={() => { setPayoutOpen(false); setPayoutSubmitted(false); }}
+                  onClick={() => {
+                    setPayoutOpen(false);
+                    setPayoutSubmitted(false);
+                  }}
                 >
                   Done
                 </Button>
@@ -497,7 +554,9 @@ export function DashboardReferralsPage() {
                   <Field
                     label="Account number"
                     value={payoutForm.accountNo}
-                    onChange={(v) => setPayoutForm((f) => ({ ...f, accountNo: v.replace(/\D/g, "").slice(0, 10) }))}
+                    onChange={(v) =>
+                      setPayoutForm((f) => ({ ...f, accountNo: v.replace(/\D/g, "").slice(0, 10) }))
+                    }
                     placeholder="10 digits"
                   />
                   <Field
@@ -537,7 +596,8 @@ export function DashboardReferralsPage() {
                   size="lg"
                   className="mt-6 w-full"
                   onClick={() => {
-                    if (!payoutForm.accountNo || !payoutForm.accountName || !payoutForm.amount) return;
+                    if (!payoutForm.accountNo || !payoutForm.accountName || !payoutForm.amount)
+                      return;
                     setPayoutSubmitted(true);
                   }}
                   disabled={!payoutForm.accountNo || !payoutForm.accountName || !payoutForm.amount}
@@ -564,10 +624,22 @@ function StatCard({ label, value, tone }: { label: string; value: string; tone: 
   );
 }
 
-function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange?: (v: string) => void; placeholder?: string }) {
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange?: (v: string) => void;
+  placeholder?: string;
+}) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">{label}</label>
+      <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+        {label}
+      </label>
       <input
         value={value}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}

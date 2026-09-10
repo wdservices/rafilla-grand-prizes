@@ -12,7 +12,9 @@ export const Route = createFileRoute("/competitions/$slug")({
     const competition = getCompetition(params.slug);
     const priceStr = competition ? formatNaira(competition.entryPrice) : "";
     const title = competition
-      ? `${competition.title} — Win ${competition.make || ""} ${competition.model || ""} for ${priceStr} · Raffila`.replace(/\s+/g, " ").trim()
+      ? `${competition.title} — Win ${competition.make || ""} ${competition.model || ""} for ${priceStr} · Raffila`
+          .replace(/\s+/g, " ")
+          .trim()
       : `Competition: ${params.slug} — Raffila`;
     const description = competition
       ? `${competition.description.slice(0, 135)} Entry ${formatNaira(competition.entryPrice)}. Prize value ${formatNaira(competition.prizeValueKobo)}. Live draw ${competition.drawDate}. raffila.com`
@@ -28,8 +30,12 @@ export const Route = createFileRoute("/competitions/$slug")({
       description: competition?.description ?? "Raffila competition",
       url: canonical,
       image: [ogImage],
-      startDate: competition ? new Date(Date.now() + (365 - competition.daysUntilClose) * 86400000).toISOString() : new Date().toISOString(),
-      endDate: competition ? new Date(Date.now() + (365 - competition.daysUntilClose + 1) * 86400000).toISOString() : new Date(Date.now() + 86400000).toISOString(),
+      startDate: competition
+        ? new Date(Date.now() + (365 - competition.daysUntilClose) * 86400000).toISOString()
+        : new Date().toISOString(),
+      endDate: competition
+        ? new Date(Date.now() + (365 - competition.daysUntilClose + 1) * 86400000).toISOString()
+        : new Date(Date.now() + 86400000).toISOString(),
       eventStatus: "https://schema.org/EventScheduled",
       eventAttendanceMode: "https://schema.org/OnlineEventAttendanceMode",
       location: {
@@ -90,7 +96,10 @@ export const Route = createFileRoute("/competitions/$slug")({
         { name: "twitter:image", content: ogImage },
         { name: "twitter:site", content: "@raffilang" },
         { name: "twitter:creator", content: "@raffilang" },
-        { "data-head-children": true, __html: `<script type="application/ld+json">${eventJsonLd}</script>` } as any,
+        {
+          "data-head-children": true,
+          __html: `<script type="application/ld+json">${eventJsonLd}</script>`,
+        } as any,
       ],
       links: [
         { rel: "canonical", href: canonical },

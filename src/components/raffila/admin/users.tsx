@@ -105,11 +105,89 @@ const statusPill: Record<Status, string> = {
 };
 
 const TINTS: MockUser["tint"][] = ["sky", "mint", "coral", "lemon", "lilac", "ink"];
-const ROLES: Role[] = ["USER", "USER", "USER", "USER", "USER", "USER", "PARTNER", "USER", "USER", "ADMIN", "USER", "PARTNER"];
-const STATUSES: Status[] = ["ACTIVE", "ACTIVE", "ACTIVE", "ACTIVE", "SUSPENDED", "ACTIVE", "ACTIVE", "ACTIVE", "ACTIVE", "ACTIVE", "SUSPENDED", "ACTIVE"];
+const ROLES: Role[] = [
+  "USER",
+  "USER",
+  "USER",
+  "USER",
+  "USER",
+  "USER",
+  "PARTNER",
+  "USER",
+  "USER",
+  "ADMIN",
+  "USER",
+  "PARTNER",
+];
+const STATUSES: Status[] = [
+  "ACTIVE",
+  "ACTIVE",
+  "ACTIVE",
+  "ACTIVE",
+  "SUSPENDED",
+  "ACTIVE",
+  "ACTIVE",
+  "ACTIVE",
+  "ACTIVE",
+  "ACTIVE",
+  "SUSPENDED",
+  "ACTIVE",
+];
 
-const FIRST_NAMES = ["Aisha", "Tunde", "Chidi", "Amaka", "Ifeoma", "Uche", "Bola", "Zainab", "Kelechi", "Ngozi", "Obioma", "Femi", "Kemi", "Olu", "Tobi", "Dami", "Sola", "Ade", "Nneka", "Uju", "Tega", "Ovie", "Wale", "Musa", "Hauwa"];
-const LAST_NAMES = ["Mohammed", "Okafor", "Kelechi", "Peace", "Dike", "Nwankwo", "Tinubu", "Abubakar", "Okonkwo", "Okafor", "Ibe", "Adesanya", "Adewale", "Olumide", "Bakare", "Ogunleye", "Sanni", "Oyelaran", "Eze", "Chukwu", "Akpobome", "Ejeviome", "Ogunwande", "Musa", "Shehu"];
+const FIRST_NAMES = [
+  "Aisha",
+  "Tunde",
+  "Chidi",
+  "Amaka",
+  "Ifeoma",
+  "Uche",
+  "Bola",
+  "Zainab",
+  "Kelechi",
+  "Ngozi",
+  "Obioma",
+  "Femi",
+  "Kemi",
+  "Olu",
+  "Tobi",
+  "Dami",
+  "Sola",
+  "Ade",
+  "Nneka",
+  "Uju",
+  "Tega",
+  "Ovie",
+  "Wale",
+  "Musa",
+  "Hauwa",
+];
+const LAST_NAMES = [
+  "Mohammed",
+  "Okafor",
+  "Kelechi",
+  "Peace",
+  "Dike",
+  "Nwankwo",
+  "Tinubu",
+  "Abubakar",
+  "Okonkwo",
+  "Okafor",
+  "Ibe",
+  "Adesanya",
+  "Adewale",
+  "Olumide",
+  "Bakare",
+  "Ogunleye",
+  "Sanni",
+  "Oyelaran",
+  "Eze",
+  "Chukwu",
+  "Akpobome",
+  "Ejeviome",
+  "Ogunwande",
+  "Musa",
+  "Shehu",
+];
 
 const EMAIL_DOMAINS = ["raffila.ng", "mail.ng", "gmail.com", "outlook.com", "yahoo.com"];
 const USERS: MockUser[] = Array.from({ length: 25 }, (_, i) => {
@@ -152,20 +230,34 @@ export function AdminUsersPage() {
 
   const filtered = USERS.filter((u) => {
     const s = search.toLowerCase();
-    if (s && !u.name.toLowerCase().includes(s) && !u.email.toLowerCase().includes(s) && !u.username.toLowerCase().includes(s)) return false;
+    if (
+      s &&
+      !u.name.toLowerCase().includes(s) &&
+      !u.email.toLowerCase().includes(s) &&
+      !u.username.toLowerCase().includes(s)
+    )
+      return false;
     switch (filter) {
-      case "Verified": return u.verifiedEmail && u.verifiedPhone && u.verifiedKyc;
-      case "Not verified": return !(u.verifiedEmail && u.verifiedPhone && u.verifiedKyc);
-      case "Suspended": return u.status === "SUSPENDED";
-      default: return true;
+      case "Verified":
+        return u.verifiedEmail && u.verifiedPhone && u.verifiedKyc;
+      case "Not verified":
+        return !(u.verifiedEmail && u.verifiedPhone && u.verifiedKyc);
+      case "Suspended":
+        return u.status === "SUSPENDED";
+      default:
+        return true;
     }
   });
 
   return (
     <AdminShell activeNav="users" title="Users">
       <header className="mb-6">
-        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">Admin · Users</p>
-        <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">Users</h1>
+        <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">
+          Admin · Users
+        </p>
+        <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          Users
+        </h1>
         <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
           Manage all Raffila accounts — view, verify, adjust wallet, suspend, and impersonate.
         </p>
@@ -183,7 +275,11 @@ export function AdminUsersPage() {
                 className="h-11 rounded-full border-0 bg-cream pl-9 pr-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral"
               />
             </div>
-            <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterKey)} className="w-auto">
+            <Tabs
+              value={filter}
+              onValueChange={(v) => setFilter(v as FilterKey)}
+              className="w-auto"
+            >
               <TabsList className="rounded-full bg-cream p-1">
                 {FILTERS.map((f) => (
                   <TabsTrigger
@@ -198,19 +294,35 @@ export function AdminUsersPage() {
             </Tabs>
             <div className="flex items-center gap-2 rounded-full bg-cream px-3 py-2 text-xs font-bold text-ink/65 ring-1 ring-ink/10">
               <Filter className="size-3.5" />
-              <Input type="date" defaultValue="2026-02-01" className="h-7 w-32 border-0 bg-transparent p-0 font-bold text-ink shadow-none focus-visible:ring-0" />
+              <Input
+                type="date"
+                defaultValue="2026-02-01"
+                className="h-7 w-32 border-0 bg-transparent p-0 font-bold text-ink shadow-none focus-visible:ring-0"
+              />
               <span>→</span>
-              <Input type="date" defaultValue="2026-03-12" className="h-7 w-32 border-0 bg-transparent p-0 font-bold text-ink shadow-none focus-visible:ring-0" />
+              <Input
+                type="date"
+                defaultValue="2026-03-12"
+                className="h-7 w-32 border-0 bg-transparent p-0 font-bold text-ink shadow-none focus-visible:ring-0"
+              />
             </div>
             <Select defaultValue="all">
               <SelectTrigger className="h-11 w-40 rounded-full bg-cream px-4 text-sm font-extrabold text-ink shadow-none ring-1 ring-ink/10 focus:ring-coral">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-[22px] bg-paper p-1">
-                <SelectItem value="all" className="rounded-xl font-bold">All roles</SelectItem>
-                <SelectItem value="user" className="rounded-xl font-bold">Users</SelectItem>
-                <SelectItem value="partner" className="rounded-xl font-bold">Partners</SelectItem>
-                <SelectItem value="admin" className="rounded-xl font-bold">Admins</SelectItem>
+                <SelectItem value="all" className="rounded-xl font-bold">
+                  All roles
+                </SelectItem>
+                <SelectItem value="user" className="rounded-xl font-bold">
+                  Users
+                </SelectItem>
+                <SelectItem value="partner" className="rounded-xl font-bold">
+                  Partners
+                </SelectItem>
+                <SelectItem value="admin" className="rounded-xl font-bold">
+                  Admins
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -224,11 +336,17 @@ export function AdminUsersPage() {
                   <TableHead className="py-3 font-extrabold text-ink/65">Phone</TableHead>
                   <TableHead className="py-3 font-extrabold text-ink/65">Role</TableHead>
                   <TableHead className="py-3 font-extrabold text-ink/65">Verified</TableHead>
-                  <TableHead className="py-3 text-right font-extrabold text-ink/65">Entries</TableHead>
-                  <TableHead className="py-3 text-right font-extrabold text-ink/65">Wallet</TableHead>
+                  <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                    Entries
+                  </TableHead>
+                  <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                    Wallet
+                  </TableHead>
                   <TableHead className="py-3 font-extrabold text-ink/65">Created</TableHead>
                   <TableHead className="py-3 font-extrabold text-ink/65">Status</TableHead>
-                  <TableHead className="py-3 text-right font-extrabold text-ink/65">Actions</TableHead>
+                  <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="[&_tr]:border-ink/10">
@@ -237,7 +355,9 @@ export function AdminUsersPage() {
                     <TableCell className="py-3">
                       <div className="flex items-center gap-3">
                         <Avatar className={cn("size-9 ring-2 ring-paper", tintBg[u.tint])}>
-                          <AvatarFallback className={cn("text-xs font-extrabold", tintBg[u.tint])}>{u.initials}</AvatarFallback>
+                          <AvatarFallback className={cn("text-xs font-extrabold", tintBg[u.tint])}>
+                            {u.initials}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 max-w-[200px]">
                           <p className="truncate text-sm font-extrabold text-ink">{u.name}</p>
@@ -245,34 +365,75 @@ export function AdminUsersPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="py-3 text-xs font-bold text-ink/65">{u.username}</TableCell>
-                    <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">{u.phone}</TableCell>
+                    <TableCell className="py-3 text-xs font-bold text-ink/65">
+                      {u.username}
+                    </TableCell>
+                    <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">
+                      {u.phone}
+                    </TableCell>
                     <TableCell className="py-3">
-                      <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0", rolePill[u.role])}>
+                      <Badge
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                          rolePill[u.role],
+                        )}
+                      >
                         {u.role}
                       </Badge>
                     </TableCell>
                     <TableCell className="py-3">
                       <div className="flex items-center gap-1">
-                        <Badge className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0", u.verifiedEmail ? "bg-mint/35 text-ink" : "bg-ink/10 text-ink/50 line-through")}>
+                        <Badge
+                          className={cn(
+                            "rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0",
+                            u.verifiedEmail
+                              ? "bg-mint/35 text-ink"
+                              : "bg-ink/10 text-ink/50 line-through",
+                          )}
+                        >
                           <Mail className="mr-0.5 size-2.5" />
                           Email
                         </Badge>
-                        <Badge className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0", u.verifiedPhone ? "bg-mint/35 text-ink" : "bg-ink/10 text-ink/50 line-through")}>
+                        <Badge
+                          className={cn(
+                            "rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0",
+                            u.verifiedPhone
+                              ? "bg-mint/35 text-ink"
+                              : "bg-ink/10 text-ink/50 line-through",
+                          )}
+                        >
                           <Phone className="mr-0.5 size-2.5" />
                           Phone
                         </Badge>
-                        <Badge className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0", u.verifiedKyc ? "bg-mint/35 text-ink" : "bg-ink/10 text-ink/50 line-through")}>
+                        <Badge
+                          className={cn(
+                            "rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0",
+                            u.verifiedKyc
+                              ? "bg-mint/35 text-ink"
+                              : "bg-ink/10 text-ink/50 line-through",
+                          )}
+                        >
                           <ShieldCheck className="mr-0.5 size-2.5" />
                           KYC
                         </Badge>
                       </div>
                     </TableCell>
-                    <TableCell className="py-3 text-right text-xs font-bold text-ink/70">{u.entries.toLocaleString("en-NG")}</TableCell>
-                    <TableCell className="py-3 text-right text-xs font-extrabold text-ink whitespace-nowrap">{formatNaira(u.wallet)}</TableCell>
-                    <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">{u.created}</TableCell>
+                    <TableCell className="py-3 text-right text-xs font-bold text-ink/70">
+                      {u.entries.toLocaleString("en-NG")}
+                    </TableCell>
+                    <TableCell className="py-3 text-right text-xs font-extrabold text-ink whitespace-nowrap">
+                      {formatNaira(u.wallet)}
+                    </TableCell>
+                    <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">
+                      {u.created}
+                    </TableCell>
                     <TableCell className="py-3">
-                      <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0", statusPill[u.status])}>
+                      <Badge
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                          statusPill[u.status],
+                        )}
+                      >
                         {u.status}
                       </Badge>
                     </TableCell>
@@ -283,7 +444,10 @@ export function AdminUsersPage() {
                             <MoreHorizontal className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44 rounded-[22px] bg-paper p-1.5">
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-44 rounded-[22px] bg-paper p-1.5"
+                        >
                           <DropdownMenuLabel className="rounded-xl px-3 py-2 text-[11px] font-extrabold uppercase tracking-wider text-ink/45">
                             {u.name}
                           </DropdownMenuLabel>
@@ -338,13 +502,16 @@ export function AdminUsersPage() {
             </DialogTitle>
             {suspendUser && (
               <DialogDescription className="mt-1 text-sm font-bold text-ink/55">
-                Restrict account access for <span className="font-extrabold text-ink">{suspendUser.name}</span>.
+                Restrict account access for{" "}
+                <span className="font-extrabold text-ink">{suspendUser.name}</span>.
               </DialogDescription>
             )}
           </DialogHeader>
           <div className="space-y-4 px-6 py-5">
             <div className="space-y-2">
-              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Reason for suspension</Label>
+              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                Reason for suspension
+              </Label>
               <Textarea
                 value={suspendReason}
                 onChange={(e) => setSuspendReason(e.target.value)}
@@ -353,18 +520,29 @@ export function AdminUsersPage() {
               />
             </div>
             <div className="flex items-center gap-3 rounded-2xl bg-cream px-4 py-3">
-              <Checkbox id="logout-all" checked={logoutSessions} onCheckedChange={(v) => setLogoutSessions(!!v)} />
-              <Label htmlFor="logout-all" className="flex-1 cursor-pointer text-sm font-bold text-ink/75">
+              <Checkbox
+                id="logout-all"
+                checked={logoutSessions}
+                onCheckedChange={(v) => setLogoutSessions(!!v)}
+              />
+              <Label
+                htmlFor="logout-all"
+                className="flex-1 cursor-pointer text-sm font-bold text-ink/75"
+              >
                 Also log out all active sessions for this user
               </Label>
             </div>
           </div>
           <DialogFooter className="border-t border-ink/10 px-6 py-4">
-            <Button variant="outline" onClick={() => setSuspendUser(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setSuspendUser(null)}>
+              Cancel
+            </Button>
             <Button
               variant="primary"
               onClick={() => {
-                toast.success("User suspended", { description: `${suspendUser?.name} · action logged to audit trail.` });
+                toast.success("User suspended", {
+                  description: `${suspendUser?.name} · action logged to audit trail.`,
+                });
                 setSuspendUser(null);
                 setSuspendReason("");
               }}
@@ -386,13 +564,16 @@ export function AdminUsersPage() {
             </DialogTitle>
             {walletUser && (
               <DialogDescription className="mt-1 text-sm font-bold text-ink/55">
-                <span className="font-extrabold text-ink">{walletUser.name}</span> · current balance {formatNaira(walletUser.wallet)}
+                <span className="font-extrabold text-ink">{walletUser.name}</span> · current balance{" "}
+                {formatNaira(walletUser.wallet)}
               </DialogDescription>
             )}
           </DialogHeader>
           <div className="space-y-4 px-6 py-5">
             <div className="space-y-2">
-              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Adjustment type</Label>
+              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                Adjustment type
+              </Label>
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   variant={walletType === "credit" ? "primary" : "outline"}
@@ -411,9 +592,13 @@ export function AdminUsersPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Amount (₦)</Label>
+              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                Amount (₦)
+              </Label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">₦</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">
+                  ₦
+                </span>
                 <Input
                   type="number"
                   value={walletAmount}
@@ -424,7 +609,9 @@ export function AdminUsersPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Reason / note</Label>
+              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                Reason / note
+              </Label>
               <Textarea
                 value={walletReason}
                 onChange={(e) => setWalletReason(e.target.value)}
@@ -433,14 +620,23 @@ export function AdminUsersPage() {
               />
             </div>
             <div className="flex items-center gap-3 rounded-2xl bg-cream px-4 py-3">
-              <Checkbox id="email-user" checked={walletEmail} onCheckedChange={(v) => setWalletEmail(!!v)} />
-              <Label htmlFor="email-user" className="flex-1 cursor-pointer text-sm font-bold text-ink/75">
+              <Checkbox
+                id="email-user"
+                checked={walletEmail}
+                onCheckedChange={(v) => setWalletEmail(!!v)}
+              />
+              <Label
+                htmlFor="email-user"
+                className="flex-1 cursor-pointer text-sm font-bold text-ink/75"
+              >
                 Email user a transaction confirmation
               </Label>
             </div>
           </div>
           <DialogFooter className="border-t border-ink/10 px-6 py-4">
-            <Button variant="outline" onClick={() => setWalletUser(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setWalletUser(null)}>
+              Cancel
+            </Button>
             <Button
               variant="primary"
               onClick={() => {

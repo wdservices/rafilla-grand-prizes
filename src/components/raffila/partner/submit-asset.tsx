@@ -51,9 +51,19 @@ import {
 import { formatNaira } from "@/lib/utils";
 
 type Step = 1 | 2 | 3 | 4;
-type Category = "Auto" | "Watches" | "Jewelry" | "Electronics" | "Real Estate" | "Home" | "Art" | "Experiences";
+type Category =
+  "Auto" | "Watches" | "Jewelry" | "Electronics" | "Real Estate" | "Home" | "Art" | "Experiences";
 
-const CATEGORIES: Category[] = ["Auto", "Watches", "Jewelry", "Electronics", "Real Estate", "Home", "Art", "Experiences"];
+const CATEGORIES: Category[] = [
+  "Auto",
+  "Watches",
+  "Jewelry",
+  "Electronics",
+  "Real Estate",
+  "Home",
+  "Art",
+  "Experiences",
+];
 const CAT_ICON: Record<Category, React.ReactNode> = {
   Auto: <Car className="w-5 h-5" />,
   Watches: <Watch className="w-5 h-5" />,
@@ -64,7 +74,15 @@ const CAT_ICON: Record<Category, React.ReactNode> = {
   Art: <Gem className="w-5 h-5" />,
   Experiences: <Sparkles className="w-5 h-5" />,
 };
-const CONDITIONS = ["Brand New", "Brand New (Sealed)", "Like New (0-6 months)", "Excellent (6-18 months)", "Good (1-3 years)", "Used (3+ years)", "Certified Pre-Owned"];
+const CONDITIONS = [
+  "Brand New",
+  "Brand New (Sealed)",
+  "Like New (0-6 months)",
+  "Excellent (6-18 months)",
+  "Good (1-3 years)",
+  "Used (3+ years)",
+  "Certified Pre-Owned",
+];
 
 interface MediaSlot {
   id: number;
@@ -126,9 +144,9 @@ export function PartnerSubmitAssetPage() {
       toast.error("You must agree to all terms");
       return;
     }
-    setStep((s) => Math.min(4, (s + 1)) as Step);
+    setStep((s) => Math.min(4, s + 1) as Step);
   };
-  const goBack = () => setStep((s) => Math.max(1, (s - 1)) as Step);
+  const goBack = () => setStep((s) => Math.max(1, s - 1) as Step);
 
   const doSubmit = () => {
     toast.loading("Submitting asset for review...", { id: "sub" });
@@ -150,7 +168,8 @@ export function PartnerSubmitAssetPage() {
               <div>
                 <h2 className="font-display text-3xl text-ink mb-1">Pending review ✅</h2>
                 <p className="font-body text-ink/60">
-                  Your asset has been submitted successfully. Raffila team will review within 24 hours.
+                  Your asset has been submitted successfully. Raffila team will review within 24
+                  hours.
                 </p>
               </div>
               <Card className="bg-paper border-ink/10 text-left">
@@ -161,20 +180,28 @@ export function PartnerSubmitAssetPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/50">Category</span>
-                    <Badge variant="outline" className="rounded-full">{category || "—"}</Badge>
+                    <Badge variant="outline" className="rounded-full">
+                      {category || "—"}
+                    </Badge>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/50">Market value</span>
-                    <span className="font-display font-bold text-coral">{formatNaira(marketValueKobo)}</span>
+                    <span className="font-display font-bold text-coral">
+                      {formatNaira(marketValueKobo)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/50">Media uploaded</span>
-                    <span className="font-semibold">{filledSlots} images{videoUrl ? " + 360 video" : ""}</span>
+                    <span className="font-semibold">
+                      {filledSlots} images{videoUrl ? " + 360 video" : ""}
+                    </span>
                   </div>
                   <Separator />
                   <div className="flex justify-between">
                     <span className="text-ink/50">Submission ID</span>
-                    <span className="font-mono text-ink/70">LST-PENDING-{String(Math.floor(Math.random() * 900000) + 100000)}</span>
+                    <span className="font-mono text-ink/70">
+                      LST-PENDING-{String(Math.floor(Math.random() * 900000) + 100000)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/50">Est. review</span>
@@ -200,7 +227,13 @@ export function PartnerSubmitAssetPage() {
                     setDescription("");
                     setSerialNo("");
                     setVideoUrl("");
-                    setMedia(Array.from({ length: 5 }).map((_, i) => ({ id: i, url: null, primary: i === 0 })));
+                    setMedia(
+                      Array.from({ length: 5 }).map((_, i) => ({
+                        id: i,
+                        url: null,
+                        primary: i === 0,
+                      })),
+                    );
                     setAgreeAssign(false);
                     setAgreeIndemnity(false);
                     setAgreeTos(false);
@@ -241,21 +274,29 @@ export function PartnerSubmitAssetPage() {
                 const active = step === s.n;
                 return (
                   <div key={s.n} className="flex items-start gap-3">
-                    <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center border-2 text-sm font-display font-bold transition ${
-                      done ? "bg-mint/40 border-mint text-ink"
-                      : active ? "bg-coral border-coral text-white shadow-md shadow-coral/30"
-                      : "bg-paper border-ink/15 text-ink/40"
-                    }`}>
+                    <div
+                      className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center border-2 text-sm font-display font-bold transition ${
+                        done
+                          ? "bg-mint/40 border-mint text-ink"
+                          : active
+                            ? "bg-coral border-coral text-white shadow-md shadow-coral/30"
+                            : "bg-paper border-ink/15 text-ink/40"
+                      }`}
+                    >
                       {done ? <CheckCheck className="w-4 h-4" /> : s.n}
                     </div>
                     <div className="min-w-0 hidden sm:block">
-                      <p className={`font-display text-sm leading-tight ${active || done ? "text-ink" : "text-ink/40"}`}>
+                      <p
+                        className={`font-display text-sm leading-tight ${active || done ? "text-ink" : "text-ink/40"}`}
+                      >
                         {s.title}
                       </p>
                       <p className="text-[11px] text-ink/40 font-body">{s.desc}</p>
                     </div>
                     {i < steps.length - 1 && (
-                      <div className={`hidden sm:block h-0.5 flex-1 mt-4 ${done ? "bg-mint" : "bg-ink/10"}`} />
+                      <div
+                        className={`hidden sm:block h-0.5 flex-1 mt-4 ${done ? "bg-mint" : "bg-ink/10"}`}
+                      />
                     )}
                   </div>
                 );
@@ -281,7 +322,9 @@ export function PartnerSubmitAssetPage() {
                           }`}
                           onClick={() => setCategory(c)}
                         >
-                          <span className={`p-1.5 rounded-lg ${category === c ? "bg-coral text-white" : "bg-cream"}`}>
+                          <span
+                            className={`p-1.5 rounded-lg ${category === c ? "bg-coral text-white" : "bg-cream"}`}
+                          >
                             {CAT_ICON[c]}
                           </span>
                           <span className="font-body font-semibold text-sm">{c}</span>
@@ -314,7 +357,9 @@ export function PartnerSubmitAssetPage() {
                         onChange={(e) => setMarketValue(e.target.value.replace(/[^\d]/g, ""))}
                       />
                       {marketValue && (
-                        <p className="text-xs text-ink/50 font-body">= {formatNaira(marketValueKobo)} · 85% payout share</p>
+                        <p className="text-xs text-ink/50 font-body">
+                          = {formatNaira(marketValueKobo)} · 85% payout share
+                        </p>
                       )}
                     </div>
 
@@ -327,7 +372,11 @@ export function PartnerSubmitAssetPage() {
                           <SelectValue placeholder="Select condition" />
                         </SelectTrigger>
                         <SelectContent>
-                          {CONDITIONS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                          {CONDITIONS.map((c) => (
+                            <SelectItem key={c} value={c}>
+                              {c}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -355,7 +404,9 @@ export function PartnerSubmitAssetPage() {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                       />
-                      <p className="text-[11px] text-ink/40 font-body text-right">{description.length} / 2000</p>
+                      <p className="text-[11px] text-ink/40 font-body text-right">
+                        {description.length} / 2000
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -368,22 +419,35 @@ export function PartnerSubmitAssetPage() {
                         <p className="font-display text-ink font-bold text-sm">Valuation tips</p>
                       </div>
                       <ul className="text-xs font-body text-ink/70 space-y-1.5 list-disc list-inside">
-                        <li>Set fair market value — underpricing increases entries but reduces yield</li>
+                        <li>
+                          Set fair market value — underpricing increases entries but reduces yield
+                        </li>
                         <li>Use verified sources (Jiji, Cheki, manufacturers)</li>
                         <li>Our team audits every listing before going LIVE</li>
-                        <li>Average approval: <span className="font-bold text-ink">6.2h</span> for complete submissions</li>
+                        <li>
+                          Average approval: <span className="font-bold text-ink">6.2h</span> for
+                          complete submissions
+                        </li>
                       </ul>
                     </CardContent>
                   </Card>
                   <Card className="border-ink/10">
                     <CardHeader className="pb-2">
-                      <CardTitle className="font-display text-ink text-base">Estimated listing preview</CardTitle>
+                      <CardTitle className="font-display text-ink text-base">
+                        Estimated listing preview
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="aspect-video rounded-xl bg-gradient-to-br from-sky/25 via-coral/15 to-lemon/25 flex items-center justify-center">
-                        {category ? CAT_ICON[category] : <Camera className="w-10 h-10 text-ink/20" />}
+                        {category ? (
+                          CAT_ICON[category]
+                        ) : (
+                          <Camera className="w-10 h-10 text-ink/20" />
+                        )}
                       </div>
-                      <p className="font-display text-ink text-lg leading-tight">{assetName || "Your asset title"}</p>
+                      <p className="font-display text-ink text-lg leading-tight">
+                        {assetName || "Your asset title"}
+                      </p>
                       <div className="flex items-center justify-between text-xs font-body">
                         <span className="text-ink/50">{category || "Category"}</span>
                         <Badge variant="outline" className="rounded-full bg-cream">
@@ -392,7 +456,9 @@ export function PartnerSubmitAssetPage() {
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between">
-                        <p className="text-[11px] text-ink/50 uppercase tracking-wider font-body">Market value</p>
+                        <p className="text-[11px] text-ink/50 uppercase tracking-wider font-body">
+                          Market value
+                        </p>
                         <p className="font-display text-coral font-bold text-xl">
                           {marketValue ? formatNaira(marketValueKobo) : "—"}
                         </p>
@@ -423,16 +489,22 @@ export function PartnerSubmitAssetPage() {
                       {m.url ? (
                         <div
                           className={`aspect-square rounded-2xl bg-gradient-to-br ${
-                            idx === 0 ? "from-coral/30 via-lemon/20 to-sky/20"
-                            : idx === 1 ? "from-mint/30 via-sky/15 to-lilac/20"
-                            : idx === 2 ? "from-lemon/30 via-coral/15 to-mint/15"
-                            : idx === 3 ? "from-sky/30 via-lilac/15 to-coral/15"
-                            : "from-lilac/30 via-cream to-coral/10"
+                            idx === 0
+                              ? "from-coral/30 via-lemon/20 to-sky/20"
+                              : idx === 1
+                                ? "from-mint/30 via-sky/15 to-lilac/20"
+                                : idx === 2
+                                  ? "from-lemon/30 via-coral/15 to-mint/15"
+                                  : idx === 3
+                                    ? "from-sky/30 via-lilac/15 to-coral/15"
+                                    : "from-lilac/30 via-cream to-coral/10"
                           } border-2 flex items-center justify-center p-4 relative overflow-hidden ${
                             m.primary ? "border-coral ring-2 ring-coral/30" : "border-ink/10"
                           }`}
                         >
-                          <div className={`p-3 rounded-xl bg-paper/70 backdrop-blur ${idx === 0 ? "text-coral" : idx === 1 ? "text-sky" : "text-ink/70"}`}>
+                          <div
+                            className={`p-3 rounded-xl bg-paper/70 backdrop-blur ${idx === 0 ? "text-coral" : idx === 1 ? "text-sky" : "text-ink/70"}`}
+                          >
                             <Camera className="w-8 h-8" />
                           </div>
                           {m.primary && (
@@ -450,7 +522,9 @@ export function PartnerSubmitAssetPage() {
                             <button
                               className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] bg-paper/90 border border-ink/10 rounded-full px-2 py-0.5 font-body font-semibold text-ink/70 opacity-0 group-hover:opacity-100 transition whitespace-nowrap"
                               onClick={() => {
-                                setMedia(allMedia.map((mm) => ({ ...mm, primary: mm.id === m.id })));
+                                setMedia(
+                                  allMedia.map((mm) => ({ ...mm, primary: mm.id === m.id })),
+                                );
                               }}
                             >
                               Set as primary
@@ -476,7 +550,9 @@ export function PartnerSubmitAssetPage() {
                       onClick={addSlot}
                     >
                       <Plus className="w-7 h-7" />
-                      <span className="text-[10px] font-body font-semibold uppercase tracking-wider">Add more</span>
+                      <span className="text-[10px] font-body font-semibold uppercase tracking-wider">
+                        Add more
+                      </span>
                     </button>
                   )}
                 </div>
@@ -490,7 +566,9 @@ export function PartnerSubmitAssetPage() {
                         <FileVideo className="w-4 h-4 text-coral" /> 360° video walkaround
                       </CardTitle>
                       <CardDescription className="font-body text-xs">
-                        Optional but <span className="font-bold text-ink">boosts entries by 42%</span>. YouTube, Vimeo, or Cloudinary URL.
+                        Optional but{" "}
+                        <span className="font-bold text-ink">boosts entries by 42%</span>. YouTube,
+                        Vimeo, or Cloudinary URL.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -545,7 +623,12 @@ export function PartnerSubmitAssetPage() {
                 <Card className="bg-cream/40 border-ink/10">
                   <CardContent className="p-6 space-y-4">
                     <label className="flex items-start gap-3 cursor-pointer group">
-                      <Checkbox id="t1" checked={agreeAssign} onCheckedChange={(v) => setAgreeAssign(!!v)} className="mt-1 h-5 w-5 rounded-full" />
+                      <Checkbox
+                        id="t1"
+                        checked={agreeAssign}
+                        onCheckedChange={(v) => setAgreeAssign(!!v)}
+                        className="mt-1 h-5 w-5 rounded-full"
+                      />
                       <div>
                         <p className="font-body font-semibold text-ink text-sm group-has-[:checked]:text-coral transition">
                           Asset Assignment & Transfer of Ownership
@@ -554,37 +637,49 @@ export function PartnerSubmitAssetPage() {
                           I irrevocably assign full legal and equitable ownership of the asset (
                           <span className="font-bold text-ink">{assetName || "listed asset"}</span>)
                           to Raffila Ltd. upon draw completion. I warrant I hold unencumbered title
-                          and will execute all transfer documentation within 48 hours of winner notification.
+                          and will execute all transfer documentation within 48 hours of winner
+                          notification.
                         </p>
                       </div>
                     </label>
                     <Separator className="bg-ink/10" />
                     <label className="flex items-start gap-3 cursor-pointer group">
-                      <Checkbox id="t2" checked={agreeIndemnity} onCheckedChange={(v) => setAgreeIndemnity(!!v)} className="mt-1 h-5 w-5 rounded-full" />
+                      <Checkbox
+                        id="t2"
+                        checked={agreeIndemnity}
+                        onCheckedChange={(v) => setAgreeIndemnity(!!v)}
+                        className="mt-1 h-5 w-5 rounded-full"
+                      />
                       <div>
                         <p className="font-body font-semibold text-ink text-sm group-has-[:checked]:text-coral transition">
                           Indemnity & Accuracy Undertaking
                         </p>
                         <p className="text-xs text-ink/60 font-body mt-0.5 leading-relaxed">
                           I indemnify and hold harmless Raffila Ltd., its employees, winners, and
-                          partners from any claim relating to misrepresentation of asset condition, undisclosed
-                          liens, odometer tampering, or counterfeit goods. I agree all submitted information is
-                          true to the best of my knowledge.
+                          partners from any claim relating to misrepresentation of asset condition,
+                          undisclosed liens, odometer tampering, or counterfeit goods. I agree all
+                          submitted information is true to the best of my knowledge.
                         </p>
                       </div>
                     </label>
                     <Separator className="bg-ink/10" />
                     <label className="flex items-start gap-3 cursor-pointer group">
-                      <Checkbox id="t3" checked={agreeTos} onCheckedChange={(v) => setAgreeTos(!!v)} className="mt-1 h-5 w-5 rounded-full" />
+                      <Checkbox
+                        id="t3"
+                        checked={agreeTos}
+                        onCheckedChange={(v) => setAgreeTos(!!v)}
+                        className="mt-1 h-5 w-5 rounded-full"
+                      />
                       <div>
                         <p className="font-body font-semibold text-ink text-sm group-has-[:checked]:text-coral transition">
                           Partner Agreement & Settlement Terms
                         </p>
                         <p className="text-xs text-ink/60 font-body mt-0.5 leading-relaxed">
-                          I acknowledge the <span className="font-bold text-ink">5% platform fee</span> and
-                          <span className="font-bold text-ink"> 85% partner share</span> structure (10% prize pool).
-                          Weekly disbursements every Friday via bank transfer to account on file. I have read and
-                          agree to the Raffila Partner Terms v3.2.
+                          I acknowledge the{" "}
+                          <span className="font-bold text-ink">5% platform fee</span> and
+                          <span className="font-bold text-ink"> 85% partner share</span> structure
+                          (10% prize pool). Weekly disbursements every Friday via bank transfer to
+                          account on file. I have read and agree to the Raffila Partner Terms v3.2.
                         </p>
                       </div>
                     </label>
@@ -608,7 +703,11 @@ export function PartnerSubmitAssetPage() {
                   <Card className="md:col-span-2 border-ink/10 bg-gradient-to-br from-cream/70 to-paper">
                     <CardContent className="p-5">
                       <div className="aspect-[16/9] rounded-2xl bg-gradient-to-br from-coral/25 via-lemon/20 to-sky/25 flex items-center justify-center mb-4 overflow-hidden relative">
-                        {category && <div className="p-4 rounded-2xl bg-paper/60 backdrop-blur text-coral">{CAT_ICON[category as Category]}</div>}
+                        {category && (
+                          <div className="p-4 rounded-2xl bg-paper/60 backdrop-blur text-coral">
+                            {CAT_ICON[category as Category]}
+                          </div>
+                        )}
                         {Array.from({ length: Math.min(filledSlots, 4) }).map((_, i) => (
                           <div
                             key={i}
@@ -628,32 +727,65 @@ export function PartnerSubmitAssetPage() {
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">Asset name</p>
-                          <p className="font-body font-semibold text-ink text-sm">{assetName || "—"}</p>
+                          <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">
+                            Asset name
+                          </p>
+                          <p className="font-body font-semibold text-ink text-sm">
+                            {assetName || "—"}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">Category</p>
-                          <p className="font-body font-semibold text-ink text-sm">{category || "—"}</p>
+                          <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">
+                            Category
+                          </p>
+                          <p className="font-body font-semibold text-ink text-sm">
+                            {category || "—"}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">Condition</p>
-                          <p className="font-body font-semibold text-ink text-sm">{condition || "—"}</p>
+                          <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">
+                            Condition
+                          </p>
+                          <p className="font-body font-semibold text-ink text-sm">
+                            {condition || "—"}
+                          </p>
                         </div>
                         <div>
-                          <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">Market value</p>
-                          <p className="font-display font-bold text-coral">{marketValue ? formatNaira(marketValueKobo) : "—"}</p>
+                          <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">
+                            Market value
+                          </p>
+                          <p className="font-display font-bold text-coral">
+                            {marketValue ? formatNaira(marketValueKobo) : "—"}
+                          </p>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                   <Card className="border-ink/10">
                     <CardHeader className="pb-2">
-                      <CardTitle className="font-display text-ink text-base">Settlement breakdown</CardTitle>
+                      <CardTitle className="font-display text-ink text-base">
+                        Settlement breakdown
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm font-body">
-                      <div className="flex justify-between"><span className="text-ink/60">Ticket value</span><span className="font-semibold">{marketValue ? formatNaira(marketValueKobo) : "—"}</span></div>
-                      <div className="flex justify-between"><span className="text-ink/60">Platform fee (5%)</span><span className="text-ink/70">- {marketValue ? formatNaira(Math.floor(marketValueKobo * 0.05)) : "—"}</span></div>
-                      <div className="flex justify-between"><span className="text-ink/60">Prize pool (10%)</span><span className="text-ink/70">- {marketValue ? formatNaira(Math.floor(marketValueKobo * 0.1)) : "—"}</span></div>
+                      <div className="flex justify-between">
+                        <span className="text-ink/60">Ticket value</span>
+                        <span className="font-semibold">
+                          {marketValue ? formatNaira(marketValueKobo) : "—"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ink/60">Platform fee (5%)</span>
+                        <span className="text-ink/70">
+                          - {marketValue ? formatNaira(Math.floor(marketValueKobo * 0.05)) : "—"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ink/60">Prize pool (10%)</span>
+                        <span className="text-ink/70">
+                          - {marketValue ? formatNaira(Math.floor(marketValueKobo * 0.1)) : "—"}
+                        </span>
+                      </div>
                       <Separator />
                       <div className="flex justify-between bg-mint/20 -mx-2 -mb-2 px-2 py-2 rounded-xl">
                         <span className="font-bold text-ink">Partner share (85%)</span>
@@ -670,12 +802,34 @@ export function PartnerSubmitAssetPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="text-sm font-body space-y-1.5 text-ink/70">
-                      <div className="flex justify-between"><span>Media:</span><span className="font-semibold text-ink">{filledSlots} images{videoUrl ? " + 360 video" : ""}</span></div>
-                      <div className="flex justify-between"><span>Serial/VIN:</span><span className="font-mono text-ink">{serialNo || "—"}</span></div>
-                      <div className="flex justify-between"><span>Terms:</span><span className="text-mint font-semibold">✓ Accepted</span></div>
-                      <div className="flex justify-between"><span>Partner tier:</span><Badge variant="outline" className="rounded-full bg-mint/30 border-mint">Approved</Badge></div>
-                      <div className="flex justify-between"><span>Est. approval:</span><span className="font-semibold text-coral">6.2 hours</span></div>
-                      <div className="flex justify-between"><span>Quality score:</span><span className="font-display font-bold text-mint">A+</span></div>
+                      <div className="flex justify-between">
+                        <span>Media:</span>
+                        <span className="font-semibold text-ink">
+                          {filledSlots} images{videoUrl ? " + 360 video" : ""}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Serial/VIN:</span>
+                        <span className="font-mono text-ink">{serialNo || "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Terms:</span>
+                        <span className="text-mint font-semibold">✓ Accepted</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Partner tier:</span>
+                        <Badge variant="outline" className="rounded-full bg-mint/30 border-mint">
+                          Approved
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Est. approval:</span>
+                        <span className="font-semibold text-coral">6.2 hours</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Quality score:</span>
+                        <span className="font-display font-bold text-mint">A+</span>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -697,11 +851,17 @@ export function PartnerSubmitAssetPage() {
                 <ChevronLeft className="w-4 h-4 mr-1" /> Back
               </Button>
               {step < 4 ? (
-                <Button className="rounded-full flex-1 sm:flex-none bg-coral hover:bg-coral/90 text-white" onClick={goNext}>
+                <Button
+                  className="rounded-full flex-1 sm:flex-none bg-coral hover:bg-coral/90 text-white"
+                  onClick={goNext}
+                >
                   Continue <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               ) : (
-                <Button className="rounded-full flex-1 sm:flex-none bg-coral hover:bg-coral/90 text-white" onClick={doSubmit}>
+                <Button
+                  className="rounded-full flex-1 sm:flex-none bg-coral hover:bg-coral/90 text-white"
+                  onClick={doSubmit}
+                >
                   <Send className="w-4 h-4 mr-2" /> Submit for approval
                 </Button>
               )}

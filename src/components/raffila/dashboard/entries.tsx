@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  Search,
-  Copy,
-  Check,
-  FileDown,
-  Ticket,
-  Eye,
-  X,
-  QrCode,
-} from "lucide-react";
+import { Search, Copy, Check, FileDown, Ticket, Eye, X, QrCode } from "lucide-react";
 
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
@@ -39,7 +30,12 @@ const statusBadge: Record<EntryStatus, string> = {
 };
 
 const initials = (name: string) =>
-  name.split(" ").map((s) => s[0]).join("").slice(0, 2).toUpperCase();
+  name
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
 function genTickets(): MockEntry[] {
   return [];
@@ -58,9 +54,7 @@ export function DashboardEntriesPage() {
     const matchesStatus = filter === "All" || e.status === filter;
     const q = search.trim().toLowerCase();
     const matchesSearch =
-      !q ||
-      e.id.toLowerCase().includes(q) ||
-      e.competitionTitle.toLowerCase().includes(q);
+      !q || e.id.toLowerCase().includes(q) || e.competitionTitle.toLowerCase().includes(q);
     return matchesStatus && matchesSearch;
   });
 
@@ -77,10 +71,7 @@ export function DashboardEntriesPage() {
   return (
     <DashboardAppShell
       title="Entries"
-      breadcrumbs={[
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "My Entries" },
-      ]}
+      breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "My Entries" }]}
     >
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -96,7 +87,7 @@ export function DashboardEntriesPage() {
                 entries
                   .map(
                     (e) =>
-                      `${e.id},"${e.competitionTitle}",${e.ticketCount},${e.drawDate},${e.status},"${e.ticketNumbers.join(", ")}"`
+                      `${e.id},"${e.competitionTitle}",${e.ticketCount},${e.drawDate},${e.status},"${e.ticketNumbers.join(", ")}"`,
                   )
                   .join("\n");
               const blob = new Blob([csv], { type: "text/csv" });
@@ -134,7 +125,7 @@ export function DashboardEntriesPage() {
                   "rounded-xl px-4 py-2 text-xs font-extrabold transition-colors",
                   filter === s
                     ? "bg-white text-ink shadow-sm ring-1 ring-ink/5"
-                    : "text-ink/55 hover:text-ink"
+                    : "text-ink/55 hover:text-ink",
                 )}
               >
                 {s}
@@ -168,16 +159,14 @@ export function DashboardEntriesPage() {
                   <tr key={e.id} className="hover:bg-cream/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-ink/70">
-                          {e.id}
-                        </span>
+                        <span className="font-mono text-xs font-bold text-ink/70">{e.id}</span>
                         <button
                           onClick={() => copyId(e.id)}
                           className={cn(
                             "grid size-6 place-items-center rounded-full transition-colors",
                             copiedId === e.id
                               ? "bg-mint/30 text-ink"
-                              : "bg-cream text-ink/45 hover:text-coral"
+                              : "bg-cream text-ink/45 hover:text-coral",
                           )}
                           aria-label="Copy"
                         >
@@ -208,9 +197,7 @@ export function DashboardEntriesPage() {
                     <td className="px-4 py-3 text-center font-display font-extrabold text-ink">
                       {e.ticketCount}
                     </td>
-                    <td className="px-4 py-3 text-xs font-bold text-ink/50">
-                      {e.drawDate}
-                    </td>
+                    <td className="px-4 py-3 text-xs font-bold text-ink/50">{e.drawDate}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1 max-w-[260px]">
                         {e.ticketNumbers.map((n) => (
@@ -227,18 +214,14 @@ export function DashboardEntriesPage() {
                       <span
                         className={cn(
                           "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
-                          statusBadge[e.status]
+                          statusBadge[e.status],
                         )}
                       >
                         {e.status.toUpperCase()}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setTicketOpen(e)}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => setTicketOpen(e)}>
                         <Eye className="size-3.5" /> View ticket
                       </Button>
                     </td>
@@ -281,9 +264,7 @@ export function DashboardEntriesPage() {
               <div className="size-40 grid place-items-center rounded-2xl bg-white ring-1 ring-ink/10">
                 <QrCode className="size-28 text-ink/80" />
               </div>
-              <p className="mt-4 font-mono text-xs font-bold text-ink/60">
-                {ticketOpen.id}
-              </p>
+              <p className="mt-4 font-mono text-xs font-bold text-ink/60">{ticketOpen.id}</p>
             </div>
 
             <div className="mt-6 space-y-3">
@@ -299,9 +280,7 @@ export function DashboardEntriesPage() {
                 <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
                   Draw date
                 </span>
-                <span className="text-sm font-extrabold text-ink">
-                  {ticketOpen.drawDate}
-                </span>
+                <span className="text-sm font-extrabold text-ink">{ticketOpen.drawDate}</span>
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/5">
                 <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
@@ -310,7 +289,7 @@ export function DashboardEntriesPage() {
                 <span
                   className={cn(
                     "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
-                    statusBadge[ticketOpen.status]
+                    statusBadge[ticketOpen.status],
                   )}
                 >
                   {ticketOpen.status.toUpperCase()}
@@ -324,13 +303,8 @@ export function DashboardEntriesPage() {
               </p>
               <div className="grid grid-cols-5 gap-2">
                 {ticketOpen.ticketNumbers.map((n) => (
-                  <div
-                    key={n}
-                    className="rounded-xl bg-lilac/20 p-2 text-center ring-1 ring-ink/5"
-                  >
-                    <p className="font-mono text-[11px] font-extrabold text-ink">
-                      {n}
-                    </p>
+                  <div key={n} className="rounded-xl bg-lilac/20 p-2 text-center ring-1 ring-ink/5">
+                    <p className="font-mono text-[11px] font-extrabold text-ink">{n}</p>
                   </div>
                 ))}
               </div>

@@ -1,11 +1,43 @@
 import { describe, it, expect } from "vitest";
-import { applySort, competitions, type Competition, type SortKey } from "@/lib/rafilla-data";
+import { applySort, competitions, type Competition, type SortKey } from "@/lib/raffila-data";
 
 const sample: Competition[] = [
-  { ...competitions[0]!, slug: "a", title: "A", daysUntilClose: 30, entryPrice: 100000, entriesSold: 500, featured: false },
-  { ...competitions[1]!, slug: "b", title: "B", daysUntilClose: 3, entryPrice: 50000, entriesSold: 9870, featured: false },
-  { ...competitions[2]!, slug: "c", title: "C", daysUntilClose: 56, entryPrice: 500000, entriesSold: 2000, featured: true },
-  { ...competitions[3]!, slug: "d", title: "D", daysUntilClose: 7, entryPrice: 25000, entriesSold: 150, featured: false },
+  {
+    ...competitions[0]!,
+    slug: "a",
+    title: "A",
+    daysUntilClose: 30,
+    entryPrice: 100000,
+    entriesSold: 500,
+    featured: false,
+  },
+  {
+    ...competitions[1]!,
+    slug: "b",
+    title: "B",
+    daysUntilClose: 3,
+    entryPrice: 50000,
+    entriesSold: 9870,
+    featured: false,
+  },
+  {
+    ...competitions[2]!,
+    slug: "c",
+    title: "C",
+    daysUntilClose: 56,
+    entryPrice: 500000,
+    entriesSold: 2000,
+    featured: true,
+  },
+  {
+    ...competitions[3]!,
+    slug: "d",
+    title: "D",
+    daysUntilClose: 7,
+    entryPrice: 25000,
+    entriesSold: 150,
+    featured: false,
+  },
 ];
 
 describe("applySort helper (rafilla-data.ts)", () => {
@@ -63,7 +95,14 @@ describe("applySort helper (rafilla-data.ts)", () => {
     expect(result).toEqual([]);
   });
 
-  const allSortKeys: SortKey[] = ["ending-soon", "newest", "price-asc", "price-desc", "most-entries", "featured-first"];
+  const allSortKeys: SortKey[] = [
+    "ending-soon",
+    "newest",
+    "price-asc",
+    "price-desc",
+    "most-entries",
+    "featured-first",
+  ];
   allSortKeys.forEach((key) => {
     it(`preserves same count for sort key "${key}"`, () => {
       const result = applySort(sample, key);

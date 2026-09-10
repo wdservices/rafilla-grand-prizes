@@ -155,8 +155,12 @@ export function DashboardShell({
               TA
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-extrabold text-ink leading-tight">Tunmise Adebayo</p>
-              <p className="truncate text-[11px] font-bold text-ink/45 leading-snug">t***@********</p>
+              <p className="truncate text-sm font-extrabold text-ink leading-tight">
+                Tunmise Adebayo
+              </p>
+              <p className="truncate text-[11px] font-bold text-ink/45 leading-snug">
+                t***@********
+              </p>
               <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-coral/10 px-2 py-0.5 text-[10px] font-extrabold text-coral">
                 <ShieldCheck className="size-3" /> Verified
               </p>
@@ -256,8 +260,12 @@ export function DashboardShell({
               TA
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-extrabold text-ink leading-tight">Tunmise Adebayo</p>
-              <p className="truncate text-[11px] font-bold text-ink/45 leading-snug">t***@********</p>
+              <p className="truncate text-sm font-extrabold text-ink leading-tight">
+                Tunmise Adebayo
+              </p>
+              <p className="truncate text-[11px] font-bold text-ink/45 leading-snug">
+                t***@********
+              </p>
               <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-coral/10 px-2 py-0.5 text-[10px] font-extrabold text-coral">
                 <ShieldCheck className="size-3" /> Verified
               </p>
@@ -347,18 +355,19 @@ export function DashboardShell({
 
       <main className="min-w-0 overflow-x-hidden lg:ml-[268px] min-h-screen pt-5 pb-28 px-4 sm:px-6 lg:px-8 lg:pt-8">
         <div className="mb-4 flex justify-end">
-          <Button variant="outline" size="sm" onClick={handleLogout} className="rounded-full border-coral/20 bg-white px-4 py-2 text-xs font-extrabold text-coral hover:bg-coral hover:text-white">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            className="rounded-full border-coral/20 bg-white px-4 py-2 text-xs font-extrabold text-coral hover:bg-coral hover:text-white"
+          >
             <LogOut className="size-3.5" /> Exit / Log out
           </Button>
         </div>
-        <div className="mx-auto w-full max-w-full min-w-0">
-          {children}
-        </div>
+        <div className="mx-auto w-full max-w-full min-w-0">{children}</div>
       </main>
 
-      <nav
-        className="fixed inset-x-0 bottom-3 z-40 mx-auto w-[calc(100%-24px)] max-w-md rounded-[28px] bg-white ring-1 ring-ink/5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)] lg:hidden"
-      >
+      <nav className="fixed inset-x-0 bottom-3 z-40 mx-auto w-[calc(100%-24px)] max-w-md rounded-[28px] bg-white ring-1 ring-ink/5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)] lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5 px-1.5 pb-1.5 pt-2">
           {bottomNavItems.map((item) => {
             const isActive = activeKey === item.key;

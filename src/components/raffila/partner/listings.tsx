@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { PartnerShell } from "./partner-shell";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -97,19 +92,28 @@ function statusBadge(s: ListingStatus) {
       );
     case "APPROVAL_REQUIRED":
       return (
-        <Badge variant="outline" className="rounded-full bg-lemon/30 border-lemon text-ink text-[10px] font-semibold">
+        <Badge
+          variant="outline"
+          className="rounded-full bg-lemon/30 border-lemon text-ink text-[10px] font-semibold"
+        >
           <Clock className="w-3 h-3 mr-1" /> AWAITING REVIEW
         </Badge>
       );
     case "REJECTED":
       return (
-        <Badge variant="outline" className="rounded-full bg-coral/15 border-coral text-coral text-[10px] font-semibold">
+        <Badge
+          variant="outline"
+          className="rounded-full bg-coral/15 border-coral text-coral text-[10px] font-semibold"
+        >
           REJECTED
         </Badge>
       );
     default:
       return (
-        <Badge variant="outline" className="rounded-full bg-cream text-ink/60 border-ink/20 text-[10px]">
+        <Badge
+          variant="outline"
+          className="rounded-full bg-cream text-ink/60 border-ink/20 text-[10px]"
+        >
           DRAFT
         </Badge>
       );
@@ -224,7 +228,7 @@ const LISTINGS: Listing[] = [
   },
   {
     id: "LST-88465",
-    name: "MacBook Pro 16\" M4 Max",
+    name: 'MacBook Pro 16" M4 Max',
     category: "Electronics",
     status: "DRAFT",
     entriesPct: 0,
@@ -284,7 +288,14 @@ const LISTINGS: Listing[] = [
   },
 ];
 
-const FILTER_TABS: (ListingStatus | "ALL")[] = ["ALL", "LIVE", "APPROVAL_REQUIRED", "DRAFT", "COMPLETED", "REJECTED"];
+const FILTER_TABS: (ListingStatus | "ALL")[] = [
+  "ALL",
+  "LIVE",
+  "APPROVAL_REQUIRED",
+  "DRAFT",
+  "COMPLETED",
+  "REJECTED",
+];
 const TINT_BG = ["coral", "sky", "lemon", "mint", "lilac"];
 
 export function PartnerListingsPage() {
@@ -298,7 +309,12 @@ export function PartnerListingsPage() {
     if (activeCategory !== "ALL" && l.category !== activeCategory) return false;
     if (query) {
       const q = query.toLowerCase();
-      if (!l.name.toLowerCase().includes(q) && !l.id.toLowerCase().includes(q) && !l.category.toLowerCase().includes(q)) return false;
+      if (
+        !l.name.toLowerCase().includes(q) &&
+        !l.id.toLowerCase().includes(q) &&
+        !l.category.toLowerCase().includes(q)
+      )
+        return false;
     }
     return true;
   });
@@ -336,10 +352,16 @@ export function PartnerListingsPage() {
               className={`rounded-full ${filter === t ? "bg-coral text-white hover:bg-coral/90 border-coral" : "text-ink/70"}`}
               onClick={() => setFilter(t)}
             >
-              {t === "APPROVAL_REQUIRED" ? "In review" : t === "ALL" ? "All listings" : t[0] + t.slice(1).toLowerCase()}
-              <Badge className={`ml-2 rounded-full text-[10px] font-bold ${
-                filter === t ? "bg-white/20 text-white border-0" : "bg-ink/5 text-ink/60 border-0"
-              }`}>
+              {t === "APPROVAL_REQUIRED"
+                ? "In review"
+                : t === "ALL"
+                  ? "All listings"
+                  : t[0] + t.slice(1).toLowerCase()}
+              <Badge
+                className={`ml-2 rounded-full text-[10px] font-bold ${
+                  filter === t ? "bg-white/20 text-white border-0" : "bg-ink/5 text-ink/60 border-0"
+                }`}
+              >
                 {counts[t]}
               </Badge>
             </Button>
@@ -385,36 +407,50 @@ export function PartnerListingsPage() {
           >
             All categories
           </Button>
-          {(["Auto", "Watches", "Electronics", "Jewelry", "Real Estate", "Home"] as Category[]).map((c) => (
-            <Button
-              key={c}
-              variant={activeCategory === c ? "primary" : "outline"}
-              size="sm"
-              className={`rounded-full text-xs ${activeCategory === c ? "bg-coral" : ""}`}
-              onClick={() => setActiveCategory(c)}
-            >
-              {c}
-            </Button>
-          ))}
+          {(["Auto", "Watches", "Electronics", "Jewelry", "Real Estate", "Home"] as Category[]).map(
+            (c) => (
+              <Button
+                key={c}
+                variant={activeCategory === c ? "primary" : "outline"}
+                size="sm"
+                className={`rounded-full text-xs ${activeCategory === c ? "bg-coral" : ""}`}
+                onClick={() => setActiveCategory(c)}
+              >
+                {c}
+              </Button>
+            ),
+          )}
         </div>
 
         {view === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {filtered.map((l, idx) => (
-              <Card key={l.id} className="border-ink/10 overflow-hidden group hover:shadow-lg hover:shadow-coral/5 transition-all">
-                <div className={`aspect-[16/10] relative bg-gradient-to-br ${l.tint} flex items-center justify-center`}>
-                  <div className={`absolute top-3 left-3 p-3 rounded-2xl bg-paper/80 backdrop-blur text-ink/70`}>
+              <Card
+                key={l.id}
+                className="border-ink/10 overflow-hidden group hover:shadow-lg hover:shadow-coral/5 transition-all"
+              >
+                <div
+                  className={`aspect-[16/10] relative bg-gradient-to-br ${l.tint} flex items-center justify-center`}
+                >
+                  <div
+                    className={`absolute top-3 left-3 p-3 rounded-2xl bg-paper/80 backdrop-blur text-ink/70`}
+                  >
                     {l.imageIcon}
                   </div>
                   <div className="absolute top-3 right-3 flex items-center gap-2">
                     {statusBadge(l.status)}
                   </div>
                   <Avatar className="absolute bottom-3 left-3 w-9 h-9 border-2 border-paper">
-                    <AvatarFallback className={`bg-${TINT_BG[idx % TINT_BG.length]} text-ink font-display font-bold text-xs`}>
+                    <AvatarFallback
+                      className={`bg-${TINT_BG[idx % TINT_BG.length]} text-ink font-display font-bold text-xs`}
+                    >
                       LL
                     </AvatarFallback>
                   </Avatar>
-                  <Badge variant="outline" className="absolute bottom-3 right-3 rounded-full bg-paper/90 backdrop-blur border-0 text-ink/60 text-[10px] font-mono">
+                  <Badge
+                    variant="outline"
+                    className="absolute bottom-3 right-3 rounded-full bg-paper/90 backdrop-blur border-0 text-ink/60 text-[10px] font-mono"
+                  >
                     {l.category}
                   </Badge>
                 </div>
@@ -424,12 +460,18 @@ export function PartnerListingsPage() {
                       <h3 className="font-display text-ink text-lg leading-tight">{l.name}</h3>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 shrink-0 -mt-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full h-8 w-8 shrink-0 -mt-1"
+                          >
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="rounded-2xl">
-                          <DropdownMenuLabel className="font-mono text-[10px] text-ink/50">Actions</DropdownMenuLabel>
+                          <DropdownMenuLabel className="font-mono text-[10px] text-ink/50">
+                            Actions
+                          </DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => toast.success("Opening listing view")}>
                             <Eye className="w-4 h-4 mr-2" /> View
@@ -438,7 +480,10 @@ export function PartnerListingsPage() {
                             <Edit3 className="w-4 h-4 mr-2" /> Edit details
                           </DropdownMenuItem>
                           {l.status !== "COMPLETED" && (
-                            <DropdownMenuItem className="text-coral focus:text-coral" onClick={() => toast.warning("Listing withdrawn")}>
+                            <DropdownMenuItem
+                              className="text-coral focus:text-coral"
+                              onClick={() => toast.warning("Listing withdrawn")}
+                            >
                               <Ban className="w-4 h-4 mr-2" /> Withdraw
                             </DropdownMenuItem>
                           )}
@@ -460,7 +505,11 @@ export function PartnerListingsPage() {
                     <div className="h-2 w-full bg-ink/5 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${
-                          l.status === "COMPLETED" ? "bg-mint" : l.entriesPct > 80 ? "bg-coral" : "bg-gradient-to-r from-sky to-coral"
+                          l.status === "COMPLETED"
+                            ? "bg-mint"
+                            : l.entriesPct > 80
+                              ? "bg-coral"
+                              : "bg-gradient-to-r from-sky to-coral"
                         }`}
                         style={{ width: `${l.entriesPct}%` }}
                       />
@@ -470,7 +519,9 @@ export function PartnerListingsPage() {
                   <div className="flex items-center justify-between text-xs font-body pt-1">
                     <div>
                       <p className="text-ink/50">Asset value</p>
-                      <p className="font-display text-coral font-bold">{formatNaira(l.valueKobo)}</p>
+                      <p className="font-display text-coral font-bold">
+                        {formatNaira(l.valueKobo)}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-ink/50">Draw date</p>
@@ -506,7 +557,9 @@ export function PartnerListingsPage() {
                 <CardContent className="p-12 text-center">
                   <Ticket className="w-12 h-12 text-ink/20 mx-auto mb-3" />
                   <p className="font-display text-ink text-lg">No listings match your filters</p>
-                  <p className="font-body text-ink/50 text-sm mt-1">Try changing status or category filter.</p>
+                  <p className="font-body text-ink/50 text-sm mt-1">
+                    Try changing status or category filter.
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -518,13 +571,27 @@ export function PartnerListingsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-ink/10 bg-cream/50">
-                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3">Listing</th>
-                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3 hidden sm:table-cell">Category</th>
-                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3">Status</th>
-                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3 hidden md:table-cell">Entries</th>
-                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3 hidden lg:table-cell">Value</th>
-                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3 hidden lg:table-cell">Draw</th>
-                      <th className="text-right text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3">Actions</th>
+                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3">
+                        Listing
+                      </th>
+                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3 hidden sm:table-cell">
+                        Category
+                      </th>
+                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3">
+                        Status
+                      </th>
+                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3 hidden md:table-cell">
+                        Entries
+                      </th>
+                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3 hidden lg:table-cell">
+                        Value
+                      </th>
+                      <th className="text-left text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3 hidden lg:table-cell">
+                        Draw
+                      </th>
+                      <th className="text-right text-[11px] font-body uppercase text-ink/50 tracking-wider px-5 py-3">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-ink/5">
@@ -532,17 +599,24 @@ export function PartnerListingsPage() {
                       <tr key={l.id} className="hover:bg-cream/30">
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${l.tint} flex items-center justify-center text-ink/70 shrink-0`}>
+                            <div
+                              className={`w-12 h-12 rounded-xl bg-gradient-to-br ${l.tint} flex items-center justify-center text-ink/70 shrink-0`}
+                            >
                               {l.imageIcon}
                             </div>
                             <div className="min-w-0">
                               <p className="font-body font-semibold text-ink truncate">{l.name}</p>
-                              <p className="text-[11px] font-mono text-ink/40">{l.id} · {l.views.toLocaleString()} views</p>
+                              <p className="text-[11px] font-mono text-ink/40">
+                                {l.id} · {l.views.toLocaleString()} views
+                              </p>
                             </div>
                           </div>
                         </td>
                         <td className="px-5 py-4 hidden sm:table-cell">
-                          <Badge variant="outline" className="rounded-full bg-cream text-ink/70 border-ink/10">
+                          <Badge
+                            variant="outline"
+                            className="rounded-full bg-cream text-ink/70 border-ink/10"
+                          >
                             {l.category}
                           </Badge>
                         </td>
@@ -551,15 +625,22 @@ export function PartnerListingsPage() {
                           <div className="w-40">
                             <div className="flex items-center justify-between text-xs font-body mb-1">
                               <span className="text-ink/50">{l.entriesPct}%</span>
-                              <span className="text-ink font-bold">{l.entriesCount.toLocaleString()}</span>
+                              <span className="text-ink font-bold">
+                                {l.entriesCount.toLocaleString()}
+                              </span>
                             </div>
                             <div className="h-1.5 bg-ink/5 rounded-full overflow-hidden">
-                              <div className="h-full bg-coral rounded-full" style={{ width: `${l.entriesPct}%` }} />
+                              <div
+                                className="h-full bg-coral rounded-full"
+                                style={{ width: `${l.entriesPct}%` }}
+                              />
                             </div>
                           </div>
                         </td>
                         <td className="px-5 py-4 hidden lg:table-cell">
-                          <p className="font-display font-bold text-ink">{formatNaira(l.valueKobo)}</p>
+                          <p className="font-display font-bold text-ink">
+                            {formatNaira(l.valueKobo)}
+                          </p>
                         </td>
                         <td className="px-5 py-4 hidden lg:table-cell">
                           <p className="font-body text-ink text-sm">{l.drawDate}</p>

@@ -11,8 +11,17 @@ import {
   RefreshCw,
   TestTube,
   Wrench,
+  Database,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { firebaseConfig } from "@/lib/firebase";
+import {
+  seedFirestoreDatabase,
+  checkFirestoreStatus,
+  type SeedProgress,
+} from "@/lib/firestore-seed";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,13 +61,23 @@ const toneText: Record<string, string> = {
   ink: "text-ink",
 };
 
-function ConfigGroup({ title, description, icon: Icon, tone, children, onSave, showSave = true }: GroupProps) {
+function ConfigGroup({
+  title,
+  description,
+  icon: Icon,
+  tone,
+  children,
+  onSave,
+  showSave = true,
+}: GroupProps) {
   return (
     <Card className="rounded-[24px] border-0 bg-white p-0 ring-1 ring-ink/8 shadow-sm">
       <CardContent className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0 flex-1">
-            <div className={cn("grid size-12 shrink-0 place-items-center rounded-2xl", toneBg[tone])}>
+            <div
+              className={cn("grid size-12 shrink-0 place-items-center rounded-2xl", toneBg[tone])}
+            >
               <Icon className={cn("size-5", toneText[tone])} />
             </div>
             <div className="min-w-0 flex-1 pt-0.5">
@@ -87,7 +106,9 @@ export function AdminPlatformConfigPage() {
   const [l4, setL4] = useState("2");
   const [l5, setL5] = useState("1");
   const [poolPct, setPoolPct] = useState("5");
-  const [poolRules, setPoolRules] = useState("5% of every ticket value accrues to the platform reward pool, distributed monthly to eligible winners and community rewards on a proportional basis subject to the published reward pool charter.");
+  const [poolRules, setPoolRules] = useState(
+    "5% of every ticket value accrues to the platform reward pool, distributed monthly to eligible winners and community rewards on a proportional basis subject to the published reward pool charter.",
+  );
   const [minPayout, setMinPayout] = useState("5000");
   const [minTopup, setMinTopup] = useState("1000");
   const [liveDelay, setLiveDelay] = useState("60");
@@ -96,8 +117,65 @@ export function AdminPlatformConfigPage() {
   const [smsNotif, setSmsNotif] = useState(false);
   const [inappNotif, setInappNotif] = useState(true);
   const [maintenance, setMaintenance] = useState(false);
-  const [maintenanceMsg, setMaintenanceMsg] = useState("Raffila is performing scheduled maintenance. The platform will be back online shortly.");
+  const [maintenanceMsg, setMaintenanceMsg] = useState(
+    "Raffila is performing scheduled maintenance. The platform will be back online shortly.",
+  );
   const [testMode, setTestMode] = useState(false);
+
+  // Firebase Database Seeding State
+  const [seeding, setSeeding] = useState(false);
+  const [seedProgress, setSeedProgress] = useState<SeedProgress | null>(null);
+  const [dbStatus, setDbStatus] = useState<{
+    connected: boolean;
+    competitionsCount: number;
+    usersCount: number;
+    drawsCount: number;
+    error?: string;
+  } | null>(null);
+  const [checkingDb, setCheckingDb] = useState(false);
+
+  const handleCheckDb = async () => {
+    setCheckingDb(true);
+    try {
+      const res = await checkFirestoreStatus();
+      setDbStatus(res);
+      if (res.connected) {
+        toast.success("Firestore connected", {
+          description: `Found ${res.competitionsCount} competitions, ${res.drawsCount} draws, ${res.usersCount} users.`,
+        });
+      } else {
+        toast.error("Firestore connection issue", {
+          description: res.error || "Permission denied or network error.",
+        });
+      }
+    } finally {
+      setCheckingDb(false);
+    }
+  };
+
+  const handleSeedDatabase = async () => {
+    setSeeding(true);
+    setSeedProgress({ stage: "Initializing seed...", count: 0, total: 17, completed: false });
+    try {
+      const res = await seedFirestoreDatabase((p) => setSeedProgress(p));
+      if (res.success) {
+        toast.success("Database seeded successfully!", {
+          description: `Seeded ${res.stats.competitions} competitions, ${res.stats.draws} draws, ${res.stats.users} users, and ${res.stats.winners} winners.`,
+        });
+        void handleCheckDb();
+      } else {
+        toast.error("Seeding incomplete", {
+          description: res.error || "Permission denied. Check Firestore security rules.",
+        });
+      }
+    } catch (err: any) {
+      toast.error("Seeding failed", {
+        description: err?.message || String(err),
+      });
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const saveAll = () => {
     setSaving(true);
@@ -109,24 +187,39 @@ export function AdminPlatformConfigPage() {
     }, 700);
   };
 
-  const groupSave = (name: string) => toast.success(`${name} saved`, { description: "Configuration group updated." });
+  const groupSave = (name: string) =>
+    toast.success(`${name} saved`, { description: "Configuration group updated." });
 
   return (
     <AdminShell activeNav="config" title="Config">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">Admin · Platform</p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">Configuration</h1>
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">
+            Admin · Platform
+          </p>
+          <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+            Configuration
+          </h1>
           <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
-            Global Raffila platform settings — referral rates, reward pool, thresholds, draws, notifications, and operational status.
+            Global Raffila platform settings — referral rates, reward pool, thresholds, draws,
+            notifications, and operational status.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge className="rounded-full bg-cream px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-ink/60 ring-1 ring-ink/10">
             <Wrench className="mr-1 size-3" /> Config v247
           </Badge>
-          <Button variant="primary" onClick={saveAll} disabled={saving} className="rounded-full h-11 px-5">
-            {saving ? <RefreshCw className="size-4 animate-spin mr-1.5" /> : <CheckCircle2 className="size-4 mr-1.5" />}
+          <Button
+            variant="primary"
+            onClick={saveAll}
+            disabled={saving}
+            className="rounded-full h-11 px-5"
+          >
+            {saving ? (
+              <RefreshCw className="size-4 animate-spin mr-1.5" />
+            ) : (
+              <CheckCircle2 className="size-4 mr-1.5" />
+            )}
             {saving ? "Publishing…" : "Save all"}
           </Button>
         </div>
@@ -149,7 +242,9 @@ export function AdminPlatformConfigPage() {
               { label: "Level 5", val: l5, set: setL5, tint: "bg-lilac/25 text-ink" },
             ].map((t) => (
               <div key={t.label} className="space-y-2.5">
-                <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">{t.label}</Label>
+                <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                  {t.label}
+                </Label>
                 <div className="relative">
                   <Input
                     type="number"
@@ -157,9 +252,16 @@ export function AdminPlatformConfigPage() {
                     onChange={(e) => t.set(e.target.value)}
                     className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pr-9 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2 text-right"
                   />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">%</span>
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">
+                    %
+                  </span>
                 </div>
-                <div className={cn("rounded-xl px-2 py-1.5 text-center text-[10px] font-extrabold uppercase tracking-wider", t.tint)}>
+                <div
+                  className={cn(
+                    "rounded-xl px-2 py-1.5 text-center text-[10px] font-extrabold uppercase tracking-wider",
+                    t.tint,
+                  )}
+                >
                   Referrer share
                 </div>
               </div>
@@ -176,7 +278,9 @@ export function AdminPlatformConfigPage() {
         >
           <div className="space-y-5">
             <div className="space-y-2.5">
-              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Contribution rate · % of ticket value</Label>
+              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                Contribution rate · % of ticket value
+              </Label>
               <div className="relative">
                 <Input
                   type="number"
@@ -184,11 +288,15 @@ export function AdminPlatformConfigPage() {
                   onChange={(e) => setPoolPct(e.target.value)}
                   className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pr-9 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2"
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">%</span>
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">
+                  %
+                </span>
               </div>
             </div>
             <div className="space-y-2.5">
-              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Distribution rules</Label>
+              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                Distribution rules
+              </Label>
               <Textarea
                 rows={4}
                 value={poolRules}
@@ -208,9 +316,13 @@ export function AdminPlatformConfigPage() {
         >
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2.5">
-              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Min payout</Label>
+              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                Min payout
+              </Label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">₦</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">
+                  ₦
+                </span>
                 <Input
                   type="number"
                   value={minPayout}
@@ -218,12 +330,18 @@ export function AdminPlatformConfigPage() {
                   className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pl-9 pr-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2"
                 />
               </div>
-              <p className="text-[11px] font-bold text-ink/50 mt-1">{formatNaira(parseInt(minPayout || "0", 10) * 100)} floor</p>
+              <p className="text-[11px] font-bold text-ink/50 mt-1">
+                {formatNaira(parseInt(minPayout || "0", 10) * 100)} floor
+              </p>
             </div>
             <div className="space-y-2.5">
-              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Min wallet top-up</Label>
+              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                Min wallet top-up
+              </Label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">₦</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">
+                  ₦
+                </span>
                 <Input
                   type="number"
                   value={minTopup}
@@ -231,7 +349,9 @@ export function AdminPlatformConfigPage() {
                   className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pl-9 pr-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2"
                 />
               </div>
-              <p className="text-[11px] font-bold text-ink/50 mt-1">{formatNaira(parseInt(minTopup || "0", 10) * 100)} minimum</p>
+              <p className="text-[11px] font-bold text-ink/50 mt-1">
+                {formatNaira(parseInt(minTopup || "0", 10) * 100)} minimum
+              </p>
             </div>
           </div>
         </ConfigGroup>
@@ -245,7 +365,9 @@ export function AdminPlatformConfigPage() {
         >
           <div className="grid grid-cols-2 gap-5">
             <div className="space-y-2.5">
-              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Live delay · seconds</Label>
+              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                Live delay · seconds
+              </Label>
               <div className="relative">
                 <Input
                   type="number"
@@ -253,12 +375,16 @@ export function AdminPlatformConfigPage() {
                   onChange={(e) => setLiveDelay(e.target.value)}
                   className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pr-14 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2"
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">s</span>
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">
+                  s
+                </span>
               </div>
               <p className="text-[11px] font-bold text-ink/50 mt-1">Broadcast buffer</p>
             </div>
             <div className="space-y-2.5">
-              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Confirmation window · hours</Label>
+              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                Confirmation window · hours
+              </Label>
               <div className="relative">
                 <Input
                   type="number"
@@ -266,7 +392,9 @@ export function AdminPlatformConfigPage() {
                   onChange={(e) => setConfirmWindow(e.target.value)}
                   className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pr-12 pl-4 text-base font-extrabold text-ink focus-visible:ring-coral focus-visible:ring-2"
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">hrs</span>
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">
+                  hrs
+                </span>
               </div>
               <p className="text-[11px] font-bold text-ink/50 mt-1">Claim deadline</p>
             </div>
@@ -282,11 +410,29 @@ export function AdminPlatformConfigPage() {
         >
           <div className="space-y-3">
             {[
-              { label: "Email notifications", desc: "Receipts, draws, results, marketing opt-in.", val: emailNotif, set: setEmailNotif },
-              { label: "SMS notifications", desc: "High-priority OTP, winner, payout alerts only.", val: smsNotif, set: setSmsNotif },
-              { label: "In-app notifications", desc: "Activity feed, badges, live draw reminders.", val: inappNotif, set: setInappNotif },
+              {
+                label: "Email notifications",
+                desc: "Receipts, draws, results, marketing opt-in.",
+                val: emailNotif,
+                set: setEmailNotif,
+              },
+              {
+                label: "SMS notifications",
+                desc: "High-priority OTP, winner, payout alerts only.",
+                val: smsNotif,
+                set: setSmsNotif,
+              },
+              {
+                label: "In-app notifications",
+                desc: "Activity feed, badges, live draw reminders.",
+                val: inappNotif,
+                set: setInappNotif,
+              },
             ].map((n) => (
-              <div key={n.label} className="flex items-center justify-between rounded-2xl bg-white ring-1 ring-ink/10 px-4.5 py-3.5">
+              <div
+                key={n.label}
+                className="flex items-center justify-between rounded-2xl bg-white ring-1 ring-ink/10 px-4.5 py-3.5"
+              >
                 <div className="pr-4">
                   <p className="text-sm font-extrabold text-ink">{n.label}</p>
                   <p className="text-xs font-bold text-ink/55 mt-0.5">{n.desc}</p>
@@ -309,14 +455,22 @@ export function AdminPlatformConfigPage() {
               <div className="pr-4">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-extrabold text-ink">Maintenance mode</p>
-                  {maintenance && <Badge className="rounded-full bg-coral/15 px-2 py-0 text-[10px] font-extrabold uppercase text-coral ring-0">Active</Badge>}
+                  {maintenance && (
+                    <Badge className="rounded-full bg-coral/15 px-2 py-0 text-[10px] font-extrabold uppercase text-coral ring-0">
+                      Active
+                    </Badge>
+                  )}
                 </div>
-                <p className="text-xs font-bold text-ink/55 mt-0.5">Public pages show maintenance landing · admin only available.</p>
+                <p className="text-xs font-bold text-ink/55 mt-0.5">
+                  Public pages show maintenance landing · admin only available.
+                </p>
               </div>
               <Switch checked={maintenance} onCheckedChange={(v) => setMaintenance(!!v)} />
             </div>
             <div className="space-y-2.5">
-              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Maintenance message</Label>
+              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                Maintenance message
+              </Label>
               <Textarea
                 rows={3}
                 value={maintenanceMsg}
@@ -329,19 +483,181 @@ export function AdminPlatformConfigPage() {
               <div className="pr-4">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-extrabold text-ink">Test mode</p>
-                  {testMode && <Badge className="rounded-full bg-lemon/30 px-2 py-0 text-[10px] font-extrabold uppercase text-ink ring-0"><TestTube className="mr-1 size-2.5" /> Sandbox</Badge>}
+                  {testMode && (
+                    <Badge className="rounded-full bg-lemon/30 px-2 py-0 text-[10px] font-extrabold uppercase text-ink ring-0">
+                      <TestTube className="mr-1 size-2.5" /> Sandbox
+                    </Badge>
+                  )}
                 </div>
-                <p className="text-xs font-bold text-ink/55 mt-0.5">Mocks all banks and payouts · no real money moves.</p>
+                <p className="text-xs font-bold text-ink/55 mt-0.5">
+                  Mocks all banks and payouts · no real money moves.
+                </p>
               </div>
               <Switch checked={testMode} onCheckedChange={(v) => setTestMode(!!v)} />
+            </div>
+          </div>
+        </ConfigGroup>
+
+        <ConfigGroup
+          title="Firebase Firestore & Seeding"
+          description="Cloud database connection, cryptographic raffle draw ledger, and automated data seeding."
+          icon={Database}
+          tone="sky"
+          showSave={false}
+        >
+          <div className="space-y-4">
+            <div className="rounded-2xl bg-white ring-1 ring-ink/10 p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-ink/50">
+                    Project ID
+                  </span>
+                  <Badge className="rounded-full bg-sky/20 px-2.5 py-0.5 text-xs font-mono font-bold text-ink ring-0">
+                    {firebaseConfig.projectId}
+                  </Badge>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCheckDb}
+                  disabled={checkingDb || seeding}
+                  className="rounded-full h-8 text-xs font-bold"
+                >
+                  {checkingDb ? (
+                    <RefreshCw className="size-3 animate-spin mr-1.5" />
+                  ) : (
+                    <Database className="size-3 mr-1.5" />
+                  )}
+                  {checkingDb ? "Verifying…" : "Check connection"}
+                </Button>
+              </div>
+
+              {dbStatus && (
+                <div
+                  className={cn(
+                    "rounded-xl p-3 text-xs font-medium space-y-1.5",
+                    dbStatus.connected ? "bg-mint/20 text-ink" : "bg-coral/10 text-coral",
+                  )}
+                >
+                  <div className="flex items-center gap-2 font-bold">
+                    {dbStatus.connected ? (
+                      <CheckCircle2 className="size-3.5 text-emerald-600" />
+                    ) : (
+                      <AlertTriangle className="size-3.5 text-coral" />
+                    )}
+                    <span>
+                      {dbStatus.connected ? "Firestore is reachable" : "Firestore permission issue"}
+                    </span>
+                  </div>
+                  {dbStatus.connected ? (
+                    <div className="grid grid-cols-3 gap-2 pt-1 font-mono text-[11px]">
+                      <div>
+                        Competitions: <strong>{dbStatus.competitionsCount}</strong>
+                      </div>
+                      <div>
+                        Draws: <strong>{dbStatus.drawsCount}</strong>
+                      </div>
+                      <div>
+                        Users: <strong>{dbStatus.usersCount}</strong>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] leading-relaxed">
+                      {dbStatus.error}. If using test mode, ensure security rules in Firebase
+                      Console are published.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-1 text-xs text-ink/65 font-medium">
+                <div className="flex justify-between">
+                  <span>Auth Domain:</span>
+                  <span className="font-mono text-ink text-[11px]">
+                    {firebaseConfig.authDomain}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Storage:</span>
+                  <span className="font-mono text-ink text-[11px]">
+                    {firebaseConfig.storageBucket}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Seeding Action */}
+            <div className="rounded-2xl bg-white ring-1 ring-ink/10 p-4 space-y-3">
+              <div>
+                <p className="text-sm font-extrabold text-ink">Seed Full Platform Data</p>
+                <p className="text-xs font-bold text-ink/55 mt-0.5 leading-relaxed">
+                  Seeds 17 competitions, cryptographic raffle draws with snapshot hashes & beacon
+                  seeds, sample ticket batches, user accounts, and 15 past winners.
+                </p>
+              </div>
+
+              {seedProgress && (
+                <div className="rounded-xl bg-ink/5 p-3 space-y-2">
+                  <div className="flex justify-between text-xs font-bold text-ink">
+                    <span>{seedProgress.stage}</span>
+                    {seedProgress.total > 0 && (
+                      <span>
+                        {seedProgress.count} / {seedProgress.total}
+                      </span>
+                    )}
+                  </div>
+                  {seedProgress.error && (
+                    <p className="text-xs font-semibold text-coral">{seedProgress.error}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button
+                  variant="primary"
+                  onClick={handleSeedDatabase}
+                  disabled={seeding || checkingDb}
+                  className="rounded-full h-10 px-5 text-xs font-bold"
+                >
+                  {seeding ? (
+                    <RefreshCw className="size-3.5 animate-spin mr-1.5" />
+                  ) : (
+                    <Database className="size-3.5 mr-1.5" />
+                  )}
+                  {seeding ? "Seeding to Firestore…" : "Seed to Firestore"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void navigator.clipboard.writeText("npm run seed:db");
+                    toast.success("CLI command copied", {
+                      description: "Run 'npm run seed:db' in your terminal.",
+                    });
+                  }}
+                  className="rounded-full h-10 px-4 text-xs font-bold"
+                >
+                  <Copy className="size-3 mr-1.5" /> Copy CLI: npm run seed:db
+                </Button>
+              </div>
             </div>
           </div>
         </ConfigGroup>
       </div>
 
       <div className="mt-6 flex justify-end">
-        <Button variant="primary" size="lg" onClick={saveAll} disabled={saving} className="rounded-full h-12 px-7">
-          {saving ? <RefreshCw className="size-4 animate-spin mr-2" /> : <CheckCircle2 className="size-4.5 mr-2" />}
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={saveAll}
+          disabled={saving}
+          className="rounded-full h-12 px-7"
+        >
+          {saving ? (
+            <RefreshCw className="size-4 animate-spin mr-2" />
+          ) : (
+            <CheckCircle2 className="size-4.5 mr-2" />
+          )}
           {saving ? "Publishing all changes…" : "Publish all changes"}
         </Button>
       </div>

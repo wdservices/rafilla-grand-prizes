@@ -54,7 +54,11 @@ export async function uploadToCloudinary(
     return {
       public_id: `local-${Date.now()}-${file.name.replace(/[^a-z0-9.-]+/gi, "_")}`,
       secure_url: localUrl,
-      format: file.type.includes("png") ? "png" : file.type.includes("jpg") || file.type.includes("jpeg") ? "jpg" : file.type.split("/")[1] ?? "png",
+      format: file.type.includes("png")
+        ? "png"
+        : file.type.includes("jpg") || file.type.includes("jpeg")
+          ? "jpg"
+          : (file.type.split("/")[1] ?? "png"),
       resource_type: "image",
       bytes: file.size,
     };
@@ -76,7 +80,8 @@ export async function uploadToCloudinary(
     xhr.addEventListener("load", () => {
       try {
         const payload = JSON.parse(xhr.responseText) as CloudinaryUploadResult;
-        if (!payload?.secure_url) throw new Error(payload?.error?.message || "Cloudinary upload failed");
+        if (!payload?.secure_url)
+          throw new Error(payload?.error?.message || "Cloudinary upload failed");
         resolve(payload);
       } catch (err) {
         reject(err);

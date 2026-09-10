@@ -71,18 +71,19 @@ function makeDrawRecord(slug: string, forceStatus?: DrawStatus): DrawRecord {
     drawTimestamp: status === "DRAWING" ? "In progress..." : "2026-09-03 18:00 UTC",
     drawCountdownSeconds: status === "DRAWING" ? 184 : 0,
     snapshotId: "SH-" + Math.random().toString(36).slice(2, 10).toUpperCase(),
-    snapshotHash:
-      "b3e7c8a1d2f496b05e12a94c78fd62b5a13e87dc04f219b6d5c8a307e14f962c",
+    snapshotHash: "b3e7c8a1d2f496b05e12a94c78fd62b5a13e87dc04f219b6d5c8a307e14f962c",
     snapshotTime: "2026-09-03 17:59:55 UTC",
     totalEntries: competition?.totalEntries ?? 5000,
     beaconEpoch: "123456",
     beaconTime: "2026-09-03 18:00:00 UTC",
-    beaconSeed:
-      "a7f3d8c2e91b4a605f2e8c7d1b3a94e50f6a2c8d1e7b94a350f1d86e2c49703a",
+    beaconSeed: "a7f3d8c2e91b4a605f2e8c7d1b3a94e50f6a2c8d1e7b94a350f1d86e2c49703a",
     winnerName: winner.winnerName,
     winnerHandle: "@tunmise_ade",
     winningTicket: "049382",
-    winningEntry: "RF-2026-" + Math.random().toString(36).slice(2, 6).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase(),
+    winningEntry:
+      "RF-2026-" +
+      Math.random().toString(36).slice(2, 6).toUpperCase() +
+      Math.random().toString(36).slice(2, 6).toUpperCase(),
     prizeImage: competition?.image ?? mercedesImage,
     prizeImageAlt: competition?.imageAlt ?? "Prize vehicle",
     algorithmSalt: "raffila-draw-v1::" + (competition?.slug ?? slug) + "::t-5-snapshot",
@@ -199,9 +200,7 @@ export function DrawVerificationPage({ campaignId }: { campaignId?: string }) {
           <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-cream/50">
             §39 · Public verification
           </p>
-          <Badge className={cn("border-0", statusStyle[record.status])}>
-            {record.status}
-          </Badge>
+          <Badge className={cn("border-0", statusStyle[record.status])}>{record.status}</Badge>
         </div>
         <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl">
@@ -212,8 +211,7 @@ export function DrawVerificationPage({ campaignId }: { campaignId?: string }) {
               {record.competitionTitle}
             </p>
             <p className="mt-3 text-sm font-bold text-cream/60">
-              Campaign ID ·{" "}
-              <span className="font-mono text-cream">{record.campaignId}</span> ·{" "}
+              Campaign ID · <span className="font-mono text-cream">{record.campaignId}</span> ·{" "}
               {record.competitionCategory}
             </p>
           </div>
@@ -376,9 +374,8 @@ export function DrawVerificationPage({ campaignId }: { campaignId?: string }) {
             </p>
           </div>
           <p className="mt-4 text-xs font-bold leading-relaxed text-ink/60">
-            This seed is{" "}
-            <span className="font-extrabold text-ink">unknowable to Raffila</span> and determined
-            after the snapshot. Raffila cannot predict or bias the seed.
+            This seed is <span className="font-extrabold text-ink">unknowable to Raffila</span> and
+            determined after the snapshot. Raffila cannot predict or bias the seed.
           </p>
         </div>
 
@@ -404,15 +401,12 @@ export function DrawVerificationPage({ campaignId }: { campaignId?: string }) {
               &nbsp;&nbsp;SHA256(snapshot_salt),
               <br />
               &nbsp;&nbsp;seed
-              <br />
-              ) mod entries_count
+              <br />) mod entries_count
             </p>
           </div>
           <div className="mt-3 rounded-xl bg-cream px-3 py-2 ring-1 ring-ink/5 text-xs">
             <p className="font-extrabold text-ink/45">Snapshot salt</p>
-            <p className="mt-0.5 break-all font-mono font-bold text-ink">
-              {record.algorithmSalt}
-            </p>
+            <p className="mt-0.5 break-all font-mono font-bold text-ink">{record.algorithmSalt}</p>
           </div>
           <a
             href="#verification-code"

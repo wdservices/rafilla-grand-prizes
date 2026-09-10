@@ -46,14 +46,62 @@ const sessions = [
 ];
 
 const loginActivity = [
-  { date: "05 Mar · 14:30", device: "Chrome · Windows 11", ip: "102.89.23.45", location: "Lagos, NG", status: "Success" as const },
-  { date: "05 Mar · 08:12", device: "Chrome · Android 14", ip: "102.67.12.45", location: "Lagos, NG", status: "Success" as const },
-  { date: "04 Mar · 22:05", device: "Safari · iOS 17", ip: "102.44.88.45", location: "Abuja, NG", status: "Success" as const },
-  { date: "04 Mar · 11:40", device: "Chrome · Windows 11", ip: "192.168.1.10", location: "Unknown", status: "Failed" as const },
-  { date: "03 Mar · 19:22", device: "Firefox · macOS", ip: "41.203.65.12", location: "Port Harcourt, NG", status: "Success" as const },
-  { date: "03 Mar · 07:50", device: "Chrome · Android 14", ip: "102.67.12.45", location: "Lagos, NG", status: "Success" as const },
-  { date: "02 Mar · 21:10", device: "Safari · iOS 17", ip: "102.44.88.45", location: "Abuja, NG", status: "Failed" as const },
-  { date: "02 Mar · 10:04", device: "Chrome · Windows 11", ip: "102.89.23.45", location: "Lagos, NG", status: "Success" as const },
+  {
+    date: "05 Mar · 14:30",
+    device: "Chrome · Windows 11",
+    ip: "102.89.23.45",
+    location: "Lagos, NG",
+    status: "Success" as const,
+  },
+  {
+    date: "05 Mar · 08:12",
+    device: "Chrome · Android 14",
+    ip: "102.67.12.45",
+    location: "Lagos, NG",
+    status: "Success" as const,
+  },
+  {
+    date: "04 Mar · 22:05",
+    device: "Safari · iOS 17",
+    ip: "102.44.88.45",
+    location: "Abuja, NG",
+    status: "Success" as const,
+  },
+  {
+    date: "04 Mar · 11:40",
+    device: "Chrome · Windows 11",
+    ip: "192.168.1.10",
+    location: "Unknown",
+    status: "Failed" as const,
+  },
+  {
+    date: "03 Mar · 19:22",
+    device: "Firefox · macOS",
+    ip: "41.203.65.12",
+    location: "Port Harcourt, NG",
+    status: "Success" as const,
+  },
+  {
+    date: "03 Mar · 07:50",
+    device: "Chrome · Android 14",
+    ip: "102.67.12.45",
+    location: "Lagos, NG",
+    status: "Success" as const,
+  },
+  {
+    date: "02 Mar · 21:10",
+    device: "Safari · iOS 17",
+    ip: "102.44.88.45",
+    location: "Abuja, NG",
+    status: "Failed" as const,
+  },
+  {
+    date: "02 Mar · 10:04",
+    device: "Chrome · Windows 11",
+    ip: "102.89.23.45",
+    location: "Lagos, NG",
+    status: "Success" as const,
+  },
 ];
 
 function strength(pw: string) {
@@ -91,10 +139,7 @@ export function DashboardSecurityPage() {
   return (
     <DashboardAppShell
       title="Security"
-      breadcrumbs={[
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Security" },
-      ]}
+      breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Security" }]}
     >
       <div className="space-y-6 max-w-5xl">
         <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
@@ -111,22 +156,48 @@ export function DashboardSecurityPage() {
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <PwField label="Current password" value={cur} onChange={setCur} show={show.cur} onToggle={() => setShow((s) => ({ ...s, cur: !s.cur }))} />
+            <PwField
+              label="Current password"
+              value={cur}
+              onChange={setCur}
+              show={show.cur}
+              onToggle={() => setShow((s) => ({ ...s, cur: !s.cur }))}
+            />
             <div />
-            <PwField label="New password" value={nw} onChange={setNw} show={show.n} onToggle={() => setShow((s) => ({ ...s, n: !s.n }))} />
-            <PwField label="Confirm new password" value={cf} onChange={setCf} show={show.c} onToggle={() => setShow((s) => ({ ...s, c: !s.c }))} />
+            <PwField
+              label="New password"
+              value={nw}
+              onChange={setNw}
+              show={show.n}
+              onToggle={() => setShow((s) => ({ ...s, n: !s.n }))}
+            />
+            <PwField
+              label="Confirm new password"
+              value={cf}
+              onChange={setCf}
+              show={show.c}
+              onToggle={() => setShow((s) => ({ ...s, c: !s.c }))}
+            />
           </div>
 
           <div className="mt-5">
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="flex gap-1.5">
                 {[1, 2, 3, 4].map((i) => (
-                  <span key={i} className={cn("h-2 w-12 rounded-full bg-ink/10 transition-colors", st.score >= i && st.color)} />
+                  <span
+                    key={i}
+                    className={cn(
+                      "h-2 w-12 rounded-full bg-ink/10 transition-colors",
+                      st.score >= i && st.color,
+                    )}
+                  />
                 ))}
               </div>
               <span className="text-xs font-extrabold capitalize text-ink/60">{st.label}</span>
             </div>
-            {nw && !match && cf && <p className="text-xs font-bold text-rose">Passwords don't match yet.</p>}
+            {nw && !match && cf && (
+              <p className="text-xs font-bold text-rose">Passwords don't match yet.</p>
+            )}
           </div>
 
           <div className="mt-6 flex items-center gap-3">
@@ -142,7 +213,9 @@ export function DashboardSecurityPage() {
                 if (!nw || !match || !cur) return;
                 setSaved(true);
                 setTimeout(() => setSaved(false), 2200);
-                setCur(""); setNw(""); setCf("");
+                setCur("");
+                setNw("");
+                setCf("");
               }}
               disabled={!nw || !match || !cur}
             >
@@ -154,7 +227,9 @@ export function DashboardSecurityPage() {
         <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-center gap-2">
             <Smartphone className="size-5 text-coral" />
-            <h2 className="font-display text-xl font-extrabold text-ink">Two-factor authentication</h2>
+            <h2 className="font-display text-xl font-extrabold text-ink">
+              Two-factor authentication
+            </h2>
           </div>
           <p className="mt-1 text-xs font-bold text-ink/45">
             2FA adds an extra layer of security when you sign in.
@@ -190,7 +265,9 @@ export function DashboardSecurityPage() {
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-display text-base font-extrabold text-ink">Authenticator app</h3>
+                    <h3 className="font-display text-base font-extrabold text-ink">
+                      Authenticator app
+                    </h3>
                     <span className="inline-flex items-center rounded-full bg-ink/10 px-2.5 py-1 text-[10px] font-extrabold text-ink/70">
                       NOT SET UP
                     </span>
@@ -212,7 +289,8 @@ export function DashboardSecurityPage() {
               <div>
                 <h4 className="font-display font-extrabold text-ink text-sm">Why enable 2FA?</h4>
                 <p className="mt-1 text-xs font-bold leading-relaxed text-ink/65">
-                  If someone gets your password, they still can't sign in without a code from your phone or authenticator app. We recommend turning on both SMS and app-based 2FA.
+                  If someone gets your password, they still can't sign in without a code from your
+                  phone or authenticator app. We recommend turning on both SMS and app-based 2FA.
                 </p>
               </div>
             </div>
@@ -237,7 +315,7 @@ export function DashboardSecurityPage() {
                   className={cn(
                     "flex flex-col gap-4 border-b border-ink/10 p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between",
                     s.current && "bg-cream/40",
-                    ended && "opacity-50"
+                    ended && "opacity-50",
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -286,9 +364,12 @@ export function DashboardSecurityPage() {
                   <AlertTriangle className="size-5 text-coral" />
                 </div>
                 <div>
-                  <h3 className="font-display text-base font-extrabold text-ink">Sign out all other sessions</h3>
+                  <h3 className="font-display text-base font-extrabold text-ink">
+                    Sign out all other sessions
+                  </h3>
                   <p className="mt-1 text-xs font-bold text-ink/55 max-w-md">
-                    Ends every session except the one you're using now. Recommended if you see a device you don't own.
+                    Ends every session except the one you're using now. Recommended if you see a
+                    device you don't own.
                   </p>
                 </div>
               </div>
@@ -299,9 +380,13 @@ export function DashboardSecurityPage() {
                 onClick={endAll}
               >
                 {endedAll ? (
-                  <><Check className="size-4" /> Done</>
+                  <>
+                    <Check className="size-4" /> Done
+                  </>
                 ) : (
-                  <><LogOut className="size-4" /> End all other sessions</>
+                  <>
+                    <LogOut className="size-4" /> End all other sessions
+                  </>
                 )}
               </Button>
             </div>
@@ -331,16 +416,24 @@ export function DashboardSecurityPage() {
               <tbody className="divide-y divide-ink/10">
                 {loginActivity.map((a, i) => (
                   <tr key={i} className="hover:bg-cream/40">
-                    <td className="whitespace-nowrap px-4 py-3 text-xs font-bold text-ink/50">{a.date}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs font-bold text-ink/50">
+                      {a.date}
+                    </td>
                     <td className="px-4 py-3 text-sm font-bold text-ink">{a.device}</td>
                     <td className="px-4 py-3 font-mono text-xs font-bold text-ink/70">{a.ip}</td>
                     <td className="px-4 py-3 text-xs font-bold text-ink/60">{a.location}</td>
                     <td className="px-4 py-3">
-                      <span className={cn(
-                        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-extrabold",
-                        a.status === "Success" ? "bg-mint/30 text-ink" : "bg-rose/20 text-ink"
-                      )}>
-                        {a.status === "Success" ? <Check className="size-3" /> : <X className="size-3" />}
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-extrabold",
+                          a.status === "Success" ? "bg-mint/30 text-ink" : "bg-rose/20 text-ink",
+                        )}
+                      >
+                        {a.status === "Success" ? (
+                          <Check className="size-3" />
+                        ) : (
+                          <X className="size-3" />
+                        )}
                         {a.status.toUpperCase()}
                       </span>
                     </td>
@@ -353,14 +446,25 @@ export function DashboardSecurityPage() {
       </div>
 
       {setup2fa && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center" onClick={() => setSetup2fa(false)}>
-          <div className="w-full max-w-md rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center"
+          onClick={() => setSetup2fa(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Authenticator app</p>
+                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                  Authenticator app
+                </p>
                 <h2 className="mt-1 font-display text-2xl font-extrabold text-ink">Set up 2FA</h2>
               </div>
-              <button onClick={() => setSetup2fa(false)} className="grid size-10 shrink-0 place-items-center rounded-full bg-cream text-ink ring-1 ring-ink/5">
+              <button
+                onClick={() => setSetup2fa(false)}
+                className="grid size-10 shrink-0 place-items-center rounded-full bg-cream text-ink ring-1 ring-ink/5"
+              >
                 <X className="size-5" />
               </button>
             </div>
@@ -369,13 +473,22 @@ export function DashboardSecurityPage() {
                 <div className="size-36 grid place-items-center rounded-2xl bg-white ring-1 ring-ink/10">
                   <KeyRound className="size-16 text-ink/60" />
                 </div>
-                <p className="mt-4 text-xs font-bold text-ink/55">Scan QR with your authenticator</p>
+                <p className="mt-4 text-xs font-bold text-ink/55">
+                  Scan QR with your authenticator
+                </p>
               </div>
               <div className="rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/5 flex items-center justify-between">
-                <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">Manual key</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                  Manual key
+                </span>
                 <span className="font-mono text-xs font-bold text-ink">JBSWY3DPEHPK3PXP</span>
               </div>
-              <Button variant="primary" size="lg" className="w-full" onClick={() => setSetup2fa(false)}>
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={() => setSetup2fa(false)}
+              >
                 I've scanned — verify code
               </Button>
             </div>
@@ -386,10 +499,24 @@ export function DashboardSecurityPage() {
   );
 }
 
-function PwField({ label, value, onChange, show, onToggle }: { label: string; value: string; onChange: (v: string) => void; show: boolean; onToggle: () => void }) {
+function PwField({
+  label,
+  value,
+  onChange,
+  show,
+  onToggle,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  show: boolean;
+  onToggle: () => void;
+}) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">{label}</label>
+      <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+        {label}
+      </label>
       <div className="flex min-h-11 items-center gap-2 rounded-2xl bg-cream px-4 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral">
         <input
           type={show ? "text" : "password"}
@@ -398,7 +525,12 @@ function PwField({ label, value, onChange, show, onToggle }: { label: string; va
           placeholder="••••••••"
           className="w-full bg-transparent text-sm font-bold text-ink outline-none placeholder:text-ink/30"
         />
-        <button type="button" onClick={onToggle} className="grid size-8 place-items-center rounded-full text-ink/45 hover:text-coral" aria-label={show ? "Hide password" : "Show password"}>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="grid size-8 place-items-center rounded-full text-ink/45 hover:text-coral"
+          aria-label={show ? "Hide password" : "Show password"}
+        >
           {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </button>
       </div>

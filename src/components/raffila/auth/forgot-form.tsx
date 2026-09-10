@@ -67,7 +67,9 @@ export function ForgotPasswordForm() {
           </p>
           <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button asChild variant="dark" size="md">
-              <Link to="/auth" search={{ mode: undefined }}>Back to Log in</Link>
+              <Link to="/auth" search={{ mode: undefined }}>
+                Back to Log in
+              </Link>
             </Button>
           </div>
         </div>

@@ -91,8 +91,7 @@ export function DashboardProfilePage() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
 
-  const update = (k: keyof typeof form, v: string) =>
-    setForm((f) => ({ ...f, [k]: v }));
+  const update = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const save = () => {
     setSaved(true);
@@ -118,10 +117,7 @@ export function DashboardProfilePage() {
   return (
     <DashboardAppShell
       title="Profile"
-      breadcrumbs={[
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Profile" },
-      ]}
+      breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Profile" }]}
     >
       <div className="space-y-6">
         <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
@@ -146,12 +142,7 @@ export function DashboardProfilePage() {
                   <span className="absolute bottom-1 right-1 grid size-8 place-items-center rounded-2xl bg-coral text-paper shadow-[0_6px_14px_-6px_var(--coral)] ring-2 ring-white group-hover:scale-105 transition-transform">
                     <Camera className="size-3.5" />
                   </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={() => {}}
-                  />
+                  <input type="file" accept="image/*" className="hidden" onChange={() => {}} />
                 </label>
 
                 <div className="text-center sm:text-left sm:pb-2">
@@ -172,9 +163,7 @@ export function DashboardProfilePage() {
               </div>
 
               <div className="flex flex-col items-center gap-2 sm:items-end sm:pb-2">
-                <p className="text-xs font-bold text-ink/45">
-                  Member since · 14 Jan 2026
-                </p>
+                <p className="text-xs font-bold text-ink/45">Member since · 14 Jan 2026</p>
                 <Button variant="outline" size="sm">
                   <Camera className="size-3.5" /> Edit profile picture
                 </Button>
@@ -193,9 +182,7 @@ export function DashboardProfilePage() {
                 Account details
               </h2>
             </div>
-            <p className="text-xs font-bold text-ink/45">
-              Last updated · 3 days ago
-            </p>
+            <p className="text-xs font-bold text-ink/45">Last updated · 3 days ago</p>
           </div>
 
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
@@ -281,14 +268,16 @@ export function DashboardProfilePage() {
                 key={b.name}
                 className={cn(
                   "relative rounded-2xl p-5 ring-1 transition-transform hover:-translate-y-0.5",
-                  b.tone
+                  b.tone,
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <div className={cn(
-                    "relative grid size-11 place-items-center rounded-2xl ring-1",
-                    b.earned ? "bg-white ring-ink/10" : "bg-white/60 ring-ink/10"
-                  )}>
+                  <div
+                    className={cn(
+                      "relative grid size-11 place-items-center rounded-2xl ring-1",
+                      b.earned ? "bg-white ring-ink/10" : "bg-white/60 ring-ink/10",
+                    )}
+                  >
                     {b.icon}
                     {!b.earned && (
                       <div className="absolute -bottom-1 -right-1 grid size-4 place-items-center rounded-full bg-white ring-1 ring-ink/10">
@@ -296,21 +285,19 @@ export function DashboardProfilePage() {
                       </div>
                     )}
                   </div>
-                  <span className={cn(
-                    "inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold ring-1",
-                    b.earned
-                      ? "bg-white text-ink ring-ink/10"
-                      : "bg-white/70 text-ink/60 ring-ink/10"
-                  )}>
+                  <span
+                    className={cn(
+                      "inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold ring-1",
+                      b.earned
+                        ? "bg-white text-ink ring-ink/10"
+                        : "bg-white/70 text-ink/60 ring-ink/10",
+                    )}
+                  >
                     {b.earned ? "EARNED" : "LOCKED"}
                   </span>
                 </div>
-                <h3 className="mt-4 font-display text-[15px] font-extrabold text-ink">
-                  {b.name}
-                </h3>
-                <p className="mt-1 text-xs font-bold leading-relaxed text-ink/60">
-                  {b.desc}
-                </p>
+                <h3 className="mt-4 font-display text-[15px] font-extrabold text-ink">{b.name}</h3>
+                <p className="mt-1 text-xs font-bold leading-relaxed text-ink/60">{b.desc}</p>
               </div>
             ))}
           </div>
@@ -318,8 +305,14 @@ export function DashboardProfilePage() {
       </div>
 
       {phoneModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center" onClick={() => setPhoneModal(false)}>
-          <div className="w-full max-w-md rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center"
+          onClick={() => setPhoneModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div>
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Verify phone
@@ -355,7 +348,13 @@ export function DashboardProfilePage() {
                   maxLength={6}
                   className="min-h-12 w-full rounded-2xl bg-cream px-4 text-center font-display text-2xl font-extrabold tracking-[0.2em] text-ink ring-1 ring-ink/5 outline-none focus:ring-2 focus:ring-coral"
                 />
-                <Button variant="primary" size="lg" className="mt-5 w-full" onClick={verifyOtp} disabled={otp.length < 4}>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="mt-5 w-full"
+                  onClick={verifyOtp}
+                  disabled={otp.length < 4}
+                >
                   Verify number
                 </Button>
               </div>
@@ -404,7 +403,7 @@ function Field({
           onChange={onChange ? (e) => onChange(e.target.value) : undefined}
           className={cn(
             "w-full bg-transparent text-sm font-bold text-ink outline-none placeholder:text-ink/35",
-            readOnly && "opacity-80"
+            readOnly && "opacity-80",
           )}
         />
       </div>

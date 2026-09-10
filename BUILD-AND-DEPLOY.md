@@ -85,13 +85,13 @@ npm run test:ui         # vitest --ui — browser UI at http://localhost:51204/_
 
 Suites included (folder `tests/unit/`):
 
-| Suite                    | File                    | Count |
-| ------------------------ | ----------------------- | ----- |
-| `formatNaira` formatter  | `utils.test.ts`         | 9     |
-| `useCountdown` hook      | `countdown.test.ts`     | 4     |
-| `applySort` helper       | `filter.test.ts`        | 11    |
-| `getPasswordStrength`    | `password-strength.test.ts` | 9 |
-| **Total**                |                         | **33+** |
+| Suite                   | File                        | Count   |
+| ----------------------- | --------------------------- | ------- |
+| `formatNaira` formatter | `utils.test.ts`             | 9       |
+| `useCountdown` hook     | `countdown.test.ts`         | 4       |
+| `applySort` helper      | `filter.test.ts`            | 11      |
+| `getPasswordStrength`   | `password-strength.test.ts` | 9       |
+| **Total**               |                             | **33+** |
 
 ### 4.2 E2E smoke — Playwright
 
@@ -234,16 +234,16 @@ npx wrangler deploy --minify .output/server/index.mjs
 
 ## 7. Environment variables summary
 
-| Variable                       | Scope         | Purpose                                              |
-| ------------------------------ | ------------- | ---------------------------------------------------- |
-| `VITE_SITE_URL`                | Client+Server | Canonical public URL                                 |
-| `VITE_SITE_NAME`               | Client+Server | Brand string                                         |
-| `VITE_FIREBASE_*`              | Client        | Firebase JS SDK config (Phase 2)                     |
-| `PAYSTACK_SECRET_KEY`          | Server only   | Wallet funding & ticket checkout                     |
-| `FLUTTERWAVE_SECRET_KEY`       | Server only   | Fallback processor                                   |
-| `TERMII_API_KEY`               | Server only   | OTP SMS + winner alerts                              |
-| `SENDGRID_API_KEY`             | Server only   | Transactional email                                  |
-| `ADMIN_EMAILS`                 | Server only   | Comma-separated super-admin whitelist                |
+| Variable                 | Scope         | Purpose                               |
+| ------------------------ | ------------- | ------------------------------------- |
+| `VITE_SITE_URL`          | Client+Server | Canonical public URL                  |
+| `VITE_SITE_NAME`         | Client+Server | Brand string                          |
+| `VITE_FIREBASE_*`        | Client        | Firebase JS SDK config (Phase 2)      |
+| `PAYSTACK_SECRET_KEY`    | Server only   | Wallet funding & ticket checkout      |
+| `FLUTTERWAVE_SECRET_KEY` | Server only   | Fallback processor                    |
+| `TERMII_API_KEY`         | Server only   | OTP SMS + winner alerts               |
+| `SENDGRID_API_KEY`       | Server only   | Transactional email                   |
+| `ADMIN_EMAILS`           | Server only   | Comma-separated super-admin whitelist |
 
 ---
 
@@ -269,7 +269,7 @@ UI-based (Vercel dashboard):
 
 ## 9. Quick checklist per release
 
-1. `npx tsc --noEmit` — no *new* errors vs baseline.
+1. `npx tsc --noEmit` — no _new_ errors vs baseline.
 2. `npm test` — 36/36 passing.
 3. `npm run build` — exit 0.
 4. (If E2E) `npm run dev` + `npm run e2e` — 4/4 smoke tests green.

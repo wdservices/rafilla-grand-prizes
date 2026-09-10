@@ -106,9 +106,28 @@ interface MockComp {
 }
 
 const IMAGES = [mercedesImage, techBundleImage, apartmentImage];
-const PARTNERS = ["Lux Wheels Ltd", "TechHome NG", "Adebayo Homes", "Lekki Luxury Autos", "Abuja Tech Hub"];
+const PARTNERS = [
+  "Lux Wheels Ltd",
+  "TechHome NG",
+  "Adebayo Homes",
+  "Lekki Luxury Autos",
+  "Abuja Tech Hub",
+];
 const CATEGORIES = ["Auto", "Tech", "Property", "Jewelry", "Home", "Experience"];
-const STATUSES: CompStatus[] = ["LIVE", "SCHEDULED", "DRAFT", "COMPLETED", "LIVE", "LIVE", "SCHEDULED", "DRAFT", "COMPLETED", "LIVE", "SCHEDULED", "LIVE"];
+const STATUSES: CompStatus[] = [
+  "LIVE",
+  "SCHEDULED",
+  "DRAFT",
+  "COMPLETED",
+  "LIVE",
+  "LIVE",
+  "SCHEDULED",
+  "DRAFT",
+  "COMPLETED",
+  "LIVE",
+  "SCHEDULED",
+  "LIVE",
+];
 
 const NAMES = [
   "Mercedes-Benz C-Class 2025",
@@ -125,8 +144,12 @@ const NAMES = [
   "VI Penthouse Week",
 ];
 
-const TOTAL_ENTRIES_POOL = [5000, 10000, 22500, 6000, 5000, 4000, 8000, 3000, 2500, 15000, 10000, 5000];
-const TICKET_PRICE_POOL = [10000, 5000, 2500, 1500, 1000, 7500, 2000, 5000, 20000, 3000, 6000, 4000];
+const TOTAL_ENTRIES_POOL = [
+  5000, 10000, 22500, 6000, 5000, 4000, 8000, 3000, 2500, 15000, 10000, 5000,
+];
+const TICKET_PRICE_POOL = [
+  10000, 5000, 2500, 1500, 1000, 7500, 2000, 5000, 20000, 3000, 6000, 4000,
+];
 
 const COMPS: MockComp[] = NAMES.map((n, i) => ({
   id: `RF-C-${String(i + 1).padStart(5, "0")}`,
@@ -139,7 +162,7 @@ const COMPS: MockComp[] = NAMES.map((n, i) => ({
   ticketPrice: TICKET_PRICE_POOL[i]! * 100,
   image: IMAGES[i % IMAGES.length]!,
   partner: PARTNERS[i % PARTNERS.length]!,
-  drawDate: `2026-${String(((i % 11) + 2)).padStart(2, "0")}-${String(((i % 27) + 1)).padStart(2, "0")}`,
+  drawDate: `2026-${String((i % 11) + 2).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
   condition: (["new", "likenew", "refurbished", "used"] as const)[i % 4],
   marketValue: (TOTAL_ENTRIES_POOL[i]! * TICKET_PRICE_POOL[i]! * 100) / 3,
   description: `Premium ${CATEGORIES[i % CATEGORIES.length]} asset. Verified authenticity, full documentation, and insured delivery to anywhere in Nigeria.`,
@@ -157,7 +180,14 @@ const statusTone: Record<CompStatus, string> = {
   COMPLETED: "bg-coral/20 text-coral",
 };
 
-const STEP_LABELS = ["Basics", "Asset", "Entry config", "Schedule", "Visibility", "Review & Publish"] as const;
+const STEP_LABELS = [
+  "Basics",
+  "Asset",
+  "Entry config",
+  "Schedule",
+  "Visibility",
+  "Review & Publish",
+] as const;
 type Step = (typeof STEP_LABELS)[number];
 
 type FormState = {
@@ -261,7 +291,13 @@ export function AdminCompetitionsPage() {
     () =>
       COMPS.filter((c) => {
         const s = search.toLowerCase();
-        if (s && !c.name.toLowerCase().includes(s) && !c.slug.includes(s) && !c.partner.toLowerCase().includes(s)) return false;
+        if (
+          s &&
+          !c.name.toLowerCase().includes(s) &&
+          !c.slug.includes(s) &&
+          !c.partner.toLowerCase().includes(s)
+        )
+          return false;
         const st = statusMap[tab];
         if (st === "all") return true;
         return c.status === st;
@@ -273,20 +309,63 @@ export function AdminCompetitionsPage() {
     const comp = COMPS.find((c) => c.id === entriesFor);
     if (!comp) return { comp: null, rows: [] as any[] };
     const rows = Array.from({ length: Math.min(comp.entriesSold, 286) }).map((_, i) => {
-      const names = ["Tunmise Adebayo", "Aisha Mohammed", "Uche Dike", "Zainab Abubakar", "Tunde Okafor", "Chidi Kelechi", "Amaka Peace", "Ifeoma Dike", "Bola Tinubu", "Amina Garba", "Samuel Ola", "Blessing Onyeka"];
+      const names = [
+        "Tunmise Adebayo",
+        "Aisha Mohammed",
+        "Uche Dike",
+        "Zainab Abubakar",
+        "Tunde Okafor",
+        "Chidi Kelechi",
+        "Amaka Peace",
+        "Ifeoma Dike",
+        "Bola Tinubu",
+        "Amina Garba",
+        "Samuel Ola",
+        "Blessing Onyeka",
+      ];
       const name = names[i % names.length]!;
-      const handles = ["@tunmise_a", "@aisha_m", "@uche_d", "@zainab_a", "@tunde_o", "@chidi_k", "@amaka_p", "@ifeoma_d", "@bola_t", "@amina_g", "@samuel_o", "@blessing_o"];
-      const statuses: Array<"Paid" | "Pending" | "Won" | "Refunded"> = ["Paid", "Paid", "Paid", "Pending", "Won", "Paid", "Paid", "Paid", "Paid", "Paid", "Refunded", "Pending"];
+      const handles = [
+        "@tunmise_a",
+        "@aisha_m",
+        "@uche_d",
+        "@zainab_a",
+        "@tunde_o",
+        "@chidi_k",
+        "@amaka_p",
+        "@ifeoma_d",
+        "@bola_t",
+        "@amina_g",
+        "@samuel_o",
+        "@blessing_o",
+      ];
+      const statuses: Array<"Paid" | "Pending" | "Won" | "Refunded"> = [
+        "Paid",
+        "Paid",
+        "Paid",
+        "Pending",
+        "Won",
+        "Paid",
+        "Paid",
+        "Paid",
+        "Paid",
+        "Paid",
+        "Refunded",
+        "Pending",
+      ];
       const tickets = (i % 50) + 1;
       const id = `${comp.id}-E${String(i + 1).padStart(6, "0")}`;
       return {
         id,
         name,
         handle: handles[i % handles.length]!,
-        monogram: name.split(" ").map(w => w[0]!).join("").toUpperCase(),
+        monogram: name
+          .split(" ")
+          .map((w) => w[0]!)
+          .join("")
+          .toUpperCase(),
         tickets,
         amount: tickets * comp.ticketPrice,
-        entered: `2026-${String(((i % 5) + 1)).padStart(2, "0")}-${String(((i % 27) + 1)).padStart(2, "0")}  ${String((i % 23) + 7).padStart(2, "0")}:${String((i * 3) % 60).padStart(2, "0")}`,
+        entered: `2026-${String((i % 5) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}  ${String((i % 23) + 7).padStart(2, "0")}:${String((i * 3) % 60).padStart(2, "0")}`,
         status: statuses[i % statuses.length]!,
       };
     });
@@ -306,8 +385,11 @@ export function AdminCompetitionsPage() {
     }
     if (entriesSearch) {
       const s = entriesSearch.toLowerCase();
-      rows = rows.filter((r) =>
-        r.name.toLowerCase().includes(s) || r.handle.toLowerCase().includes(s) || r.id.toLowerCase().includes(s),
+      rows = rows.filter(
+        (r) =>
+          r.name.toLowerCase().includes(s) ||
+          r.handle.toLowerCase().includes(s) ||
+          r.id.toLowerCase().includes(s),
       );
     }
     return rows.slice(0, entriesPage * PAGE_SIZE);
@@ -357,7 +439,9 @@ export function AdminCompetitionsPage() {
         openEdit(comp);
         break;
       case "duplicate":
-        toast.success("Competition duplicated", { description: `Copy of ${comp.name} created in DRAFT.` });
+        toast.success("Competition duplicated", {
+          description: `Copy of ${comp.name} created in DRAFT.`,
+        });
         break;
       case "pause":
         toast.success(comp.status === "LIVE" ? "Competition paused" : "Competition resumed", {
@@ -365,16 +449,22 @@ export function AdminCompetitionsPage() {
         });
         break;
       case "cancel":
-        toast.warning("Competition cancelled", { description: `${comp.name} moved to CANCELLED · no refunds auto-issued.` });
+        toast.warning("Competition cancelled", {
+          description: `${comp.name} moved to CANCELLED · no refunds auto-issued.`,
+        });
         break;
       case "analytics":
-        toast.success("Analytics loading", { description: `Performance snapshot for ${comp.name}.` });
+        toast.success("Analytics loading", {
+          description: `Performance snapshot for ${comp.name}.`,
+        });
         break;
       case "share":
         if (typeof navigator !== "undefined" && navigator.clipboard) {
           void navigator.clipboard.writeText(`https://raffila.com/competitions/${comp.slug}`);
         }
-        toast.success("Public link copied", { description: `raffila.com/competitions/${comp.slug}` });
+        toast.success("Public link copied", {
+          description: `raffila.com/competitions/${comp.slug}`,
+        });
         break;
       default:
         break;
@@ -385,8 +475,12 @@ export function AdminCompetitionsPage() {
     <AdminShell activeNav="competitions" title="Competitions">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">Admin · Competitions</p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">Competitions</h1>
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">
+            Admin · Competitions
+          </p>
+          <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
+            Competitions
+          </h1>
           <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
             Create, schedule, draw, and manage prize competitions across the Raffila platform.
           </p>
@@ -399,7 +493,11 @@ export function AdminCompetitionsPage() {
       <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
         <CardContent className="space-y-4 p-5 sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-            <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full sm:w-auto overflow-x-auto scrollbar-none">
+            <Tabs
+              value={tab}
+              onValueChange={(v) => setTab(v as any)}
+              className="w-full sm:w-auto overflow-x-auto scrollbar-none"
+            >
               <TabsList className="rounded-full bg-cream p-1 w-max sm:w-auto">
                 {[
                   { v: "live", l: "Live" },
@@ -429,10 +527,26 @@ export function AdminCompetitionsPage() {
                 />
               </div>
               <div className="flex items-center rounded-full bg-cream p-0.5 ring-1 ring-ink/10">
-                <Button variant="ghost" size="icon" className={cn("size-9 rounded-full", view === "grid" && "bg-white text-ink shadow-sm")} onClick={() => setView("grid")}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "size-9 rounded-full",
+                    view === "grid" && "bg-white text-ink shadow-sm",
+                  )}
+                  onClick={() => setView("grid")}
+                >
                   <LayoutGrid className="size-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className={cn("size-9 rounded-full", view === "list" && "bg-white text-ink shadow-sm")} onClick={() => setView("list")}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "size-9 rounded-full",
+                    view === "list" && "bg-white text-ink shadow-sm",
+                  )}
+                  onClick={() => setView("list")}
+                >
                   <List className="size-4" />
                 </Button>
               </div>
@@ -445,11 +559,23 @@ export function AdminCompetitionsPage() {
                 const pct = Math.min(100, Math.round((c.entriesSold / c.totalEntries) * 100));
                 const full = pct >= 100;
                 return (
-                  <Card key={c.id} className="group rounded-[26px] border-0 bg-white p-0 ring-1 ring-ink/10 shadow-[0_2px_14px_-10px_rgba(0,0,0,0.15)] overflow-hidden">
+                  <Card
+                    key={c.id}
+                    className="group rounded-[26px] border-0 bg-white p-0 ring-1 ring-ink/10 shadow-[0_2px_14px_-10px_rgba(0,0,0,0.15)] overflow-hidden"
+                  >
                     <div className="relative aspect-[16/10] overflow-hidden bg-cream">
-                      <img src={c.image} alt={`${c.name} prize`} className="size-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                      <img
+                        src={c.image}
+                        alt={`${c.name} prize`}
+                        className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
                       <div className="absolute left-3 top-3 flex items-center gap-1.5">
-                        <Badge className={cn("rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider ring-0", statusTone[c.status])}>
+                        <Badge
+                          className={cn(
+                            "rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                            statusTone[c.status],
+                          )}
+                        >
                           {c.status}
                         </Badge>
                         <Badge className="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-extrabold text-ink ring-0 backdrop-blur">
@@ -459,45 +585,136 @@ export function AdminCompetitionsPage() {
                       <div className="absolute right-3 top-3">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-8 rounded-full bg-white/95 backdrop-blur text-ink ring-1 ring-ink/10 hover:bg-white">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 rounded-full bg-white/95 backdrop-blur text-ink ring-1 ring-ink/10 hover:bg-white"
+                            >
                               <MoreHorizontal className="size-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52 rounded-[22px] bg-white p-1.5 ring-1 ring-ink/10 shadow-[0_20px_60px_-25px_rgba(0,0,0,0.25)]">
-                            <DropdownMenuLabel className="rounded-xl px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-ink/45">{c.id}</DropdownMenuLabel>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-52 rounded-[22px] bg-white p-1.5 ring-1 ring-ink/10 shadow-[0_20px_60px_-25px_rgba(0,0,0,0.25)]"
+                          >
+                            <DropdownMenuLabel className="rounded-xl px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                              {c.id}
+                            </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-sky/20 focus:text-ink" onClick={() => performAction(c, "view")}><EyeIcon className="mr-2 size-4" />View on site</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-coral/15 focus:text-ink" onClick={() => performAction(c, "edit")}><Pencil className="mr-2 size-4" />Edit competition</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-mint/25 focus:text-ink" onClick={() => setEntriesFor(c.id)}><Ticket className="mr-2 size-4" />Manage entries</DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-sky/20 focus:text-ink"
+                              onClick={() => performAction(c, "view")}
+                            >
+                              <EyeIcon className="mr-2 size-4" />
+                              View on site
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-coral/15 focus:text-ink"
+                              onClick={() => performAction(c, "edit")}
+                            >
+                              <Pencil className="mr-2 size-4" />
+                              Edit competition
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-mint/25 focus:text-ink"
+                              onClick={() => setEntriesFor(c.id)}
+                            >
+                              <Ticket className="mr-2 size-4" />
+                              Manage entries
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-lemon/40 focus:text-ink" onClick={() => performAction(c, "duplicate")}><Copy className="mr-2 size-4" />Duplicate</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-cream focus:text-ink" onClick={() => performAction(c, "pause")}>{c.status === "LIVE" ? <Pause className="mr-2 size-4" /> : <PlayCircle className="mr-2 size-4" />}{c.status === "LIVE" ? "Pause entries" : "Resume entries"}</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-lilac/25 focus:text-ink" onClick={() => performAction(c, "analytics")}><TrendingUp className="mr-2 size-4" />View analytics</DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-coral/15 focus:text-ink" onClick={() => performAction(c, "share")}><Share2 className="mr-2 size-4" />Copy public link</DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-lemon/40 focus:text-ink"
+                              onClick={() => performAction(c, "duplicate")}
+                            >
+                              <Copy className="mr-2 size-4" />
+                              Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-cream focus:text-ink"
+                              onClick={() => performAction(c, "pause")}
+                            >
+                              {c.status === "LIVE" ? (
+                                <Pause className="mr-2 size-4" />
+                              ) : (
+                                <PlayCircle className="mr-2 size-4" />
+                              )}
+                              {c.status === "LIVE" ? "Pause entries" : "Resume entries"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-lilac/25 focus:text-ink"
+                              onClick={() => performAction(c, "analytics")}
+                            >
+                              <TrendingUp className="mr-2 size-4" />
+                              View analytics
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-coral/15 focus:text-ink"
+                              onClick={() => performAction(c, "share")}
+                            >
+                              <Share2 className="mr-2 size-4" />
+                              Copy public link
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15" onClick={() => performAction(c, "cancel")}><AlertCircle className="mr-2 size-4" />Cancel draw</DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15"
+                              onClick={() => performAction(c, "cancel")}
+                            >
+                              <AlertCircle className="mr-2 size-4" />
+                              Cancel draw
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
                     </div>
                     <CardContent className="p-5 space-y-3.5">
-                      <h3 className="font-display text-[17px] font-extrabold leading-tight text-ink min-h-[2.5rem] line-clamp-2">{c.name}</h3>
+                      <h3 className="font-display text-[17px] font-extrabold leading-tight text-ink min-h-[2.5rem] line-clamp-2">
+                        {c.name}
+                      </h3>
                       <div className="flex items-center justify-between text-[11px] font-extrabold">
-                        <span className="inline-flex items-center gap-1 text-ink/60"><CalendarDays className="size-3" />Draw {c.drawDate}</span>
-                        <span className="text-ink whitespace-nowrap">{formatNaira(c.ticketPrice)}</span>
+                        <span className="inline-flex items-center gap-1 text-ink/60">
+                          <CalendarDays className="size-3" />
+                          Draw {c.drawDate}
+                        </span>
+                        <span className="text-ink whitespace-nowrap">
+                          {formatNaira(c.ticketPrice)}
+                        </span>
                       </div>
                       <div>
                         <div className="mb-1.5 flex items-center justify-between text-[11px] font-extrabold text-ink/60">
                           <span>Entries</span>
-                          <span>{c.entriesSold.toLocaleString("en-NG")} / {c.totalEntries.toLocaleString("en-NG")} · {pct}%</span>
+                          <span>
+                            {c.entriesSold.toLocaleString("en-NG")} /{" "}
+                            {c.totalEntries.toLocaleString("en-NG")} · {pct}%
+                          </span>
                         </div>
-                        <Progress value={pct} className="h-2 rounded-full bg-cream [&>div]:bg-coral [&>div]:rounded-full" />
+                        <Progress
+                          value={pct}
+                          className="h-2 rounded-full bg-cream [&>div]:bg-coral [&>div]:rounded-full"
+                        />
                       </div>
                       <div className="flex flex-wrap items-center gap-2 pt-1">
-                        <Button variant="outline" size="sm" onClick={() => performAction(c, "edit")}><Pencil className="size-3.5" />Edit</Button>
-                        <Button variant="outline" size="sm" onClick={() => setEntriesFor(c.id)}><Ticket className="size-3.5" />Manage entries</Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => performAction(c, "edit")}
+                        >
+                          <Pencil className="size-3.5" />
+                          Edit
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setEntriesFor(c.id)}>
+                          <Ticket className="size-3.5" />
+                          Manage entries
+                        </Button>
                         {c.status === "LIVE" && full && (
-                          <Button variant="primary" size="sm" onClick={() => toast.success("Starting draw", { description: c.name })}><PlayCircle className="size-3.5" />Draw now</Button>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => toast.success("Starting draw", { description: c.name })}
+                          >
+                            <PlayCircle className="size-3.5" />
+                            Draw now
+                          </Button>
                         )}
                       </div>
                     </CardContent>
@@ -513,11 +730,17 @@ export function AdminCompetitionsPage() {
                     <TableHead className="py-3 font-extrabold text-ink/65">Competition</TableHead>
                     <TableHead className="py-3 font-extrabold text-ink/65">Category</TableHead>
                     <TableHead className="py-3 font-extrabold text-ink/65">Partner</TableHead>
-                    <TableHead className="py-3 text-right font-extrabold text-ink/65">Entries %</TableHead>
-                    <TableHead className="py-3 text-right font-extrabold text-ink/65">Ticket</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                      Entries %
+                    </TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                      Ticket
+                    </TableHead>
                     <TableHead className="py-3 font-extrabold text-ink/65">Status</TableHead>
                     <TableHead className="py-3 font-extrabold text-ink/65">Draw date</TableHead>
-                    <TableHead className="py-3 text-right font-extrabold text-ink/65">Actions</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-ink/10">
@@ -528,35 +751,89 @@ export function AdminCompetitionsPage() {
                       <TableRow key={c.id} className="hover:bg-sky/8">
                         <TableCell className="py-3">
                           <div className="flex items-center gap-3">
-                            <img src={c.image} alt="" aria-hidden className="size-11 rounded-2xl object-cover ring-2 ring-white" />
+                            <img
+                              src={c.image}
+                              alt=""
+                              aria-hidden
+                              className="size-11 rounded-2xl object-cover ring-2 ring-white"
+                            />
                             <div className="min-w-0 max-w-[280px]">
                               <p className="truncate text-sm font-extrabold text-ink">{c.name}</p>
-                              <p className="truncate text-[11px] font-bold text-ink/50">{c.id} · {c.partner}</p>
+                              <p className="truncate text-[11px] font-bold text-ink/50">
+                                {c.id} · {c.partner}
+                              </p>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-3 text-xs font-bold text-ink/70">{c.category}</TableCell>
-                        <TableCell className="py-3 text-xs font-bold text-ink/70">{c.partner}</TableCell>
+                        <TableCell className="py-3 text-xs font-bold text-ink/70">
+                          {c.category}
+                        </TableCell>
+                        <TableCell className="py-3 text-xs font-bold text-ink/70">
+                          {c.partner}
+                        </TableCell>
                         <TableCell className="py-3">
                           <div className="flex items-center justify-end gap-2">
                             <div className="h-2 w-28 overflow-hidden rounded-full bg-cream">
                               <div className="h-full bg-coral" style={{ width: `${pct}%` }} />
                             </div>
-                            <span className="w-10 text-right text-[11px] font-extrabold text-ink/65">{pct}%</span>
+                            <span className="w-10 text-right text-[11px] font-extrabold text-ink/65">
+                              {pct}%
+                            </span>
                           </div>
                         </TableCell>
-                        <TableCell className="py-3 text-right whitespace-nowrap text-xs font-extrabold text-ink">{formatNaira(c.ticketPrice)}</TableCell>
-                        <TableCell className="py-3">
-                          <Badge className={cn("rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0", statusTone[c.status])}>{c.status}</Badge>
+                        <TableCell className="py-3 text-right whitespace-nowrap text-xs font-extrabold text-ink">
+                          {formatNaira(c.ticketPrice)}
                         </TableCell>
-                        <TableCell className="py-3 whitespace-nowrap text-xs font-bold text-ink/65">{c.drawDate}</TableCell>
+                        <TableCell className="py-3">
+                          <Badge
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                              statusTone[c.status],
+                            )}
+                          >
+                            {c.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-3 whitespace-nowrap text-xs font-bold text-ink/65">
+                          {c.drawDate}
+                        </TableCell>
                         <TableCell className="py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="size-8 text-ink/70 hover:bg-coral/10 hover:text-coral" onClick={() => performAction(c, "view")}><EyeIcon className="size-4" /></Button>
-                            <Button variant="ghost" size="icon" className="size-8 text-ink/70 hover:bg-coral/10 hover:text-coral" onClick={() => performAction(c, "edit")}><Pencil className="size-4" /></Button>
-                            <Button variant="ghost" size="icon" className="size-8 text-ink/70 hover:bg-mint/20 hover:text-ink" onClick={() => setEntriesFor(c.id)}><Ticket className="size-4" /></Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-ink/70 hover:bg-coral/10 hover:text-coral"
+                              onClick={() => performAction(c, "view")}
+                            >
+                              <EyeIcon className="size-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-ink/70 hover:bg-coral/10 hover:text-coral"
+                              onClick={() => performAction(c, "edit")}
+                            >
+                              <Pencil className="size-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-ink/70 hover:bg-mint/20 hover:text-ink"
+                              onClick={() => setEntriesFor(c.id)}
+                            >
+                              <Ticket className="size-4" />
+                            </Button>
                             {c.status === "LIVE" && full && (
-                              <Button variant="primary" size="sm" onClick={() => toast.success("Starting draw", { description: c.name })}><PlayCircle className="size-3.5" />Draw</Button>
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() =>
+                                  toast.success("Starting draw", { description: c.name })
+                                }
+                              >
+                                <PlayCircle className="size-3.5" />
+                                Draw
+                              </Button>
                             )}
                           </div>
                         </TableCell>
@@ -580,7 +857,10 @@ export function AdminCompetitionsPage() {
                 </span>
                 {modalMode === "edit" ? "Edit competition" : "New competition"}
               </span>
-              <button className="grid size-9 place-items-center rounded-full bg-cream/60 text-ink/60 ring-1 ring-ink/10 hover:bg-white hover:text-ink" onClick={closeModal}>
+              <button
+                className="grid size-9 place-items-center rounded-full bg-cream/60 text-ink/60 ring-1 ring-ink/10 hover:bg-white hover:text-ink"
+                onClick={closeModal}
+              >
                 <X className="size-4" />
               </button>
             </DialogTitle>
@@ -598,19 +878,29 @@ export function AdminCompetitionsPage() {
                 {modalMode === "edit" ? "Competition updated" : "Competition created"}
               </h3>
               <p className="mt-2 max-w-md text-sm font-bold text-ink/60">
-                {modalMode === "edit" ? "Edits saved. Asset review, schedule, and draw settings remain live adjustable." : "Your draft competition has been saved. Asset review, schedule, and draw settings can be adjusted before going live."}
+                {modalMode === "edit"
+                  ? "Edits saved. Asset review, schedule, and draw settings remain live adjustable."
+                  : "Your draft competition has been saved. Asset review, schedule, and draw settings can be adjusted before going live."}
               </p>
               <div className="mt-6 grid w-full max-w-md grid-cols-2 gap-3 text-left">
                 <Card className="rounded-2xl border-0 bg-cream/60 p-0 ring-1 ring-ink/10">
                   <CardContent className="p-4">
-                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Competition ID</p>
-                    <p className="mt-1 text-sm font-extrabold text-ink">{form.id ?? "RF-C-00134"}</p>
+                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                      Competition ID
+                    </p>
+                    <p className="mt-1 text-sm font-extrabold text-ink">
+                      {form.id ?? "RF-C-00134"}
+                    </p>
                   </CardContent>
                 </Card>
                 <Card className="rounded-2xl border-0 bg-cream/60 p-0 ring-1 ring-ink/10">
                   <CardContent className="p-4">
-                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">Status</p>
-                    <Badge className="mt-1 rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-extrabold uppercase ring-0 text-ink">{form.status ?? "Draft"}</Badge>
+                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                      Status
+                    </p>
+                    <Badge className="mt-1 rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-extrabold uppercase ring-0 text-ink">
+                      {form.status ?? "Draft"}
+                    </Badge>
                   </CardContent>
                 </Card>
               </div>
@@ -624,14 +914,29 @@ export function AdminCompetitionsPage() {
                 <div className="flex items-center gap-1.5 overflow-x-auto py-2">
                   {STEP_LABELS.map((s, i) => (
                     <div key={s} className="flex shrink-0 items-center gap-1.5">
-                      <div className={cn(
-                        "grid size-8 place-items-center rounded-full text-[11px] font-extrabold ring-1",
-                        i < stepIdx ? "bg-mint/35 text-ink ring-mint/40" : i === stepIdx ? "bg-coral text-white ring-coral/50 shadow-[0_10px_24px_-16px_var(--coral)]" : "bg-cream/50 text-ink/55 ring-ink/10",
-                      )}>
+                      <div
+                        className={cn(
+                          "grid size-8 place-items-center rounded-full text-[11px] font-extrabold ring-1",
+                          i < stepIdx
+                            ? "bg-mint/35 text-ink ring-mint/40"
+                            : i === stepIdx
+                              ? "bg-coral text-white ring-coral/50 shadow-[0_10px_24px_-16px_var(--coral)]"
+                              : "bg-cream/50 text-ink/55 ring-ink/10",
+                        )}
+                      >
                         {i < stepIdx ? <Check className="size-3.5" /> : i + 1}
                       </div>
-                      <span className={cn("whitespace-nowrap text-[10px] font-extrabold uppercase tracking-wider", i <= stepIdx ? "text-ink" : "text-ink/40")}>{s}</span>
-                      {i < STEP_LABELS.length - 1 && <ChevronRight className="mx-0.5 size-3 text-ink/30" />}
+                      <span
+                        className={cn(
+                          "whitespace-nowrap text-[10px] font-extrabold uppercase tracking-wider",
+                          i <= stepIdx ? "text-ink" : "text-ink/40",
+                        )}
+                      >
+                        {s}
+                      </span>
+                      {i < STEP_LABELS.length - 1 && (
+                        <ChevronRight className="mx-0.5 size-3 text-ink/30" />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -642,27 +947,67 @@ export function AdminCompetitionsPage() {
                 {stepIdx === 0 && (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="sm:col-span-2 space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Competition name</Label>
-                      <Input placeholder="e.g. 2026 Mercedes-Benz C-Class Grand Prize" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral" />
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Competition name
+                      </Label>
+                      <Input
+                        placeholder="e.g. 2026 Mercedes-Benz C-Class Grand Prize"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral"
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">URL slug</Label>
-                      <Input placeholder="mercedes-c-class-2026" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })} className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral" />
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        URL slug
+                      </Label>
+                      <Input
+                        placeholder="mercedes-c-class-2026"
+                        value={form.slug}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+                          })
+                        }
+                        className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral"
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Category</Label>
-                      <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Category
+                      </Label>
+                      <Select
+                        value={form.category}
+                        onValueChange={(v) => setForm({ ...form, category: v })}
+                      >
                         <SelectTrigger className="h-12 rounded-2xl bg-white px-4 text-sm font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-[22px] bg-white p-1 ring-1 ring-ink/10">
-                          {CATEGORIES.map((c) => <SelectItem key={c} value={c.toLowerCase()} className="rounded-xl font-bold">{c}</SelectItem>)}
+                          {CATEGORIES.map((c) => (
+                            <SelectItem
+                              key={c}
+                              value={c.toLowerCase()}
+                              className="rounded-xl font-bold"
+                            >
+                              {c}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="sm:col-span-2 space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Description</Label>
-                      <Textarea rows={4} placeholder="Rich description shown on the competition landing page…" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="rounded-2xl border-0 bg-white p-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral" />
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Description
+                      </Label>
+                      <Textarea
+                        rows={4}
+                        placeholder="Rich description shown on the competition landing page…"
+                        value={form.description}
+                        onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        className="rounded-2xl border-0 bg-white p-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral"
+                      />
                     </div>
                   </div>
                 )}
@@ -670,8 +1015,15 @@ export function AdminCompetitionsPage() {
                 {stepIdx === 1 && (
                   <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                     <div className="sm:col-span-2 space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Asset / prize name</Label>
-                      <Input placeholder="Mercedes-Benz C-Class 2025 · brand new, full warranty" value={form.assetName} onChange={(e) => setForm({ ...form, assetName: e.target.value })} className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral" />
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Asset / prize name
+                      </Label>
+                      <Input
+                        placeholder="Mercedes-Benz C-Class 2025 · brand new, full warranty"
+                        value={form.assetName}
+                        onChange={(e) => setForm({ ...form, assetName: e.target.value })}
+                        className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral"
+                      />
                     </div>
                     <div className="sm:col-span-2">
                       <AssetUploader
@@ -683,35 +1035,73 @@ export function AdminCompetitionsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Market value (₦)</Label>
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Market value (₦)
+                      </Label>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">₦</span>
-                        <Input type="number" value={form.marketValue} onChange={(e) => setForm({ ...form, marketValue: e.target.value })} placeholder="12,000,000" className="h-12 rounded-2xl border-0 bg-white pl-8 pr-4 text-base font-extrabold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral" />
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">
+                          ₦
+                        </span>
+                        <Input
+                          type="number"
+                          value={form.marketValue}
+                          onChange={(e) => setForm({ ...form, marketValue: e.target.value })}
+                          placeholder="12,000,000"
+                          className="h-12 rounded-2xl border-0 bg-white pl-8 pr-4 text-base font-extrabold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral"
+                        />
                       </div>
-                      <p className="text-[11px] font-bold text-ink/55">{formatNaira(parseInt(form.marketValue || "0", 10) * 100)} suggested retail</p>
+                      <p className="text-[11px] font-bold text-ink/55">
+                        {formatNaira(parseInt(form.marketValue || "0", 10) * 100)} suggested retail
+                      </p>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Asset condition</Label>
-                      <Select value={form.condition} onValueChange={(v) => setForm({ ...form, condition: v })}>
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Asset condition
+                      </Label>
+                      <Select
+                        value={form.condition}
+                        onValueChange={(v) => setForm({ ...form, condition: v })}
+                      >
                         <SelectTrigger className="h-12 rounded-2xl bg-white px-4 text-sm font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-[22px] bg-white p-1 ring-1 ring-ink/10">
-                          <SelectItem value="new" className="rounded-xl font-bold">Brand new</SelectItem>
-                          <SelectItem value="likenew" className="rounded-xl font-bold">Like new</SelectItem>
-                          <SelectItem value="refurbished" className="rounded-xl font-bold">Certified refurbished</SelectItem>
-                          <SelectItem value="used" className="rounded-xl font-bold">Used / verified</SelectItem>
+                          <SelectItem value="new" className="rounded-xl font-bold">
+                            Brand new
+                          </SelectItem>
+                          <SelectItem value="likenew" className="rounded-xl font-bold">
+                            Like new
+                          </SelectItem>
+                          <SelectItem value="refurbished" className="rounded-xl font-bold">
+                            Certified refurbished
+                          </SelectItem>
+                          <SelectItem value="used" className="rounded-xl font-bold">
+                            Used / verified
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="sm:col-span-2 space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Partner</Label>
-                      <Select value={form.partner} onValueChange={(v) => setForm({ ...form, partner: v })}>
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Partner
+                      </Label>
+                      <Select
+                        value={form.partner}
+                        onValueChange={(v) => setForm({ ...form, partner: v })}
+                      >
                         <SelectTrigger className="h-12 rounded-2xl bg-white px-4 text-sm font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="rounded-[22px] bg-white p-1 ring-1 ring-ink/10">
-                          {PARTNERS.map((p) => <SelectItem key={p} value={p.toLowerCase().replace(/[^a-z]/g, "")} className="rounded-xl font-bold">{p}</SelectItem>)}
+                          {PARTNERS.map((p) => (
+                            <SelectItem
+                              key={p}
+                              value={p.toLowerCase().replace(/[^a-z]/g, "")}
+                              className="rounded-xl font-bold"
+                            >
+                              {p}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -721,20 +1111,45 @@ export function AdminCompetitionsPage() {
                 {stepIdx === 2 && (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Ticket price (₦)</Label>
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Ticket price (₦)
+                      </Label>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">₦</span>
-                        <Input type="number" value={form.ticketPrice} onChange={(e) => setForm({ ...form, ticketPrice: e.target.value })} className="h-12 rounded-2xl border-0 bg-white pl-8 pr-4 text-base font-extrabold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral" />
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">
+                          ₦
+                        </span>
+                        <Input
+                          type="number"
+                          value={form.ticketPrice}
+                          onChange={(e) => setForm({ ...form, ticketPrice: e.target.value })}
+                          className="h-12 rounded-2xl border-0 bg-white pl-8 pr-4 text-base font-extrabold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral"
+                        />
                       </div>
-                      <p className="text-[11px] font-bold text-ink/55">{formatNaira(parseInt(form.ticketPrice || "0", 10) * 100)} per entry</p>
+                      <p className="text-[11px] font-bold text-ink/55">
+                        {formatNaira(parseInt(form.ticketPrice || "0", 10) * 100)} per entry
+                      </p>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Max total entries</Label>
-                      <Input type="number" value={form.totalEntries} onChange={(e) => setForm({ ...form, totalEntries: e.target.value })} className="h-12 rounded-2xl border-0 bg-white px-4 text-base font-extrabold text-ink ring-1 ring-ink/10 focus-visible:ring-coral" />
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Max total entries
+                      </Label>
+                      <Input
+                        type="number"
+                        value={form.totalEntries}
+                        onChange={(e) => setForm({ ...form, totalEntries: e.target.value })}
+                        className="h-12 rounded-2xl border-0 bg-white px-4 text-base font-extrabold text-ink ring-1 ring-ink/10 focus-visible:ring-coral"
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Max entries per user</Label>
-                      <Input type="number" value={form.maxPerUser} onChange={(e) => setForm({ ...form, maxPerUser: e.target.value })} className="h-12 rounded-2xl border-0 bg-white px-4 text-base font-extrabold text-ink ring-1 ring-ink/10 focus-visible:ring-coral" />
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Max entries per user
+                      </Label>
+                      <Input
+                        type="number"
+                        value={form.maxPerUser}
+                        onChange={(e) => setForm({ ...form, maxPerUser: e.target.value })}
+                        className="h-12 rounded-2xl border-0 bg-white px-4 text-base font-extrabold text-ink ring-1 ring-ink/10 focus-visible:ring-coral"
+                      />
                     </div>
                   </div>
                 )}
@@ -742,16 +1157,37 @@ export function AdminCompetitionsPage() {
                 {stepIdx === 3 && (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Start date</Label>
-                      <Input type="datetime-local" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10 focus-visible:ring-coral" />
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Start date
+                      </Label>
+                      <Input
+                        type="datetime-local"
+                        value={form.startDate}
+                        onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                        className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10 focus-visible:ring-coral"
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Draw date</Label>
-                      <Input type="datetime-local" value={form.drawDate} onChange={(e) => setForm({ ...form, drawDate: e.target.value })} className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10 focus-visible:ring-coral" />
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Draw date
+                      </Label>
+                      <Input
+                        type="datetime-local"
+                        value={form.drawDate}
+                        onChange={(e) => setForm({ ...form, drawDate: e.target.value })}
+                        className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10 focus-visible:ring-coral"
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">Live push delay (mins)</Label>
-                      <Input type="number" value={form.liveDelay} onChange={(e) => setForm({ ...form, liveDelay: e.target.value })} className="h-12 rounded-2xl border-0 bg-white px-4 text-base font-extrabold text-ink ring-1 ring-ink/10 focus-visible:ring-coral" />
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Live push delay (mins)
+                      </Label>
+                      <Input
+                        type="number"
+                        value={form.liveDelay}
+                        onChange={(e) => setForm({ ...form, liveDelay: e.target.value })}
+                        className="h-12 rounded-2xl border-0 bg-white px-4 text-base font-extrabold text-ink ring-1 ring-ink/10 focus-visible:ring-coral"
+                      />
                     </div>
                   </div>
                 )}
@@ -761,16 +1197,26 @@ export function AdminCompetitionsPage() {
                     <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-4 ring-1 ring-ink/10">
                       <div>
                         <p className="text-sm font-extrabold text-ink">Featured competition</p>
-                        <p className="text-xs font-bold text-ink/55">Pin to the top of the home page and featured carousel.</p>
+                        <p className="text-xs font-bold text-ink/55">
+                          Pin to the top of the home page and featured carousel.
+                        </p>
                       </div>
-                      <Switch checked={form.featured} onCheckedChange={(v) => setForm({ ...form, featured: !!v })} />
+                      <Switch
+                        checked={form.featured}
+                        onCheckedChange={(v) => setForm({ ...form, featured: !!v })}
+                      />
                     </div>
                     <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-4 ring-1 ring-ink/10">
                       <div>
                         <p className="text-sm font-extrabold text-ink">Public results</p>
-                        <p className="text-xs font-bold text-ink/55">Publish draw results and winner identity publicly.</p>
+                        <p className="text-xs font-bold text-ink/55">
+                          Publish draw results and winner identity publicly.
+                        </p>
                       </div>
-                      <Switch checked={form.publicResults} onCheckedChange={(v) => setForm({ ...form, publicResults: !!v })} />
+                      <Switch
+                        checked={form.publicResults}
+                        onCheckedChange={(v) => setForm({ ...form, publicResults: !!v })}
+                      />
                     </div>
                   </div>
                 )}
@@ -778,16 +1224,39 @@ export function AdminCompetitionsPage() {
                 {stepIdx === 5 && (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {[
-                      { k: "Basics", title: form.name || "Untitled", sub: `${CATEGORIES.find(c => c.toLowerCase() === form.category) ?? form.category} · slug: ${form.slug || "auto"}` },
-                      { k: "Asset", title: `${formatNaira(parseInt(form.marketValue || "0", 10) * 100)} · ${({ new: "Brand new", likenew: "Like new", refurbished: "Refurbished", used: "Used" } as any)[form.condition] || "Brand new"}`, sub: `${form.assets.length} uploaded · ${PARTNERS.find(p => p.toLowerCase().replace(/[^a-z]/g, "") === form.partner) ?? PARTNERS[0]}` },
-                      { k: "Entry config", title: `${formatNaira(parseInt(form.ticketPrice || "0", 10) * 100)} per ticket`, sub: `${form.totalEntries} total · ${form.maxPerUser} max per user` },
-                      { k: "Schedule", title: `Draw · ${form.drawDate.replace("T", " ")}`, sub: `Start ${form.startDate.replace("T", " ")} · delay ${form.liveDelay}m · ${form.featured ? "featured" : "not featured"} · ${form.publicResults ? "public" : "private"} results` },
+                      {
+                        k: "Basics",
+                        title: form.name || "Untitled",
+                        sub: `${CATEGORIES.find((c) => c.toLowerCase() === form.category) ?? form.category} · slug: ${form.slug || "auto"}`,
+                      },
+                      {
+                        k: "Asset",
+                        title: `${formatNaira(parseInt(form.marketValue || "0", 10) * 100)} · ${({ new: "Brand new", likenew: "Like new", refurbished: "Refurbished", used: "Used" } as any)[form.condition] || "Brand new"}`,
+                        sub: `${form.assets.length} uploaded · ${PARTNERS.find((p) => p.toLowerCase().replace(/[^a-z]/g, "") === form.partner) ?? PARTNERS[0]}`,
+                      },
+                      {
+                        k: "Entry config",
+                        title: `${formatNaira(parseInt(form.ticketPrice || "0", 10) * 100)} per ticket`,
+                        sub: `${form.totalEntries} total · ${form.maxPerUser} max per user`,
+                      },
+                      {
+                        k: "Schedule",
+                        title: `Draw · ${form.drawDate.replace("T", " ")}`,
+                        sub: `Start ${form.startDate.replace("T", " ")} · delay ${form.liveDelay}m · ${form.featured ? "featured" : "not featured"} · ${form.publicResults ? "public" : "private"} results`,
+                      },
                     ].map((s) => (
-                      <Card key={s.k} className="rounded-2xl border-0 bg-white p-0 ring-1 ring-ink/10">
+                      <Card
+                        key={s.k}
+                        className="rounded-2xl border-0 bg-white p-0 ring-1 ring-ink/10"
+                      >
                         <CardContent className="space-y-2 p-4">
                           <div className="flex items-center justify-between">
-                            <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">{s.k}</p>
-                            <Badge className="rounded-full bg-mint/35 px-2 py-0.5 text-[9px] font-extrabold ring-0 text-ink">OK</Badge>
+                            <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                              {s.k}
+                            </p>
+                            <Badge className="rounded-full bg-mint/35 px-2 py-0.5 text-[9px] font-extrabold ring-0 text-ink">
+                              OK
+                            </Badge>
                           </div>
                           <p className="text-sm font-extrabold text-ink">{s.title}</p>
                           <p className="text-[11px] font-bold text-ink/55">{s.sub}</p>
@@ -799,18 +1268,48 @@ export function AdminCompetitionsPage() {
               </div>
 
               <DialogFooter className="flex-wrap border-t border-ink/10 px-6 py-4">
-                <Button variant="outline" onClick={() => { if (stepIdx === 0) closeModal(); else setStepIdx(stepIdx - 1); }} disabled={submitting}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (stepIdx === 0) closeModal();
+                    else setStepIdx(stepIdx - 1);
+                  }}
+                  disabled={submitting}
+                >
                   {stepIdx === 0 ? "Cancel" : "Back"}
                 </Button>
                 <div className="flex-1" />
-                <Button variant="ghost" onClick={() => { setSubmitted(true); toast.success("Draft saved", { description: "Saved without publishing." }); }} disabled={submitting}>Save as draft</Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setSubmitted(true);
+                    toast.success("Draft saved", { description: "Saved without publishing." });
+                  }}
+                  disabled={submitting}
+                >
+                  Save as draft
+                </Button>
                 {stepIdx < STEP_LABELS.length - 1 ? (
-                  <Button variant="primary" onClick={() => setStepIdx(stepIdx + 1)} disabled={submitting}>
+                  <Button
+                    variant="primary"
+                    onClick={() => setStepIdx(stepIdx + 1)}
+                    disabled={submitting}
+                  >
                     Continue <ChevronRight className="size-4" />
                   </Button>
                 ) : (
                   <Button variant="primary" onClick={submitDraft} disabled={submitting}>
-                    {submitting ? <><Sparkles className="size-4 animate-pulse" /> {modalMode === "edit" ? "Saving…" : "Creating…"}</> : <><Sparkles className="size-4" />{modalMode === "edit" ? "Save changes" : "Create competition"}</>}
+                    {submitting ? (
+                      <>
+                        <Sparkles className="size-4 animate-pulse" />{" "}
+                        {modalMode === "edit" ? "Saving…" : "Creating…"}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="size-4" />
+                        {modalMode === "edit" ? "Save changes" : "Create competition"}
+                      </>
+                    )}
                   </Button>
                 )}
               </DialogFooter>
@@ -829,12 +1328,17 @@ export function AdminCompetitionsPage() {
                 </span>
                 {entriesSource.comp?.name ?? "Entries"} · manage
               </span>
-              <button className="grid size-9 place-items-center rounded-full bg-cream/60 text-ink/60 ring-1 ring-ink/10 hover:bg-white hover:text-ink" onClick={() => setEntriesFor(null)}>
+              <button
+                className="grid size-9 place-items-center rounded-full bg-cream/60 text-ink/60 ring-1 ring-ink/10 hover:bg-white hover:text-ink"
+                onClick={() => setEntriesFor(null)}
+              >
                 <X className="size-4" />
               </button>
             </DialogTitle>
             <DialogDescription className="mt-1 text-sm font-bold text-ink/55">
-              {entriesSource.comp ? `${entriesSource.rows.length.toLocaleString("en-NG")} total entries · ${formatNaira(entriesSource.comp.ticketPrice)} each` : ""}
+              {entriesSource.comp
+                ? `${entriesSource.rows.length.toLocaleString("en-NG")} total entries · ${formatNaira(entriesSource.comp.ticketPrice)} each`
+                : ""}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 border-b border-ink/10 px-6 py-4">
@@ -844,11 +1348,21 @@ export function AdminCompetitionsPage() {
                 <Input
                   placeholder="Search name, handle, entry id…"
                   value={entriesSearch}
-                  onChange={(e) => { setEntriesSearch(e.target.value); setEntriesPage(1); }}
+                  onChange={(e) => {
+                    setEntriesSearch(e.target.value);
+                    setEntriesPage(1);
+                  }}
                   className="h-11 rounded-full border-0 bg-white pl-9 pr-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral"
                 />
               </div>
-              <Tabs value={entriesFilter} onValueChange={(v) => { setEntriesFilter(v as any); setEntriesPage(1); }} className="w-auto">
+              <Tabs
+                value={entriesFilter}
+                onValueChange={(v) => {
+                  setEntriesFilter(v as any);
+                  setEntriesPage(1);
+                }}
+                className="w-auto"
+              >
                 <TabsList className="rounded-full bg-cream p-1">
                   {[
                     { v: "all", l: "All" },
@@ -856,15 +1370,31 @@ export function AdminCompetitionsPage() {
                     { v: "won", l: "Won" },
                     { v: "pending", l: "Pending" },
                   ].map((t) => (
-                    <TabsTrigger key={t.v} value={t.v} className="rounded-full px-4 py-1.5 text-xs font-extrabold data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm data-[state=inactive]:text-ink/60">{t.l}</TabsTrigger>
+                    <TabsTrigger
+                      key={t.v}
+                      value={t.v}
+                      className="rounded-full px-4 py-1.5 text-xs font-extrabold data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm data-[state=inactive]:text-ink/60"
+                    >
+                      {t.l}
+                    </TabsTrigger>
                   ))}
                 </TabsList>
               </Tabs>
               <div className="ml-auto flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => toast.success("Export queued", { description: "Entries CSV will download shortly." })}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    toast.success("Export queued", {
+                      description: "Entries CSV will download shortly.",
+                    })
+                  }
+                >
                   <Download className="size-3.5" /> Export CSV
                 </Button>
-                <Button variant="ghost" size="sm"><Filter className="size-3.5" /> More filters</Button>
+                <Button variant="ghost" size="sm">
+                  <Filter className="size-3.5" /> More filters
+                </Button>
               </div>
             </div>
           </div>
@@ -872,13 +1402,21 @@ export function AdminCompetitionsPage() {
             <Table>
               <TableHeader className="[&_tr]:border-ink/10 bg-cream/60 [&_tr_th]:bg-transparent">
                 <TableRow>
-                  <TableHead className="rounded-l-2xl py-3 font-extrabold text-ink/65">Entry</TableHead>
+                  <TableHead className="rounded-l-2xl py-3 font-extrabold text-ink/65">
+                    Entry
+                  </TableHead>
                   <TableHead className="py-3 font-extrabold text-ink/65">Player</TableHead>
-                  <TableHead className="py-3 text-right font-extrabold text-ink/65">Tickets</TableHead>
-                  <TableHead className="py-3 text-right font-extrabold text-ink/65">Amount</TableHead>
+                  <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                    Tickets
+                  </TableHead>
+                  <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                    Amount
+                  </TableHead>
                   <TableHead className="py-3 font-extrabold text-ink/65">Entered</TableHead>
                   <TableHead className="py-3 font-extrabold text-ink/65">Status</TableHead>
-                  <TableHead className="rounded-r-2xl py-3 text-right font-extrabold text-ink/65">Actions</TableHead>
+                  <TableHead className="rounded-r-2xl py-3 text-right font-extrabold text-ink/65">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="[&_tr]:border-ink/10">
@@ -887,13 +1425,17 @@ export function AdminCompetitionsPage() {
                     <TableCell className="py-3">
                       <div className="min-w-0 max-w-[200px]">
                         <p className="truncate text-xs font-extrabold text-ink">{r.id}</p>
-                        <p className="truncate text-[11px] font-bold text-ink/50">{entriesSource.comp?.id ?? ""}</p>
+                        <p className="truncate text-[11px] font-bold text-ink/50">
+                          {entriesSource.comp?.id ?? ""}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="size-9 ring-2 ring-white">
-                          <AvatarFallback className="bg-coral/15 text-coral font-extrabold">{r.monogram}</AvatarFallback>
+                          <AvatarFallback className="bg-coral/15 text-coral font-extrabold">
+                            {r.monogram}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 max-w-[240px]">
                           <p className="truncate text-sm font-extrabold text-ink">{r.name}</p>
@@ -901,26 +1443,58 @@ export function AdminCompetitionsPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="py-3 text-right text-sm font-extrabold text-ink">{r.tickets.toLocaleString("en-NG")}</TableCell>
-                    <TableCell className="py-3 text-right whitespace-nowrap text-sm font-extrabold text-ink">{formatNaira(r.amount)}</TableCell>
-                    <TableCell className="py-3 whitespace-nowrap text-xs font-bold text-ink/60">{r.entered}</TableCell>
+                    <TableCell className="py-3 text-right text-sm font-extrabold text-ink">
+                      {r.tickets.toLocaleString("en-NG")}
+                    </TableCell>
+                    <TableCell className="py-3 text-right whitespace-nowrap text-sm font-extrabold text-ink">
+                      {formatNaira(r.amount)}
+                    </TableCell>
+                    <TableCell className="py-3 whitespace-nowrap text-xs font-bold text-ink/60">
+                      {r.entered}
+                    </TableCell>
                     <TableCell className="py-3">
-                      <Badge className={cn(
-                        "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
-                        r.status === "Paid" && "bg-mint/35 text-ink",
-                        r.status === "Pending" && "bg-lemon/40 text-ink",
-                        r.status === "Won" && "bg-coral/20 text-coral",
-                        r.status === "Refunded" && "bg-ink/10 text-ink",
-                      )}>{r.status}</Badge>
+                      <Badge
+                        className={cn(
+                          "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                          r.status === "Paid" && "bg-mint/35 text-ink",
+                          r.status === "Pending" && "bg-lemon/40 text-ink",
+                          r.status === "Won" && "bg-coral/20 text-coral",
+                          r.status === "Refunded" && "bg-ink/10 text-ink",
+                        )}
+                      >
+                        {r.status}
+                      </Badge>
                     </TableCell>
                     <TableCell className="py-3 text-right">
                       <div className="inline-flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="size-8 text-ink/70 hover:bg-sky/15 hover:text-ink" onClick={() => toast.info("Opening entry", { description: r.id })}><Eye className="size-4" /></Button>
-                        <Button variant="ghost" size="icon" className="size-8 text-ink/70 hover:bg-coral/10 hover:text-coral" onClick={() => {
-                          if (typeof navigator !== "undefined" && navigator.clipboard) void navigator.clipboard.writeText(r.id);
-                          toast.success("Entry ID copied", { description: r.id });
-                        }}><Copy className="size-4" /></Button>
-                        <Button variant="ghost" size="icon" className="size-8 text-ink/70 hover:bg-mint/20 hover:text-ink" onClick={() => toast.info("Opening player", { description: r.name })}><UserRound className="size-4" /></Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-ink/70 hover:bg-sky/15 hover:text-ink"
+                          onClick={() => toast.info("Opening entry", { description: r.id })}
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-ink/70 hover:bg-coral/10 hover:text-coral"
+                          onClick={() => {
+                            if (typeof navigator !== "undefined" && navigator.clipboard)
+                              void navigator.clipboard.writeText(r.id);
+                            toast.success("Entry ID copied", { description: r.id });
+                          }}
+                        >
+                          <Copy className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-ink/70 hover:bg-mint/20 hover:text-ink"
+                          onClick={() => toast.info("Opening player", { description: r.name })}
+                        >
+                          <UserRound className="size-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -928,14 +1502,30 @@ export function AdminCompetitionsPage() {
               </TableBody>
             </Table>
             {visibleEntries.length === 0 ? (
-              <div className="py-16 text-center text-sm font-bold text-ink/50">No entries match this filter.</div>
+              <div className="py-16 text-center text-sm font-bold text-ink/50">
+                No entries match this filter.
+              </div>
             ) : null}
           </div>
           <DialogFooter className="flex-wrap border-t border-ink/10 px-6 py-4">
-            <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">Showing {visibleEntries.length.toLocaleString("en-NG")}</div>
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
+              Showing {visibleEntries.length.toLocaleString("en-NG")}
+            </div>
             <div className="flex-1" />
-            <Button variant="outline" size="sm" onClick={() => setEntriesPage((p) => Math.max(1, p - 1))} disabled={entriesPage === 1}>Previous</Button>
-            <Button variant="primary" size="sm" onClick={() => setEntriesPage((p) => p + 1)} disabled={visibleEntries.length < entriesPage * PAGE_SIZE}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEntriesPage((p) => Math.max(1, p - 1))}
+              disabled={entriesPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setEntriesPage((p) => p + 1)}
+              disabled={visibleEntries.length < entriesPage * PAGE_SIZE}
+            >
               Load more
             </Button>
           </DialogFooter>

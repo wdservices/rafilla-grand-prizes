@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  ArrowRight,
-  Wallet,
-  Users,
-  Ticket,
-  Trophy,
-  Copy,
-  Check,
-  Clock,
-} from "lucide-react";
+import { ArrowRight, Wallet, Users, Ticket, Trophy, Copy, Check, Clock } from "lucide-react";
 
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
@@ -30,12 +21,8 @@ function KpiCard({ label, value, sub, icon, iconBg, right }: KpiProps) {
     <div className="rounded-2xl bg-white p-5 ring-1 ring-ink/5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
-            {label}
-          </p>
-          <p className="mt-2 font-display text-2xl font-extrabold text-ink sm:text-3xl">
-            {value}
-          </p>
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">{label}</p>
+          <p className="mt-2 font-display text-2xl font-extrabold text-ink sm:text-3xl">{value}</p>
           {sub && <p className="mt-1 text-xs font-bold text-ink/45">{sub}</p>}
         </div>
         <div className={`grid size-12 shrink-0 place-items-center rounded-2xl ${iconBg}`}>
@@ -47,7 +34,13 @@ function KpiCard({ label, value, sub, icon, iconBg, right }: KpiProps) {
   );
 }
 
-const recentEntries: Array<{ id: string; competition: string; tickets: number; drawDate: string; status: "Entered" | "Won" | "Lost" | "Drawn" }> = [];
+const recentEntries: Array<{
+  id: string;
+  competition: string;
+  tickets: number;
+  drawDate: string;
+  status: "Entered" | "Won" | "Lost" | "Drawn";
+}> = [];
 
 const statusStyles: Record<(typeof recentEntries)[number]["status"], string> = {
   Entered: "bg-mint/30 text-ink",
@@ -183,7 +176,8 @@ export function DashboardOverviewPage() {
                       </h3>
                       <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-ink/50">
                         <span className="inline-flex items-center gap-1">
-                          <Ticket className="size-3.5 shrink-0" /> {Math.min(100, Math.round((sold / total) * 100))}% sold
+                          <Ticket className="size-3.5 shrink-0" />{" "}
+                          {Math.min(100, Math.round((sold / total) * 100))}% sold
                         </span>
                       </div>
                       <div className="mt-2 h-1.5 w-full rounded-full bg-cream overflow-hidden">
@@ -245,9 +239,7 @@ export function DashboardOverviewPage() {
                   <tr key={entry.id} className="hover:bg-cream/40 transition-colors">
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-ink/70">
-                          {entry.id}
-                        </span>
+                        <span className="font-mono text-xs font-bold text-ink/70">{entry.id}</span>
                         <button
                           onClick={() => copyId(entry.id)}
                           className={cn(
@@ -270,9 +262,7 @@ export function DashboardOverviewPage() {
                     <td className="px-4 py-3.5 text-center font-display font-extrabold text-ink">
                       {entry.tickets}
                     </td>
-                    <td className="px-4 py-3.5 text-xs font-bold text-ink/50">
-                      {entry.drawDate}
-                    </td>
+                    <td className="px-4 py-3.5 text-xs font-bold text-ink/50">{entry.drawDate}</td>
                     <td className="px-4 py-3.5">
                       <span
                         className={cn(

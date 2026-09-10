@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { AdminShell } from "./admin-shell";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +43,8 @@ import {
 } from "lucide-react";
 import { formatNaira } from "@/lib/utils";
 
-type ContactTag = "Prospect" | "Player" | "Winner" | "VIP" | "Partner" | "At-risk" | "Pending KYC" | "Referred";
+type ContactTag =
+  "Prospect" | "Player" | "Winner" | "VIP" | "Partner" | "At-risk" | "Pending KYC" | "Referred";
 type Classification = "Cold" | "Warm" | "Hot" | "Champion";
 
 interface CRMNote {
@@ -63,7 +58,8 @@ interface CRMNote {
 interface CRMActivity {
   id: string;
   timestamp: string;
-  type: "ticket_buy" | "win" | "wallet_fund" | "referral" | "login" | "kyc_submit" | "suspend" | "note";
+  type:
+    "ticket_buy" | "win" | "wallet_fund" | "referral" | "login" | "kyc_submit" | "suspend" | "note";
   detail: string;
   valueKobo?: number;
 }
@@ -94,13 +90,93 @@ interface Contact {
   rating: number;
 }
 
-const FIRST = ["Amaka", "Tunde", "Funmi", "Chidi", "Sade", "Kemi", "Bola", "Ifeoma", "Dele", "Zainab", "Emeka", "Ngozi", "Seun", "Tobi", "Wale", "Aisha", "Musa", "Ebi", "Dapo", "Rita", "Jide", "Tola", "Uche", "Temitope", "Kunle"];
-const LAST = ["Okafor", "Bakare", "Adeyemi", "Eze", "Lawal", "Hassan", "Tinubu", "Dike", "Ogun", "Aliyu", "Nwosu", "Obi", "Adeyinka", "Balogun", "Olayiwola", "Musa", "Sani", "Abubakar", "Okoro", "Ezeigbo", "Ogunleye", "Adewale", "Ibrahim", "Abdullahi", "Chukwu"];
-const STATES = ["Lagos", "Abuja", "Rivers", "Ogun", "Kano", "Kaduna", "Oyo", "Delta", "Edo", "Enugu", "Anambra", "Plateau"];
+const FIRST = [
+  "Amaka",
+  "Tunde",
+  "Funmi",
+  "Chidi",
+  "Sade",
+  "Kemi",
+  "Bola",
+  "Ifeoma",
+  "Dele",
+  "Zainab",
+  "Emeka",
+  "Ngozi",
+  "Seun",
+  "Tobi",
+  "Wale",
+  "Aisha",
+  "Musa",
+  "Ebi",
+  "Dapo",
+  "Rita",
+  "Jide",
+  "Tola",
+  "Uche",
+  "Temitope",
+  "Kunle",
+];
+const LAST = [
+  "Okafor",
+  "Bakare",
+  "Adeyemi",
+  "Eze",
+  "Lawal",
+  "Hassan",
+  "Tinubu",
+  "Dike",
+  "Ogun",
+  "Aliyu",
+  "Nwosu",
+  "Obi",
+  "Adeyinka",
+  "Balogun",
+  "Olayiwola",
+  "Musa",
+  "Sani",
+  "Abubakar",
+  "Okoro",
+  "Ezeigbo",
+  "Ogunleye",
+  "Adewale",
+  "Ibrahim",
+  "Abdullahi",
+  "Chukwu",
+];
+const STATES = [
+  "Lagos",
+  "Abuja",
+  "Rivers",
+  "Ogun",
+  "Kano",
+  "Kaduna",
+  "Oyo",
+  "Delta",
+  "Edo",
+  "Enugu",
+  "Anambra",
+  "Plateau",
+];
 const TINTS = ["coral", "mint", "lemon", "sky", "lilac"];
-const TAG_POOL: ContactTag[] = ["Prospect", "Player", "Winner", "VIP", "Partner", "At-risk", "Pending KYC", "Referred"];
+const TAG_POOL: ContactTag[] = [
+  "Prospect",
+  "Player",
+  "Winner",
+  "VIP",
+  "Partner",
+  "At-risk",
+  "Pending KYC",
+  "Referred",
+];
 const CLS: Classification[] = ["Cold", "Warm", "Hot", "Champion"];
-const AGENTS = ["Gloria (CRM)", "David (Sales)", "Chioma (Support)", "Kingsley (Success)", "Unassigned"];
+const AGENTS = [
+  "Gloria (CRM)",
+  "David (Sales)",
+  "Chioma (Support)",
+  "Kingsley (Success)",
+  "Unassigned",
+];
 
 const now = Date.now();
 
@@ -118,29 +194,48 @@ function mkContact(i: number): Contact {
     author: AGENTS[(i + n) % AGENTS.length]!,
     timestamp: new Date(now - (n * 3 + i) * 86400000).toISOString(),
     content:
-      n === 0 ? "User followed up via SMS — confirmed interest in auto draws next month."
-      : n === 1 ? "Called to verify bank details for upcoming ₦250k payout. Confirmed."
-      : n === 2 ? "Reached out re: VIP tier upgrade — in consideration."
-      : "Sent personalised offer for competition ending this weekend.",
+      n === 0
+        ? "User followed up via SMS — confirmed interest in auto draws next month."
+        : n === 1
+          ? "Called to verify bank details for upcoming ₦250k payout. Confirmed."
+          : n === 2
+            ? "Reached out re: VIP tier upgrade — in consideration."
+            : "Sent personalised offer for competition ending this weekend.",
     tag: (["note", "call", "email", "meeting"] as const)[n % 4]!,
   }));
   const activity: CRMActivity[] = Array.from({ length: 10 }, (_, a) => {
     const roll = (i * 3 + a) % 8;
-    const types: CRMActivity["type"][] = ["ticket_buy", "win", "wallet_fund", "referral", "login", "kyc_submit", "suspend", "note"];
+    const types: CRMActivity["type"][] = [
+      "ticket_buy",
+      "win",
+      "wallet_fund",
+      "referral",
+      "login",
+      "kyc_submit",
+      "suspend",
+      "note",
+    ];
     const type = types[roll]!;
     const base: CRMActivity = {
       id: `act-${i}-${a}`,
       timestamp: new Date(now - (a * 17 + i) * 3600000).toISOString(),
       type,
       detail:
-        type === "ticket_buy" ? `Purchased ${3 + a * 2} entries — "2024 Lexus RX 350"`
-        : type === "win" ? `Won "Samsung Galaxy S24 Ultra" draw`
-        : type === "wallet_fund" ? `Wallet funded via Paystack`
-        : type === "referral" ? `Referred 3 new L1 signups`
-        : type === "login" ? `Login from Lagos (192.168.x.x)`
-        : type === "kyc_submit" ? `Submitted KYC — NIN + passport`
-        : type === "suspend" ? `Temporary restriction lifted (reviewed)`
-        : `Outbound call — outcome: positive`,
+        type === "ticket_buy"
+          ? `Purchased ${3 + a * 2} entries — "2024 Lexus RX 350"`
+          : type === "win"
+            ? `Won "Samsung Galaxy S24 Ultra" draw`
+            : type === "wallet_fund"
+              ? `Wallet funded via Paystack`
+              : type === "referral"
+                ? `Referred 3 new L1 signups`
+                : type === "login"
+                  ? `Login from Lagos (192.168.x.x)`
+                  : type === "kyc_submit"
+                    ? `Submitted KYC — NIN + passport`
+                    : type === "suspend"
+                      ? `Temporary restriction lifted (reviewed)`
+                      : `Outbound call — outcome: positive`,
       valueKobo: 0,
     };
     if (type === "wallet_fund") base.valueKobo = (50000 + i * 5000 + a * 10000) * 100;
@@ -165,7 +260,7 @@ function mkContact(i: number): Contact {
     classification: CLS[i % 4]!,
     entriesTotal: 120 + i * 73,
     spentTotalKobo: (850000 + i * 275000) * 100,
-    walletKobo: (15000 + (i * 4300) % 900000) * 100,
+    walletKobo: (15000 + ((i * 4300) % 900000)) * 100,
     wins: i % 7 === 0 ? 2 + (i % 3) : i % 3,
     referrals: i % 5,
     level: 1 + (i % 5),
@@ -177,18 +272,34 @@ function mkContact(i: number): Contact {
 }
 
 const CONTACTS: Contact[] = Array.from({ length: 36 }, (_, i) => mkContact(i));
-const ALL_TAGS: ContactTag[] = ["Prospect", "Player", "Winner", "VIP", "Partner", "At-risk", "Pending KYC", "Referred"];
+const ALL_TAGS: ContactTag[] = [
+  "Prospect",
+  "Player",
+  "Winner",
+  "VIP",
+  "Partner",
+  "At-risk",
+  "Pending KYC",
+  "Referred",
+];
 
 function tagBadge(t: ContactTag) {
   const tint =
-    t === "Prospect" ? "bg-sky/20 border-sky text-ink"
-    : t === "Player" ? "bg-lemon/30 border-lemon text-ink"
-    : t === "Winner" ? "bg-mint/30 border-mint text-ink"
-    : t === "VIP" ? "bg-coral border-coral text-white"
-    : t === "Partner" ? "bg-lilac/20 border-lilac text-ink"
-    : t === "At-risk" ? "bg-coral/20 border-coral text-ink"
-    : t === "Pending KYC" ? "bg-lemon/30 border-lemon text-ink"
-    : "bg-mint/20 border-mint text-ink";
+    t === "Prospect"
+      ? "bg-sky/20 border-sky text-ink"
+      : t === "Player"
+        ? "bg-lemon/30 border-lemon text-ink"
+        : t === "Winner"
+          ? "bg-mint/30 border-mint text-ink"
+          : t === "VIP"
+            ? "bg-coral border-coral text-white"
+            : t === "Partner"
+              ? "bg-lilac/20 border-lilac text-ink"
+              : t === "At-risk"
+                ? "bg-coral/20 border-coral text-ink"
+                : t === "Pending KYC"
+                  ? "bg-lemon/30 border-lemon text-ink"
+                  : "bg-mint/20 border-mint text-ink";
   return (
     <Badge variant="outline" className={`rounded-full text-[10px] ${tint}`}>
       {t === "Prospect" && <Target className="w-3 h-3 mr-1" />}
@@ -205,24 +316,37 @@ function tagBadge(t: ContactTag) {
 
 const actIcon = (t: CRMActivity["type"]) => {
   switch (t) {
-    case "ticket_buy": return <Ticket className="w-3.5 h-3.5" />;
-    case "win": return <Trophy className="w-3.5 h-3.5 text-coral" />;
-    case "wallet_fund": return <Wallet className="w-3.5 h-3.5 text-mint" />;
-    case "referral": return <Gift className="w-3.5 h-3.5 text-lilac" />;
-    case "login": return <User className="w-3.5 h-3.5 text-sky" />;
-    case "kyc_submit": return <FileText className="w-3.5 h-3.5 text-lemon" />;
-    case "suspend": return <Clock className="w-3.5 h-3.5 text-coral" />;
-    case "note": return <MessageSquare className="w-3.5 h-3.5 text-ink/50" />;
+    case "ticket_buy":
+      return <Ticket className="w-3.5 h-3.5" />;
+    case "win":
+      return <Trophy className="w-3.5 h-3.5 text-coral" />;
+    case "wallet_fund":
+      return <Wallet className="w-3.5 h-3.5 text-mint" />;
+    case "referral":
+      return <Gift className="w-3.5 h-3.5 text-lilac" />;
+    case "login":
+      return <User className="w-3.5 h-3.5 text-sky" />;
+    case "kyc_submit":
+      return <FileText className="w-3.5 h-3.5 text-lemon" />;
+    case "suspend":
+      return <Clock className="w-3.5 h-3.5 text-coral" />;
+    case "note":
+      return <MessageSquare className="w-3.5 h-3.5 text-ink/50" />;
   }
 };
 
 const actTint = (t: CRMActivity["type"]) =>
-  t === "win" ? "bg-coral/20 border-coral"
-  : t === "wallet_fund" ? "bg-mint/30 border-mint"
-  : t === "ticket_buy" ? "bg-lemon/30 border-lemon"
-  : t === "referral" ? "bg-lilac/20 border-lilac"
-  : t === "login" ? "bg-sky/20 border-sky"
-  : "bg-ink/5 border-ink/20";
+  t === "win"
+    ? "bg-coral/20 border-coral"
+    : t === "wallet_fund"
+      ? "bg-mint/30 border-mint"
+      : t === "ticket_buy"
+        ? "bg-lemon/30 border-lemon"
+        : t === "referral"
+          ? "bg-lilac/20 border-lilac"
+          : t === "login"
+            ? "bg-sky/20 border-sky"
+            : "bg-ink/5 border-ink/20";
 
 export function AdminCRMPage() {
   const [query, setQuery] = useState("");
@@ -242,7 +366,8 @@ export function AdminCRMPage() {
         !c.phone.includes(q) &&
         !c.id.toLowerCase().includes(q) &&
         !c.username.toLowerCase().includes(q)
-      ) return false;
+      )
+        return false;
     }
     if (activeTags.size > 0 && !c.tags.some((t) => activeTags.has(t))) return false;
     if (activeClassification !== "all" && c.classification !== activeClassification) return false;
@@ -272,7 +397,11 @@ export function AdminCRMPage() {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" className="rounded-full" onClick={() => toast.success("CSV export queued")}>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => toast.success("CSV export queued")}
+            >
               <Download className="w-4 h-4 mr-2" /> Export CSV
             </Button>
             <Button className="rounded-full">
@@ -283,16 +412,42 @@ export function AdminCRMPage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
-            { label: "Contacts", value: stats.total, tint: "bg-cream/60", icon: <User className="w-4 h-4" /> },
-            { label: "Winners", value: stats.winners, tint: "bg-mint/20", icon: <Trophy className="w-4 h-4 text-coral" /> },
-            { label: "VIP", value: stats.vip, tint: "bg-coral/15", icon: <Crown className="w-4 h-4 text-coral" /> },
-            { label: "At-risk", value: stats.atRisk, tint: "bg-lemon/30", icon: <Clock className="w-4 h-4" /> },
-            { label: "Pending KYC", value: stats.pending, tint: "bg-sky/15", icon: <FileText className="w-4 h-4" /> },
+            {
+              label: "Contacts",
+              value: stats.total,
+              tint: "bg-cream/60",
+              icon: <User className="w-4 h-4" />,
+            },
+            {
+              label: "Winners",
+              value: stats.winners,
+              tint: "bg-mint/20",
+              icon: <Trophy className="w-4 h-4 text-coral" />,
+            },
+            {
+              label: "VIP",
+              value: stats.vip,
+              tint: "bg-coral/15",
+              icon: <Crown className="w-4 h-4 text-coral" />,
+            },
+            {
+              label: "At-risk",
+              value: stats.atRisk,
+              tint: "bg-lemon/30",
+              icon: <Clock className="w-4 h-4" />,
+            },
+            {
+              label: "Pending KYC",
+              value: stats.pending,
+              tint: "bg-sky/15",
+              icon: <FileText className="w-4 h-4" />,
+            },
           ].map((s) => (
             <Card key={s.label} className={`${s.tint} border-ink/10`}>
               <CardContent className="p-3">
                 <p className="text-[10px] font-body uppercase tracking-wider text-ink/50 flex items-center gap-1">
-                  {s.icon}{s.label}
+                  {s.icon}
+                  {s.label}
                 </p>
                 <p className="font-display text-2xl text-ink mt-0.5">{s.value}</p>
               </CardContent>
@@ -325,7 +480,11 @@ export function AdminCRMPage() {
                       }`}
                       onClick={() => {
                         const ns = new Set(activeTags);
-                        ns.has(t) ? ns.delete(t) : ns.add(t);
+                        if (ns.has(t)) {
+                          ns.delete(t);
+                        } else {
+                          ns.add(t);
+                        }
                         setActiveTags(ns);
                       }}
                     >
@@ -337,17 +496,26 @@ export function AdminCRMPage() {
                   <Label className="font-body text-[10px] text-ink/50 uppercase tracking-wider whitespace-nowrap">
                     Classification
                   </Label>
-                  <Select value={activeClassification} onValueChange={(v) => setActiveClassification(v as Classification | "all")}>
+                  <Select
+                    value={activeClassification}
+                    onValueChange={(v) => setActiveClassification(v as Classification | "all")}
+                  >
                     <SelectTrigger className="rounded-full h-8 text-xs">
                       <SelectValue placeholder="All" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All classifications</SelectItem>
-                      {CLS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      {CLS.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <Badge variant="outline" className="rounded-full font-body">{filtered.length} contacts</Badge>
+                <Badge variant="outline" className="rounded-full font-body">
+                  {filtered.length} contacts
+                </Badge>
               </div>
             </CardContent>
             <div className="overflow-y-auto flex-1 divide-y divide-ink/5">
@@ -355,7 +523,9 @@ export function AdminCRMPage() {
                 <button
                   key={c.id}
                   className={`w-full text-left p-3 flex gap-3 hover:bg-cream/40 transition ${
-                    selectedId === c.id ? "bg-coral/10 border-s-4 border-s-coral" : "border-s-4 border-s-transparent"
+                    selectedId === c.id
+                      ? "bg-coral/10 border-s-4 border-s-coral"
+                      : "border-s-4 border-s-transparent"
                   }`}
                   onClick={() => {
                     setSelectedId(c.id);
@@ -373,15 +543,23 @@ export function AdminCRMPage() {
                       <p className="font-body font-semibold text-ink truncate">{c.name}</p>
                       <div className="flex items-center gap-0.5 shrink-0">
                         {Array.from({ length: 5 }).map((_, s) => (
-                          <Star key={s} className={`w-3 h-3 ${s < c.rating ? "text-coral fill-coral" : "text-ink/20"}`} />
+                          <Star
+                            key={s}
+                            className={`w-3 h-3 ${s < c.rating ? "text-coral fill-coral" : "text-ink/20"}`}
+                          />
                         ))}
                       </div>
                     </div>
-                    <p className="text-[11px] text-ink/50 truncate font-mono">{c.id} · {c.username}</p>
+                    <p className="text-[11px] text-ink/50 truncate font-mono">
+                      {c.id} · {c.username}
+                    </p>
                     <div className="mt-1.5 flex flex-wrap gap-1">
                       {c.tags.slice(0, 2).map((t) => tagBadge(t))}
                       {c.tags.length > 2 && (
-                        <Badge variant="outline" className="rounded-full text-[10px] bg-ink/5 border-ink/15 text-ink/60">
+                        <Badge
+                          variant="outline"
+                          className="rounded-full text-[10px] bg-ink/5 border-ink/15 text-ink/60"
+                        >
                           +{c.tags.length - 2}
                         </Badge>
                       )}
@@ -397,13 +575,17 @@ export function AdminCRMPage() {
               <CardHeader className="pb-3 flex-row items-start justify-between space-y-0 flex-wrap gap-3">
                 <div className="flex items-start gap-4">
                   <Avatar className="w-16 h-16 border-4 border-coral/30 shrink-0">
-                    <AvatarFallback className={`bg-${selected.tint} text-ink font-display text-xl font-bold`}>
+                    <AvatarFallback
+                      className={`bg-${selected.tint} text-ink font-display text-xl font-bold`}
+                    >
                       {selected.initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <CardTitle className="font-display text-2xl text-ink">{selected.name}</CardTitle>
+                      <CardTitle className="font-display text-2xl text-ink">
+                        {selected.name}
+                      </CardTitle>
                       {selected.tags.map((t) => tagBadge(t))}
                     </div>
                     <CardDescription className="mt-1 font-body text-sm">
@@ -412,22 +594,35 @@ export function AdminCRMPage() {
                       <span className="text-ink font-semibold">{selected.assignedTo}</span>
                     </CardDescription>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <Badge variant="outline" className={`rounded-full text-xs ${
-                        selected.classification === "Champion" ? "bg-coral text-white border-coral"
-                        : selected.classification === "Hot" ? "bg-coral/20 border-coral text-ink"
-                        : selected.classification === "Warm" ? "bg-lemon/30 border-lemon text-ink"
-                        : "bg-ink/10 border-ink/20 text-ink/70"
-                      }`}>
+                      <Badge
+                        variant="outline"
+                        className={`rounded-full text-xs ${
+                          selected.classification === "Champion"
+                            ? "bg-coral text-white border-coral"
+                            : selected.classification === "Hot"
+                              ? "bg-coral/20 border-coral text-ink"
+                              : selected.classification === "Warm"
+                                ? "bg-lemon/30 border-lemon text-ink"
+                                : "bg-ink/10 border-ink/20 text-ink/70"
+                        }`}
+                      >
                         <TagIcon className="w-3 h-3 mr-1" /> {selected.classification}
                       </Badge>
                       <div className="flex items-center">
                         <Label className="font-body text-xs text-ink/50 mr-2">Set:</Label>
-                        <Select value={classification} onValueChange={(v) => setClassification(v as Classification)}>
+                        <Select
+                          value={classification}
+                          onValueChange={(v) => setClassification(v as Classification)}
+                        >
                           <SelectTrigger className="h-7 w-36 rounded-full text-xs">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {CLS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            {CLS.map((c) => (
+                              <SelectItem key={c} value={c}>
+                                {c}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -451,16 +646,41 @@ export function AdminCRMPage() {
                 <div className="lg:col-span-3 p-4 overflow-y-auto space-y-4">
                   <div className="grid grid-cols-2 gap-2">
                     {[
-                      { k: "Total entries", v: selected.entriesTotal.toLocaleString(), icon: <Ticket className="w-3.5 h-3.5 text-coral" /> },
-                      { k: "Lifetime spend", v: formatNaira(selected.spentTotalKobo), icon: <Wallet className="w-3.5 h-3.5 text-mint" /> },
-                      { k: "Wins", v: `${selected.wins} prizes`, icon: <Trophy className="w-3.5 h-3.5 text-coral" /> },
-                      { k: "Wallet", v: formatNaira(selected.walletKobo), icon: <Wallet className="w-3.5 h-3.5 text-sky" /> },
-                      { k: "Referrals", v: `${selected.referrals} L1`, icon: <Gift className="w-3.5 h-3.5 text-lilac" /> },
-                      { k: "Loyalty tier", v: `Level ${selected.level}`, icon: <Crown className="w-3.5 h-3.5 text-lemon" /> },
+                      {
+                        k: "Total entries",
+                        v: selected.entriesTotal.toLocaleString(),
+                        icon: <Ticket className="w-3.5 h-3.5 text-coral" />,
+                      },
+                      {
+                        k: "Lifetime spend",
+                        v: formatNaira(selected.spentTotalKobo),
+                        icon: <Wallet className="w-3.5 h-3.5 text-mint" />,
+                      },
+                      {
+                        k: "Wins",
+                        v: `${selected.wins} prizes`,
+                        icon: <Trophy className="w-3.5 h-3.5 text-coral" />,
+                      },
+                      {
+                        k: "Wallet",
+                        v: formatNaira(selected.walletKobo),
+                        icon: <Wallet className="w-3.5 h-3.5 text-sky" />,
+                      },
+                      {
+                        k: "Referrals",
+                        v: `${selected.referrals} L1`,
+                        icon: <Gift className="w-3.5 h-3.5 text-lilac" />,
+                      },
+                      {
+                        k: "Loyalty tier",
+                        v: `Level ${selected.level}`,
+                        icon: <Crown className="w-3.5 h-3.5 text-lemon" />,
+                      },
                     ].map((s) => (
                       <div key={s.k} className="p-3 rounded-xl bg-cream/50 border border-ink/5">
                         <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body flex items-center gap-1">
-                          {s.icon}{s.k}
+                          {s.icon}
+                          {s.k}
                         </p>
                         <p className="font-display text-lg text-ink mt-0.5">{s.v}</p>
                       </div>
@@ -494,7 +714,15 @@ export function AdminCRMPage() {
                                 className="rounded-full text-xs capitalize"
                                 onClick={() => setNoteTag(n)}
                               >
-                                {n === "note" ? <Tag className="w-3 h-3 mr-1" /> : n === "call" ? <Phone className="w-3 h-3 mr-1" /> : n === "email" ? <Mail className="w-3 h-3 mr-1" /> : <Calendar className="w-3 h-3 mr-1" />}
+                                {n === "note" ? (
+                                  <Tag className="w-3 h-3 mr-1" />
+                                ) : n === "call" ? (
+                                  <Phone className="w-3 h-3 mr-1" />
+                                ) : n === "email" ? (
+                                  <Mail className="w-3 h-3 mr-1" />
+                                ) : (
+                                  <Calendar className="w-3 h-3 mr-1" />
+                                )}
                                 {n}
                               </Button>
                             ))}
@@ -515,16 +743,29 @@ export function AdminCRMPage() {
                       <Separator />
                       <div className="space-y-3">
                         {selected.notes.map((n) => (
-                          <div key={n.id} className="p-3 rounded-xl bg-cream/40 border border-ink/5">
+                          <div
+                            key={n.id}
+                            className="p-3 rounded-xl bg-cream/40 border border-ink/5"
+                          >
                             <div className="flex items-center justify-between mb-1 flex-wrap gap-1">
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="rounded-full text-[10px] bg-ink/5 border-ink/20 capitalize">
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full text-[10px] bg-ink/5 border-ink/20 capitalize"
+                                >
                                   {n.tag}
                                 </Badge>
-                                <span className="font-body text-xs font-semibold text-ink">{n.author}</span>
+                                <span className="font-body text-xs font-semibold text-ink">
+                                  {n.author}
+                                </span>
                               </div>
                               <span className="text-[10px] text-ink/40 font-mono">
-                                {new Date(n.timestamp).toLocaleString("en-NG", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                {new Date(n.timestamp).toLocaleString("en-NG", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
                               </span>
                             </div>
                             <p className="text-sm font-body text-ink/80">{n.content}</p>
@@ -543,41 +784,59 @@ export function AdminCRMPage() {
                         <div className="flex items-start gap-2">
                           <Mail className="w-4 h-4 text-ink/40 mt-0.5 shrink-0" />
                           <div className="min-w-0">
-                            <p className="text-[10px] uppercase tracking-wider text-ink/40">Email</p>
+                            <p className="text-[10px] uppercase tracking-wider text-ink/40">
+                              Email
+                            </p>
                             <p className="text-ink break-all">{selected.email}</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
                           <Phone className="w-4 h-4 text-ink/40 mt-0.5 shrink-0" />
                           <div>
-                            <p className="text-[10px] uppercase tracking-wider text-ink/40">Phone</p>
+                            <p className="text-[10px] uppercase tracking-wider text-ink/40">
+                              Phone
+                            </p>
                             <p className="text-ink">{selected.phone}</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
                           <User className="w-4 h-4 text-ink/40 mt-0.5 shrink-0" />
                           <div>
-                            <p className="text-[10px] uppercase tracking-wider text-ink/40">Username</p>
+                            <p className="text-[10px] uppercase tracking-wider text-ink/40">
+                              Username
+                            </p>
                             <p className="text-ink">{selected.username}</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
                           <MapPin className="w-4 h-4 text-ink/40 mt-0.5 shrink-0" />
                           <div>
-                            <p className="text-[10px] uppercase tracking-wider text-ink/40">Address</p>
-                            <p className="text-ink">{selected.address}, {selected.state}</p>
+                            <p className="text-[10px] uppercase tracking-wider text-ink/40">
+                              Address
+                            </p>
+                            <p className="text-ink">
+                              {selected.address}, {selected.state}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
                           <Calendar className="w-4 h-4 text-ink/40 mt-0.5 shrink-0" />
                           <div className="grid grid-cols-2 gap-3 flex-1">
                             <div>
-                              <p className="text-[10px] uppercase tracking-wider text-ink/40">Registered</p>
-                              <p className="text-ink text-xs">{new Date(selected.registeredAt).toLocaleDateString("en-NG")}</p>
+                              <p className="text-[10px] uppercase tracking-wider text-ink/40">
+                                Registered
+                              </p>
+                              <p className="text-ink text-xs">
+                                {new Date(selected.registeredAt).toLocaleDateString("en-NG")}
+                              </p>
                             </div>
                             <div>
-                              <p className="text-[10px] uppercase tracking-wider text-ink/40">Last active</p>
-                              <p className="text-ink text-xs">{new Date(selected.lastActive).toLocaleDateString("en-NG")}</p>
+                              <p className="text-[10px] uppercase tracking-wider text-ink/40">
+                                Last active
+                              </p>
+                              <p className="text-ink text-xs">
+                                {new Date(selected.lastActive).toLocaleDateString("en-NG")}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -595,21 +854,33 @@ export function AdminCRMPage() {
                       <ol className="relative border-s-2 border-ink/10 ms-2 space-y-3">
                         {selected.activity.map((a, idx) => (
                           <li key={a.id} className="ms-4">
-                            <span className={`absolute -start-[9px] flex items-center justify-center w-4 h-4 rounded-full border ${actTint(a.type)}`}>
+                            <span
+                              className={`absolute -start-[9px] flex items-center justify-center w-4 h-4 rounded-full border ${actTint(a.type)}`}
+                            >
                               {actIcon(a.type)}
                             </span>
                             <div className="flex items-center justify-between gap-2 flex-wrap">
                               <p className="text-xs font-body text-ink font-semibold">{a.detail}</p>
                               {a.valueKobo && (
-                                <Badge variant="outline" className="rounded-full text-[10px] bg-mint/20 border-mint text-ink font-display">
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full text-[10px] bg-mint/20 border-mint text-ink font-display"
+                                >
                                   {formatNaira(a.valueKobo)}
                                 </Badge>
                               )}
                             </div>
                             <p className="text-[10px] text-ink/40 font-mono mt-0.5">
-                              {new Date(a.timestamp).toLocaleString("en-NG", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                              {new Date(a.timestamp).toLocaleString("en-NG", {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </p>
-                            {idx < selected.activity.length - 1 && <ChevronRight className="sr-only" />}
+                            {idx < selected.activity.length - 1 && (
+                              <ChevronRight className="sr-only" />
+                            )}
                           </li>
                         ))}
                       </ol>

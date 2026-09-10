@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { useRouter } from "@tanstack/react-router";
-import { AlertTriangle, RefreshCw, Phone, ChevronDown, ChevronUp, Clock, FileCode } from "lucide-react";
+import {
+  AlertTriangle,
+  RefreshCw,
+  Phone,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  FileCode,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/raffila/site-header";
@@ -60,11 +68,7 @@ export function ErrorPage({ error, reset }: { error?: Error; reset?: () => void 
             >
               <RefreshCw className="size-4" /> Try again
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => router.navigate({ to: "/contact" })}
-            >
+            <Button variant="outline" size="lg" onClick={() => router.navigate({ to: "/contact" })}>
               <Phone className="size-4" /> Contact support
             </Button>
           </div>
@@ -111,7 +115,7 @@ export function ErrorPage({ error, reset }: { error?: Error; reset?: () => void 
                     Stack trace
                   </p>
                   <pre className="max-h-72 overflow-auto font-mono text-[11px] leading-relaxed text-cream/85">
-{mockStack}
+                    {mockStack}
                   </pre>
                 </div>
                 <p className="text-center text-xs font-bold text-ink/45">

@@ -9,7 +9,11 @@ interface AuthTabsProps {
   onTabChange?: (tab: AuthTab) => void;
 }
 
-export function AuthTabs({ activeTab: controlledTab, defaultTab = "login", onTabChange }: AuthTabsProps) {
+export function AuthTabs({
+  activeTab: controlledTab,
+  defaultTab = "login",
+  onTabChange,
+}: AuthTabsProps) {
   const [internal, setInternal] = useState<AuthTab>(defaultTab);
   const active = controlledTab ?? internal;
 
@@ -19,7 +23,11 @@ export function AuthTabs({ activeTab: controlledTab, defaultTab = "login", onTab
   };
 
   return (
-    <div className="relative flex w-full gap-0 border-b border-ink/10" role="tablist" aria-label="Authentication tabs">
+    <div
+      className="relative flex w-full gap-0 border-b border-ink/10"
+      role="tablist"
+      aria-label="Authentication tabs"
+    >
       {(["login", "register"] as AuthTab[]).map((tab) => {
         const isActive = active === tab;
         return (
