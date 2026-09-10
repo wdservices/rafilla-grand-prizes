@@ -35,7 +35,7 @@ export function DashboardCompetitionsPage() {
           return (
             <div
               key={c.slug}
-              className="flex flex-col overflow-hidden rounded-3xl bg-white ring-1 ring-ink/5"
+              className="flex flex-col overflow-hidden rounded-[24px] bg-white ring-1 ring-ink/5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
             >
               <div className="relative h-52 overflow-hidden">
                 <img

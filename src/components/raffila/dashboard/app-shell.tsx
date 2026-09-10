@@ -115,7 +115,7 @@ export function DashboardNavLink({ item, active, onClick }: DashboardNavLinkProp
       to={item.to}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition-all",
+        "flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition-all duration-200",
         active
           ? "bg-coral text-white shadow-[0_8px_24px_-10px_var(--coral)] ring-1 ring-coral/30"
           : "text-ink/70 hover:bg-ink/5 hover:text-ink",
@@ -124,7 +124,7 @@ export function DashboardNavLink({ item, active, onClick }: DashboardNavLinkProp
     >
       <span
         className={cn(
-          "grid size-8 place-items-center rounded-xl transition-colors",
+          "grid size-8 place-items-center rounded-xl transition-colors duration-200",
           active ? "bg-white/15 text-white" : "bg-coral/10 text-coral",
         )}
       >
@@ -222,8 +222,8 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
             onClick={() => setUserDropdownOpen((v) => !v)}
             className="flex w-full items-center gap-3 rounded-2xl bg-cream/60 p-3 ring-1 ring-ink/5 hover:ring-coral/20 hover:bg-white transition-all"
           >
-            <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-coral text-white shadow-[0_8px_18px_-10px_var(--coral)] font-display text-sm font-extrabold">
-              {monogram}
+            <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-coral text-white shadow-[0_8px_18px_-10px_var(--coral)] font-display text-sm font-extrabold">
+              {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="size-full object-cover" /> : monogram}
             </div>
             <div className="min-w-0 flex-1 text-left">
               <p className="truncate text-sm font-extrabold text-ink leading-tight">{fullName}</p>
@@ -305,8 +305,8 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
             onClick={() => setMobileUserDropdown((v) => !v)}
             className="flex w-full items-center gap-3 rounded-2xl bg-cream/60 p-3 ring-1 ring-ink/5"
           >
-            <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-coral text-white shadow-[0_8px_18px_-10px_var(--coral)] font-display text-sm font-extrabold">
-              {monogram}
+            <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-coral text-white shadow-[0_8px_18px_-10px_var(--coral)] font-display text-sm font-extrabold">
+              {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="size-full object-cover" /> : monogram}
             </div>
             <div className="min-w-0 flex-1 text-left">
               <p className="truncate text-sm font-extrabold text-ink leading-tight">{fullName}</p>
@@ -393,8 +393,8 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
           >
             <LogOut className="size-3.5" /> Exit
           </Button>
-          <div className="grid size-10 shrink-0 place-items-center rounded-2xl bg-coral text-white font-display text-sm font-extrabold shadow-[0_8px_18px_-10px_var(--coral)]">
-            {monogram}
+          <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-2xl bg-coral text-white font-display text-sm font-extrabold shadow-[0_8px_18px_-10px_var(--coral)]">
+            {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="size-full object-cover" /> : monogram}
           </div>
         </div>
       </header>

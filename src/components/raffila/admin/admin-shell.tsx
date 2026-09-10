@@ -20,7 +20,7 @@ import {
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -174,7 +174,8 @@ export function AdminShell({ children, title, activeNav }: AdminShellProps) {
 
         <div className="px-4 pb-5">
           <div className="flex items-center gap-3 rounded-2xl bg-white/8 px-3.5 py-3 ring-1 ring-white/10">
-            <Avatar className="size-9 ring-2 ring-coral/60">
+            <Avatar className="size-9 ring-2 ring-coral/60 overflow-hidden">
+              <AvatarImage src={user?.avatarUrl} alt="" />
               <AvatarFallback className="bg-coral text-ink font-extrabold">
                 {monogram}
               </AvatarFallback>
@@ -286,7 +287,8 @@ export function AdminShell({ children, title, activeNav }: AdminShellProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="size-11 lg:hidden rounded-full">
-                  <Avatar className="size-9 ring-2 ring-coral/60">
+                  <Avatar className="size-9 ring-2 ring-coral/60 overflow-hidden">
+                    <AvatarImage src={user?.avatarUrl} alt="" />
                     <AvatarFallback className="bg-coral text-ink font-extrabold">
                       {monogram}
                     </AvatarFallback>

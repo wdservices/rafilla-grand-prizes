@@ -5,7 +5,6 @@ import {
   Wallet,
   Plus,
   CreditCard,
-  Building2,
   Check,
   Copy,
   ChevronLeft,
@@ -50,17 +49,17 @@ function HowStep({
   accent: string;
 }) {
   return (
-    <div className="rounded-2xl bg-white p-5 ring-1 ring-ink/5">
+    <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 transition-shadow hover:shadow-md">
       <div
         className={cn(
-          "inline-flex size-9 items-center justify-center rounded-xl font-display text-sm font-extrabold",
+          "inline-flex size-10 items-center justify-center rounded-2xl font-display text-sm font-extrabold",
           accent,
         )}
       >
         {step}
       </div>
       <h3 className="mt-4 font-display text-base font-extrabold text-ink">{title}</h3>
-      <p className="mt-1 text-xs font-bold leading-relaxed text-ink/55">{text}</p>
+      <p className="mt-1.5 text-xs font-bold leading-relaxed text-ink/55">{text}</p>
     </div>
   );
 }
@@ -224,7 +223,6 @@ export function FundWalletModal({ open, onClose }: { open: boolean; onClose: () 
 export function DashboardWalletPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [tab, setTab] = useState<TxTab>("all");
-  const [copied, setCopied] = useState(false);
   const [page, setPage] = useState(1);
 
   const filtered = walletTransactions.filter((t) => {
@@ -233,13 +231,6 @@ export function DashboardWalletPage() {
     if (tab === "purchases") return t.type === "Ticket purchase";
     return t.type === "Referral bonus";
   });
-
-  const copyDetails = () => {
-    const details = "Bank: Wema Bank\nAccount no: 0123456789\nAccount name: Raffila Ltd";
-    navigator.clipboard?.writeText(details).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
-  };
 
   return (
     <DashboardAppShell
@@ -254,7 +245,7 @@ export function DashboardWalletPage() {
         <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Wallet balance
               </p>
               <p className="mt-3 break-all font-display text-[clamp(1.75rem,6vw,4.5rem)] font-extrabold leading-none tracking-tight text-ink">
@@ -283,7 +274,7 @@ export function DashboardWalletPage() {
             <HowStep
               step="1"
               title="Add money"
-              text="Top up securely with card or bank transfer."
+              text="Top up securely with card via Paystack."
               accent="bg-mint/30 text-ink"
             />
             <HowStep
@@ -301,53 +292,7 @@ export function DashboardWalletPage() {
           </div>
         </div>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
-                Bank transfer funding
-              </p>
-              <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
-                Account details
-              </h2>
-              <div className="mt-5 space-y-3">
-                <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/5">
-                  <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                    Bank
-                  </span>
-                  <span className="text-sm font-extrabold text-ink">Wema Bank</span>
-                </div>
-                <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/5">
-                  <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                    Account no
-                  </span>
-                  <span className="font-mono text-sm font-extrabold text-ink">0123456789</span>
-                </div>
-                <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3 ring-1 ring-ink/5">
-                  <span className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                    Account name
-                  </span>
-                  <span className="text-sm font-extrabold text-ink">Raffila Ltd</span>
-                </div>
-              </div>
-              <Button variant="outline" size="md" className="mt-5" onClick={copyDetails}>
-                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-                {copied ? "Copied!" : "Copy details"}
-              </Button>
-            </div>
-            <div className="rounded-2xl bg-mint/20 p-5 ring-1 ring-mint/30 max-w-xs">
-              <div className="flex items-start gap-3">
-                <Building2 className="size-5 text-coral shrink-0 mt-0.5" />
-                <p className="text-xs font-bold leading-relaxed text-ink/75">
-                  Transfers take 2–5 minutes to reflect automatically. You'll see the credit in your
-                  ledger with the bank reference.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
@@ -393,7 +338,24 @@ export function DashboardWalletPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/10">
-                {filtered.map((tx, i) => (
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-12 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="grid size-12 place-items-center rounded-2xl bg-coral/10">
+                          <Wallet className="size-5 text-coral" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-extrabold text-ink">No transactions yet</p>
+                          <p className="mt-1 text-xs font-bold text-ink/45">
+                            Fund your wallet to start entering competitions
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((tx, i) => (
                   <tr key={i} className="hover:bg-cream/40">
                     <td className="whitespace-nowrap px-4 py-3 text-xs font-bold text-ink/50">
                       {tx.date}
@@ -428,7 +390,8 @@ export function DashboardWalletPage() {
                       </span>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

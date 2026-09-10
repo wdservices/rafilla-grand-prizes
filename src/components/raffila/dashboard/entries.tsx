@@ -6,6 +6,7 @@ import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
 import { competitions, formatNaira } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 type EntryStatus = "Entered" | "Won" | "Lost";
 
@@ -42,6 +43,8 @@ function genTickets(): MockEntry[] {
 }
 
 export function DashboardEntriesPage() {
+  const { user } = useAuthSession();
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "User";
   const [filter, setFilter] = useState<(typeof statuses)[number]>("All");
   const [search, setSearch] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -103,9 +106,9 @@ export function DashboardEntriesPage() {
           </Button>
         </div>
 
-        <div className="rounded-[28px] bg-white p-4 ring-1 ring-ink/5 sm:p-5">
+        <div className="rounded-[24px] bg-white p-4 ring-1 ring-ink/5 sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            <label className="flex min-h-12 flex-1 items-center gap-3 rounded-full bg-cream px-4 text-sm font-bold text-ink/50 ring-1 ring-ink/5">
+            <label className="flex min-h-12 flex-1 items-center gap-3 rounded-full bg-cream px-4 text-sm font-bold text-ink/50 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral/20 transition-all">
               <Search className="size-4 shrink-0 text-ink/45" />
               <input
                 value={search}
@@ -122,10 +125,10 @@ export function DashboardEntriesPage() {
                 key={s}
                 onClick={() => setFilter(s)}
                 className={cn(
-                  "rounded-xl px-4 py-2 text-xs font-extrabold transition-colors",
+                  "rounded-xl px-4 py-2 text-xs font-extrabold transition-all duration-200",
                   filter === s
                     ? "bg-white text-ink shadow-sm ring-1 ring-ink/5"
-                    : "text-ink/55 hover:text-ink",
+                    : "text-ink/55 hover:text-ink hover:bg-white/50",
                 )}
               >
                 {s}
@@ -140,10 +143,10 @@ export function DashboardEntriesPage() {
           </div>
         )}
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="overflow-x-auto -mx-4 px-4">
             <table className="w-full min-w-[860px] text-left text-sm">
-              <thead className="bg-cream text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+              <thead className="bg-cream text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 <tr>
                   <th className="px-4 py-3">Entry ID</th>
                   <th className="px-4 py-3">Competition</th>
@@ -155,7 +158,24 @@ export function DashboardEntriesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/10">
-                {filtered.map((e) => (
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-12 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="grid size-12 place-items-center rounded-2xl bg-coral/10">
+                          <Ticket className="size-5 text-coral" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-extrabold text-ink">No entries found</p>
+                          <p className="mt-1 text-xs font-bold text-ink/45">
+                            {search || filter !== "All" ? "Try a different search or filter" : "Browse competitions to enter your first draw"}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((e) => (
                   <tr key={e.id} className="hover:bg-cream/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -226,7 +246,8 @@ export function DashboardEntriesPage() {
                       </Button>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -312,12 +333,12 @@ export function DashboardEntriesPage() {
 
             <div className="mt-6 rounded-2xl bg-coral/10 p-4 ring-1 ring-coral/20">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-full bg-coral/15 font-display text-sm font-extrabold text-coral">
-                  {initials("Tunmise Adebayo")}
+                <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-coral/15 font-display text-sm font-extrabold text-coral">
+                  {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="size-full object-cover" /> : initials(fullName)}
                 </div>
                 <div>
-                  <p className="text-sm font-extrabold text-ink">Tunmise Adebayo</p>
-                  <p className="text-[11px] font-bold text-ink/45">@tunmise_ade</p>
+                  <p className="text-sm font-extrabold text-ink">{fullName}</p>
+                  <p className="text-[11px] font-bold text-ink/45">@{user?.handle || "user"}</p>
                 </div>
               </div>
             </div>

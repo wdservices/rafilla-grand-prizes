@@ -6,6 +6,7 @@ import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
 import { competitions, formatNaira } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 type KpiProps = {
   label: string;
@@ -18,10 +19,10 @@ type KpiProps = {
 
 function KpiCard({ label, value, sub, icon, iconBg, right }: KpiProps) {
   return (
-    <div className="rounded-2xl bg-white p-5 ring-1 ring-ink/5">
+    <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex-1">
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">{label}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">{label}</p>
           <p className="mt-2 font-display text-2xl font-extrabold text-ink sm:text-3xl">{value}</p>
           {sub && <p className="mt-1 text-xs font-bold text-ink/45">{sub}</p>}
         </div>
@@ -50,6 +51,8 @@ const statusStyles: Record<(typeof recentEntries)[number]["status"], string> = {
 };
 
 export function DashboardOverviewPage() {
+  const { user } = useAuthSession();
+  const firstName = user?.firstName || "there";
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const copyId = (id: string) => {
@@ -57,6 +60,14 @@ export function DashboardOverviewPage() {
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 1500);
   };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+  const greeting = getGreeting();
 
   return (
     <DashboardAppShell
@@ -71,8 +82,11 @@ export function DashboardOverviewPage() {
                 Welcome back
               </p>
               <h2 className="mt-2 break-words font-display text-2xl font-extrabold leading-tight tracking-tight text-ink sm:text-3xl lg:text-4xl">
-                Good afternoon, Tunmise 👋
+                {greeting} 👋
               </h2>
+              <h3 className="mt-1 font-display text-xl font-extrabold text-ink sm:text-2xl">
+                {firstName}
+              </h3>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink/55">
                 Your next win could be one ticket away.
               </p>
@@ -109,28 +123,28 @@ export function DashboardOverviewPage() {
             value="0"
             sub="Across 0 competitions"
             icon={<Ticket className="size-5 text-coral" />}
-            iconBg="bg-sky/20"
+            iconBg="bg-coral/10"
           />
           <KpiCard
             label="Active competitions"
             value="0"
             sub="Draws coming up"
             icon={<Trophy className="size-5 text-coral" />}
-            iconBg="bg-lemon/30"
+            iconBg="bg-coral/10"
           />
           <KpiCard
             label="Prizes won"
             value="0"
             sub={`${formatNaira(0)} value`}
             icon={<Trophy className="size-5 text-coral" />}
-            iconBg="bg-mint/30"
+            iconBg="bg-coral/10"
           />
           <KpiCard
             label="Referrals recruited"
             value="0"
             sub="In your network"
             icon={<Users className="size-5 text-coral" />}
-            iconBg="bg-coral/15"
+            iconBg="bg-coral/10"
           />
         </div>
 
@@ -158,7 +172,7 @@ export function DashboardOverviewPage() {
               return (
                 <article
                   key={comp.slug}
-                  className="flex flex-col overflow-hidden rounded-2xl ring-1 ring-ink/5 bg-white hover:ring-coral/20 transition-all sm:flex-row"
+                  className="flex flex-col overflow-hidden rounded-[24px] ring-1 ring-ink/5 bg-white hover:shadow-md hover:ring-coral/20 transition-all sm:flex-row"
                 >
                   <div className="bg-cream/60 p-3 flex items-center justify-center sm:w-[42%] sm:shrink-0">
                     <img
@@ -235,7 +249,29 @@ export function DashboardOverviewPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/10">
-                {recentEntries.map((entry) => (
+                {recentEntries.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-12 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="grid size-12 place-items-center rounded-2xl bg-coral/10">
+                          <Ticket className="size-5 text-coral" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-extrabold text-ink">No entries yet</p>
+                          <p className="mt-1 text-xs font-bold text-ink/45">
+                            Browse competitions and grab your first ticket
+                          </p>
+                        </div>
+                        <Button asChild variant="primary" size="sm">
+                          <Link to="/dashboard/competitions">
+                            Browse competitions <ArrowRight className="size-3.5" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  recentEntries.map((entry) => (
                   <tr key={entry.id} className="hover:bg-cream/40 transition-colors">
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2">
@@ -274,7 +310,8 @@ export function DashboardOverviewPage() {
                       </span>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -120,6 +120,9 @@ export function RegisterForm() {
       email,
       password,
       displayName: username,
+      phone,
+      address,
+      dob,
     });
 
     if (!result.ok) {
@@ -128,20 +131,15 @@ export function RegisterForm() {
       return;
     }
 
-    const { createUserProfile } = await import("@/lib/firebase-auth");
-    const uid = result.user.id.replace("firebase_", "");
-    await createUserProfile(uid, {
-      phone,
-      address,
-      dob,
-      handle: username,
-    });
-
     setLoading(false);
     setSuccess(true);
   }
 
   async function onGoogleSignUp() {
+    if (!terms) {
+      setErrors({ terms: "You must accept the terms to continue" });
+      return;
+    }
     setLoading(true);
     setErrors({});
     const res = await signInWithGoogle();
@@ -378,17 +376,35 @@ export function RegisterForm() {
         </div>
       </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        className="w-full h-12 rounded-xl border-ink/15 hover:border-ink/25 hover:bg-cream/30"
-        disabled={loading}
-        onClick={onGoogleSignUp}
-      >
-        <GoogleIcon className="size-4.5" />
-        Sign up with Google
-      </Button>
+      <div className="space-y-3">
+        <div className={cn("flex items-start gap-3 rounded-xl border p-3 transition-colors", errors.terms ? "border-coral bg-coral/5" : "border-ink/10 bg-cream/30")}>
+          <Checkbox
+            id="r-google-terms"
+            checked={terms}
+            onCheckedChange={(v) => { setTerms(Boolean(v)); if (errors.terms) setErrors((p) => { const n = { ...p }; delete n.terms; return n; }); }}
+            className="mt-0.5 size-4 rounded-md"
+          />
+          <label htmlFor="r-google-terms" className="text-[12px] leading-relaxed font-bold text-ink/60 cursor-pointer select-none">
+            I agree to the{" "}
+            <Link to="/terms-and-conditions" className="text-coral hover:underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Terms</Link>,{" "}
+            <Link to="/privacy-policy" className="text-coral hover:underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>, and{" "}
+            <Link to="/competition-rules" className="text-coral hover:underline underline-offset-2" onClick={(e) => e.stopPropagation()}>Competition Rules</Link>.
+          </label>
+        </div>
+        <FieldError error={errors.terms} />
+
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full h-12 rounded-xl border-ink/15 hover:border-ink/25 hover:bg-cream/30"
+          disabled={loading}
+          onClick={onGoogleSignUp}
+        >
+          <GoogleIcon className="size-4.5" />
+          Sign up with Google
+        </Button>
+      </div>
 
       <p className="pt-1 text-center text-sm text-ink/55">
         Already have an account?{" "}

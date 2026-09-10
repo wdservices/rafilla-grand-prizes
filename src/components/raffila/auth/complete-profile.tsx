@@ -77,7 +77,7 @@ export function CompleteProfileForm() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [dob, setDob] = useState("");
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatarUrl || null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<{

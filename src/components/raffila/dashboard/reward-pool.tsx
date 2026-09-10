@@ -89,7 +89,7 @@ export function DashboardRewardPoolPage() {
             <div className="rounded-2xl bg-white p-5 ring-1 ring-ink/5 min-w-[320px]">
               <div className="flex items-center gap-2">
                 <Clock className="size-4 text-coral" />
-                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                   Next pool drop
                 </p>
               </div>
@@ -107,7 +107,7 @@ export function DashboardRewardPoolPage() {
                     <p className="font-display text-2xl font-extrabold text-ink tabular-nums">
                       {pad(v as number)}
                     </p>
-                    <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45 mt-0.5">
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/45 mt-0.5">
                       {l}
                     </p>
                   </div>
@@ -122,10 +122,10 @@ export function DashboardRewardPoolPage() {
           </div>
         </div>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Top 10 referrers
               </p>
               <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">

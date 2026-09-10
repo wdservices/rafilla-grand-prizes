@@ -20,6 +20,7 @@ import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 type TreeNode = {
   name: string;
@@ -141,6 +142,9 @@ function NodeCard({
 }
 
 export function DashboardReferralsPage() {
+  const { user } = useAuthSession();
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "User";
+  const firstName = user?.firstName || "User";
   const [copied, setCopied] = useState<"url" | "code" | null>(null);
   const [payoutOpen, setPayoutOpen] = useState(false);
   const [payoutForm, setPayoutForm] = useState({
@@ -242,8 +246,8 @@ export function DashboardReferralsPage() {
               value={formatNaira(0)}
               tone="bg-sky/20 text-ink"
             />
-            <div className="rounded-[22px] bg-white p-5 ring-1 ring-ink/5">
-              <span className="inline-block rounded-xl bg-lemon/30 px-2.5 py-1 text-[10px] font-extrabold text-ink">
+            <div className="rounded-[24px] bg-white p-5 ring-1 ring-ink/5 transition-shadow hover:shadow-md">
+              <span className="inline-block rounded-xl bg-coral/10 px-2.5 py-1 text-[10px] font-extrabold text-coral">
                 Available balance
               </span>
               <p className="mt-3 font-display text-2xl font-extrabold text-ink sm:text-3xl">
@@ -254,10 +258,10 @@ export function DashboardReferralsPage() {
           </div>
         </div>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 5-level earning tree
               </p>
               <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
@@ -294,7 +298,7 @@ export function DashboardReferralsPage() {
                 >
                   TA
                 </div>
-                <p className="mt-2 text-[11px] font-extrabold text-ink">Tunmise A. (You)</p>
+                <p className="mt-2 text-[11px] font-extrabold text-ink">{firstName} A. (You)</p>
                 <p className="text-[10px] font-bold text-ink/45">4 recruits · L1 10%</p>
               </div>
             </div>

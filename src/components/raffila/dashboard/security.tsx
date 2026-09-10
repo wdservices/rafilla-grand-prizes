@@ -224,7 +224,7 @@ export function DashboardSecurityPage() {
           </div>
         </div>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-center gap-2">
             <Smartphone className="size-5 text-coral" />
             <h2 className="font-display text-xl font-extrabold text-ink">
@@ -297,7 +297,7 @@ export function DashboardSecurityPage() {
           </div>
         </div>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-center gap-2">
             <Monitor className="size-5 text-coral" />
             <h2 className="font-display text-xl font-extrabold text-ink">Active sessions</h2>
@@ -393,7 +393,7 @@ export function DashboardSecurityPage() {
           </div>
         </div>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-center gap-2">
             <ShieldCheck className="size-5 text-coral" />
             <h2 className="font-display text-xl font-extrabold text-ink">Login activity</h2>
@@ -404,7 +404,7 @@ export function DashboardSecurityPage() {
 
           <div className="mt-5 overflow-x-auto">
             <table className="w-full min-w-[680px] text-left text-sm">
-              <thead className="bg-cream text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+              <thead className="bg-cream text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 <tr>
                   <th className="px-4 py-3">Date</th>
                   <th className="px-4 py-3">Device</th>
@@ -517,7 +517,7 @@ function PwField({
       <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
         {label}
       </label>
-      <div className="flex min-h-11 items-center gap-2 rounded-2xl bg-cream px-4 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral">
+      <div className="flex min-h-11 items-center gap-2 rounded-2xl bg-cream px-4 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral/20 transition-all">
         <input
           type={show ? "text" : "password"}
           value={value}
@@ -528,7 +528,7 @@ function PwField({
         <button
           type="button"
           onClick={onToggle}
-          className="grid size-8 place-items-center rounded-full text-ink/45 hover:text-coral"
+          className="grid size-8 place-items-center rounded-full text-ink/45 hover:text-coral transition-colors"
           aria-label={show ? "Hide password" : "Show password"}
         >
           {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}

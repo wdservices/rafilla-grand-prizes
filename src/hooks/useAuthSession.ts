@@ -142,6 +142,9 @@ export function useAuthActions() {
       email: string;
       password: string;
       displayName: string;
+      phone?: string;
+      address?: string;
+      dob?: string;
     }): Promise<{ ok: true; user: RaffilaUser } | { ok: false; message: string }> {
       try {
         const cred = await registerWithEmail(input.email, input.password);
@@ -154,9 +157,9 @@ export function useAuthActions() {
           lastName,
           handle,
           email: input.email,
-          phone: "",
-          address: "",
-          dob: "",
+          phone: input.phone || "",
+          address: input.address || "",
+          dob: input.dob || "",
           avatarMonogram: ((firstName || "") + lastName).toUpperCase() || "U",
           role: "user",
           verified: false,
@@ -195,10 +198,11 @@ export function useAuthActions() {
           address: data.address,
           dob: data.dob,
           handle: data.handle || session.user.handle,
+          avatarUrl: session.user.avatarUrl || "",
         });
 
         const profile = await getUserProfile(uid);
-        const fbUser = { uid, email: session.user.email, displayName: `${session.user.firstName || ""} ${session.user.lastName || ""}`, photoURL: null, providerData: [{ providerId: "google.com" }] } as any;
+        const fbUser = { uid, email: session.user.email, displayName: `${session.user.firstName || ""} ${session.user.lastName || ""}`, photoURL: session.user.avatarUrl || null, providerData: [{ providerId: "google.com" }] } as any;
         const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
         const updatedUser: RaffilaUser = { ...raffilaUser, id: `firebase_${uid}`, profileComplete: true };
         setFirebaseSession(updatedUser);

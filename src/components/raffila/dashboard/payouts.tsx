@@ -15,6 +15,7 @@ import { DashboardShell } from "@/components/raffila/dashboard/shell";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const banks = [
   "Access Bank",
@@ -48,9 +49,11 @@ const statusColor: Record<PayoutStatus, string> = {
 const AVAILABLE_BALANCE = 0;
 
 export function DashboardReferralsPayoutPage() {
+  const { user } = useAuthSession();
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "";
   const [amount, setAmount] = useState("");
   const [bank, setBank] = useState("Access Bank");
-  const [accountName, setAccountName] = useState("Tunmise Oluwaseyi Adeyemi");
+  const [accountName, setAccountName] = useState(fullName);
   const [accountNumber, setAccountNumber] = useState("");
   const [note, setNote] = useState("");
   const [submitted, setSubmitted] = useState(false);

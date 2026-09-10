@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Camera,
   Mail,
@@ -15,6 +15,7 @@ import {
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 type Badge = {
   name: string;
@@ -77,25 +78,67 @@ const badges: Badge[] = [
 ];
 
 export function DashboardProfilePage() {
+  const { user } = useAuthSession();
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "User";
   const [form, setForm] = useState({
-    displayName: "Tunmise Adebayo",
-    username: "tunmise_ade",
-    email: "tunmise.adebayo@example.com",
-    phone: "+234 803 123 4567",
-    address: "14, Allen Avenue, Ikeja, Lagos, Nigeria",
-    dob: "1998-06-14",
+    displayName: fullName,
+    username: user?.handle || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    address: "",
+    dob: "",
   });
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [phoneModal, setPhoneModal] = useState(false);
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
 
+  useEffect(() => {
+    const uid = user?.id?.replace("firebase_", "");
+    if (!uid) return;
+    import("@/lib/firebase-auth").then(({ getUserProfile }) =>
+      getUserProfile(uid).then((profile) => {
+        if (!profile) return;
+        setForm((f) => ({
+          ...f,
+          phone: (profile["phone"] as string) || f.phone,
+          address: (profile["address"] as string) || f.address,
+          dob: (profile["dob"] as string) || f.dob,
+          username: (profile["handle"] as string) || f.username,
+        }));
+      })
+    );
+  }, [user?.id]);
+
   const update = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  const save = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2200);
+  const save = async () => {
+    try {
+      setSaveError("");
+      const { createUserProfile } = await import("@/lib/firebase-auth");
+      const uid = user?.id?.replace("firebase_", "");
+      if (uid) {
+        await createUserProfile(uid, {
+          phone: form.phone,
+          address: form.address,
+          dob: form.dob,
+          handle: form.username,
+        });
+        
+        const { setFirebaseSession } = await import("@/lib/auth-store");
+        setFirebaseSession({
+          ...user!,
+          handle: form.username,
+          phone: form.phone,
+        });
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2200);
+    } catch (err: any) {
+      setSaveError(err?.message || "Failed to save changes");
+    }
   };
 
   const sendOtp = () => {
@@ -135,9 +178,13 @@ export function DashboardProfilePage() {
               <div className="flex flex-col gap-4 sm:-mt-12 sm:flex-row sm:items-end sm:gap-5">
                 <label className="relative mx-auto block size-[108px] shrink-0 cursor-pointer group sm:mx-0 sm:size-28">
                   <div className="absolute inset-0 overflow-hidden rounded-3xl bg-lilac/30 ring-4 ring-white shadow-[0_12px_30px_-14px_rgba(0,0,0,0.35)]">
-                    <div className="grid h-full w-full place-items-center font-display text-5xl font-extrabold text-ink sm:text-4xl">
-                      TA
-                    </div>
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="" className="size-full object-cover" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center font-display text-5xl font-extrabold text-ink sm:text-4xl">
+                        {user?.avatarMonogram || "U"}
+                      </div>
+                    )}
                   </div>
                   <span className="absolute bottom-1 right-1 grid size-8 place-items-center rounded-2xl bg-coral text-paper shadow-[0_6px_14px_-6px_var(--coral)] ring-2 ring-white group-hover:scale-105 transition-transform">
                     <Camera className="size-3.5" />
@@ -147,9 +194,9 @@ export function DashboardProfilePage() {
 
                 <div className="text-center sm:text-left sm:pb-2">
                   <h2 className="font-display text-2xl font-extrabold text-ink sm:text-[1.7rem]">
-                    Tunmise Adebayo
+                    {fullName}
                   </h2>
-                  <p className="mt-0.5 text-sm font-bold text-ink/45">@tunmise_ade</p>
+                  <p className="mt-0.5 text-sm font-bold text-ink/45">@{form.username}</p>
 
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-mint/30 px-3 py-1 text-[11px] font-extrabold text-ink ring-1 ring-mint/20">
@@ -175,7 +222,7 @@ export function DashboardProfilePage() {
         <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Personal information
               </p>
               <h2 className="mt-1.5 font-display text-xl font-extrabold text-ink">
@@ -231,11 +278,16 @@ export function DashboardProfilePage() {
                 className="w-full resize-none rounded-2xl bg-cream px-4 py-3 text-sm font-bold text-ink ring-1 ring-ink/5 outline-none placeholder:text-ink/35 focus:ring-2 focus:ring-coral"
               />
             </div>
-            <Field label="Date of birth" type="date" value={form.dob} readOnly />
+            <Field label="Date of birth" type="date" value={form.dob} onChange={(v) => update("dob", v)} />
             <div className="hidden sm:block" />
           </div>
 
           <div className="mt-8 flex items-center justify-end gap-3 border-t border-ink/10 pt-6">
+            {saveError && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-coral/10 px-3 py-1.5 text-xs font-extrabold text-coral ring-1 ring-coral/20">
+                {saveError}
+              </span>
+            )}
             {saved && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-mint/30 px-3 py-1.5 text-xs font-extrabold text-ink ring-1 ring-mint/20">
                 <Check className="size-3.5" /> Changes saved
@@ -250,7 +302,7 @@ export function DashboardProfilePage() {
         <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Your Raffila badges
               </p>
               <h2 className="mt-1.5 font-display text-xl font-extrabold text-ink">
@@ -267,7 +319,7 @@ export function DashboardProfilePage() {
               <div
                 key={b.name}
                 className={cn(
-                  "relative rounded-2xl p-5 ring-1 transition-transform hover:-translate-y-0.5",
+                  "relative rounded-[24px] p-5 ring-1 transition-all duration-200 hover:shadow-md",
                   b.tone,
                 )}
               >
@@ -393,7 +445,7 @@ function Field({
         </label>
         {trailing}
       </div>
-      <div className="flex min-h-11 items-center gap-2 rounded-2xl bg-cream px-4 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral">
+      <div className="flex min-h-11 items-center gap-2 rounded-2xl bg-cream px-4 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral/20 transition-all">
         {leading && <span className="font-extrabold text-ink/45">{leading}</span>}
         <input
           type={type}

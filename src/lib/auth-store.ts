@@ -16,6 +16,7 @@ export type RaffilaUser = {
   email: string;
   phone: string;
   avatarMonogram: string;
+  avatarUrl?: string | undefined;
   verified?: boolean | undefined;
   tagline?: string | undefined;
   isGoogleUser?: boolean | undefined;

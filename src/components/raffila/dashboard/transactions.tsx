@@ -118,10 +118,10 @@ export function DashboardTransactionsPage() {
               key={key}
               onClick={() => setTab(key)}
               className={cn(
-                "rounded-xl px-5 py-2.5 text-sm font-extrabold transition-colors",
+                "rounded-xl px-5 py-2.5 text-sm font-extrabold transition-all duration-200",
                 tab === key
                   ? "bg-coral text-white shadow-[0_8px_20px_-8px_var(--coral)]"
-                  : "text-ink/60 hover:text-ink",
+                  : "text-ink/60 hover:text-ink hover:bg-cream/50",
               )}
             >
               {label}
@@ -132,7 +132,7 @@ export function DashboardTransactionsPage() {
         <div className="rounded-[28px] bg-white p-4 ring-1 ring-ink/5 sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <label className="flex min-h-11 items-center gap-3 rounded-full bg-cream px-4 text-sm font-bold text-ink/50 ring-1 ring-ink/5">
+              <label className="flex min-h-11 items-center gap-3 rounded-full bg-cream px-4 text-sm font-bold text-ink/50 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral/20 transition-all">
                 <Search className="size-4 shrink-0 text-ink/45" />
                 <input
                   value={search}
@@ -162,10 +162,10 @@ export function DashboardTransactionsPage() {
           </div>
         </div>
 
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="overflow-x-auto -mx-4 px-4">
             <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="bg-cream text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+              <thead className="bg-cream text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 <tr>
                   <th className="px-4 py-3">Date</th>
                   <th className="px-4 py-3">Type</th>
@@ -230,7 +230,7 @@ export function DashboardTransactionsPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
-                          className="grid size-8 place-items-center rounded-full bg-cream text-ink/55 ring-1 ring-ink/10 hover:text-coral hover:bg-coral/10 transition-colors"
+                          className="grid size-8 place-items-center rounded-full bg-cream text-ink/55 ring-1 ring-ink/10 hover:text-coral hover:bg-coral/10 transition-all duration-200"
                           aria-label="Download receipt"
                         >
                           <Download className="size-3.5" />

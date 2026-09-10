@@ -60,6 +60,7 @@ export function firebaseUserToRaffilaUser(fbUser: FirebaseUser, profile?: Record
     email: fbUser.email || "",
     phone: (profile?.["phone"] as string) || "",
     avatarMonogram: (profile?.["avatarMonogram"] as string) || ((firstName + lastName).toUpperCase() || "U"),
+    avatarUrl: (profile?.["avatarUrl"] as string) || fbUser.photoURL || "",
     verified: Boolean(profile?.["verified"]),
     isGoogleUser: !fbUser.email || fbUser.providerData.some((p) => p.providerId === "google.com"),
     profileComplete: Boolean(profile?.["phone"] && profile?.["address"] && profile?.["dob"]),
