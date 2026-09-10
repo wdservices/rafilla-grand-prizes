@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import {
   Search,
   Plus,
@@ -80,6 +81,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AdminShell } from "@/components/raffila/admin/admin-shell";
 import { AssetUploader } from "@/components/raffila/admin/asset-uploader";
 import { cn, formatNaira } from "@/lib/utils";
+import { db } from "@/lib/firebase";
 
 type CompStatus = "DRAFT" | "SCHEDULED" | "LIVE" | "COMPLETED";
 
@@ -419,15 +421,49 @@ export function AdminCompetitionsPage() {
     }, 220);
   }
 
-  function submitDraft() {
+  async function submitDraft() {
     setSubmitting(true);
-    setTimeout(() => {
+    try {
+      const compId =
+        form.slug || form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || `comp-${Date.now()}`;
+      const imageData = form.assets.length > 0 ? form.assets[0] : "";
+
+      await setDoc(doc(db, "competitions", compId), {
+        slug: compId,
+        title: form.name,
+        category: form.category,
+        partner: form.partner,
+        description: form.description,
+        assetName: form.assetName,
+        image: imageData,
+        images: form.assets,
+        marketValueKobo: Math.round(Number(form.marketValue) * 100),
+        condition: form.condition,
+        entryPrice: Math.round(Number(form.ticketPrice) * 100),
+        totalEntries: Number(form.totalEntries),
+        maxPerUser: Number(form.maxPerUser),
+        startDate: form.startDate,
+        drawDate: form.drawDate,
+        liveDelay: Number(form.liveDelay),
+        featured: form.featured,
+        publicResults: form.publicResults,
+        status: form.status,
+        entriesSold: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
       setSubmitting(false);
       setSubmitted(true);
       toast.success(`${modalMode === "edit" ? "Competition updated" : "Competition created"}`, {
-        description: `${form.assetName || form.name || "Untitled competition"} · saved as draft · ${form.id ?? "RF-C-NEW"}`,
+        description: `${form.assetName || form.name || "Untitled competition"} · saved as ${form.status} · ${compId}`,
       });
-    }, 700);
+    } catch (err) {
+      setSubmitting(false);
+      toast.error("Failed to save competition", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
   }
 
   function performAction(comp: MockComp, action: string) {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
+import { doc, updateDoc } from "firebase/firestore";
 
 import type { RaffilaUser, Session } from "@/lib/auth-store";
 import {
@@ -23,6 +24,13 @@ import {
   createUserProfile,
   firebaseUserToRaffilaUser,
 } from "@/lib/firebase-auth";
+import { db } from "@/lib/firebase";
+
+function isAdminEmail(email: string): boolean {
+  const adminEmail =
+    (typeof import.meta !== "undefined" && (import.meta.env?.VITE_ADMIN_EMAIL as string)) || "";
+  return !!adminEmail && email.toLowerCase() === adminEmail.toLowerCase();
+}
 
 export function useAuthSession() {
   const [session, setSession] = useState<Session>(getSession());
@@ -72,7 +80,14 @@ export function useAuthActions() {
       // Try Firebase Auth
       try {
         const cred = await loginWithEmail(input.email, input.password);
-        const profile = await getUserProfile(cred.user.uid);
+        let profile = await getUserProfile(cred.user.uid);
+
+        // Auto-promote to admin if email matches
+        if (isAdminEmail(input.email) && profile && profile["role"] !== "admin") {
+          await updateDoc(doc(db, "users", cred.user.uid), { role: "admin" });
+          profile = { ...profile, role: "admin" };
+        }
+
         const raffilaUser = firebaseUserToRaffilaUser(cred.user, profile ?? {});
         const user: RaffilaUser = { ...raffilaUser, id: `firebase_${cred.user.uid}` };
         setFirebaseSession(user);
@@ -108,7 +123,7 @@ export function useAuthActions() {
       try {
         const result = await loginWithGoogle();
         const fbUser = result.user;
-        const profile = await getUserProfile(fbUser.uid);
+        let profile = await getUserProfile(fbUser.uid);
 
         if (!profile) {
           // First-time Google user — needs profile completion
@@ -123,7 +138,13 @@ export function useAuthActions() {
         }
 
         // Existing user
-        const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile);
+        // Auto-promote to admin if email matches
+        if (isAdminEmail(fbUser.email || "") && profile && profile["role"] !== "admin") {
+          await updateDoc(doc(db, "users", fbUser.uid), { role: "admin" });
+          profile = { ...profile, role: "admin" };
+        }
+
+        const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
         const user: RaffilaUser = { ...raffilaUser, id: `firebase_${fbUser.uid}` };
         setFirebaseSession(user);
 
@@ -161,7 +182,7 @@ export function useAuthActions() {
           address: input.address || "",
           dob: input.dob || "",
           avatarMonogram: ((firstName || "") + lastName).toUpperCase() || "U",
-          role: "user",
+          role: isAdminEmail(input.email) ? "admin" : "user",
           verified: false,
         });
 
@@ -199,6 +220,7 @@ export function useAuthActions() {
           dob: data.dob,
           handle: data.handle || session.user.handle,
           avatarUrl: session.user.avatarUrl || "",
+          role: isAdminEmail(session.user.email) ? "admin" : undefined,
         });
 
         const profile = await getUserProfile(uid);
