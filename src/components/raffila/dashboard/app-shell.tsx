@@ -223,7 +223,11 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
             className="flex w-full items-center gap-3 rounded-2xl bg-cream/60 p-3 ring-1 ring-ink/5 hover:ring-coral/20 hover:bg-white transition-all"
           >
             <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-coral text-white shadow-[0_8px_18px_-10px_var(--coral)] font-display text-sm font-extrabold">
-              {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="size-full object-cover" /> : monogram}
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" className="size-full object-cover" />
+              ) : (
+                monogram
+              )}
             </div>
             <div className="min-w-0 flex-1 text-left">
               <p className="truncate text-sm font-extrabold text-ink leading-tight">{fullName}</p>
@@ -306,7 +310,11 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
             className="flex w-full items-center gap-3 rounded-2xl bg-cream/60 p-3 ring-1 ring-ink/5"
           >
             <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-2xl bg-coral text-white shadow-[0_8px_18px_-10px_var(--coral)] font-display text-sm font-extrabold">
-              {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="size-full object-cover" /> : monogram}
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" className="size-full object-cover" />
+              ) : (
+                monogram
+              )}
             </div>
             <div className="min-w-0 flex-1 text-left">
               <p className="truncate text-sm font-extrabold text-ink leading-tight">{fullName}</p>
@@ -394,7 +402,11 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
             <LogOut className="size-3.5" /> Exit
           </Button>
           <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-2xl bg-coral text-white font-display text-sm font-extrabold shadow-[0_8px_18px_-10px_var(--coral)]">
-            {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="size-full object-cover" /> : monogram}
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" className="size-full object-cover" />
+            ) : (
+              monogram
+            )}
           </div>
         </div>
       </header>

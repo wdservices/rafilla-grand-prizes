@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, User, Loader2, AlertCircle, Camera } from "lucide-react";
+import { ArrowLeft, User, Loader2, AlertCircle, Camera, Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useAuthActions, useAuthSession } from "@/hooks/useAuthSession";
+import { checkUsernameAvailability, validateUsernameFormat } from "@/lib/user-validation";
 
 function authInputBase(error?: string) {
   return cn(
@@ -78,6 +79,8 @@ export function CompleteProfileForm() {
   const [address, setAddress] = useState("");
   const [dob, setDob] = useState("");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatarUrl || null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<{
@@ -96,10 +99,40 @@ export function CompleteProfileForm() {
     reader.readAsDataURL(file);
   }
 
+  async function handleUsernameBlur() {
+    if (!username.trim()) return;
+    const format = validateUsernameFormat(username);
+    if (!format.valid) {
+      setErrors((prev) => ({ ...prev, username: format.error }));
+      setUsernameAvailable(false);
+      return;
+    }
+    setCheckingUsername(true);
+    try {
+      const currentUid = user?.id?.replace("firebase_", "");
+      const res = await checkUsernameAvailability(username, currentUid);
+      if (!res.available) {
+        setErrors((prev) => ({ ...prev, username: res.error || "This username is already taken" }));
+        setUsernameAvailable(false);
+      } else {
+        setErrors((prev) => {
+          const n = { ...prev };
+          delete n.username;
+          return n;
+        });
+        setUsernameAvailable(true);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setCheckingUsername(false);
+    }
+  }
+
   function validate() {
     const next: typeof errors = {};
-    if (!username) next.username = "Username is required";
-    else if (username.length < 3) next.username = "Username must be at least 3 characters";
+    const format = validateUsernameFormat(username);
+    if (!format.valid) next.username = format.error;
     if (!phone) next.phone = "Phone number is required";
     else if (!/^(\+?234|0)[789]\d{9}$/.test(phone.replace(/\s/g, "")))
       next.phone = "Enter a valid Nigerian number";
@@ -115,6 +148,16 @@ export function CompleteProfileForm() {
     if (!validate()) return;
     setLoading(true);
     setErrors({});
+
+    const currentUid = user?.id?.replace("firebase_", "");
+    const avail = await checkUsernameAvailability(username, currentUid);
+    if (!avail.available) {
+      setLoading(false);
+      setErrors({
+        username: avail.error || "This username is already taken. Please choose another.",
+      });
+      return;
+    }
 
     const result = await completeGoogleProfile({
       phone,
@@ -149,134 +192,161 @@ export function CompleteProfileForm() {
       </Link>
 
       <form noValidate onSubmit={onSubmit} className="space-y-4.5">
-          <header>
-            <div className="mx-auto grid size-12 place-items-center rounded-full bg-coral/20 sm:mx-0">
-              <User className="size-6 text-coral" />
-            </div>
-            <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              Complete your Raffila profile
-            </h1>
-            <p className="mt-2 text-sm text-ink/60">
-              We just need a few more details to set up your account.
-            </p>
-          </header>
-
-          {errors.global && (
-            <div className="rounded-2xl border-2 border-coral/30 bg-coral/10 px-4 py-3 text-sm font-bold text-coral">
-              {errors.global}
-            </div>
-          )}
-
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-5 rounded-[20px] border-2 border-ink/10 bg-cream/30 p-4 sm:p-5">
-            <label htmlFor="cp-avatar" className="relative cursor-pointer group">
-              <div
-                className={cn(
-                  "grid size-20 place-items-center overflow-hidden rounded-[22px] border-2 ring-4 ring-white shadow-sm",
-                  avatarPreview ? "border-lilac" : "border-ink/10 bg-lilac/20",
-                )}
-              >
-                {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt=""
-                    aria-hidden="true"
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <div className="grid size-10 place-items-center rounded-full bg-white text-ink/40">
-                    <User className="size-6" />
-                  </div>
-                )}
-              </div>
-              <span className="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-coral text-paper shadow-md ring-2 ring-white">
-                <Camera className="size-4" />
-              </span>
-              <input
-                id="cp-avatar"
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={handleAvatarChange}
-              />
-            </label>
-            <div className="flex-1 text-center sm:text-left">
-              <h3 className="font-display text-lg font-extrabold text-ink">Profile picture</h3>
-              <p className="mt-1 text-xs leading-relaxed text-ink/55">
-                Upload a photo (optional). PNG or JPG, max 5&nbsp;MB). This will be shown on your
-                entry slips and winner announcements.
-              </p>
-            </div>
+        <header>
+          <div className="mx-auto grid size-12 place-items-center rounded-full bg-coral/20 sm:mx-0">
+            <User className="size-6 text-coral" />
           </div>
+          <h1 className="mt-5 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+            Complete your Raffila profile
+          </h1>
+          <p className="mt-2 text-sm text-ink/60">
+            We just need a few more details to set up your account.
+          </p>
+        </header>
 
-          <FieldWrapper
+        {errors.global && (
+          <div className="rounded-2xl border-2 border-coral/30 bg-coral/10 px-4 py-3 text-sm font-bold text-coral">
+            {errors.global}
+          </div>
+        )}
+
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-5 rounded-[20px] border-2 border-ink/10 bg-cream/30 p-4 sm:p-5">
+          <label htmlFor="cp-avatar" className="relative cursor-pointer group">
+            <div
+              className={cn(
+                "grid size-20 place-items-center overflow-hidden rounded-[22px] border-2 ring-4 ring-white shadow-sm",
+                avatarPreview ? "border-lilac" : "border-ink/10 bg-lilac/20",
+              )}
+            >
+              {avatarPreview ? (
+                <img
+                  src={avatarPreview}
+                  alt=""
+                  aria-hidden="true"
+                  className="size-full object-cover"
+                />
+              ) : (
+                <div className="grid size-10 place-items-center rounded-full bg-white text-ink/40">
+                  <User className="size-6" />
+                </div>
+              )}
+            </div>
+            <span className="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-coral text-paper shadow-md ring-2 ring-white">
+              <Camera className="size-4" />
+            </span>
+            <input
+              id="cp-avatar"
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={handleAvatarChange}
+            />
+          </label>
+          <div className="flex-1 text-center sm:text-left">
+            <h3 className="font-display text-lg font-extrabold text-ink">Profile picture</h3>
+            <p className="mt-1 text-xs leading-relaxed text-ink/55">
+              Upload a photo (optional). PNG or JPG, max 5&nbsp;MB). This will be shown on your
+              entry slips and winner announcements.
+            </p>
+          </div>
+        </div>
+
+        <FieldWrapper
+          id="cp-username"
+          label="Username (unique handle)"
+          required
+          error={errors.username}
+          hint={
+            checkingUsername ? (
+              <span className="flex items-center gap-1 text-ink/40">
+                <Loader2 className="size-3 animate-spin" /> Checking availability...
+              </span>
+            ) : usernameAvailable === true && !errors.username ? (
+              <span className="flex items-center gap-1 text-mint font-extrabold">
+                <Check className="size-3" /> Username is available
+              </span>
+            ) : (
+              "Letters, numbers, underscores and dots. Unique to you."
+            )
+          }
+        >
+          <input
             id="cp-username"
-            label="Username"
-            required
-            error={errors.username}
-            hint="Prefilled from your Google account"
-          >
-            <input
-              id="cp-username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className={authInputBase(errors.username)}
-            />
-          </FieldWrapper>
-
-          <FieldWrapper
-            id="cp-phone"
-            label="Phone number"
-            required
-            error={errors.phone}
-            hint="NG format: +234 803 ..."
-          >
-            <input
-              id="cp-phone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="+234 803 000 0000"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className={authInputBase(errors.phone)}
-            />
-          </FieldWrapper>
-
-          <FieldWrapper id="cp-address" label="Residential address" required error={errors.address}>
-            <textarea
-              id="cp-address"
-              autoComplete="street-address"
-              placeholder="Street, city, state"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className={authTextareaBase(errors.address)}
-            />
-          </FieldWrapper>
-
-          <FieldWrapper
-            id="cp-dob"
-            label="Date of birth"
-            required
-            error={errors.dob}
-            hint="Must be 18+ years"
-          >
-            <input
-              id="cp-dob"
-              type="date"
-              max={
-                new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+            type="text"
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setUsernameAvailable(null);
+              if (errors.username) {
+                setErrors((p) => {
+                  const n = { ...p };
+                  delete n.username;
+                  return n;
+                });
               }
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
-              className={cn(authInputBase(errors.dob), "text-ink/70 [color-scheme:light]")}
-            />
-          </FieldWrapper>
+            }}
+            onBlur={handleUsernameBlur}
+            className={cn(
+              authInputBase(errors.username),
+              "w-full",
+              usernameAvailable === true && !errors.username && "border-mint/50 bg-mint/5",
+            )}
+          />
+        </FieldWrapper>
 
-          <Button type="submit" variant="primary" size="lg" className="w-full" disabled={loading}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-            {loading ? "Saving profile..." : "Save and continue"}
-          </Button>
-        </form>
+        <FieldWrapper
+          id="cp-phone"
+          label="Phone number"
+          required
+          error={errors.phone}
+          hint="NG format: +234 803 ..."
+        >
+          <input
+            id="cp-phone"
+            type="tel"
+            autoComplete="tel"
+            placeholder="+234 803 000 0000"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className={authInputBase(errors.phone)}
+          />
+        </FieldWrapper>
+
+        <FieldWrapper id="cp-address" label="Residential address" required error={errors.address}>
+          <textarea
+            id="cp-address"
+            autoComplete="street-address"
+            placeholder="Street, city, state"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className={authTextareaBase(errors.address)}
+          />
+        </FieldWrapper>
+
+        <FieldWrapper
+          id="cp-dob"
+          label="Date of birth"
+          required
+          error={errors.dob}
+          hint="Must be 18+ years"
+        >
+          <input
+            id="cp-dob"
+            type="date"
+            max={
+              new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+            }
+            value={dob}
+            onChange={(e) => setDob(e.target.value)}
+            className={cn(authInputBase(errors.dob), "text-ink/70 [color-scheme:light]")}
+          />
+        </FieldWrapper>
+
+        <Button type="submit" variant="primary" size="lg" className="w-full" disabled={loading}>
+          {loading ? <Loader2 className="size-4 animate-spin" /> : null}
+          {loading ? "Saving profile..." : "Save and continue"}
+        </Button>
+      </form>
     </div>
   );
 }

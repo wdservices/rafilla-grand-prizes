@@ -168,7 +168,9 @@ export function DashboardEntriesPage() {
                         <div>
                           <p className="text-sm font-extrabold text-ink">No entries found</p>
                           <p className="mt-1 text-xs font-bold text-ink/45">
-                            {search || filter !== "All" ? "Try a different search or filter" : "Browse competitions to enter your first draw"}
+                            {search || filter !== "All"
+                              ? "Try a different search or filter"
+                              : "Browse competitions to enter your first draw"}
                           </p>
                         </div>
                       </div>
@@ -176,76 +178,76 @@ export function DashboardEntriesPage() {
                   </tr>
                 ) : (
                   filtered.map((e) => (
-                  <tr key={e.id} className="hover:bg-cream/40">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-ink/70">{e.id}</span>
-                        <button
-                          onClick={() => copyId(e.id)}
-                          className={cn(
-                            "grid size-6 place-items-center rounded-full transition-colors",
-                            copiedId === e.id
-                              ? "bg-mint/30 text-ink"
-                              : "bg-cream text-ink/45 hover:text-coral",
-                          )}
-                          aria-label="Copy"
-                        >
-                          {copiedId === e.id ? (
-                            <Check className="size-3" />
-                          ) : (
-                            <Copy className="size-3" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="size-11 shrink-0 overflow-hidden rounded-xl ring-1 ring-ink/10">
-                          <img
-                            src={e.competitionImage}
-                            alt={`${e.competitionTitle} prize`}
-                            loading="lazy"
-                            decoding="async"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <span className="text-sm font-extrabold text-ink line-clamp-1 max-w-[220px]">
-                          {e.competitionTitle}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center font-display font-extrabold text-ink">
-                      {e.ticketCount}
-                    </td>
-                    <td className="px-4 py-3 text-xs font-bold text-ink/50">{e.drawDate}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1 max-w-[260px]">
-                        {e.ticketNumbers.map((n) => (
-                          <span
-                            key={n}
-                            className="inline-flex items-center rounded-full bg-cream px-2 py-0.5 font-mono text-[10px] font-bold text-ink/70 ring-1 ring-ink/5"
+                    <tr key={e.id} className="hover:bg-cream/40">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-ink/70">{e.id}</span>
+                          <button
+                            onClick={() => copyId(e.id)}
+                            className={cn(
+                              "grid size-6 place-items-center rounded-full transition-colors",
+                              copiedId === e.id
+                                ? "bg-mint/30 text-ink"
+                                : "bg-cream text-ink/45 hover:text-coral",
+                            )}
+                            aria-label="Copy"
                           >
-                            {n}
+                            {copiedId === e.id ? (
+                              <Check className="size-3" />
+                            ) : (
+                              <Copy className="size-3" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="size-11 shrink-0 overflow-hidden rounded-xl ring-1 ring-ink/10">
+                            <img
+                              src={e.competitionImage}
+                              alt={`${e.competitionTitle} prize`}
+                              loading="lazy"
+                              decoding="async"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <span className="text-sm font-extrabold text-ink line-clamp-1 max-w-[220px]">
+                            {e.competitionTitle}
                           </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
-                          statusBadge[e.status],
-                        )}
-                      >
-                        {e.status.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Button variant="outline" size="sm" onClick={() => setTicketOpen(e)}>
-                        <Eye className="size-3.5" /> View ticket
-                      </Button>
-                    </td>
-                  </tr>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center font-display font-extrabold text-ink">
+                        {e.ticketCount}
+                      </td>
+                      <td className="px-4 py-3 text-xs font-bold text-ink/50">{e.drawDate}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1 max-w-[260px]">
+                          {e.ticketNumbers.map((n) => (
+                            <span
+                              key={n}
+                              className="inline-flex items-center rounded-full bg-cream px-2 py-0.5 font-mono text-[10px] font-bold text-ink/70 ring-1 ring-ink/5"
+                            >
+                              {n}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
+                            statusBadge[e.status],
+                          )}
+                        >
+                          {e.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button variant="outline" size="sm" onClick={() => setTicketOpen(e)}>
+                          <Eye className="size-3.5" /> View ticket
+                        </Button>
+                      </td>
+                    </tr>
                   ))
                 )}
               </tbody>
@@ -334,7 +336,11 @@ export function DashboardEntriesPage() {
             <div className="mt-6 rounded-2xl bg-coral/10 p-4 ring-1 ring-coral/20">
               <div className="flex items-center gap-3">
                 <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-coral/15 font-display text-sm font-extrabold text-coral">
-                  {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="size-full object-cover" /> : initials(fullName)}
+                  {user?.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="size-full object-cover" />
+                  ) : (
+                    initials(fullName)
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-extrabold text-ink">{fullName}</p>

@@ -1,7 +1,9 @@
 import {
   onAuthChange,
   getUserProfile,
+  createUserProfile,
   firebaseUserToRaffilaUser,
+  checkIsAdmin,
   type FirebaseUser,
 } from "./firebase-auth";
 
@@ -61,8 +63,15 @@ export const DEFAULT_CREDENTIALS: Record<UserRole, DefaultCredential> = {
 };
 
 const STORAGE_KEY = "raffila:auth:session:v1";
+export const REMEMBER_ME_DAYS = 30;
+export const REMEMBER_ME_MS = 30 * 24 * 60 * 60 * 1000;
 
-export type Session = { user: RaffilaUser; createdAt: string } | null;
+export type Session = {
+  user: RaffilaUser;
+  createdAt: string;
+  expiresAt?: number;
+  remember?: boolean;
+} | null;
 
 function readSession(): Session {
   if (typeof window === "undefined") return null;
@@ -70,7 +79,15 @@ function readSession(): Session {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Session;
-    return parsed && parsed?.user?.id ? parsed : null;
+    if (!parsed || !parsed?.user?.id) return null;
+
+    // Check expiration if set
+    if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+
+    return parsed;
   } catch {
     return null;
   }
@@ -98,16 +115,28 @@ export type SignInResult =
   | { ok: true; user: RaffilaUser; redirect: string }
   | { ok: false; code: "invalid_credentials" | "invalid_input"; message: string };
 
-export function signInWithCredentials(input: { email: string; password: string }): SignInResult {
+export function signInWithCredentials(input: {
+  email: string;
+  password: string;
+  remember?: boolean;
+}): SignInResult {
   const email = input.email.trim().toLowerCase();
   const password = input.password;
+  const remember = input.remember ?? true;
+  const expiresAt = Date.now() + (remember ? REMEMBER_ME_MS : 24 * 60 * 60 * 1000);
+
   if (!email || !password) {
     return { ok: false, code: "invalid_input", message: "Email and password are required" };
   }
 
   const admin = DEFAULT_CREDENTIALS.admin;
   if (email === admin.email.toLowerCase() && password === admin.password) {
-    const session: Session = { user: admin.user, createdAt: new Date().toISOString() };
+    const session: Session = {
+      user: admin.user,
+      createdAt: new Date().toISOString(),
+      expiresAt,
+      remember,
+    };
     writeSession(session);
     emit(session);
     return { ok: true, user: admin.user, redirect: "/admin" };
@@ -115,7 +144,12 @@ export function signInWithCredentials(input: { email: string; password: string }
 
   const user = DEFAULT_CREDENTIALS.user;
   if (email === user.email.toLowerCase() && password === user.password) {
-    const session: Session = { user: user.user, createdAt: new Date().toISOString() };
+    const session: Session = {
+      user: user.user,
+      createdAt: new Date().toISOString(),
+      expiresAt,
+      remember,
+    };
     writeSession(session);
     emit(session);
     return { ok: true, user: user.user, redirect: "/dashboard" };
@@ -130,14 +164,25 @@ export function signInWithCredentials(input: { email: string; password: string }
 
 export function signInAs(role: UserRole): SignInResult {
   const cred = DEFAULT_CREDENTIALS[role];
-  const session: Session = { user: cred.user, createdAt: new Date().toISOString() };
+  const session: Session = {
+    user: cred.user,
+    createdAt: new Date().toISOString(),
+    expiresAt: Date.now() + REMEMBER_ME_MS,
+    remember: true,
+  };
   writeSession(session);
   emit(session);
   return { ok: true, user: cred.user, redirect: role === "admin" ? "/admin" : "/dashboard" };
 }
 
-export function setFirebaseSession(user: RaffilaUser) {
-  const session: Session = { user, createdAt: new Date().toISOString() };
+export function setFirebaseSession(user: RaffilaUser, remember = true) {
+  const expiresAt = Date.now() + (remember ? REMEMBER_ME_MS : 24 * 60 * 60 * 1000);
+  const session: Session = {
+    user,
+    createdAt: new Date().toISOString(),
+    expiresAt,
+    remember,
+  };
   writeSession(session);
   emit(session);
 }
@@ -173,19 +218,53 @@ export function initFirebaseAuthListener() {
 
     // Skip if session was set by demo credentials
     const current = getSession();
-    if (current && !current.user.id.startsWith("firebase_") && !current.user.id.startsWith("usr_") && !current.user.id.startsWith("adm_")) {
+    if (
+      current &&
+      !current.user.id.startsWith("firebase_") &&
+      !current.user.id.startsWith("usr_") &&
+      !current.user.id.startsWith("adm_")
+    ) {
       return;
     }
 
     try {
-      const profile = await getUserProfile(fbUser.uid);
+      let profile = await getUserProfile(fbUser.uid);
+      const isUserAdmin = checkIsAdmin(fbUser.email, profile);
+
+      // If user is admin but doc is missing or missing role: "admin", sync it to Firestore
+      if (isUserAdmin && (!profile || profile["role"] !== "admin")) {
+        try {
+          await createUserProfile(fbUser.uid, {
+            email: fbUser.email || "",
+            role: "admin",
+            isAdmin: true,
+            verified: true,
+          });
+          profile = { ...(profile || {}), role: "admin", isAdmin: true };
+        } catch (syncErr) {
+          console.warn("Could not sync admin status to Firestore:", syncErr);
+        }
+      }
+
       const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
       const firebaseUser: RaffilaUser = {
         ...raffilaUser,
+        role: isUserAdmin ? "admin" : raffilaUser.role,
         id: `firebase_${fbUser.uid}`,
       };
 
-      const session: Session = { user: firebaseUser, createdAt: new Date().toISOString() };
+      const remember =
+        current?.remember ??
+        (typeof window !== "undefined" &&
+          window.localStorage.getItem("raffila:remember_me") === "true");
+      const expiresAt = Date.now() + (remember ? REMEMBER_ME_MS : 24 * 60 * 60 * 1000);
+
+      const session: Session = {
+        user: firebaseUser,
+        createdAt: new Date().toISOString(),
+        expiresAt,
+        remember,
+      };
       writeSession(session);
       emit(session);
     } catch (err) {
@@ -215,10 +294,19 @@ export function canAccessRoute(input: { pathname: string }): AuthGateResult {
     return { allowed: false, reason: "unauthenticated", redirect: "/auth" };
   }
 
-  if (isAdminRoute && session.user.role !== "admin") {
+  const isUserAdmin = session.user.role === "admin" || checkIsAdmin(session.user.email);
+
+  // Self-heal stale session if role was stored as user
+  if (isUserAdmin && session.user.role !== "admin") {
+    session.user.role = "admin";
+    writeSession(session);
+    emit(session);
+  }
+
+  if (isAdminRoute && !isUserAdmin) {
     return { allowed: false, reason: "unauthorized", redirect: "/dashboard" };
   }
-  if (isDashboardRoute && session.user.role === "admin") {
+  if (isDashboardRoute && isUserAdmin) {
     return { allowed: false, reason: "unauthorized", redirect: "/admin" };
   }
   return { allowed: true };

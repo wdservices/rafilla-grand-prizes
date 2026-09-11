@@ -22,7 +22,9 @@ function KpiCard({ label, value, sub, icon, iconBg, right }: KpiProps) {
     <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">{label}</p>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+            {label}
+          </p>
           <p className="mt-2 font-display text-2xl font-extrabold text-ink sm:text-3xl">{value}</p>
           {sub && <p className="mt-1 text-xs font-bold text-ink/45">{sub}</p>}
         </div>
@@ -272,44 +274,48 @@ export function DashboardOverviewPage() {
                   </tr>
                 ) : (
                   recentEntries.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-cream/40 transition-colors">
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-ink/70">{entry.id}</span>
-                        <button
-                          onClick={() => copyId(entry.id)}
+                    <tr key={entry.id} className="hover:bg-cream/40 transition-colors">
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-ink/70">
+                            {entry.id}
+                          </span>
+                          <button
+                            onClick={() => copyId(entry.id)}
+                            className={cn(
+                              "grid size-6 place-items-center rounded-full transition-colors",
+                              copiedId === entry.id
+                                ? "bg-mint/30 text-ink"
+                                : "bg-cream text-ink/45 hover:text-coral",
+                            )}
+                            aria-label="Copy entry ID"
+                          >
+                            {copiedId === entry.id ? (
+                              <Check className="size-3" />
+                            ) : (
+                              <Copy className="size-3" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 font-bold text-ink">{entry.competition}</td>
+                      <td className="px-4 py-3.5 text-center font-display font-extrabold text-ink">
+                        {entry.tickets}
+                      </td>
+                      <td className="px-4 py-3.5 text-xs font-bold text-ink/50">
+                        {entry.drawDate}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span
                           className={cn(
-                            "grid size-6 place-items-center rounded-full transition-colors",
-                            copiedId === entry.id
-                              ? "bg-mint/30 text-ink"
-                              : "bg-cream text-ink/45 hover:text-coral",
+                            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
+                            statusStyles[entry.status],
                           )}
-                          aria-label="Copy entry ID"
                         >
-                          {copiedId === entry.id ? (
-                            <Check className="size-3" />
-                          ) : (
-                            <Copy className="size-3" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3.5 font-bold text-ink">{entry.competition}</td>
-                    <td className="px-4 py-3.5 text-center font-display font-extrabold text-ink">
-                      {entry.tickets}
-                    </td>
-                    <td className="px-4 py-3.5 text-xs font-bold text-ink/50">{entry.drawDate}</td>
-                    <td className="px-4 py-3.5">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
-                          statusStyles[entry.status],
-                        )}
-                      >
-                        {entry.status.toUpperCase()}
-                      </span>
-                    </td>
-                  </tr>
+                          {entry.status.toUpperCase()}
+                        </span>
+                      </td>
+                    </tr>
                   ))
                 )}
               </tbody>

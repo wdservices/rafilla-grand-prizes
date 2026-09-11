@@ -2,6 +2,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.role == "admin" ||
+        (request.auth.token.email != null && (
+          request.auth.token.email.lower() == "raffilamarketplace@gmail.com" ||
+          request.auth.token.email.lower() == "spellz49@gmail.com" ||
+          request.auth.token.email.lower() == "admin@raffila.com" ||
+          request.auth.token.email.lower().matches("admin@.*")
+        ))
+      );
+    }
+
     // Public catalog collections (readable by anyone, modifiable by authenticated staff/admin)
     match /competitions/{competitionId} {
       allow read: if true;
@@ -44,25 +56,39 @@ service cloud.firestore {
 
     // User accounts & private subcollections
     match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.role == "admin");
-      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.token.role == "admin");
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
 
       match /walletTransactions/{txId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
       }
 
       match /entries/{entryId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
       }
 
       match /notifications/{notifId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
       }
+    }
+
+    // Public username registry for unique username validation
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (request.auth.uid == resource.data.uid || isAdmin());
+    }
+
+    // Email registry for unique email validation
+    match /registeredEmails/{emailDoc} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && (request.auth.uid == resource.data.uid || isAdmin());
     }
 
     // Orders collection
     match /orders/{orderId} {
-      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || request.auth.token.role == "admin");
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
       allow write: if request.auth != null;
     }
   }

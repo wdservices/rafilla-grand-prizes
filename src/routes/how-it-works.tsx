@@ -55,7 +55,10 @@ export const Route = createFileRoute("/how-it-works")({
         { name: "twitter:image", content: ogImageDefault },
         { name: "twitter:site", content: "@raffilang" },
         { name: "twitter:creator", content: "@raffilang" },
-        { "data-head-children": true, __html: `<script type="application/ld+json">${howArticleJsonLd}</script>` } as any,
+        {
+          "data-head-children": true,
+          __html: `<script type="application/ld+json">${howArticleJsonLd}</script>`,
+        } as any,
       ],
       links: [
         { rel: "canonical", href: canonical },

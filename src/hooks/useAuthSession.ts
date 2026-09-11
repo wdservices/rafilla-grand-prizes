@@ -23,14 +23,18 @@ import {
   getUserProfile,
   createUserProfile,
   firebaseUserToRaffilaUser,
+  updateProfile,
+  isAdminEmail,
+  checkIsAdmin,
 } from "@/lib/firebase-auth";
 import { db } from "@/lib/firebase";
-
-function isAdminEmail(email: string): boolean {
-  const adminEmail =
-    (typeof import.meta !== "undefined" && (import.meta.env?.VITE_ADMIN_EMAIL as string)) || "";
-  return !!adminEmail && email.toLowerCase() === adminEmail.toLowerCase();
-}
+import {
+  checkUsernameAvailability,
+  checkEmailAvailability,
+  claimUsernameAndEmail,
+  normalizeUsername,
+  normalizeEmail,
+} from "@/lib/user-validation";
 
 export function useAuthSession() {
   const [session, setSession] = useState<Session>(getSession());
@@ -45,9 +49,24 @@ export function useAuthSession() {
     };
   }, []);
 
+  const isUserAdmin = session?.user
+    ? session.user.role === "admin" || checkIsAdmin(session.user.email)
+    : false;
+  const effectiveRole: UserRole | null = session?.user
+    ? isUserAdmin
+      ? "admin"
+      : session.user.role
+    : null;
+  const effectiveUser = session?.user
+    ? {
+        ...session.user,
+        role: isUserAdmin ? ("admin" as const) : session.user.role,
+      }
+    : null;
+
   return {
-    user: session?.user ?? null,
-    role: session?.user.role ?? null,
+    user: effectiveUser,
+    role: effectiveRole,
     isAuthenticated: !!session,
     session,
   };
@@ -69,30 +88,69 @@ export function useAuthActions() {
   const navigate = useNavigate();
 
   return {
-    async signIn(input: { email: string; password: string }): Promise<SignInResult> {
+    async signIn(input: {
+      email: string;
+      password: string;
+      remember?: boolean;
+    }): Promise<SignInResult> {
+      const remember = input.remember ?? true;
+
       // First check demo credentials
-      const demoResult = signInWithCredentials(input);
+      const demoResult = signInWithCredentials({ ...input, remember });
       if (demoResult.ok) {
+        if (typeof window !== "undefined") {
+          if (remember) {
+            window.localStorage.setItem("raffila:saved_email", input.email.trim());
+            window.localStorage.setItem("raffila:remember_me", "true");
+          } else {
+            window.localStorage.removeItem("raffila:saved_email");
+            window.localStorage.setItem("raffila:remember_me", "false");
+          }
+        }
         setTimeout(() => void navigate({ to: demoResult.redirect as any }), 0);
         return demoResult;
       }
 
       // Try Firebase Auth
       try {
-        const cred = await loginWithEmail(input.email, input.password);
+        const cred = await loginWithEmail(input.email, input.password, remember);
         let profile = await getUserProfile(cred.user.uid);
+        const isUserAdmin = checkIsAdmin(cred.user.email, profile);
 
-        // Auto-promote to admin if email matches
-        if (isAdminEmail(input.email) && profile && profile["role"] !== "admin") {
-          await updateDoc(doc(db, "users", cred.user.uid), { role: "admin" });
-          profile = { ...profile, role: "admin" };
+        // Ensure admin user profile exists and has role: "admin" in Firestore
+        if (isUserAdmin) {
+          try {
+            await createUserProfile(cred.user.uid, {
+              email: cred.user.email || input.email,
+              role: "admin",
+              isAdmin: true,
+              verified: true,
+            });
+            profile = { ...(profile || {}), role: "admin", isAdmin: true, verified: true };
+          } catch (syncErr) {
+            console.warn("Could not sync admin in Firestore:", syncErr);
+          }
         }
 
         const raffilaUser = firebaseUserToRaffilaUser(cred.user, profile ?? {});
-        const user: RaffilaUser = { ...raffilaUser, id: `firebase_${cred.user.uid}` };
-        setFirebaseSession(user);
+        const user: RaffilaUser = {
+          ...raffilaUser,
+          role: isUserAdmin ? "admin" : raffilaUser.role,
+          id: `firebase_${cred.user.uid}`,
+        };
+        setFirebaseSession(user, remember);
 
-        const redirect = user.role === "admin" ? "/admin" : "/dashboard";
+        if (typeof window !== "undefined") {
+          if (remember) {
+            window.localStorage.setItem("raffila:saved_email", input.email.trim());
+            window.localStorage.setItem("raffila:remember_me", "true");
+          } else {
+            window.localStorage.removeItem("raffila:saved_email");
+            window.localStorage.setItem("raffila:remember_me", "false");
+          }
+        }
+
+        const redirect = isUserAdmin ? "/admin" : "/dashboard";
         setTimeout(() => void navigate({ to: redirect as any }), 0);
         return { ok: true, user, redirect };
       } catch (err: any) {
@@ -124,8 +182,23 @@ export function useAuthActions() {
         const result = await loginWithGoogle();
         const fbUser = result.user;
         let profile = await getUserProfile(fbUser.uid);
+        const isUserAdmin = checkIsAdmin(fbUser.email, profile);
 
-        if (!profile) {
+        if (isUserAdmin) {
+          try {
+            await createUserProfile(fbUser.uid, {
+              email: fbUser.email || "",
+              role: "admin",
+              isAdmin: true,
+              verified: true,
+            });
+            profile = { ...(profile || {}), role: "admin", isAdmin: true, verified: true };
+          } catch (syncErr) {
+            console.warn("Could not sync admin to Firestore:", syncErr);
+          }
+        }
+
+        if (!profile && !isUserAdmin) {
           // First-time Google user — needs profile completion
           const raffilaUser = firebaseUserToRaffilaUser(fbUser);
           const user: RaffilaUser = {
@@ -133,22 +206,20 @@ export function useAuthActions() {
             id: `firebase_${fbUser.uid}`,
             profileComplete: false,
           };
-          setFirebaseSession(user);
+          setFirebaseSession(user, true);
           return { ok: true, user, redirect: "/auth?mode=complete", needsProfile: true };
         }
 
-        // Existing user
-        // Auto-promote to admin if email matches
-        if (isAdminEmail(fbUser.email || "") && profile && profile["role"] !== "admin") {
-          await updateDoc(doc(db, "users", fbUser.uid), { role: "admin" });
-          profile = { ...profile, role: "admin" };
-        }
-
+        // Existing user or admin
         const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
-        const user: RaffilaUser = { ...raffilaUser, id: `firebase_${fbUser.uid}` };
-        setFirebaseSession(user);
+        const user: RaffilaUser = {
+          ...raffilaUser,
+          role: isUserAdmin ? "admin" : raffilaUser.role,
+          id: `firebase_${fbUser.uid}`,
+        };
+        setFirebaseSession(user, true);
 
-        const redirect = user.role === "admin" ? "/admin" : "/dashboard";
+        const redirect = isUserAdmin ? "/admin" : "/dashboard";
         setTimeout(() => void navigate({ to: redirect as any }), 0);
         return { ok: true, user, redirect, needsProfile: false };
       } catch (err: any) {
@@ -162,39 +233,75 @@ export function useAuthActions() {
     async registerWithFirebase(input: {
       email: string;
       password: string;
-      displayName: string;
+      username: string;
+      displayName?: string;
       phone?: string;
       address?: string;
       dob?: string;
     }): Promise<{ ok: true; user: RaffilaUser } | { ok: false; message: string }> {
       try {
-        const cred = await registerWithEmail(input.email, input.password);
-        const [firstName, ...rest] = input.displayName.split(" ");
-        const lastName = rest.join(" ") || "";
-        const handle = (input.email.split("@")[0] || "").replace(/[^a-zA-Z0-9_.]/g, "_");
+        const cleanUsername = normalizeUsername(input.username || input.displayName || "");
+        const cleanEmail = normalizeEmail(input.email);
 
+        // Pre-validate username uniqueness
+        const userCheck = await checkUsernameAvailability(cleanUsername);
+        if (!userCheck.available) {
+          return { ok: false, message: userCheck.error || "This username is already taken" };
+        }
+
+        // Pre-validate email uniqueness
+        const emailCheck = await checkEmailAvailability(cleanEmail);
+        if (!emailCheck.available) {
+          return { ok: false, message: emailCheck.error || "This email is already registered" };
+        }
+
+        const cred = await registerWithEmail(cleanEmail, input.password);
+
+        // Update native Firebase Auth profile
+        try {
+          await updateProfile(cred.user, { displayName: cleanUsername });
+        } catch (pErr) {
+          console.warn("Could not update auth display name:", pErr);
+        }
+
+        const isUserAdmin = checkIsAdmin(cleanEmail);
         await createUserProfile(cred.user.uid, {
-          firstName: firstName || "",
-          lastName,
-          handle,
-          email: input.email,
+          firstName: cleanUsername,
+          lastName: "",
+          handle: cleanUsername,
+          displayName: cleanUsername,
+          email: cleanEmail,
           phone: input.phone || "",
           address: input.address || "",
           dob: input.dob || "",
-          avatarMonogram: ((firstName || "") + lastName).toUpperCase() || "U",
-          role: isAdminEmail(input.email) ? "admin" : "user",
-          verified: false,
+          avatarMonogram: cleanUsername.slice(0, 2).toUpperCase() || (isUserAdmin ? "AD" : "U"),
+          role: isUserAdmin ? "admin" : "user",
+          isAdmin: isUserAdmin,
+          verified: isUserAdmin ? true : false,
+        });
+
+        // Reserve in public uniqueness collections
+        await claimUsernameAndEmail({
+          username: cleanUsername,
+          email: cleanEmail,
+          uid: cred.user.uid,
         });
 
         const profile = await getUserProfile(cred.user.uid);
         const raffilaUser = firebaseUserToRaffilaUser(cred.user, profile ?? {});
         const user: RaffilaUser = { ...raffilaUser, id: `firebase_${cred.user.uid}` };
-        setFirebaseSession(user);
+        setFirebaseSession(user, true);
+
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("raffila:saved_email", cleanEmail);
+          window.localStorage.setItem("raffila:remember_me", "true");
+        }
+
         return { ok: true, user };
       } catch (err: any) {
         const message =
           err?.code === "auth/email-already-in-use"
-            ? "An account with this email already exists"
+            ? "An account with this email already exists. Please sign in instead."
             : err?.code === "auth/weak-password"
               ? "Password must be at least 6 characters"
               : err?.message || "Registration failed";
@@ -214,20 +321,52 @@ export function useAuthActions() {
           return { ok: false, message: "No active Firebase session" };
         }
         const uid = session.user.id.replace("firebase_", "");
+
+        const chosenHandle = data.handle
+          ? normalizeUsername(data.handle)
+          : session.user.handle || "";
+        if (chosenHandle && chosenHandle !== session.user.handle) {
+          const avail = await checkUsernameAvailability(chosenHandle, uid);
+          if (!avail.available) {
+            return { ok: false, message: avail.error || "This username is already taken" };
+          }
+        }
+
+        const isUserAdmin = checkIsAdmin(session.user.email);
         await createUserProfile(uid, {
           phone: data.phone,
           address: data.address,
           dob: data.dob,
-          handle: data.handle || session.user.handle,
+          handle: chosenHandle,
           avatarUrl: session.user.avatarUrl || "",
-          role: isAdminEmail(session.user.email) ? "admin" : undefined,
+          role: isUserAdmin ? "admin" : "user",
+          isAdmin: isUserAdmin,
         });
 
+        if (chosenHandle) {
+          await claimUsernameAndEmail({
+            username: chosenHandle,
+            email: session.user.email,
+            uid,
+          });
+        }
+
         const profile = await getUserProfile(uid);
-        const fbUser = { uid, email: session.user.email, displayName: `${session.user.firstName || ""} ${session.user.lastName || ""}`, photoURL: session.user.avatarUrl || null, providerData: [{ providerId: "google.com" }] } as any;
+        const fbUser = {
+          uid,
+          email: session.user.email,
+          displayName: `${session.user.firstName || ""} ${session.user.lastName || ""}`,
+          photoURL: session.user.avatarUrl || null,
+          providerData: [{ providerId: "google.com" }],
+        } as any;
         const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
-        const updatedUser: RaffilaUser = { ...raffilaUser, id: `firebase_${uid}`, profileComplete: true };
-        setFirebaseSession(updatedUser);
+        const updatedUser: RaffilaUser = {
+          ...raffilaUser,
+          role: isUserAdmin ? "admin" : raffilaUser.role,
+          id: `firebase_${uid}`,
+          profileComplete: true,
+        };
+        setFirebaseSession(updatedUser, true);
         return { ok: true };
       } catch (err: any) {
         return { ok: false, message: err?.message || "Failed to save profile" };

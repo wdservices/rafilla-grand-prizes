@@ -10,8 +10,7 @@ export const Route = createFileRoute("/draw-verification/$campaign")({
     const canonical = `${canonicalBase}${pathname}`;
     const formatted = params.campaign.replaceAll("-", " ");
     const title = `Draw verification: ${formatted} — Raffila`;
-    const description =
-      `Public draw verification record for ${formatted}. Published snapshot hash, NIST beacon seed, HMAC_DRBG algorithm details, and the verified winning entry. raffila.com`;
+    const description = `Public draw verification record for ${formatted}. Published snapshot hash, NIST beacon seed, HMAC_DRBG algorithm details, and the verified winning entry. raffila.com`;
 
     return {
       meta: [

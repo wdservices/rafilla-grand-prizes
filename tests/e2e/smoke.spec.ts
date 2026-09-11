@@ -18,12 +18,13 @@ test.describe("Rafilla smoke", () => {
     await page.goto("/");
     await page.getByRole("link", { name: "Competitions" }).first().click();
     await expect(page).toHaveURL(/\/competitions/);
-    const cardLinks = page
-      .getByRole("link")
-      .filter({ hasText: /View|Enter draw|Enter/ });
+    const cardLinks = page.getByRole("link").filter({ hasText: /View|Enter draw|Enter/ });
     const count = await cardLinks.count();
     expect(count).toBeGreaterThanOrEqual(3);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, "2-competitions-grid.png"), fullPage: true });
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, "2-competitions-grid.png"),
+      fullPage: true,
+    });
   });
 
   test("Enter competition detail from first thumbnail/card", async ({ page }) => {
@@ -40,7 +41,10 @@ test.describe("Rafilla smoke", () => {
       .or(page.getByRole("link", { name: /Enter draw/i }))
       .first();
     await expect(enterBtn).toBeVisible();
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, "3-competition-detail.png"), fullPage: true });
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, "3-competition-detail.png"),
+      fullPage: true,
+    });
   });
 
   test("Open ticket purchase modal shows step UI and qty controls", async ({ page }) => {
@@ -59,9 +63,11 @@ test.describe("Rafilla smoke", () => {
     await expect(dialog.first()).toBeVisible({ timeout: 10000 });
     const plus = page.getByRole("button", { name: /plus|\+|add/i }).first();
     const minus = page.getByRole("button", { name: /minus|−|subtract|-/i }).first();
-    const qtyControlsVisible =
-      (await plus.count()) + (await minus.count()) >= 0;
+    const qtyControlsVisible = (await plus.count()) + (await minus.count()) >= 0;
     expect(typeof qtyControlsVisible).toBe("number");
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, "4-ticket-purchase-modal.png"), fullPage: true });
+    await page.screenshot({
+      path: path.join(SCREENSHOT_DIR, "4-ticket-purchase-modal.png"),
+      fullPage: true,
+    });
   });
 });

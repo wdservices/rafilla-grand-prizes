@@ -108,7 +108,7 @@ export function DashboardProfilePage() {
           dob: (profile["dob"] as string) || f.dob,
           username: (profile["handle"] as string) || f.username,
         }));
-      })
+      }),
     );
   }, [user?.id]);
 
@@ -126,7 +126,7 @@ export function DashboardProfilePage() {
           dob: form.dob,
           handle: form.username,
         });
-        
+
         const { setFirebaseSession } = await import("@/lib/auth-store");
         setFirebaseSession({
           ...user!,
@@ -278,7 +278,12 @@ export function DashboardProfilePage() {
                 className="w-full resize-none rounded-2xl bg-cream px-4 py-3 text-sm font-bold text-ink ring-1 ring-ink/5 outline-none placeholder:text-ink/35 focus:ring-2 focus:ring-coral"
               />
             </div>
-            <Field label="Date of birth" type="date" value={form.dob} onChange={(v) => update("dob", v)} />
+            <Field
+              label="Date of birth"
+              type="date"
+              value={form.dob}
+              onChange={(v) => update("dob", v)}
+            />
             <div className="hidden sm:block" />
           </div>
 

@@ -53,7 +53,10 @@ const trustItems = [
 
 function ProductCarousel() {
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl ring-1 ring-ink/5" style={{ aspectRatio: "2/1" }}>
+    <div
+      className="relative w-full overflow-hidden rounded-2xl ring-1 ring-ink/5"
+      style={{ aspectRatio: "2/1" }}
+    >
       {products.map((p, i) => (
         <div
           key={p.title}
@@ -86,7 +89,9 @@ function ProductCarousel() {
                 </span>
                 <span className="font-display text-lg font-extrabold text-white">{p.value}</span>
               </div>
-              <h3 className="font-display text-lg font-extrabold text-white leading-tight">{p.title}</h3>
+              <h3 className="font-display text-lg font-extrabold text-white leading-tight">
+                {p.title}
+              </h3>
               <p className="text-xs text-white/70">{p.tagline}</p>
             </div>
           ))}
@@ -99,25 +104,37 @@ function ProductCarousel() {
 export function AuthShell({ children, variant = "login" }: AuthShellProps) {
   return (
     <div className="min-h-screen bg-paper flex flex-col lg:flex-row">
-
       <div className="lg:hidden px-4 pt-6 pb-2">
         <div className="flex items-center gap-2">
-          <img src="/Raffila-logo.png" alt="" className="size-8 shrink-0 rounded-xl shadow-sm" width={32} height={32} />
-          <span className="font-display text-lg font-extrabold tracking-tight text-ink">Raffila</span>
+          <img
+            src="/Raffila-logo.png"
+            alt=""
+            className="size-8 shrink-0 rounded-xl shadow-sm"
+            width={32}
+            height={32}
+          />
+          <span className="font-display text-lg font-extrabold tracking-tight text-ink">
+            Raffila
+          </span>
         </div>
       </div>
 
       <div className="lg:hidden px-4 pb-6">
-        <div className="rounded-2xl bg-white p-5 ring-1 ring-ink/5 shadow-lg">
-          {children}
-        </div>
+        <div className="rounded-2xl bg-white p-5 ring-1 ring-ink/5 shadow-lg">{children}</div>
       </div>
 
       <div className="hidden lg:flex w-[45%] shrink-0 flex-col h-screen sticky top-0 rounded-l-[32px] bg-cream p-7 xl:p-9 ring-1 ring-ink/5 overflow-hidden">
-
         <div className="flex items-center gap-2 mb-5">
-          <img src="/Raffila-logo.png" alt="" className="size-10 shrink-0 rounded-2xl shadow-sm" width={40} height={40} />
-          <span className="font-display text-2xl font-extrabold tracking-tight text-ink">Raffila</span>
+          <img
+            src="/Raffila-logo.png"
+            alt=""
+            className="size-10 shrink-0 rounded-2xl shadow-sm"
+            width={40}
+            height={40}
+          />
+          <span className="font-display text-2xl font-extrabold tracking-tight text-ink">
+            Raffila
+          </span>
         </div>
 
         <ProductCarousel />
@@ -129,14 +146,20 @@ export function AuthShell({ children, variant = "login" }: AuthShellProps) {
             <span className="text-coral">Real prizes.</span>
           </h2>
           <p className="mt-3 text-[15px] leading-relaxed text-ink/60">
-            Join thousands across Africa playing for premium homes, cars, cash, and lifestyle prizes — with complete peace of mind.
+            Join thousands across Africa playing for premium homes, cars, cash, and lifestyle prizes
+            — with complete peace of mind.
           </p>
         </div>
 
         <ul className="mt-5 space-y-3.5">
           {trustItems.map((item, i) => (
             <li key={i} className="flex items-start gap-3">
-              <span className={cn("mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-white/70 ring-1 ring-ink/5", item.color)}>
+              <span
+                className={cn(
+                  "mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-white/70 ring-1 ring-ink/5",
+                  item.color,
+                )}
+              >
                 {item.icon}
               </span>
               <div>
@@ -154,8 +177,12 @@ export function AuthShell({ children, variant = "login" }: AuthShellProps) {
               <BadgeCheck className="size-5" />
             </span>
             <div>
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">Prizes paid out</p>
-              <p className="mt-0.5 font-display text-xl font-extrabold text-ink">{"\u20A6"}148,200,000+</p>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                Prizes paid out
+              </p>
+              <p className="mt-0.5 font-display text-xl font-extrabold text-ink">
+                {"\u20A6"}148,200,000+
+              </p>
             </div>
           </div>
         </div>
@@ -172,7 +199,10 @@ export function AuthShell({ children, variant = "login" }: AuthShellProps) {
                 { icon: <BadgeCheck className="size-4" />, label: "Real prizes" },
                 { icon: <WalletCards className="size-4" />, label: "Secure payments" },
               ].map((item) => (
-                <span key={item.label} className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/45">
+                <span
+                  key={item.label}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold text-ink/45"
+                >
                   <span className="text-mint">{item.icon}</span>
                   {item.label}
                 </span>

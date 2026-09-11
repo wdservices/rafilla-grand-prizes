@@ -19,8 +19,7 @@ export const Route = createFileRoute("/")({
       url: canonicalBase,
       logo: "https://raffila.com/logo.png",
       image: ogImageDefault,
-      description:
-        "Premium prize competitions with publicly verifiable draws.",
+      description: "Premium prize competitions with publicly verifiable draws.",
       foundingDate: "2025",
       address: {
         "@type": "PostalAddress",
@@ -63,7 +62,10 @@ export const Route = createFileRoute("/")({
         { name: "twitter:image", content: ogImageDefault },
         { name: "twitter:site", content: "@raffilang" },
         { name: "twitter:creator", content: "@raffilang" },
-        { "data-head-children": true, __html: `<script type="application/ld+json">${organizationJsonLd}</script>` } as any,
+        {
+          "data-head-children": true,
+          __html: `<script type="application/ld+json">${organizationJsonLd}</script>`,
+        } as any,
       ],
       links: [
         { rel: "canonical", href: canonical },

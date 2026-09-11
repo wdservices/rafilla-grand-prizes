@@ -356,40 +356,40 @@ export function DashboardWalletPage() {
                   </tr>
                 ) : (
                   filtered.map((tx, i) => (
-                  <tr key={i} className="hover:bg-cream/40">
-                    <td className="whitespace-nowrap px-4 py-3 text-xs font-bold text-ink/50">
-                      {tx.date}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
+                    <tr key={i} className="hover:bg-cream/40">
+                      <td className="whitespace-nowrap px-4 py-3 text-xs font-bold text-ink/50">
+                        {tx.date}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={cn(
+                            "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
+                            typeStyles[tx.type],
+                          )}
+                        >
+                          {tx.type.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-bold text-ink">{tx.desc}</td>
+                      <td
                         className={cn(
-                          "inline-flex rounded-full px-2.5 py-1 text-[10px] font-extrabold",
-                          typeStyles[tx.type],
+                          "whitespace-nowrap px-4 py-3 text-right font-display text-base font-extrabold",
+                          tx.amount >= 0 ? "text-mint" : "text-coral",
                         )}
                       >
-                        {tx.type.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm font-bold text-ink">{tx.desc}</td>
-                    <td
-                      className={cn(
-                        "whitespace-nowrap px-4 py-3 text-right font-display text-base font-extrabold",
-                        tx.amount >= 0 ? "text-mint" : "text-coral",
-                      )}
-                    >
-                      {tx.amount >= 0 ? "+" : "-"}
-                      {formatNaira(Math.floor(Math.abs(tx.amount) / 100))}
-                      <span className="text-[10px]">
-                        .{String(Math.abs(tx.amount) % 100).padStart(2, "0")}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-ink/70">
-                      {formatNaira(Math.floor(tx.balance / 100))}
-                      <span className="text-[10px]">
-                        .{String(tx.balance % 100).padStart(2, "0")}
-                      </span>
-                    </td>
-                  </tr>
+                        {tx.amount >= 0 ? "+" : "-"}
+                        {formatNaira(Math.floor(Math.abs(tx.amount) / 100))}
+                        <span className="text-[10px]">
+                          .{String(Math.abs(tx.amount) % 100).padStart(2, "0")}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-bold text-ink/70">
+                        {formatNaira(Math.floor(tx.balance / 100))}
+                        <span className="text-[10px]">
+                          .{String(tx.balance % 100).padStart(2, "0")}
+                        </span>
+                      </td>
+                    </tr>
                   ))
                 )}
               </tbody>

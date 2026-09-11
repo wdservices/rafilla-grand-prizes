@@ -53,7 +53,10 @@ export const Route = createFileRoute("/terms-and-conditions")({
         { name: "twitter:image", content: ogImageDefault },
         { name: "twitter:site", content: "@raffilang" },
         { name: "twitter:creator", content: "@raffilang" },
-        { "data-head-children": true, __html: `<script type="application/ld+json">${termsArticleJsonLd}</script>` } as any,
+        {
+          "data-head-children": true,
+          __html: `<script type="application/ld+json">${termsArticleJsonLd}</script>`,
+        } as any,
       ],
       links: [
         { rel: "canonical", href: canonical },
