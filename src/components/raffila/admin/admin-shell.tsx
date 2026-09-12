@@ -8,7 +8,6 @@ import {
   Settings2,
   ClipboardList,
   ShieldAlert,
-  UserSearch,
   Bell,
   Menu,
   X,
@@ -45,7 +44,6 @@ export type AdminNavKey =
   | "config"
   | "audit-logs"
   | "fraud"
-  | "crm"
   | "notifications";
 
 const OPS_GROUP: Array<{
@@ -69,7 +67,6 @@ const CONFIG_GROUP: Array<{
   { key: "config", label: "Config", icon: Settings2 },
   { key: "audit-logs", label: "Audit logs", icon: ClipboardList },
   { key: "fraud", label: "Fraud queue", icon: ShieldAlert },
-  { key: "crm", label: "CRM", icon: UserSearch },
   { key: "notifications", label: "Notifications", icon: Bell },
 ];
 
@@ -83,7 +80,6 @@ const navRoute: Record<AdminNavKey, string> = {
   config: "/admin/config",
   "audit-logs": "/admin/audit-logs",
   fraud: "/admin/fraud",
-  crm: "/admin/crm",
   notifications: "/admin/notifications",
 };
 

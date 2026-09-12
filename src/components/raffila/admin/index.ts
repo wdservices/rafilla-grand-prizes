@@ -8,5 +8,4 @@ export * from "./reports";
 export * from "./config";
 export * from "./audit-logs";
 export * from "./fraud";
-export * from "./crm";
 export * from "./notifications-admin";
