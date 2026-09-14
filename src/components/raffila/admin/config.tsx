@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Save,
   UsersRound,
@@ -14,13 +14,9 @@ import {
   Database,
   Copy,
   ExternalLink,
-  ShieldCheck,
-  Mail,
-  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { firebaseConfig } from "@/lib/firebase";
-import { useAdminEmailConfig, DEFAULT_PRIMARY_ADMIN_EMAIL } from "@/lib/admin-email-config";
 import {
   seedFirestoreDatabase,
   checkFirestoreStatus,
@@ -126,62 +122,6 @@ export function AdminPlatformConfigPage() {
   );
   const [testMode, setTestMode] = useState(false);
 
-  // Admin Master Email State
-  const {
-    adminEmail,
-    loading: loadingAdminEmail,
-    setAdminEmail: updateMasterAdminEmail,
-    resetAdminEmailToDefault,
-  } = useAdminEmailConfig();
-  const [emailInput, setEmailInput] = useState(adminEmail);
-  const [savingEmail, setSavingEmail] = useState(false);
-
-  useEffect(() => {
-    if (adminEmail) {
-      setEmailInput(adminEmail);
-    }
-  }, [adminEmail]);
-
-  const handleSaveAdminEmail = async () => {
-    const clean = emailInput.trim().toLowerCase();
-    if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
-      toast.error("Invalid email address", {
-        description: "Please enter a valid email address (e.g. name@example.com).",
-      });
-      return;
-    }
-    setSavingEmail(true);
-    try {
-      const res = await updateMasterAdminEmail(clean);
-      toast.success("Admin email updated", {
-        description: `Authorized master admin email set to ${res.email}. Changes are synced to cloud settings.`,
-      });
-    } catch (err: any) {
-      toast.error("Could not update admin email", {
-        description: err?.message || String(err),
-      });
-    } finally {
-      setSavingEmail(false);
-    }
-  };
-
-  const handleResetAdminEmail = async () => {
-    setSavingEmail(true);
-    try {
-      const def = await resetAdminEmailToDefault();
-      setEmailInput(def);
-      toast.info("Admin email restored", {
-        description: `Primary admin email reset to ${def}.`,
-      });
-    } catch (err: any) {
-      toast.error("Reset failed", {
-        description: err?.message || String(err),
-      });
-    } finally {
-      setSavingEmail(false);
-    }
-  };
-
   // Firebase Database Seeding State
   const [seeding, setSeeding] = useState(false);
   const [seedProgress, setSeedProgress] = useState<SeedProgress | null>(null);
@@ -286,97 +226,6 @@ export function AdminPlatformConfigPage() {
       </header>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <ConfigGroup
-          title="Admin master email"
-          description="Authorized master email for platform administration and security control. Changing this updates administrative login rights immediately."
-          icon={ShieldCheck}
-          tone="coral"
-          showSave={false}
-        >
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-cream/70 p-4 ring-1 ring-ink/10">
-              <div className="space-y-1">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-ink/50">
-                  Currently active master admin
-                </span>
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-mono text-sm font-extrabold text-ink">
-                    {loadingAdminEmail ? "Loading…" : adminEmail}
-                  </span>
-                  <Badge className="rounded-full bg-coral/15 px-2.5 py-0 text-[10px] font-extrabold uppercase text-coral ring-0">
-                    Master Admin
-                  </Badge>
-                </div>
-              </div>
-
-              {adminEmail.toLowerCase() !== DEFAULT_PRIMARY_ADMIN_EMAIL.toLowerCase() && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleResetAdminEmail}
-                  disabled={savingEmail}
-                  className="rounded-full h-8 text-xs font-bold text-ink/60 hover:text-ink hover:bg-ink/5"
-                >
-                  <RotateCcw className="size-3 mr-1.5" /> Revert to {DEFAULT_PRIMARY_ADMIN_EMAIL}
-                </Button>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
-                Change master admin email
-              </Label>
-              <div className="flex flex-col sm:flex-row gap-2.5">
-                <div className="relative flex-1">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-ink/40" />
-                  <Input
-                    type="email"
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    placeholder="e.g. Raffilamarketplace@gmail.com"
-                    className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 pl-11 pr-4 text-sm font-bold text-ink focus-visible:ring-coral focus-visible:ring-2"
-                  />
-                </div>
-                <Button
-                  variant="primary"
-                  onClick={handleSaveAdminEmail}
-                  disabled={
-                    savingEmail ||
-                    !emailInput ||
-                    emailInput.trim().toLowerCase() === adminEmail.toLowerCase()
-                  }
-                  className="rounded-2xl h-12 px-6 font-bold shrink-0"
-                >
-                  {savingEmail ? (
-                    <RefreshCw className="size-4 animate-spin mr-1.5" />
-                  ) : (
-                    <Save className="size-4 mr-1.5" />
-                  )}
-                  {savingEmail ? "Saving…" : "Update email"}
-                </Button>
-              </div>
-              <p className="text-[11px] font-bold text-ink/50 leading-relaxed">
-                Persisted to Cloud Firestore (
-                <code className="font-mono text-[10px]">platformSettings/admin_config</code>) and
-                cached locally so any device or session immediately recognizes this address.
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-ink/5 p-3 space-y-1.5 text-xs">
-              <div className="flex items-center gap-1.5 font-extrabold text-ink">
-                <CheckCircle2 className="size-3.5 text-emerald-600" />
-                <span>Authorized administrator access</span>
-              </div>
-              <p className="text-[11px] text-ink/60 font-medium leading-relaxed">
-                Users logging in with this email automatically receive full administrator privileges
-                and are directed straight to the Admin Dashboard. Emergency fallback access is
-                preserved for <strong className="text-ink">Spellz49@gmail.com</strong>.
-              </p>
-            </div>
-          </div>
-        </ConfigGroup>
-
         <ConfigGroup
           title="Referral rates"
           description="5-tier referral commission structure applied per qualified ticket purchase."

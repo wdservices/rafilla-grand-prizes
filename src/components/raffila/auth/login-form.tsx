@@ -4,8 +4,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DEFAULT_CREDENTIALS, type UserRole } from "@/lib/auth-store";
-import { checkIsAdmin } from "@/lib/firebase-auth";
+import { type UserRole } from "@/lib/auth-store";
 import { useAuthActions } from "@/hooks/useAuthSession";
 import { cn } from "@/lib/utils";
 
@@ -91,8 +90,7 @@ export function LoginForm() {
     if (!res.ok) {
       setErrors({ global: res.message });
     } else {
-      const isTargetAdmin = res.user.role === "admin" || checkIsAdmin(email);
-      setSuccessRole(isTargetAdmin ? "admin" : res.user.role);
+      setSuccessRole(res.user.role);
       setSuccess(true);
     }
   }
@@ -110,17 +108,15 @@ export function LoginForm() {
       window.location.href = "/auth?mode=complete";
       return;
     }
-    const isTargetAdmin = res.user.role === "admin" || checkIsAdmin(res.user.email);
-    setSuccessRole(isTargetAdmin ? "admin" : res.user.role);
+    setSuccessRole(res.user.role);
     setSuccess(true);
   }
 
   useEffect(() => {
     if (!success) return;
-    const isTargetAdmin = (successRole ?? "user") === "admin" || checkIsAdmin(email);
-    const redirect = isTargetAdmin ? "/admin" : "/dashboard";
+    const redirect = (successRole ?? "user") === "admin" ? "/admin" : "/dashboard";
     navigate({ to: redirect });
-  }, [success, successRole, email, navigate]);
+  }, [success, successRole, navigate]);
 
   if (success) return <Loader2 className="size-6 animate-spin mx-auto mt-12" />;
 

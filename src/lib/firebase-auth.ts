@@ -60,39 +60,12 @@ export async function createUserProfile(uid: string, data: Record<string, unknow
   return setDoc(doc(db, "users", uid), { ...data, createdAt: serverTimestamp() }, { merge: true });
 }
 
-import {
-  DEFAULT_PRIMARY_ADMIN_EMAIL,
-  BACKUP_ADMIN_EMAILS,
-  getPrimaryAdminEmail,
-  getAllAdminEmails,
-  checkIsAdminEmail,
-  setAdminEmail,
-  resetAdminEmailToDefault,
-  useAdminEmailConfig,
-} from "./admin-email-config";
-
-export {
-  DEFAULT_PRIMARY_ADMIN_EMAIL,
-  BACKUP_ADMIN_EMAILS,
-  getPrimaryAdminEmail,
-  getAllAdminEmails,
-  checkIsAdminEmail,
-  setAdminEmail,
-  resetAdminEmailToDefault,
-  useAdminEmailConfig,
-};
-
-export const KNOWN_ADMIN_EMAILS = [DEFAULT_PRIMARY_ADMIN_EMAIL, ...BACKUP_ADMIN_EMAILS];
-
-export function isAdminEmail(email?: string | null): boolean {
-  return checkIsAdminEmail(email);
-}
-
-export function checkIsAdmin(
-  email?: string | null,
-  profile?: Record<string, unknown> | null,
-): boolean {
-  if (isAdminEmail(email)) return true;
+/**
+ * Admin access is determined SOLELY by the Firestore `users/{uid}` document.
+ * Set `role: "admin"` (or `isAdmin: true`) in the Firebase Console to grant
+ * admin access. No email addresses are hardcoded anywhere.
+ */
+export function checkIsAdmin(profile?: Record<string, unknown> | null): boolean {
   if (!profile) return false;
   const role = typeof profile["role"] === "string" ? profile["role"].trim().toLowerCase() : "";
   if (
@@ -125,7 +98,7 @@ export function firebaseUserToRaffilaUser(fbUser: FirebaseUser, profile?: Record
     (profile?.["handle"] as string) || firstName.toLowerCase().replace(/\s+/g, "_") || "user";
 
   const email = fbUser.email || (profile?.["email"] as string) || "";
-  const isAdmin = checkIsAdmin(email, profile);
+  const isAdmin = checkIsAdmin(profile);
 
   const initials =
     (firstName.slice(0, 1) + lastName.slice(0, 1)).toUpperCase() || (isAdmin ? "AD" : "U");

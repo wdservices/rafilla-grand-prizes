@@ -1,19 +1,15 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { doc, updateDoc } from "firebase/firestore";
 
 import type { RaffilaUser, Session } from "@/lib/auth-store";
 import {
   canAccessRoute,
   getSession,
-  signInAs,
-  signInWithCredentials,
   signOut,
   subscribe,
   initFirebaseAuthListener,
   setFirebaseSession,
   type SignInResult,
-  type UserRole,
 } from "@/lib/auth-store";
 import {
   loginWithEmail,
@@ -24,10 +20,7 @@ import {
   createUserProfile,
   firebaseUserToRaffilaUser,
   updateProfile,
-  isAdminEmail,
-  checkIsAdmin,
 } from "@/lib/firebase-auth";
-import { db } from "@/lib/firebase";
 import {
   checkUsernameAvailability,
   checkEmailAvailability,
@@ -49,24 +42,9 @@ export function useAuthSession() {
     };
   }, []);
 
-  const isUserAdmin = session?.user
-    ? session.user.role === "admin" || checkIsAdmin(session.user.email)
-    : false;
-  const effectiveRole: UserRole | null = session?.user
-    ? isUserAdmin
-      ? "admin"
-      : session.user.role
-    : null;
-  const effectiveUser = session?.user
-    ? {
-        ...session.user,
-        role: isUserAdmin ? ("admin" as const) : session.user.role,
-      }
-    : null;
-
   return {
-    user: effectiveUser,
-    role: effectiveRole,
+    user: session?.user ?? null,
+    role: session?.user.role ?? null,
     isAuthenticated: !!session,
     session,
   };
@@ -80,7 +58,11 @@ export function useAuthGate() {
   useEffect(() => {
     const gate = canAccessRoute({ pathname: location.pathname });
     if (gate.allowed) return;
-    void navigate({ to: gate.redirect });
+    if (gate.search) {
+      void navigate({ to: gate.redirect as any, search: gate.search as any });
+    } else {
+      void navigate({ to: gate.redirect as any });
+    }
   }, [user?.id, user?.role, isAuthenticated, location.pathname, navigate]);
 }
 
@@ -95,47 +77,14 @@ export function useAuthActions() {
     }): Promise<SignInResult> {
       const remember = input.remember ?? true;
 
-      // First check demo credentials
-      const demoResult = signInWithCredentials({ ...input, remember });
-      if (demoResult.ok) {
-        if (typeof window !== "undefined") {
-          if (remember) {
-            window.localStorage.setItem("raffila:saved_email", input.email.trim());
-            window.localStorage.setItem("raffila:remember_me", "true");
-          } else {
-            window.localStorage.removeItem("raffila:saved_email");
-            window.localStorage.setItem("raffila:remember_me", "false");
-          }
-        }
-        setTimeout(() => void navigate({ to: demoResult.redirect as any }), 0);
-        return demoResult;
-      }
-
-      // Try Firebase Auth
+      // Firebase Auth only — role comes from the Firestore user document.
       try {
         const cred = await loginWithEmail(input.email, input.password, remember);
-        let profile = await getUserProfile(cred.user.uid);
-        const isUserAdmin = checkIsAdmin(cred.user.email, profile);
-
-        // Ensure admin user profile exists and has role: "admin" in Firestore
-        if (isUserAdmin) {
-          try {
-            await createUserProfile(cred.user.uid, {
-              email: cred.user.email || input.email,
-              role: "admin",
-              isAdmin: true,
-              verified: true,
-            });
-            profile = { ...(profile || {}), role: "admin", isAdmin: true, verified: true };
-          } catch (syncErr) {
-            console.warn("Could not sync admin in Firestore:", syncErr);
-          }
-        }
+        const profile = await getUserProfile(cred.user.uid);
 
         const raffilaUser = firebaseUserToRaffilaUser(cred.user, profile ?? {});
         const user: RaffilaUser = {
           ...raffilaUser,
-          role: isUserAdmin ? "admin" : raffilaUser.role,
           id: `firebase_${cred.user.uid}`,
         };
         setFirebaseSession(user, remember);
@@ -150,7 +99,7 @@ export function useAuthActions() {
           }
         }
 
-        const redirect = isUserAdmin ? "/admin" : "/dashboard";
+        const redirect = user.role === "admin" ? "/admin" : "/dashboard";
         setTimeout(() => void navigate({ to: redirect as any }), 0);
         return { ok: true, user, redirect };
       } catch (err: any) {
@@ -166,14 +115,6 @@ export function useAuthActions() {
       }
     },
 
-    async signInQuick(role: UserRole): Promise<SignInResult> {
-      const result = signInAs(role);
-      if (result.ok) {
-        setTimeout(() => void navigate({ to: result.redirect as any }), 0);
-      }
-      return result;
-    },
-
     async signInWithGoogle(): Promise<
       | { ok: true; user: RaffilaUser; redirect: string; needsProfile: boolean }
       | { ok: false; message: string }
@@ -182,25 +123,45 @@ export function useAuthActions() {
         const result = await loginWithGoogle();
         const fbUser = result.user;
         let profile = await getUserProfile(fbUser.uid);
-        const isUserAdmin = checkIsAdmin(fbUser.email, profile);
 
-        if (isUserAdmin) {
+        if (!profile) {
+          // First Google login — preserve the Google identity and photo in
+          // Firestore right away. The doc stays "incomplete" (no
+          // phone/address/dob) so the user is still routed through profile
+          // completion below.
+          const stub = firebaseUserToRaffilaUser(fbUser);
           try {
             await createUserProfile(fbUser.uid, {
               email: fbUser.email || "",
-              role: "admin",
-              isAdmin: true,
+              firstName: stub.firstName,
+              lastName: stub.lastName,
+              handle: stub.handle,
+              avatarUrl: fbUser.photoURL || "",
+              avatarMonogram: stub.avatarMonogram,
+              role: "user",
+              isAdmin: false,
               verified: true,
             });
-            profile = { ...(profile || {}), role: "admin", isAdmin: true, verified: true };
-          } catch (syncErr) {
-            console.warn("Could not sync admin to Firestore:", syncErr);
+            profile = await getUserProfile(fbUser.uid);
+          } catch (stubErr) {
+            console.warn("Could not save Google profile stub:", stubErr);
           }
         }
 
-        if (!profile && !isUserAdmin) {
-          // First-time Google user — needs profile completion
-          const raffilaUser = firebaseUserToRaffilaUser(fbUser);
+        // Backfill: heal docs that are missing the Google photo.
+        if (profile && !profile["avatarUrl"] && fbUser.photoURL) {
+          try {
+            await createUserProfile(fbUser.uid, { avatarUrl: fbUser.photoURL });
+            profile = { ...profile, avatarUrl: fbUser.photoURL };
+          } catch (healErr) {
+            console.warn("Could not backfill avatar:", healErr);
+          }
+        }
+
+        const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
+
+        if (!raffilaUser.profileComplete) {
+          // New or unfinished Google user — must complete registration.
           const user: RaffilaUser = {
             ...raffilaUser,
             id: `firebase_${fbUser.uid}`,
@@ -210,16 +171,14 @@ export function useAuthActions() {
           return { ok: true, user, redirect: "/auth?mode=complete", needsProfile: true };
         }
 
-        // Existing user or admin
-        const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
+        // Existing complete user — role comes from the Firestore user document.
         const user: RaffilaUser = {
           ...raffilaUser,
-          role: isUserAdmin ? "admin" : raffilaUser.role,
           id: `firebase_${fbUser.uid}`,
         };
         setFirebaseSession(user, true);
 
-        const redirect = isUserAdmin ? "/admin" : "/dashboard";
+        const redirect = user.role === "admin" ? "/admin" : "/dashboard";
         setTimeout(() => void navigate({ to: redirect as any }), 0);
         return { ok: true, user, redirect, needsProfile: false };
       } catch (err: any) {
@@ -264,7 +223,9 @@ export function useAuthActions() {
           console.warn("Could not update auth display name:", pErr);
         }
 
-        const isUserAdmin = checkIsAdmin(cleanEmail);
+        // New registrations are always regular users.
+        // Admin access is granted manually in the Firebase Console
+        // by setting `role: "admin"` on the user's Firestore document.
         await createUserProfile(cred.user.uid, {
           firstName: cleanUsername,
           lastName: "",
@@ -274,10 +235,10 @@ export function useAuthActions() {
           phone: input.phone || "",
           address: input.address || "",
           dob: input.dob || "",
-          avatarMonogram: cleanUsername.slice(0, 2).toUpperCase() || (isUserAdmin ? "AD" : "U"),
-          role: isUserAdmin ? "admin" : "user",
-          isAdmin: isUserAdmin,
-          verified: isUserAdmin ? true : false,
+          avatarMonogram: cleanUsername.slice(0, 2).toUpperCase() || "U",
+          role: "user",
+          isAdmin: false,
+          verified: false,
         });
 
         // Reserve in public uniqueness collections
@@ -314,6 +275,7 @@ export function useAuthActions() {
       address: string;
       dob: string;
       handle?: string;
+      avatarUrl?: string;
     }): Promise<{ ok: true } | { ok: false; message: string }> {
       try {
         const session = getSession();
@@ -332,15 +294,14 @@ export function useAuthActions() {
           }
         }
 
-        const isUserAdmin = checkIsAdmin(session.user.email);
         await createUserProfile(uid, {
           phone: data.phone,
           address: data.address,
           dob: data.dob,
           handle: chosenHandle,
-          avatarUrl: session.user.avatarUrl || "",
-          role: isUserAdmin ? "admin" : "user",
-          isAdmin: isUserAdmin,
+          avatarUrl: data.avatarUrl || session.user.avatarUrl || "",
+          role: "user",
+          isAdmin: false,
         });
 
         if (chosenHandle) {
@@ -362,7 +323,6 @@ export function useAuthActions() {
         const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
         const updatedUser: RaffilaUser = {
           ...raffilaUser,
-          role: isUserAdmin ? "admin" : raffilaUser.role,
           id: `firebase_${uid}`,
           profileComplete: true,
         };

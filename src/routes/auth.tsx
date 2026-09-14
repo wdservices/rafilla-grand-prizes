@@ -62,8 +62,18 @@ function AuthPage() {
 }
 
 export const Route = createFileRoute("/auth")({
-  beforeLoad: () => {
+  beforeLoad: ({ search }) => {
+    const params = (search ?? {}) as Record<string, unknown>;
     const session = typeof window !== "undefined" ? getSession() : null;
+    if (params["mode"] === "complete") {
+      // New Google users must finish registration before entering the app.
+      if (!session) {
+        throw redirect({ to: "/auth" });
+      }
+      if (session.user.profileComplete === false) {
+        return;
+      }
+    }
     if (session?.user.role === "admin") {
       throw redirect({ to: "/admin" });
     }

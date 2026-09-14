@@ -12,7 +12,6 @@ import {
 import { fetchSignInMethodsForEmail } from "firebase/auth";
 import { db, auth } from "./firebase";
 import { SEED_USERS } from "./firestore-seed";
-import { DEFAULT_CREDENTIALS } from "./auth-store";
 
 const RESERVED_USERNAMES = new Set([
   "admin",
@@ -92,18 +91,11 @@ export async function checkUsernameAvailability(
 
   const clean = normalizeUsername(rawUsername);
 
-  // 1. Check against pre-seeded users and default credentials
+  // 1. Check against pre-seeded users
   const isSeedTaken = SEED_USERS.some(
     (u) => u.handle.toLowerCase() === clean && (!excludeUid || u.id !== excludeUid),
   );
   if (isSeedTaken) {
-    return { available: false, error: "This username is already taken. Please choose another." };
-  }
-
-  const isDefaultTaken = Object.values(DEFAULT_CREDENTIALS).some(
-    (c) => c.user.handle?.toLowerCase() === clean && (!excludeUid || c.user.id !== excludeUid),
-  );
-  if (isDefaultTaken) {
     return { available: false, error: "This username is already taken. Please choose another." };
   }
 
@@ -158,18 +150,11 @@ export async function checkEmailAvailability(
 
   const clean = normalizeEmail(rawEmail);
 
-  // 1. Check against pre-seeded users and default credentials
+  // 1. Check against pre-seeded users
   const isSeedTaken = SEED_USERS.some(
     (u) => u.email.toLowerCase() === clean && (!excludeUid || u.id !== excludeUid),
   );
   if (isSeedTaken) {
-    return { available: false, error: "This email is already registered. Please sign in instead." };
-  }
-
-  const isDefaultTaken = Object.values(DEFAULT_CREDENTIALS).some(
-    (c) => c.email.toLowerCase() === clean && (!excludeUid || c.user.id !== excludeUid),
-  );
-  if (isDefaultTaken) {
     return { available: false, error: "This email is already registered. Please sign in instead." };
   }
 

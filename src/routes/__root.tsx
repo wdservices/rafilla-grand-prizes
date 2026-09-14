@@ -77,7 +77,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   beforeLoad: ({ location }) => {
     const gate = canAccessRoute({ pathname: location.pathname });
     if (!gate.allowed) {
-      throw redirect({ to: gate.redirect as any });
+      throw redirect({
+        to: gate.redirect as any,
+        ...(gate.search ? { search: gate.search } : {}),
+      });
     }
   },
   head: () => ({

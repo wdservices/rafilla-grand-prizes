@@ -57,6 +57,38 @@ function FieldWrapper({ id, label, error, required, children, hint }: FieldWrapp
   );
 }
 
+/**
+ * Downscale an image file to a small JPEG data URL so it fits comfortably
+ * inside a Firestore document (1MB limit).
+ */
+function downscaleImage(file: File, maxDim = 512, quality = 0.82): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas not supported"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read image file"));
+    };
+    img.src = url;
+  });
+}
+
 function isAdult(dob: string): boolean {
   if (!dob) return false;
   const date = new Date(dob);
@@ -94,9 +126,21 @@ export function CompleteProfileForm() {
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setAvatarPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    // Small files can be used directly; larger ones are downscaled so the
+    // saved avatar fits inside a Firestore document.
+    if (file.size <= 400 * 1024) {
+      const reader = new FileReader();
+      reader.onload = () => setAvatarPreview(reader.result as string);
+      reader.readAsDataURL(file);
+      return;
+    }
+    downscaleImage(file)
+      .then((url) => setAvatarPreview(url))
+      .catch(() => {
+        const reader = new FileReader();
+        reader.onload = () => setAvatarPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      });
   }
 
   async function handleUsernameBlur() {
@@ -164,6 +208,7 @@ export function CompleteProfileForm() {
       address,
       dob,
       handle: username,
+      ...(avatarPreview ? { avatarUrl: avatarPreview } : {}),
     });
 
     setLoading(false);

@@ -1,9 +1,7 @@
 import {
   onAuthChange,
   getUserProfile,
-  createUserProfile,
   firebaseUserToRaffilaUser,
-  checkIsAdmin,
   type FirebaseUser,
 } from "./firebase-auth";
 
@@ -23,43 +21,6 @@ export type RaffilaUser = {
   tagline?: string | undefined;
   isGoogleUser?: boolean | undefined;
   profileComplete?: boolean | undefined;
-};
-
-type DefaultCredential = { email: string; password: string; user: RaffilaUser };
-
-export const DEFAULT_CREDENTIALS: Record<UserRole, DefaultCredential> = {
-  user: {
-    email: "user@raffila.com",
-    password: "Raffila2026!",
-    user: {
-      id: "usr_tunmise_adebayo_001",
-      role: "user",
-      firstName: "Tunmise",
-      lastName: "Adebayo",
-      handle: "tunmise_adebayo",
-      email: "tunmise.adebayo@raffila.com",
-      phone: "+234 801 234 5678",
-      avatarMonogram: "TA",
-      verified: true,
-      tagline: "Verified Raffila player",
-    },
-  },
-  admin: {
-    email: "admin@raffila.com",
-    password: "Admin2026!",
-    user: {
-      id: "adm_aisha_ola_001",
-      role: "admin",
-      firstName: "Aisha",
-      lastName: "Olamide",
-      handle: "admin_aisha",
-      email: "aisha.olamide@raffila.com",
-      phone: "+234 802 345 6789",
-      avatarMonogram: "AO",
-      verified: true,
-      tagline: "Super admin · Raffila ops",
-    },
-  },
 };
 
 const STORAGE_KEY = "raffila:auth:session:v1";
@@ -115,66 +76,6 @@ export type SignInResult =
   | { ok: true; user: RaffilaUser; redirect: string }
   | { ok: false; code: "invalid_credentials" | "invalid_input"; message: string };
 
-export function signInWithCredentials(input: {
-  email: string;
-  password: string;
-  remember?: boolean;
-}): SignInResult {
-  const email = input.email.trim().toLowerCase();
-  const password = input.password;
-  const remember = input.remember ?? true;
-  const expiresAt = Date.now() + (remember ? REMEMBER_ME_MS : 24 * 60 * 60 * 1000);
-
-  if (!email || !password) {
-    return { ok: false, code: "invalid_input", message: "Email and password are required" };
-  }
-
-  const admin = DEFAULT_CREDENTIALS.admin;
-  if (email === admin.email.toLowerCase() && password === admin.password) {
-    const session: Session = {
-      user: admin.user,
-      createdAt: new Date().toISOString(),
-      expiresAt,
-      remember,
-    };
-    writeSession(session);
-    emit(session);
-    return { ok: true, user: admin.user, redirect: "/admin" };
-  }
-
-  const user = DEFAULT_CREDENTIALS.user;
-  if (email === user.email.toLowerCase() && password === user.password) {
-    const session: Session = {
-      user: user.user,
-      createdAt: new Date().toISOString(),
-      expiresAt,
-      remember,
-    };
-    writeSession(session);
-    emit(session);
-    return { ok: true, user: user.user, redirect: "/dashboard" };
-  }
-
-  return {
-    ok: false,
-    code: "invalid_credentials",
-    message: "Incorrect email or password. Use the default Raffila credentials.",
-  };
-}
-
-export function signInAs(role: UserRole): SignInResult {
-  const cred = DEFAULT_CREDENTIALS[role];
-  const session: Session = {
-    user: cred.user,
-    createdAt: new Date().toISOString(),
-    expiresAt: Date.now() + REMEMBER_ME_MS,
-    remember: true,
-  };
-  writeSession(session);
-  emit(session);
-  return { ok: true, user: cred.user, redirect: role === "admin" ? "/admin" : "/dashboard" };
-}
-
 export function setFirebaseSession(user: RaffilaUser, remember = true) {
   const expiresAt = Date.now() + (remember ? REMEMBER_ME_MS : 24 * 60 * 60 * 1000);
   const session: Session = {
@@ -228,28 +129,12 @@ export function initFirebaseAuthListener() {
     }
 
     try {
-      let profile = await getUserProfile(fbUser.uid);
-      const isUserAdmin = checkIsAdmin(fbUser.email, profile);
+      const profile = await getUserProfile(fbUser.uid);
 
-      // If user is admin but doc is missing or missing role: "admin", sync it to Firestore
-      if (isUserAdmin && (!profile || profile["role"] !== "admin")) {
-        try {
-          await createUserProfile(fbUser.uid, {
-            email: fbUser.email || "",
-            role: "admin",
-            isAdmin: true,
-            verified: true,
-          });
-          profile = { ...(profile || {}), role: "admin", isAdmin: true };
-        } catch (syncErr) {
-          console.warn("Could not sync admin status to Firestore:", syncErr);
-        }
-      }
-
+      // Role comes solely from the Firestore user document.
       const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
       const firebaseUser: RaffilaUser = {
         ...raffilaUser,
-        role: isUserAdmin ? "admin" : raffilaUser.role,
         id: `firebase_${fbUser.uid}`,
       };
 
@@ -277,7 +162,12 @@ export function initFirebaseAuthListener() {
 
 type AuthGateResult =
   | { allowed: true }
-  | { allowed: false; reason: "unauthenticated" | "unauthorized"; redirect: string };
+  | {
+      allowed: false;
+      reason: "unauthenticated" | "unauthorized";
+      redirect: string;
+      search?: Record<string, string>;
+    };
 
 export function canAccessRoute(input: { pathname: string }): AuthGateResult {
   const session = getSession();
@@ -294,14 +184,20 @@ export function canAccessRoute(input: { pathname: string }): AuthGateResult {
     return { allowed: false, reason: "unauthenticated", redirect: "/auth" };
   }
 
-  const isUserAdmin = session.user.role === "admin" || checkIsAdmin(session.user.email);
-
-  // Self-heal stale session if role was stored as user
-  if (isUserAdmin && session.user.role !== "admin") {
-    session.user.role = "admin";
-    writeSession(session);
-    emit(session);
+  // Users who signed up with Google but never finished registration
+  // must complete their profile before entering the app.
+  if (session.user.profileComplete === false) {
+    return {
+      allowed: false,
+      reason: "unauthorized",
+      redirect: "/auth",
+      search: { mode: "complete" },
+    };
   }
+
+  // Admin access is determined solely by the session role,
+  // which comes from the Firestore `users/{uid}` document.
+  const isUserAdmin = session.user.role === "admin";
 
   if (isAdminRoute && !isUserAdmin) {
     return { allowed: false, reason: "unauthorized", redirect: "/dashboard" };
