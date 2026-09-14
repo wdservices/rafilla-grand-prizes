@@ -1,4 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  collection,
+  doc,
+  getDocs,
+  limit,
+  query,
+  serverTimestamp,
+  updateDoc,
+  addDoc,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import {
   Search,
   Filter,
@@ -66,13 +77,14 @@ import { cn, formatNaira } from "@/lib/utils";
 type Role = "USER" | "PARTNER" | "ADMIN";
 type Status = "ACTIVE" | "SUSPENDED";
 
-interface MockUser {
+interface AdminUser {
   id: string;
   name: string;
   email: string;
   username: string;
   phone: string;
   initials: string;
+  avatarUrl: string;
   tint: "sky" | "mint" | "coral" | "lemon" | "lilac" | "ink";
   role: Role;
   verifiedEmail: boolean;
@@ -84,7 +96,7 @@ interface MockUser {
   status: Status;
 }
 
-const tintBg: Record<MockUser["tint"], string> = {
+const tintBg: Record<AdminUser["tint"], string> = {
   sky: "bg-sky/30 text-ink",
   mint: "bg-mint/35 text-ink",
   coral: "bg-coral/20 text-coral",
@@ -104,131 +116,127 @@ const statusPill: Record<Status, string> = {
   SUSPENDED: "bg-coral/20 text-coral",
 };
 
-const TINTS: MockUser["tint"][] = ["sky", "mint", "coral", "lemon", "lilac", "ink"];
-const ROLES: Role[] = [
-  "USER",
-  "USER",
-  "USER",
-  "USER",
-  "USER",
-  "USER",
-  "PARTNER",
-  "USER",
-  "USER",
-  "ADMIN",
-  "USER",
-  "PARTNER",
-];
-const STATUSES: Status[] = [
-  "ACTIVE",
-  "ACTIVE",
-  "ACTIVE",
-  "ACTIVE",
-  "SUSPENDED",
-  "ACTIVE",
-  "ACTIVE",
-  "ACTIVE",
-  "ACTIVE",
-  "ACTIVE",
-  "SUSPENDED",
-  "ACTIVE",
-];
+const TINTS: AdminUser["tint"][] = ["sky", "mint", "coral", "lemon", "lilac", "ink"];
 
-const FIRST_NAMES = [
-  "Aisha",
-  "Tunde",
-  "Chidi",
-  "Amaka",
-  "Ifeoma",
-  "Uche",
-  "Bola",
-  "Zainab",
-  "Kelechi",
-  "Ngozi",
-  "Obioma",
-  "Femi",
-  "Kemi",
-  "Olu",
-  "Tobi",
-  "Dami",
-  "Sola",
-  "Ade",
-  "Nneka",
-  "Uju",
-  "Tega",
-  "Ovie",
-  "Wale",
-  "Musa",
-  "Hauwa",
-];
-const LAST_NAMES = [
-  "Mohammed",
-  "Okafor",
-  "Kelechi",
-  "Peace",
-  "Dike",
-  "Nwankwo",
-  "Tinubu",
-  "Abubakar",
-  "Okonkwo",
-  "Okafor",
-  "Ibe",
-  "Adesanya",
-  "Adewale",
-  "Olumide",
-  "Bakare",
-  "Ogunleye",
-  "Sanni",
-  "Oyelaran",
-  "Eze",
-  "Chukwu",
-  "Akpobome",
-  "Ejeviome",
-  "Ogunwande",
-  "Musa",
-  "Shehu",
-];
+function tintFor(id: string): AdminUser["tint"] {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return TINTS[h % TINTS.length]!;
+}
 
-const EMAIL_DOMAINS = ["raffila.ng", "mail.ng", "gmail.com", "outlook.com", "yahoo.com"];
-const USERS: MockUser[] = Array.from({ length: 25 }, (_, i) => {
-  const fn = FIRST_NAMES[i % FIRST_NAMES.length]!;
-  const ln = LAST_NAMES[i % LAST_NAMES.length]!;
-  const initials = `${fn[0]!}${ln[0]!}`;
+function isoDate(value: unknown): string {
+  try {
+    const v = value as any;
+    if (v && typeof v.toDate === "function") {
+      return (v.toDate() as Date).toISOString().slice(0, 10);
+    }
+  } catch {
+    // ignore
+  }
+  if (typeof value === "string" && value) return value.slice(0, 10);
+  return "";
+}
+
+function docToAdminUser(id: string, data: Record<string, unknown>, entries: number): AdminUser {
+  const first = (data["firstName"] as string) || "";
+  const last = (data["lastName"] as string) || "";
+  const display = (data["displayName"] as string) || `${first} ${last}`.trim();
+  const name = display || (data["handle"] as string) || (data["email"] as string) || id.slice(0, 8);
+  const monogram =
+    (data["avatarMonogram"] as string) ||
+    ((first.slice(0, 1) + last.slice(0, 1)).toUpperCase() || "U");
+  const rawRole = String(data["role"] ?? "user").toLowerCase();
+  const role: Role = rawRole === "admin" ? "ADMIN" : rawRole === "partner" ? "PARTNER" : "USER";
+  const verified = data["verified"] === true;
+  const phone = (data["phone"] as string) || "";
+  const statusRaw = String(data["status"] ?? "active").toLowerCase();
   return {
-    id: `RF-U-${String(i + 1).padStart(5, "0")}`,
-    name: `${fn} ${ln}`,
-    email: `${fn.toLowerCase()}.${ln.toLowerCase()}${i}@${EMAIL_DOMAINS[i % 5]!}`,
-    username: `@${fn.toLowerCase()}.${ln.toLowerCase().slice(0, 3)}`,
-    phone: `+234 80${String(10000000 + i * 37).slice(0, 8)}`,
-    initials,
-    tint: TINTS[i % TINTS.length]!,
-    role: ROLES[i % ROLES.length]!,
-    verifiedEmail: i % 5 !== 2,
-    verifiedPhone: i % 7 !== 3,
-    verifiedKyc: i % 4 !== 0,
-    entries: 0,
-    wallet: 0,
-    created: `2025-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
-    status: STATUSES[i % STATUSES.length]!,
+    id,
+    name,
+    email: (data["email"] as string) || "",
+    username: (data["handle"] as string) || "",
+    phone,
+    initials: monogram.slice(0, 2),
+    avatarUrl: (data["avatarUrl"] as string) || "",
+    tint: tintFor(id),
+    role,
+    verifiedEmail: verified,
+    verifiedPhone: phone.length > 0,
+    verifiedKyc: verified,
+    entries,
+    wallet: Number(data["walletBalanceKobo"] ?? 0) || 0,
+    created: isoDate(data["createdAt"]),
+    status: statusRaw === "suspended" ? "SUSPENDED" : "ACTIVE",
   };
-});
+}
 
 const FILTERS = ["All", "Verified", "Not verified", "Suspended"] as const;
 type FilterKey = (typeof FILTERS)[number];
+const ROLE_FILTERS = ["all", "user", "partner", "admin"] as const;
+type RoleFilter = (typeof ROLE_FILTERS)[number];
 
 export function AdminUsersPage() {
   const [filter, setFilter] = useState<FilterKey>("All");
-  const [suspendUser, setSuspendUser] = useState<MockUser | null>(null);
-  const [walletUser, setWalletUser] = useState<MockUser | null>(null);
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [suspendUser, setSuspendUser] = useState<AdminUser | null>(null);
+  const [walletUser, setWalletUser] = useState<AdminUser | null>(null);
   const [walletType, setWalletType] = useState<"credit" | "debit">("credit");
   const [walletAmount, setWalletAmount] = useState("");
   const [walletReason, setWalletReason] = useState("");
   const [walletEmail, setWalletEmail] = useState(false);
+  const [walletSaving, setWalletSaving] = useState(false);
   const [suspendReason, setSuspendReason] = useState("");
+  const [suspendSaving, setSuspendSaving] = useState(false);
   const [logoutSessions, setLogoutSessions] = useState(true);
   const [search, setSearch] = useState("");
 
-  const filtered = USERS.filter((u) => {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const snap = await getDocs(query(collection(db, "users"), limit(100)));
+        const rows = await Promise.all(
+          snap.docs.map(async (d) => {
+            let entries = 0;
+            try {
+              const es = await getDocs(query(collection(db, "users", d.id, "entries"), limit(500)));
+              entries = es.size;
+            } catch {
+              entries = 0;
+            }
+            return docToAdminUser(d.id, d.data() as Record<string, unknown>, entries);
+          }),
+        );
+        if (!cancelled) setUsers(rows);
+      } catch (err: any) {
+        if (!cancelled) {
+          const code = err?.code as string | undefined;
+          setLoadError(
+            code === "permission-denied"
+              ? "Firestore denied access. Publish the latest firestore.rules, then refresh."
+              : err?.message || "Could not load users",
+          );
+          setUsers([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
+  const filtered = users.filter((u) => {
     const s = search.toLowerCase();
     if (
       s &&
@@ -237,6 +245,9 @@ export function AdminUsersPage() {
       !u.username.toLowerCase().includes(s)
     )
       return false;
+    if (roleFilter !== "all" && u.role.toLowerCase() !== roleFilter) return false;
+    if (dateFrom && u.created && u.created < dateFrom) return false;
+    if (dateTo && u.created && u.created > dateTo) return false;
     switch (filter) {
       case "Verified":
         return u.verifiedEmail && u.verifiedPhone && u.verifiedKyc;
@@ -259,7 +270,8 @@ export function AdminUsersPage() {
           Users
         </h1>
         <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
-          Manage all Raffila accounts — view, verify, adjust wallet, suspend, and impersonate.
+          Manage all Raffila accounts — view, verify, adjust wallet, suspend, and impersonate.{" "}
+          <span className="text-emerald-700">Live from Firestore ({users.length}).</span>
         </p>
       </header>
 
@@ -296,17 +308,19 @@ export function AdminUsersPage() {
               <Filter className="size-3.5" />
               <Input
                 type="date"
-                defaultValue="2026-02-01"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
                 className="h-7 w-32 border-0 bg-transparent p-0 font-bold text-ink shadow-none focus-visible:ring-0"
               />
               <span>→</span>
               <Input
                 type="date"
-                defaultValue="2026-03-12"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
                 className="h-7 w-32 border-0 bg-transparent p-0 font-bold text-ink shadow-none focus-visible:ring-0"
               />
             </div>
-            <Select defaultValue="all">
+            <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
               <SelectTrigger className="h-11 w-40 rounded-full bg-cream px-4 text-sm font-extrabold text-ink shadow-none ring-1 ring-ink/10 focus:ring-coral">
                 <SelectValue />
               </SelectTrigger>
@@ -350,14 +364,49 @@ export function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody className="[&_tr]:border-ink/10">
-                {filtered.map((u) => (
-                  <TableRow key={u.id} className="hover:bg-lilac/10">
+                {loading && (
+                  <TableRow>
+                    <TableCell colSpan={10} className="py-12 text-center text-sm font-bold text-ink/55">
+                      Loading users from Firestore…
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!loading && loadError && (
+                  <TableRow>
+                    <TableCell colSpan={10} className="py-12 text-center">
+                      <p className="text-sm font-extrabold text-coral">{loadError}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 rounded-full"
+                        onClick={() => setRefreshKey((k) => k + 1)}
+                      >
+                        Retry
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!loading && !loadError && filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={10} className="py-12 text-center text-sm font-bold text-ink/55">
+                      No users found. Adjust search or filters.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!loading &&
+                  !loadError &&
+                  filtered.map((u) => (
+                    <TableRow key={u.id} className="hover:bg-lilac/10">
                     <TableCell className="py-3">
                       <div className="flex items-center gap-3">
                         <Avatar className={cn("size-9 ring-2 ring-paper", tintBg[u.tint])}>
-                          <AvatarFallback className={cn("text-xs font-extrabold", tintBg[u.tint])}>
-                            {u.initials}
-                          </AvatarFallback>
+                          {u.avatarUrl ? (
+                            <img src={u.avatarUrl} alt="" className="size-full object-cover" />
+                          ) : (
+                            <AvatarFallback className={cn("text-xs font-extrabold", tintBg[u.tint])}>
+                              {u.initials}
+                            </AvatarFallback>
+                          )}
                         </Avatar>
                         <div className="min-w-0 max-w-[200px]">
                           <p className="truncate text-sm font-extrabold text-ink">{u.name}</p>
@@ -476,15 +525,32 @@ export function AdminUsersPage() {
                             <DropdownMenuItem
                               className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-mint-700 focus:bg-mint/20"
                               onClick={() => {
-                                import("@/lib/activity-log").then(({ logActivity }) =>
-                                  logActivity({
-                                    eventType: "USER_ACTIVATE",
-                                    targetType: "user",
-                                    targetId: u.id,
-                                    summary: `Reactivated ${u.name}`,
-                                  }),
-                                );
-                                toast.success(`${u.name} reactivated`);
+                                updateDoc(doc(db, "users", u.id), {
+                                  status: "active",
+                                  updatedAt: serverTimestamp(),
+                                })
+                                  .then(() => {
+                                    setUsers((prev) =>
+                                      prev.map((x) => (x.id === u.id ? { ...x, status: "ACTIVE" as const } : x)),
+                                    );
+                                    return import("@/lib/activity-log");
+                                  })
+                                  .then(({ logActivity }) =>
+                                    logActivity({
+                                      eventType: "USER_ACTIVATE",
+                                      targetType: "user",
+                                      targetId: u.id,
+                                      summary: `Reactivated ${u.name}`,
+                                      oldValue: { status: "suspended" },
+                                      newValue: { status: "active" },
+                                    }),
+                                  )
+                                  .then(() => toast.success(`${u.name} reactivated`))
+                                  .catch((err: any) =>
+                                    toast.error("Reactivate failed", {
+                                      description: err?.message || String(err),
+                                    }),
+                                  );
                               }}
                             >
                               <UserCheck className="mr-2 size-4" /> Activate
@@ -493,8 +559,8 @@ export function AdminUsersPage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
-                  </TableRow>
-                ))}
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </div>
@@ -549,27 +615,53 @@ export function AdminUsersPage() {
             </Button>
             <Button
               variant="primary"
+              disabled={suspendSaving}
               onClick={() => {
-                import("@/lib/activity-log").then(({ logActivity }) =>
-                  logActivity({
-                    eventType: "USER_SUSPEND",
-                    targetType: "user",
-                    ...(suspendUser?.id ? { targetId: suspendUser.id } : {}),
-                    summary: `Suspended ${suspendUser?.name}`,
-                    details: {
-                      reason: suspendReason || "No reason given",
-                      logoutSessions,
-                    },
-                  }),
-                );
-                toast.success("User suspended", {
-                  description: `${suspendUser?.name} · action logged to audit trail.`,
-                });
-                setSuspendUser(null);
-                setSuspendReason("");
+                if (!suspendUser || suspendSaving) return;
+                const target = suspendUser;
+                setSuspendSaving(true);
+                updateDoc(doc(db, "users", target.id), {
+                  status: "suspended",
+                  suspendedReason: suspendReason || "No reason given",
+                  suspendedAt: serverTimestamp(),
+                  updatedAt: serverTimestamp(),
+                })
+                  .then(() => {
+                    setUsers((prev) =>
+                      prev.map((x) => (x.id === target.id ? { ...x, status: "SUSPENDED" as const } : x)),
+                    );
+                    return import("@/lib/activity-log");
+                  })
+                  .then(({ logActivity }) =>
+                    logActivity({
+                      eventType: "USER_SUSPEND",
+                      targetType: "user",
+                      targetId: target.id,
+                      summary: `Suspended ${target.name}`,
+                      details: {
+                        reason: suspendReason || "No reason given",
+                        logoutSessions,
+                      },
+                      oldValue: { status: "active" },
+                      newValue: { status: "suspended" },
+                    }),
+                  )
+                  .then(() => {
+                    toast.success("User suspended", {
+                      description: `${target.name} · action logged to audit trail.`,
+                    });
+                    setSuspendUser(null);
+                    setSuspendReason("");
+                  })
+                  .catch((err: any) =>
+                    toast.error("Suspend failed", {
+                      description: err?.message || String(err),
+                    }),
+                  )
+                  .finally(() => setSuspendSaving(false));
               }}
             >
-              <Ban className="size-4" /> Confirm suspend
+              <Ban className="size-4" /> {suspendSaving ? "Suspending…" : "Confirm suspend"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -661,31 +753,78 @@ export function AdminUsersPage() {
             </Button>
             <Button
               variant="primary"
+              disabled={walletSaving}
               onClick={() => {
+                if (!walletUser || walletSaving) return;
+                const target = walletUser;
                 const amt = parseInt(walletAmount || "0", 10);
-                import("@/lib/activity-log").then(({ logActivity }) =>
-                  logActivity({
-                    eventType: "WALLET_ADJUST",
-                    targetType: "user",
-                    ...(walletUser?.id ? { targetId: walletUser.id } : {}),
-                    summary: `${walletType === "credit" ? "Credited" : "Debited"} ${formatNaira(amt * 100)} ${walletType === "credit" ? "to" : "from"} ${walletUser?.name}`,
-                    details: {
-                      direction: walletType,
+                if (!amt || amt <= 0) {
+                  toast.error("Invalid amount", { description: "Enter an amount above zero." });
+                  return;
+                }
+                const delta = (walletType === "credit" ? 1 : -1) * amt * 100;
+                const nextBalance = target.wallet + delta;
+                if (nextBalance < 0) {
+                  toast.error("Insufficient balance", {
+                    description: `${target.name} holds ${formatNaira(target.wallet)}.`,
+                  });
+                  return;
+                }
+                setWalletSaving(true);
+                updateDoc(doc(db, "users", target.id), {
+                  walletBalanceKobo: nextBalance,
+                  updatedAt: serverTimestamp(),
+                })
+                  .then(() =>
+                    addDoc(collection(db, "users", target.id, "walletTransactions"), {
+                      type: walletType === "credit" ? "Wallet credit" : "Wallet debit",
                       amountKobo: amt * 100,
-                      reason: walletReason || "No reason given",
+                      balanceAfterKobo: nextBalance,
+                      reason: walletReason || "Admin adjustment",
                       emailReceipt: walletEmail,
-                    },
-                  }),
-                );
-                toast.success("Wallet adjusted", {
-                  description: `${walletType.toUpperCase()} ${formatNaira(amt * 100)} for ${walletUser?.name}.`,
-                });
-                setWalletUser(null);
-                setWalletAmount("");
-                setWalletReason("");
+                      createdAt: serverTimestamp(),
+                    }),
+                  )
+                  .then(() => {
+                    setUsers((prev) =>
+                      prev.map((x) => (x.id === target.id ? { ...x, wallet: nextBalance } : x)),
+                    );
+                    return import("@/lib/activity-log");
+                  })
+                  .then(({ logActivity }) =>
+                    logActivity({
+                      eventType: "WALLET_ADJUST",
+                      targetType: "user",
+                      targetId: target.id,
+                      summary: `${walletType === "credit" ? "Credited" : "Debited"} ${formatNaira(amt * 100)} ${walletType === "credit" ? "to" : "from"} ${target.name}`,
+                      details: {
+                        direction: walletType,
+                        amountKobo: amt * 100,
+                        balanceAfterKobo: nextBalance,
+                        reason: walletReason || "No reason given",
+                        emailReceipt: walletEmail,
+                      },
+                      oldValue: { walletBalanceKobo: target.wallet },
+                      newValue: { walletBalanceKobo: nextBalance },
+                    }),
+                  )
+                  .then(() => {
+                    toast.success("Wallet adjusted", {
+                      description: `${walletType.toUpperCase()} ${formatNaira(amt * 100)} for ${target.name}.`,
+                    });
+                    setWalletUser(null);
+                    setWalletAmount("");
+                    setWalletReason("");
+                  })
+                  .catch((err: any) =>
+                    toast.error("Wallet adjust failed", {
+                      description: err?.message || String(err),
+                    }),
+                  )
+                  .finally(() => setWalletSaving(false));
               }}
             >
-              <Check className="size-4" /> Confirm {walletType}
+              <Check className="size-4" /> {walletSaving ? "Saving…" : `Confirm ${walletType}`}
             </Button>
           </DialogFooter>
         </DialogContent>

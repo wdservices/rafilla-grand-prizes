@@ -92,6 +92,14 @@ export function useAuthActions() {
           }
         }
 
+        if (String(profile?.["status"] ?? "").toLowerCase() === "suspended") {
+          return {
+            ok: false,
+            code: "invalid_credentials",
+            message: "This account has been suspended. Contact Raffila support.",
+          };
+        }
+
         const raffilaUser = firebaseUserToRaffilaUser(cred.user, profile ?? {});
         const user: RaffilaUser = {
           ...raffilaUser,
@@ -179,6 +187,10 @@ export function useAuthActions() {
           if (await consumeAdminInvite(fbUser.email || "", fbUser.uid)) {
             profile = await getUserProfile(fbUser.uid);
           }
+        }
+
+        if (String(profile?.["status"] ?? "").toLowerCase() === "suspended") {
+          return { ok: false, message: "This account has been suspended. Contact Raffila support." };
         }
 
         const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
