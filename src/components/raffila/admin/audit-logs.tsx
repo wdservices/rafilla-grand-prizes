@@ -1,4 +1,14 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  type Timestamp,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { ACTIVITY_EVENTS, type ActivityEventType, type ActivityRisk } from "@/lib/activity-log";
 import { AdminShell } from "./admin-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -68,58 +78,63 @@ import {
   Lock,
 } from "lucide-react";
 
-const EVENT_TYPES = [
-  "AUTH_LOGIN",
-  "AUTH_REGISTER",
-  "AUTH_OTP",
-  "AUTH_LOGOUT",
-  "AUTH_PASSWORD_RESET",
-  "AUTH_2FA_ENABLE",
-  "AUTH_2FA_DISABLE",
-  "TICKET_PURCHASE",
-  "TICKET_REFUND",
-  "TICKET_WINNER",
-  "PAYOUT_INITIATE",
-  "PAYOUT_COMPLETE",
-  "PAYOUT_FAIL",
-  "PAYOUT_REVERSE",
-  "WALLET_FUND",
-  "WALLET_ADJUST",
-  "WALLET_WITHDRAW",
-  "CONFIG_CHANGE",
-  "USER_CREATE",
-  "USER_UPDATE",
-  "USER_SUSPEND",
-  "USER_ACTIVATE",
-  "USER_DELETE",
-  "PARTNER_APPROVE",
-  "PARTNER_REJECT",
-  "COMPETITION_CREATE",
-  "COMPETITION_UPDATE",
-  "COMPETITION_DRAW",
-  "COMPETITION_CANCEL",
-  "NOTIFICATION_SEND",
-  "REFERRAL_PAY",
-  "CRM_NOTE_ADD",
-  "FRAUD_FLAG",
-  "FRAUD_RESOLVE",
-] as const;
+const EVENT_TYPES = ACTIVITY_EVENTS;
 
-type EventType = (typeof EVENT_TYPES)[number];
-type RiskLevel = "low" | "medium" | "high" | "critical";
+type EventType = ActivityEventType;
+type RiskLevel = ActivityRisk;
 
 interface AuditLog {
   id: string;
   timestamp: string;
   actorName: string;
+  actorEmail: string;
   actorId: string;
-  actorIp: string;
+  actorRole: string;
   eventType: EventType;
   targetType: string;
   targetId: string;
+  summary: string;
+  details: Record<string, unknown>;
   oldValue: Record<string, unknown> | null;
   newValue: Record<string, unknown> | null;
   riskLevel: RiskLevel;
+}
+
+function toIso(value: unknown, fallback?: unknown): string {
+  try {
+    if (value && typeof (value as Timestamp).toDate === "function") {
+      return ((value as Timestamp).toDate() as Date).toISOString();
+    }
+  } catch {
+    // fall through
+  }
+  if (typeof value === "string" && value) return value;
+  if (typeof fallback === "string" && fallback) return fallback;
+  return new Date(0).toISOString();
+}
+
+function docToLog(id: string, data: Record<string, unknown>): AuditLog {
+  const eventType = (
+    typeof data["eventType"] === "string" && (EVENT_TYPES as readonly string[]).includes(data["eventType"] as string)
+      ? (data["eventType"] as EventType)
+      : "USER_UPDATE"
+  );
+  return {
+    id,
+    timestamp: toIso(data["createdAt"], data["clientAt"]),
+    actorName: (data["actorName"] as string) || "Unknown",
+    actorEmail: (data["actorEmail"] as string) || "",
+    actorId: (data["actorId"] as string) || "",
+    actorRole: (data["actorRole"] as string) || "",
+    eventType,
+    targetType: (data["targetType"] as string) || "",
+    targetId: (data["targetId"] as string) || "",
+    summary: (data["summary"] as string) || "",
+    details: (data["details"] as Record<string, unknown>) || {},
+    oldValue: (data["oldValue"] as Record<string, unknown> | null) ?? null,
+    newValue: (data["newValue"] as Record<string, unknown> | null) ?? null,
+    riskLevel: (data["riskLevel"] as RiskLevel) || "low",
+  };
 }
 
 const riskBadge = (r: RiskLevel) => {
@@ -155,7 +170,7 @@ const eventIcon = (e: EventType) => {
   if (e.startsWith("AUTH")) {
     if (e === "AUTH_LOGIN") return <LogIn className="w-3.5 h-3.5" />;
     if (e === "AUTH_REGISTER" || e === "USER_CREATE") return <UserPlus className="w-3.5 h-3.5" />;
-    if (e === "AUTH_OTP" || e.startsWith("AUTH_2FA") || e === "AUTH_PASSWORD_RESET")
+    if (e === "AUTH_PASSWORD_CHANGE" || e === "AUTH_PASSWORD_RESET")
       return <KeyRound className="w-3.5 h-3.5" />;
     return <Lock className="w-3.5 h-3.5" />;
   }
@@ -206,79 +221,8 @@ const eventBadge = (e: EventType) => {
   );
 };
 
-const ACTOR_NAMES = [
-  "Amaka Okafor",
-  "Tunde Bakare",
-  "Funmi Adeyemi",
-  "Chidi Eze",
-  "Sade Lawal",
-  "Admin Console",
-  "System",
-  "Kemi Hassan",
-  "Bola Tinubu",
-  "Ifeoma Dike",
-  "Dele Ogun",
-  "Zainab Aliyu",
-];
-
-const TARGET_TYPES = [
-  "user_id",
-  "ticket_id",
-  "payout_id",
-  "wallet_id",
-  "config_key",
-  "competition_id",
-  "partner_id",
-  "entry_id",
-  "notification_id",
-  "session_id",
-];
-
-function makeLogs(count: number): AuditLog[] {
-  const logs: AuditLog[] = [];
-  const now = Date.now();
-  for (let i = 0; i < count; i++) {
-    const eventType = EVENT_TYPES[i % EVENT_TYPES.length]!;
-    const riskRoll = i % 11;
-    const risk: RiskLevel =
-      riskRoll <= 6 ? "low" : riskRoll <= 8 ? "medium" : riskRoll === 9 ? "high" : "critical";
-    const targetType = TARGET_TYPES[i % TARGET_TYPES.length]!;
-    const tgtSuffix = String(100000 + i * 37).slice(0, 8);
-    const oldValue =
-      i % 4 === 0
-        ? null
-        : {
-            status: i % 3 === 0 ? "pending" : "active",
-            amount: (i * 5000 + 1000) * 100,
-            role: i % 5 === 0 ? "user" : "partner",
-          };
-    const newValue = {
-      status: i % 3 === 1 ? "completed" : "suspended",
-      amount: (i * 5000 + 2500) * 100,
-      role: i % 5 === 2 ? "admin" : "user",
-      updatedBy: ACTOR_NAMES[i % ACTOR_NAMES.length]!,
-    };
-    const minsAgo = i * 13 + 2;
-    const d = new Date(now - minsAgo * 60 * 1000);
-    logs.push({
-      id: `AUD-${String(900000 + i).slice(0, 6)}`,
-      timestamp: d.toISOString(),
-      actorName: ACTOR_NAMES[i % ACTOR_NAMES.length]!,
-      actorId: `RF-USR-${String(10000 + i * 11).slice(0, 5)}`,
-      actorIp: `192.168.${(i * 3) % 255}.${(i * 7) % 255}`,
-      eventType,
-      targetType,
-      targetId: `${targetType.toUpperCase().slice(0, 3)}-${tgtSuffix}`,
-      oldValue,
-      newValue,
-      riskLevel: risk,
-    });
-  }
-  return logs;
-}
-
-const ALL_LOGS = makeLogs(80);
 const RISK_LEVELS: RiskLevel[] = ["low", "medium", "high", "critical"];
+const FETCH_LIMIT = 200;
 
 export function AdminAuditLogsPage() {
   const [eventFilter, setEventFilter] = useState<EventType | "all">("all");
@@ -290,36 +234,115 @@ export function AdminAuditLogsPage() {
   const perPage = 12;
   const [diffLog, setDiffLog] = useState<AuditLog | null>(null);
 
-  const filtered = ALL_LOGS.filter((l) => {
-    if (eventFilter !== "all" && l.eventType !== eventFilter) return false;
-    if (riskFilter !== "all" && l.riskLevel !== riskFilter) return false;
-    if (userQuery) {
-      const q = userQuery.toLowerCase();
-      if (
-        !l.actorName.toLowerCase().includes(q) &&
-        !l.actorId.toLowerCase().includes(q) &&
-        !l.actorIp.includes(q)
-      )
-        return false;
-    }
-    if (dateFrom) {
-      if (new Date(l.timestamp) < new Date(dateFrom)) return false;
-    }
-    if (dateTo) {
-      if (new Date(l.timestamp) > new Date(dateTo + "T23:59:59")) return false;
-    }
-    return true;
-  });
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const snap = await getDocs(
+          query(collection(db, "activityLogs"), orderBy("createdAt", "desc"), limit(FETCH_LIMIT)),
+        );
+        if (cancelled) return;
+        setLogs(snap.docs.map((d) => docToLog(d.id, d.data() as Record<string, unknown>)));
+      } catch (err: any) {
+        if (!cancelled) {
+          setLoadError(err?.message || "Could not load activity logs");
+          setLogs([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
+  const filtered = useMemo(() => {
+    const out = logs.filter((l) => {
+      if (eventFilter !== "all" && l.eventType !== eventFilter) return false;
+      if (riskFilter !== "all" && l.riskLevel !== riskFilter) return false;
+      if (userQuery) {
+        const q = userQuery.toLowerCase();
+        if (
+          !l.actorName.toLowerCase().includes(q) &&
+          !l.actorId.toLowerCase().includes(q) &&
+          !l.actorEmail.toLowerCase().includes(q) &&
+          !(l.summary || "").toLowerCase().includes(q)
+        )
+          return false;
+      }
+      if (dateFrom) {
+        if (new Date(l.timestamp) < new Date(dateFrom)) return false;
+      }
+      if (dateTo) {
+        if (new Date(l.timestamp) > new Date(dateTo + "T23:59:59")) return false;
+      }
+      return true;
+    });
+    return out;
+  }, [logs, eventFilter, riskFilter, userQuery, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const pageLogs = filtered.slice((page - 1) * perPage, page * perPage);
 
-  const stats = {
-    total: ALL_LOGS.length,
-    low: ALL_LOGS.filter((l) => l.riskLevel === "low").length,
-    medium: ALL_LOGS.filter((l) => l.riskLevel === "medium").length,
-    high: ALL_LOGS.filter((l) => l.riskLevel === "high").length,
-    critical: ALL_LOGS.filter((l) => l.riskLevel === "critical").length,
+  const stats = useMemo(
+    () => ({
+      total: logs.length,
+      low: logs.filter((l) => l.riskLevel === "low").length,
+      medium: logs.filter((l) => l.riskLevel === "medium").length,
+      high: logs.filter((l) => l.riskLevel === "high").length,
+      critical: logs.filter((l) => l.riskLevel === "critical").length,
+    }),
+    [logs],
+  );
+
+  function download(filename: string, content: string, mime: string) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const exportCsv = () => {
+    const rows = [
+      ["id", "timestamp", "actor", "actor_email", "actor_id", "role", "event", "target", "target_id", "risk", "summary"],
+      ...filtered.map((l) => [
+        l.id,
+        l.timestamp,
+        l.actorName,
+        l.actorEmail,
+        l.actorId,
+        l.actorRole,
+        l.eventType,
+        l.targetType,
+        l.targetId,
+        l.riskLevel,
+        (l.summary || "").replace(/"/g, '""'),
+      ]),
+    ];
+    download(
+      `raffila-audit-${new Date().toISOString().slice(0, 10)}.csv`,
+      rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n"),
+      "text/csv",
+    );
+  };
+
+  const exportJson = () => {
+    download(
+      `raffila-audit-${new Date().toISOString().slice(0, 10)}.json`,
+      JSON.stringify(filtered, null, 2),
+      "application/json",
+    );
   };
 
   return (
@@ -329,14 +352,31 @@ export function AdminAuditLogsPage() {
           <div>
             <h1 className="font-display text-3xl text-ink">Audit Logs</h1>
             <p className="font-body text-ink/60 text-sm mt-1">
-              Immutable event log. All platform activity — 24 month retention.
-            </p>
+            Immutable event log streamed from Firestore — every user and admin action.
+          </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" className="rounded-full">
+          <div className="flex gap-2 flex-wrap items-center">
+            <Badge
+              variant="outline"
+              className="rounded-full font-body text-emerald-700 border-emerald-300 bg-emerald-50"
+            >
+              <span className="mr-1.5 inline-block size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Live · Firestore
+            </Badge>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => {
+                setPage(1);
+                setRefreshKey((k) => k + 1);
+              }}
+            >
+              <Activity className="w-4 h-4 mr-2" /> Refresh
+            </Button>
+            <Button variant="outline" className="rounded-full" onClick={exportCsv}>
               <FileText className="w-4 h-4 mr-2" /> Export CSV
             </Button>
-            <Button variant="outline" className="rounded-full">
+            <Button variant="outline" className="rounded-full" onClick={exportJson}>
               <FileText className="w-4 h-4 mr-2" /> Export JSON
             </Button>
           </div>
@@ -391,13 +431,13 @@ export function AdminAuditLogsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="space-y-1.5">
                 <Label className="font-body text-xs text-ink/60 uppercase tracking-wider">
-                  Actor / IP search
+                  Actor / summary search
                 </Label>
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40" />
                   <Input
                     className="pl-9 rounded-full"
-                    placeholder="Name, ID, 192.168..."
+                    placeholder="Name, email, ID, action…"
                     value={userQuery}
                     onChange={(e) => setUserQuery(e.target.value)}
                   />
@@ -510,7 +550,41 @@ export function AdminAuditLogsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pageLogs.map((l) => (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="py-12 text-center">
+                        <div className="flex flex-col items-center gap-2 text-ink/50">
+                          <Activity className="w-6 h-6 animate-pulse" />
+                          <p className="font-body text-sm">Loading activity from Firestore…</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : loadError ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="py-12 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <AlertTriangle className="w-6 h-6 text-coral" />
+                          <p className="font-body text-sm text-ink">{loadError}</p>
+                          <p className="font-body text-xs text-ink/50">
+                            Publish the updated firestore.rules, then refresh.
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : pageLogs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="py-12 text-center">
+                        <div className="flex flex-col items-center gap-2 text-ink/50">
+                          <Shield className="w-6 h-6" />
+                          <p className="font-body text-sm font-semibold text-ink">No activity yet</p>
+                          <p className="font-body text-xs">
+                            Actions across the app will appear here as users and admins use Raffila.
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    pageLogs.map((l) => (
                     <TableRow key={l.id}>
                       <TableCell className="font-body text-sm whitespace-nowrap">
                         <div className="text-ink">
@@ -525,8 +599,8 @@ export function AdminAuditLogsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="font-body text-sm text-ink">{l.actorName}</div>
-                        <div className="text-[11px] text-ink/40 font-mono">
-                          {l.actorId} · {l.actorIp}
+                        <div className="text-[11px] text-ink/40 font-mono truncate max-w-[220px]">
+                          {l.actorEmail || l.actorId}
                         </div>
                       </TableCell>
                       <TableCell>{eventBadge(l.eventType)}</TableCell>
@@ -565,7 +639,8 @@ export function AdminAuditLogsPage() {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -642,16 +717,30 @@ export function AdminAuditLogsPage() {
                 <div className="p-3 rounded-xl bg-cream/60">
                   <p className="text-ink/50 uppercase tracking-wider mb-1">Actor</p>
                   <p className="text-ink font-semibold">{diffLog.actorName}</p>
-                  <p className="font-mono text-ink/60">{diffLog.actorId}</p>
-                  <p className="font-mono text-ink/60">{diffLog.actorIp}</p>
+                  <p className="font-mono text-ink/60 break-all">{diffLog.actorEmail}</p>
+                  <p className="font-mono text-ink/60 break-all">{diffLog.actorId}</p>
+                  <p className="mt-1 inline-block rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-extrabold uppercase">
+                    {diffLog.actorRole || "unknown"}
+                  </p>
                 </div>
                 <div className="p-3 rounded-xl bg-cream/60">
                   <p className="text-ink/50 uppercase tracking-wider mb-1">Target</p>
-                  <p className="text-ink font-mono">{diffLog.targetType}</p>
-                  <p className="text-ink font-mono font-semibold">{diffLog.targetId}</p>
+                  <p className="text-ink font-mono">{diffLog.targetType || "—"}</p>
+                  <p className="text-ink font-mono font-semibold break-all">{diffLog.targetId || "—"}</p>
                   <div className="mt-1">{riskBadge(diffLog.riskLevel)}</div>
                 </div>
               </div>
+              {(diffLog.summary || Object.keys(diffLog.details || {}).length > 0) && (
+                <div className="p-3 rounded-xl bg-cream/60 text-xs font-body">
+                  <p className="text-ink/50 uppercase tracking-wider mb-1">Summary</p>
+                  {diffLog.summary && <p className="text-ink font-semibold">{diffLog.summary}</p>}
+                  {Object.keys(diffLog.details || {}).length > 0 && (
+                    <pre className="mt-2 bg-ink text-cream p-3 rounded-xl text-[11px] overflow-x-auto font-mono leading-relaxed">
+                      {JSON.stringify(diffLog.details, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>

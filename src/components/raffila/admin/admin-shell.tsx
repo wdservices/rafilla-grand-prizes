@@ -6,6 +6,7 @@ import {
   Banknote,
   BarChart3,
   Settings2,
+  SlidersHorizontal,
   ClipboardList,
   ShieldAlert,
   Bell,
@@ -42,6 +43,7 @@ export type AdminNavKey =
   | "payouts"
   | "reports"
   | "config"
+  | "settings"
   | "audit-logs"
   | "fraud"
   | "notifications";
@@ -65,6 +67,7 @@ const CONFIG_GROUP: Array<{
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   { key: "config", label: "Config", icon: Settings2 },
+  { key: "settings", label: "Settings", icon: SlidersHorizontal },
   { key: "audit-logs", label: "Audit logs", icon: ClipboardList },
   { key: "fraud", label: "Fraud queue", icon: ShieldAlert },
   { key: "notifications", label: "Notifications", icon: Bell },
@@ -78,6 +81,7 @@ const navRoute: Record<AdminNavKey, string> = {
   payouts: "/admin/payouts",
   reports: "/admin/reports",
   config: "/admin/config",
+  settings: "/admin/settings",
   "audit-logs": "/admin/audit-logs",
   fraud: "/admin/fraud",
   notifications: "/admin/notifications",

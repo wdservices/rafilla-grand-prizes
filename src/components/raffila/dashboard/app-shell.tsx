@@ -1,5 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
+import { fetchFeatureFlags, NAV_FEATURE_KEY } from "@/lib/platform-config";
 import {
   Home,
   Trophy,
@@ -149,6 +150,28 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
   const location = useLocation();
   const { user } = useAuthSession();
   const { signOut } = useAuthActions();
+  const [features, setFeatures] = useState<Record<string, boolean> | null>(null);
+
+  // Feature availability is controlled from Admin → Settings (live Firestore).
+  useEffect(() => {
+    let cancelled = false;
+    fetchFeatureFlags().then((f) => {
+      if (!cancelled) setFeatures(f);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const gateItems = (items: NavItem[]) =>
+    items.filter((item) => {
+      const key = NAV_FEATURE_KEY[item.label];
+      if (!key) return true;
+      if (!features) return true;
+      return features[key] !== false;
+    });
+  const visibleItems = useMemo(() => gateItems(navItems), [features]);
+  const visibleBottomItems = useMemo(() => gateItems(bottomNavItems), [features]);
 
   const monogram = user?.avatarMonogram ?? (user ? initialsOf(user) : "U");
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Raffila user";
@@ -207,7 +230,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
                 {group}
               </p>
               <div className="space-y-1">
-                {navItems
+                {visibleItems
                   .filter((item) => item.group === group)
                   .map((item) => (
                     <DashboardNavLink key={item.label} item={item} active={isActive(item.to)} />
@@ -350,7 +373,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
                 {group}
               </p>
               <div className="space-y-1">
-                {navItems
+                {visibleItems
                   .filter((item) => item.group === group)
                   .map((item) => (
                     <DashboardNavLink
@@ -458,8 +481,11 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
         className="fixed inset-x-0 bottom-3 z-40 mx-auto w-[calc(100%-24px)] max-w-md rounded-[26px] bg-white ring-1 ring-ink/5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)] lg:hidden"
         aria-label="Dashboard bottom navigation"
       >
-        <div className="grid grid-cols-5 px-1.5 pb-1.5 pt-2">
-          {bottomNavItems.map((item) => {
+        <div
+          className="grid px-1.5 pb-1.5 pt-2"
+          style={{ gridTemplateColumns: `repeat(${Math.max(visibleBottomItems.length, 1)}, minmax(0, 1fr))` }}
+        >
+          {visibleBottomItems.map((item) => {
             const isA = activeBottom(item.to);
             return (
               <Link

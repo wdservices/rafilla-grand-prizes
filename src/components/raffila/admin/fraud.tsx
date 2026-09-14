@@ -914,6 +914,14 @@ export function AdminFraudQueuePage() {
                       variant="outline"
                       className="rounded-full"
                       onClick={() => {
+                        import("@/lib/activity-log").then(({ logActivity }) =>
+                          logActivity({
+                            eventType: "FRAUD_RESOLVE",
+                            targetType: "fraud_case",
+                            targetId: reviewCase?.id,
+                            summary: `Dismissed fraud case ${reviewCase?.id ?? ""}`,
+                          }),
+                        );
                         toast.success("Case dismissed");
                         setReviewCase(null);
                       }}
@@ -924,6 +932,14 @@ export function AdminFraudQueuePage() {
                       variant="outline"
                       className="rounded-full"
                       onClick={() => {
+                        import("@/lib/activity-log").then(({ logActivity }) =>
+                          logActivity({
+                            eventType: "FRAUD_FLAG",
+                            targetType: "fraud_case",
+                            targetId: reviewCase?.id,
+                            summary: `Issued warning for fraud case ${reviewCase?.id ?? ""}`,
+                          }),
+                        );
                         toast.info("Warning issued to user");
                         setReviewCase(null);
                       }}
@@ -934,6 +950,14 @@ export function AdminFraudQueuePage() {
                       variant="outline"
                       className="rounded-full border-coral text-coral hover:bg-coral hover:text-white"
                       onClick={() => {
+                        import("@/lib/activity-log").then(({ logActivity }) =>
+                          logActivity({
+                            eventType: "USER_SUSPEND",
+                            targetType: "fraud_case",
+                            targetId: reviewCase?.id,
+                            summary: `Suspended user from fraud case ${reviewCase?.id ?? ""}`,
+                          }),
+                        );
                         toast.error("User suspended");
                         setReviewCase(null);
                       }}

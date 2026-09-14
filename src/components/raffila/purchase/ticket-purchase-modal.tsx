@@ -120,6 +120,21 @@ export function TicketPurchaseModal({
     setTicketNumbers(tix);
     const t = setTimeout(() => {
       setPurchaseComplete(true);
+      import("@/lib/activity-log").then(({ logActivity }) =>
+        logActivity({
+          eventType: "TICKET_PURCHASE",
+          targetType: "competition",
+          targetId: competitionSlug,
+          summary: `Purchased ${qty} ticket${qty === 1 ? "" : "s"} for ${competition?.title ?? competitionSlug} via ${paymentSource}`,
+          details: {
+            competitionSlug,
+            quantity: qty,
+            paymentSource,
+            ticketNumbers: tix,
+            entryPriceKobo: competition ? competition.entryPrice * qty : 0,
+          },
+        }),
+      );
       toast.success("Added to entries", {
         className: "!bg-mint/30 !text-ink !border-0 !ring-1 !ring-mint/40",
         icon: <Check className="size-4 text-mint" />,

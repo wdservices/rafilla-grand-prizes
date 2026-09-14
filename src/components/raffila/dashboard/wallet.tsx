@@ -85,6 +85,15 @@ export function FundWalletModal({ open, onClose }: { open: boolean; onClose: () 
     setTimeout(() => {
       setProcessing(false);
       setSuccess(true);
+      import("@/lib/activity-log").then(({ logActivity }) =>
+        logActivity({
+          eventType: "WALLET_FUND",
+          targetType: "wallet",
+          targetId: payRef,
+          summary: `Funded wallet with ₦${Number(amount).toLocaleString("en-NG")}`,
+          details: { amountNaira: Number(amount), reference: payRef },
+        }),
+      );
     }, 1500);
   };
 

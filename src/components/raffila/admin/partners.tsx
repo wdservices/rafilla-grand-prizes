@@ -244,6 +244,15 @@ export function AdminPartnersPage() {
     const next = [...partners, newPartner];
     setPartners(next);
     partnerList = next;
+    import("@/lib/activity-log").then(({ logActivity }) =>
+      logActivity({
+        eventType: "PARTNER_INVITE",
+        targetType: "partner",
+        targetId: newPartner.id,
+        summary: `Invited partner ${inviteForm.company} (${inviteForm.email})`,
+        details: { company: inviteForm.company, email: inviteForm.email, manager: inviteForm.manager },
+      }),
+    );
     toast.success("Invitation sent", {
       description: `Partner invite for ${inviteForm.company} emailed to ${inviteForm.email} · assigned to ${inviteForm.manager}.`,
     });
@@ -478,6 +487,14 @@ export function AdminPartnersPage() {
                                 );
                                 setPartners(next);
                                 partnerList = next;
+                                import("@/lib/activity-log").then(({ logActivity }) =>
+                                  logActivity({
+                                    eventType: "PARTNER_APPROVE",
+                                    targetType: "partner",
+                                    targetId: p.id,
+                                    summary: `Approved partner ${p.name}`,
+                                  }),
+                                );
                                 toast.success("Partner approved", {
                                   description: `${p.name} is now active.`,
                                 });
@@ -497,6 +514,14 @@ export function AdminPartnersPage() {
                                 );
                                 setPartners(next);
                                 partnerList = next;
+                                import("@/lib/activity-log").then(({ logActivity }) =>
+                                  logActivity({
+                                    eventType: "PARTNER_REJECT",
+                                    targetType: "partner",
+                                    targetId: p.id,
+                                    summary: `Rejected partner ${p.name}`,
+                                  }),
+                                );
                                 toast.info("Partner rejected", {
                                   description: `${p.name} · rejection sent.`,
                                 });
@@ -541,6 +566,14 @@ export function AdminPartnersPage() {
                                   );
                                   setPartners(next);
                                   partnerList = next;
+                                  import("@/lib/activity-log").then(({ logActivity }) =>
+                                    logActivity({
+                                      eventType: "PARTNER_APPROVE",
+                                      targetType: "partner",
+                                      targetId: p.id,
+                                      summary: `Approved partner ${p.name}`,
+                                    }),
+                                  );
                                   toast.success("Partner approved", { description: p.name });
                                 }}
                               >
@@ -562,6 +595,14 @@ export function AdminPartnersPage() {
                                   );
                                   setPartners(next);
                                   partnerList = next;
+                                  import("@/lib/activity-log").then(({ logActivity }) =>
+                                    logActivity({
+                                      eventType: "USER_SUSPEND",
+                                      targetType: "partner",
+                                      targetId: p.id,
+                                      summary: `Suspended partner ${p.name}`,
+                                    }),
+                                  );
                                   toast.info("Partner suspended", { description: p.name });
                                 }}
                               >

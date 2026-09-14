@@ -3,12 +3,17 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
+  updatePassword,
   updateProfile,
+  deleteUser,
   type User as FirebaseUser,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -45,6 +50,37 @@ export async function loginWithGoogle() {
 
 export async function logoutFirebase() {
   return firebaseSignOut(auth);
+}
+
+/** Change the signed-in user's password after re-authenticating. */
+export async function changeAccountPassword(currentPassword: string, newPassword: string) {
+  const user = auth.currentUser;
+  if (!user?.email) throw new Error("No signed-in user with an email address");
+  const cred = EmailAuthProvider.credential(user.email, currentPassword);
+  await reauthenticateWithCredential(user, cred);
+  await updatePassword(user, newPassword);
+}
+
+/**
+ * Permanently delete the signed-in Firebase Auth user.
+ * Pass the account password for email/password accounts; Google users are
+ * re-authenticated with a popup when no password is given.
+ */
+export async function deleteOwnAccount(password?: string) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("No signed-in user");
+  try {
+    if (password && user.email) {
+      const cred = EmailAuthProvider.credential(user.email, password);
+      await reauthenticateWithCredential(user, cred);
+    } else {
+      await reauthenticateWithPopup(user, googleProvider);
+    }
+  } catch (err: any) {
+    if (err?.code === "auth/popup-closed-by-user") throw new Error("Confirmation cancelled");
+    throw err;
+  }
+  await deleteUser(user);
 }
 
 export function onAuthChange(callback: (user: FirebaseUser | null) => void) {

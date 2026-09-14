@@ -32,6 +32,7 @@ import { Route as AdminNotificationsRouteImport } from './routes/admin.notificat
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
 import { Route as AdminPayoutsRouteImport } from './routes/admin.payouts'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as CompetitionsIndexRouteImport } from './routes/competitions/index'
 import { Route as CompetitionsSlugRouteImport } from './routes/competitions.$slug'
@@ -170,6 +171,11 @@ const AdminReportsRoute = AdminReportsRouteImport.update({
   path: '/admin/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/admin/settings',
+  path: '/admin/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
@@ -306,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payouts': typeof AdminPayoutsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
@@ -352,6 +359,7 @@ export interface FileRoutesByTo {
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payouts': typeof AdminPayoutsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
@@ -400,6 +408,7 @@ export interface FileRoutesById {
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/payouts': typeof AdminPayoutsRoute
   '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
@@ -449,6 +458,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/payouts'
     | '/admin/reports'
+    | '/admin/settings'
     | '/admin/users'
     | '/competitions/$slug'
     | '/dashboard/competitions'
@@ -495,6 +505,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/payouts'
     | '/admin/reports'
+    | '/admin/settings'
     | '/admin/users'
     | '/competitions/$slug'
     | '/dashboard/competitions'
@@ -542,6 +553,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/payouts'
     | '/admin/reports'
+    | '/admin/settings'
     | '/admin/users'
     | '/competitions/$slug'
     | '/dashboard/competitions'
@@ -590,6 +602,7 @@ export interface RootRouteChildren {
   AdminPartnersRoute: typeof AdminPartnersRoute
   AdminPayoutsRoute: typeof AdminPayoutsRoute
   AdminReportsRoute: typeof AdminReportsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   DashboardCompetitionsRoute: typeof DashboardCompetitionsRoute
   DashboardEntriesRoute: typeof DashboardEntriesRoute
@@ -773,6 +786,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/reports'
       fullPath: '/admin/reports'
       preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/users': {
@@ -980,6 +1000,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPartnersRoute: AdminPartnersRoute,
   AdminPayoutsRoute: AdminPayoutsRoute,
   AdminReportsRoute: AdminReportsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
   DashboardCompetitionsRoute: DashboardCompetitionsRoute,
   DashboardEntriesRoute: DashboardEntriesRoute,

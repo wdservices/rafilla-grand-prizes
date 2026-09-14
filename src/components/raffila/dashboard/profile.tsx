@@ -127,11 +127,20 @@ export function DashboardProfilePage() {
           handle: form.username,
         });
 
-        const { setFirebaseSession } = await import("@/lib/auth-store");
+        const [{ setFirebaseSession }, { logActivity }] = await Promise.all([
+          import("@/lib/auth-store"),
+          import("@/lib/activity-log"),
+        ]);
         setFirebaseSession({
           ...user!,
           handle: form.username,
           phone: form.phone,
+        });
+        void logActivity({
+          eventType: "USER_UPDATE",
+          targetType: "user",
+          targetId: uid,
+          summary: "Updated profile details",
         });
       }
       setSaved(true);

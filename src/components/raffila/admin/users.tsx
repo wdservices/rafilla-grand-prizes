@@ -475,7 +475,17 @@ export function AdminUsersPage() {
                           ) : (
                             <DropdownMenuItem
                               className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-mint-700 focus:bg-mint/20"
-                              onClick={() => toast.success(`${u.name} reactivated`)}
+                              onClick={() => {
+                                import("@/lib/activity-log").then(({ logActivity }) =>
+                                  logActivity({
+                                    eventType: "USER_ACTIVATE",
+                                    targetType: "user",
+                                    targetId: u.id,
+                                    summary: `Reactivated ${u.name}`,
+                                  }),
+                                );
+                                toast.success(`${u.name} reactivated`);
+                              }}
                             >
                               <UserCheck className="mr-2 size-4" /> Activate
                             </DropdownMenuItem>
@@ -540,6 +550,18 @@ export function AdminUsersPage() {
             <Button
               variant="primary"
               onClick={() => {
+                import("@/lib/activity-log").then(({ logActivity }) =>
+                  logActivity({
+                    eventType: "USER_SUSPEND",
+                    targetType: "user",
+                    ...(suspendUser?.id ? { targetId: suspendUser.id } : {}),
+                    summary: `Suspended ${suspendUser?.name}`,
+                    details: {
+                      reason: suspendReason || "No reason given",
+                      logoutSessions,
+                    },
+                  }),
+                );
                 toast.success("User suspended", {
                   description: `${suspendUser?.name} · action logged to audit trail.`,
                 });
@@ -641,6 +663,20 @@ export function AdminUsersPage() {
               variant="primary"
               onClick={() => {
                 const amt = parseInt(walletAmount || "0", 10);
+                import("@/lib/activity-log").then(({ logActivity }) =>
+                  logActivity({
+                    eventType: "WALLET_ADJUST",
+                    targetType: "user",
+                    ...(walletUser?.id ? { targetId: walletUser.id } : {}),
+                    summary: `${walletType === "credit" ? "Credited" : "Debited"} ${formatNaira(amt * 100)} ${walletType === "credit" ? "to" : "from"} ${walletUser?.name}`,
+                    details: {
+                      direction: walletType,
+                      amountKobo: amt * 100,
+                      reason: walletReason || "No reason given",
+                      emailReceipt: walletEmail,
+                    },
+                  }),
+                );
                 toast.success("Wallet adjusted", {
                   description: `${walletType.toUpperCase()} ${formatNaira(amt * 100)} for ${walletUser?.name}.`,
                 });

@@ -123,9 +123,91 @@ export function DashboardSecurityPage() {
   const [cf, setCf] = useState("");
   const [show, setShow] = useState({ cur: false, n: false, c: false });
   const [saved, setSaved] = useState(false);
+  const [pwError, setPwError] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
   const [endedAll, setEndedAll] = useState(false);
   const [endedIds, setEndedIds] = useState<Set<number>>(new Set());
   const [setup2fa, setSetup2fa] = useState(false);
+  const [delOpen, setDelOpen] = useState(false);
+  const [delPw, setDelPw] = useState("");
+  const [delConfirm, setDelConfirm] = useState("");
+  const [delError, setDelError] = useState("");
+  const [delSaving, setDelSaving] = useState(false);
+
+  const changePassword = async () => {
+    if (!nw || !match || !cur || pwSaving) return;
+    setPwSaving(true);
+    setPwError("");
+    try {
+      const [{ changeAccountPassword }, { logActivity }] = await Promise.all([
+        import("@/lib/firebase-auth"),
+        import("@/lib/activity-log"),
+      ]);
+      await changeAccountPassword(cur, nw);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2200);
+      setCur("");
+      setNw("");
+      setCf("");
+      await logActivity({
+        eventType: "AUTH_PASSWORD_CHANGE",
+        targetType: "user",
+        summary: "Changed account password",
+      });
+    } catch (err: any) {
+      const code = err?.code as string | undefined;
+      setPwError(
+        code === "auth/wrong-password" || code === "auth/invalid-credential"
+          ? "Current password is incorrect"
+          : code === "auth/requires-recent-login"
+            ? "Session expired — sign out and sign in again, then retry"
+            : err?.message || "Password change failed",
+      );
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (delConfirm !== "DELETE" || delSaving) return;
+    setDelSaving(true);
+    setDelError("");
+    try {
+      const { getSession } = await import("@/lib/auth-store");
+      const session = getSession();
+      const uid = session?.user?.id?.replace("firebase_", "");
+      const [{ deleteOwnAccount }, { logActivity }] = await Promise.all([
+        import("@/lib/firebase-auth"),
+        import("@/lib/activity-log"),
+      ]);
+      // Log + clean up while still authenticated (rules require auth).
+      await logActivity({
+        eventType: "USER_DELETE",
+        targetType: "user",
+        ...(uid ? { targetId: uid } : {}),
+        summary: `Deleted own account (${session?.user?.email ?? "unknown"})`,
+      });
+      if (uid) {
+        const { doc, deleteDoc } = await import("firebase/firestore");
+        const { db } = await import("@/lib/firebase");
+        await deleteDoc(doc(db, "users", uid)).catch(() => {});
+      }
+      await deleteOwnAccount(delPw || undefined);
+      const { signOut } = await import("@/lib/auth-store");
+      signOut();
+      window.location.href = "/";
+    } catch (err: any) {
+      const code = err?.code as string | undefined;
+      setDelError(
+        code === "auth/wrong-password" || code === "auth/invalid-credential"
+          ? "Password is incorrect"
+          : code === "auth/requires-recent-login"
+            ? "Session expired — sign out and sign in again, then retry"
+            : err?.message || "Account deletion failed",
+      );
+      setDelSaving(false);
+    }
+  };
 
   const st = strength(nw);
   const match = nw && cf && nw === cf;
@@ -206,20 +288,16 @@ export function DashboardSecurityPage() {
                 <Check className="size-3.5" /> Password updated
               </span>
             )}
+            {pwError && <p className="text-xs font-bold text-rose">{pwError}</p>}
             <Button
               variant="primary"
               size="lg"
+              disabled={pwSaving || !nw || !match || !cur}
               onClick={() => {
-                if (!nw || !match || !cur) return;
-                setSaved(true);
-                setTimeout(() => setSaved(false), 2200);
-                setCur("");
-                setNw("");
-                setCf("");
+                void changePassword();
               }}
-              disabled={!nw || !match || !cur}
             >
-              Update password
+              {pwSaving ? "Updating…" : "Update password"}
             </Button>
           </div>
         </div>
@@ -495,6 +573,83 @@ export function DashboardSecurityPage() {
           </div>
         </div>
       )}
+
+        <div className="rounded-[24px] bg-white p-6 ring-1 ring-coral/25 sm:p-8">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="size-5 text-coral" />
+            <h2 className="font-display text-xl font-extrabold text-ink">Danger zone</h2>
+          </div>
+          <p className="mt-1 text-xs font-bold text-ink/45">
+            Permanently delete your Raffila account, profile data and auth login. This cannot be
+            undone and is recorded in the audit trail.
+          </p>
+          {!delOpen ? (
+            <Button
+              variant="outline"
+              size="lg"
+              className="mt-5 rounded-full border-coral/40 text-coral hover:bg-coral hover:text-white"
+              onClick={() => {
+                setDelOpen(true);
+                setDelError("");
+              }}
+            >
+              Delete my account
+            </Button>
+          ) : (
+            <div className="mt-5 space-y-4 rounded-2xl bg-coral/5 p-4 ring-1 ring-coral/20">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <PwField
+                  label="Account password (email accounts)"
+                  value={delPw}
+                  onChange={setDelPw}
+                  show={false}
+                  onToggle={() => {}}
+                />
+                <div>
+                  <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                    Type DELETE to confirm
+                  </label>
+                  <div className="flex min-h-11 items-center rounded-2xl bg-cream px-4 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral/20 transition-all">
+                    <input
+                      value={delConfirm}
+                      onChange={(e) => setDelConfirm(e.target.value)}
+                      placeholder="DELETE"
+                      className="w-full bg-transparent text-sm font-bold text-ink outline-none placeholder:text-ink/30"
+                    />
+                  </div>
+                </div>
+              </div>
+              <p className="text-[11px] font-bold text-ink/50">
+                Google accounts: leave the password blank — you'll confirm with a Google prompt
+                instead.
+              </p>
+              {delError && <p className="text-xs font-bold text-rose">{delError}</p>}
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDelOpen(false);
+                    setDelPw("");
+                    setDelConfirm("");
+                    setDelError("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  className="bg-coral hover:bg-coral/90"
+                  disabled={delConfirm !== "DELETE" || delSaving}
+                  onClick={() => {
+                    void deleteAccount();
+                  }}
+                >
+                  {delSaving ? "Deleting…" : "Permanently delete account"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
     </DashboardAppShell>
   );
 }

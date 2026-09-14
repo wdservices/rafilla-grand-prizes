@@ -333,11 +333,19 @@ export function AdminPayoutsPage() {
               {selectedCount > 0 && (
                 <Button
                   variant="primary"
-                  onClick={() =>
+                  onClick={() => {
+                    import("@/lib/activity-log").then(({ logActivity }) =>
+                      logActivity({
+                        eventType: "PAYOUT_INITIATE",
+                        targetType: "payout_batch",
+                        summary: `Queued ${selectedCount} payouts for processing`,
+                        details: { count: selectedCount },
+                      }),
+                    );
                     toast.success(`${selectedCount} payouts queued for processing`, {
                       description: "Settlement batch created.",
-                    })
-                  }
+                    });
+                  }}
                 >
                   <PlayCircle className="size-4" /> Process selected ({selectedCount})
                 </Button>
@@ -522,11 +530,20 @@ export function AdminPayoutsPage() {
                               {(p.status === "PENDING" || p.status === "FAILED") && (
                                 <DropdownMenuItem
                                   className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink"
-                                  onClick={() =>
+                                  onClick={() => {
+                                    import("@/lib/activity-log").then(({ logActivity }) =>
+                                      logActivity({
+                                        eventType: "PAYOUT_INITIATE",
+                                        targetType: "payout",
+                                        targetId: p.id,
+                                        summary: `Processing payout ${p.id} (${formatNaira(p.amount)})`,
+                                        details: { amountKobo: p.amount },
+                                      }),
+                                    );
                                     toast.success("Processing payout", {
                                       description: `${p.id} · ${formatNaira(p.amount)}`,
-                                    })
-                                  }
+                                    });
+                                  }}
                                 >
                                   <PlayCircle className="mr-2 size-4" /> Process
                                 </DropdownMenuItem>
@@ -534,9 +551,18 @@ export function AdminPayoutsPage() {
                               {p.status === "PROCESSING" && (
                                 <DropdownMenuItem
                                   className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-mint-700 focus:bg-mint/20"
-                                  onClick={() =>
-                                    toast.success("Payout marked paid", { description: p.id })
-                                  }
+                                  onClick={() => {
+                                    import("@/lib/activity-log").then(({ logActivity }) =>
+                                      logActivity({
+                                        eventType: "PAYOUT_COMPLETE",
+                                        targetType: "payout",
+                                        targetId: p.id,
+                                        summary: `Marked payout ${p.id} as paid (${formatNaira(p.amount)})`,
+                                        details: { amountKobo: p.amount },
+                                      }),
+                                    );
+                                    toast.success("Payout marked paid", { description: p.id });
+                                  }}
                                 >
                                   <CheckCircle2 className="mr-2 size-4" /> Mark paid
                                 </DropdownMenuItem>
@@ -544,9 +570,17 @@ export function AdminPayoutsPage() {
                               {(p.status === "PAID" || p.status === "PROCESSING") && (
                                 <DropdownMenuItem
                                   className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15"
-                                  onClick={() =>
-                                    toast.info("Reversal requested", { description: p.id })
-                                  }
+                                  onClick={() => {
+                                    import("@/lib/activity-log").then(({ logActivity }) =>
+                                      logActivity({
+                                        eventType: "PAYOUT_REVERSE",
+                                        targetType: "payout",
+                                        targetId: p.id,
+                                        summary: `Requested reversal of payout ${p.id}`,
+                                      }),
+                                    );
+                                    toast.info("Reversal requested", { description: p.id });
+                                  }}
                                 >
                                   <Undo2 className="mr-2 size-4" /> Reverse
                                 </DropdownMenuItem>

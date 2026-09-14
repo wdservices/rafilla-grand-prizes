@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteFooter } from "@/components/raffila/site-footer";
 import { SiteHeader } from "@/components/raffila/site-header";
 import { CookieConsentBanner } from "@/components/raffila/cookie";
+import { Toaster } from "@/components/ui/sonner";
 import { ErrorPage } from "@/components/raffila/error-page";
 import { canAccessRoute } from "@/lib/auth-store";
 
@@ -165,6 +166,7 @@ function RootComponent() {
         </main>
         {!hidePublicChrome && <SiteFooter />}
         {!hidePublicChrome && <CookieConsentBanner />}
+        <Toaster position="top-center" richColors closeButton />
       </div>
     </QueryClientProvider>
   );

@@ -81,6 +81,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AdminShell } from "@/components/raffila/admin/admin-shell";
 import { AssetUploader } from "@/components/raffila/admin/asset-uploader";
 import { cn, formatNaira } from "@/lib/utils";
+import { logActivity } from "@/lib/activity-log";
 import { db } from "@/lib/firebase";
 
 type CompStatus = "DRAFT" | "SCHEDULED" | "LIVE" | "COMPLETED";
@@ -455,6 +456,20 @@ export function AdminCompetitionsPage() {
 
       setSubmitting(false);
       setSubmitted(true);
+      void logActivity({
+        eventType: modalMode === "edit" ? "COMPETITION_UPDATE" : "COMPETITION_CREATE",
+        targetType: "competition",
+        targetId: compId,
+        summary: `${modalMode === "edit" ? "Updated" : "Created"} competition "${form.assetName || form.name}" (${form.status})`,
+        details: {
+          title: form.name,
+          category: form.category,
+          partner: form.partner,
+          status: form.status,
+          entryPriceKobo: Math.round(Number(form.ticketPrice) * 100),
+          totalEntries: Number(form.totalEntries),
+        },
+      });
       toast.success(`${modalMode === "edit" ? "Competition updated" : "Competition created"}`, {
         description: `${form.assetName || form.name || "Untitled competition"} · saved as ${form.status} · ${compId}`,
       });

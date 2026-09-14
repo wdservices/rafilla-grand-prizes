@@ -21,6 +21,7 @@ import {
   firebaseUserToRaffilaUser,
   updateProfile,
 } from "@/lib/firebase-auth";
+import { logActivity } from "@/lib/activity-log";
 import {
   checkUsernameAvailability,
   checkEmailAvailability,
@@ -80,7 +81,16 @@ export function useAuthActions() {
       // Firebase Auth only — role comes from the Firestore user document.
       try {
         const cred = await loginWithEmail(input.email, input.password, remember);
-        const profile = await getUserProfile(cred.user.uid);
+        let profile = await getUserProfile(cred.user.uid);
+
+        // Pending admin invite for this email? (e.g. account created in the
+        // Firebase Console after the invite was sent.) Apply it now.
+        if (profile?.["role"] !== "admin") {
+          const { consumeAdminInvite } = await import("@/lib/activity-log");
+          if (await consumeAdminInvite(cred.user.email || input.email, cred.user.uid)) {
+            profile = await getUserProfile(cred.user.uid);
+          }
+        }
 
         const raffilaUser = firebaseUserToRaffilaUser(cred.user, profile ?? {});
         const user: RaffilaUser = {
@@ -100,6 +110,11 @@ export function useAuthActions() {
         }
 
         const redirect = user.role === "admin" ? "/admin" : "/dashboard";
+        void logActivity({
+          eventType: "AUTH_LOGIN",
+          targetType: "session",
+          summary: `Signed in with email`,
+        });
         setTimeout(() => void navigate({ to: redirect as any }), 0);
         return { ok: true, user, redirect };
       } catch (err: any) {
@@ -158,6 +173,14 @@ export function useAuthActions() {
           }
         }
 
+        // Pending admin invite for this email? Apply it now.
+        if (profile?.["role"] !== "admin") {
+          const { consumeAdminInvite } = await import("@/lib/activity-log");
+          if (await consumeAdminInvite(fbUser.email || "", fbUser.uid)) {
+            profile = await getUserProfile(fbUser.uid);
+          }
+        }
+
         const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
 
         if (!raffilaUser.profileComplete) {
@@ -168,6 +191,11 @@ export function useAuthActions() {
             profileComplete: false,
           };
           setFirebaseSession(user, true);
+          void logActivity({
+            eventType: "AUTH_REGISTER",
+            targetType: "session",
+            summary: `Started Google registration`,
+          });
           return { ok: true, user, redirect: "/auth?mode=complete", needsProfile: true };
         }
 
@@ -179,6 +207,11 @@ export function useAuthActions() {
         setFirebaseSession(user, true);
 
         const redirect = user.role === "admin" ? "/admin" : "/dashboard";
+        void logActivity({
+          eventType: "AUTH_LOGIN",
+          targetType: "session",
+          summary: `Signed in with Google`,
+        });
         setTimeout(() => void navigate({ to: redirect as any }), 0);
         return { ok: true, user, redirect, needsProfile: false };
       } catch (err: any) {
@@ -248,6 +281,10 @@ export function useAuthActions() {
           uid: cred.user.uid,
         });
 
+        // Pending admin invite for this email? Apply it now.
+        const { consumeAdminInvite } = await import("@/lib/activity-log");
+        await consumeAdminInvite(cleanEmail, cred.user.uid);
+
         const profile = await getUserProfile(cred.user.uid);
         const raffilaUser = firebaseUserToRaffilaUser(cred.user, profile ?? {});
         const user: RaffilaUser = { ...raffilaUser, id: `firebase_${cred.user.uid}` };
@@ -258,6 +295,12 @@ export function useAuthActions() {
           window.localStorage.setItem("raffila:remember_me", "true");
         }
 
+        void logActivity({
+          eventType: "AUTH_REGISTER",
+          targetType: "user",
+          targetId: cred.user.uid,
+          summary: `Created account (${cleanUsername})`,
+        });
         return { ok: true, user };
       } catch (err: any) {
         const message =
@@ -327,6 +370,12 @@ export function useAuthActions() {
           profileComplete: true,
         };
         setFirebaseSession(updatedUser, true);
+        void logActivity({
+          eventType: "USER_UPDATE",
+          targetType: "user",
+          targetId: uid,
+          summary: `Completed registration (${chosenHandle || updatedUser.email})`,
+        });
         return { ok: true };
       } catch (err: any) {
         return { ok: false, message: err?.message || "Failed to save profile" };
@@ -334,6 +383,8 @@ export function useAuthActions() {
     },
 
     signOut(target: { to?: "/" | "/auth" } = { to: "/auth" }) {
+      // Log while the session is still available.
+      void logActivity({ eventType: "AUTH_LOGOUT", targetType: "session", summary: "Signed out" });
       logoutFirebase().catch(() => {});
       signOut();
       setTimeout(() => void navigate({ to: target.to as any }), 0);

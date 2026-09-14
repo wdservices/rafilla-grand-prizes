@@ -6,6 +6,7 @@ export * from "./competitions";
 export * from "./payouts";
 export * from "./reports";
 export * from "./config";
+export * from "./settings";
 export * from "./audit-logs";
 export * from "./fraud";
 export * from "./notifications-admin";
