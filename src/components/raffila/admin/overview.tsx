@@ -1,3 +1,11 @@
+import { useEffect, useState } from "react";
+import {
+  collection,
+  getDocs,
+  limit,
+  query,
+  where,
+} from "firebase/firestore";
 import {
   Users,
   Trophy,
@@ -26,6 +34,7 @@ import {
 } from "@/components/ui/table";
 import { AdminShell } from "@/components/raffila/admin/admin-shell";
 import { cn, formatNaira } from "@/lib/utils";
+import { db } from "@/lib/firebase";
 
 interface KpiCardProps {
   label: string;
@@ -98,36 +107,25 @@ function KpiCard({ label, value, sub, delta, deltaPositive, icon: Icon, tone }: 
   );
 }
 
-function DualChartBars() {
+function DualChartBars({ tickets, revenueBase }: { tickets: number[]; revenueBase: number[] }) {
   const days = 14;
   const w = 720;
   const h = 240;
   const pad = 28;
-  const tickets = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-  const revenueBase = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-  const maxT = Math.max(...tickets) * 1.15;
-  const maxR = Math.max(...revenueBase) * 1.15;
+  const t = Array.from({ length: days }, (_, i) => tickets[i] ?? 0);
+  const r = Array.from({ length: days }, (_, i) => revenueBase[i] ?? 0);
+  const maxT = Math.max(1, ...t) * 1.15;
+  const maxR = Math.max(1, ...r) * 1.15;
   const barArea = w - pad * 2;
   const bw = (barArea / days) * 0.38;
   const gap = (barArea / days) * 0.62;
   const toYT = (v: number) => h - pad - (v / maxT) * (h - pad * 2);
   const toYR = (v: number) => h - pad - (v / maxR) * (h - pad * 2);
-  const labels = [
-    "Mon 1",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-    "Sat",
-    "Sun",
-    "Mon 8",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-    "Sat",
-    "Sun",
-  ];
+  const now = new Date();
+  const labels = Array.from({ length: days }, (_, i) => {
+    const d = new Date(now.getTime() - (days - 1 - i) * 86400000);
+    return d.toLocaleDateString("en-NG", { weekday: "short", day: "numeric" });
+  });
   const coralOklch = "oklch(0.75 0.14 35)";
   const skyOklch = "oklch(0.76 0.12 255)";
   const gridOklch = "oklch(0.929 0.013 255.508)";
@@ -141,7 +139,7 @@ function DualChartBars() {
         </pattern>
       </defs>
       <rect x={pad} y={pad} width={w - pad * 2} height={h - pad * 2} fill="url(#agrid)" rx="12" />
-      {tickets.map((v, i) => {
+      {t.map((v, i) => {
         const x = pad + i * (bw + gap) + gap / 2;
         const bh = (v / maxT) * (h - pad * 2);
         const y = h - pad - bh;
@@ -158,7 +156,7 @@ function DualChartBars() {
           />
         );
       })}
-      {revenueBase.map((v, i) => {
+      {r.map((v, i) => {
         const x = pad + i * (bw + gap) + gap / 2 + bw;
         const bh = (v / maxR) * (h - pad * 2);
         const y = h - pad - bh;
@@ -190,13 +188,13 @@ function DualChartBars() {
       ))}
       <circle
         cx={pad + 13 * (bw + gap) + gap / 2 + bw / 2}
-        cy={toYT(tickets[13]!)}
+        cy={toYT(t[13]!)}
         r="3.5"
         fill={coralOklch}
       />
       <circle
         cx={pad + 13 * (bw + gap) + gap / 2 + bw + bw / 2}
-        cy={toYR(revenueBase[13]!)}
+        cy={toYR(r[13]!)}
         r="3.5"
         fill={skyOklch}
       />
@@ -204,14 +202,15 @@ function DualChartBars() {
   );
 }
 
-const REGISTRATIONS: Array<{
+interface RegistrationRow {
+  id: string;
   name: string;
   email: string;
   initials: string;
   tint: "coral" | "sky" | "mint" | "lemon" | "lilac";
   date: string;
   verified: boolean;
-}> = [];
+}
 
 const tintBg: Record<string, string> = {
   sky: "bg-sky/30 text-ink",
@@ -222,25 +221,64 @@ const tintBg: Record<string, string> = {
   ink: "bg-ink/10 text-ink",
 };
 
-const PAYOUTS_QUEUE: Array<{
+const REG_TINTS: RegistrationRow["tint"][] = ["coral", "sky", "mint", "lemon", "lilac"];
+
+interface PayoutRow {
+  id: string;
   user: string;
   initials: string;
   tint: "lemon" | "sky" | "mint" | "coral" | "lilac";
   amount: number;
-}> = [];
+}
 
 type CompStatus = "DRAFT" | "SCHEDULED" | "LIVE" | "DRAWING" | "RESULTED" | "CLOSED" | "COMPLETED";
 
-const COMP_LIFECYCLE: Array<{ name: string; pct: number; status: CompStatus; action: string }> = [
-  { name: "Mercedes-Benz C-Class 2025", pct: 0, status: "LIVE", action: "Monitor entries" },
-  { name: "Nova X1 Tech Bundle", pct: 0, status: "DRAWING", action: "Start draw now" },
-  { name: "Luxury 2-Bed Apartment", pct: 0, status: "SCHEDULED", action: "Review asset" },
-  { name: "Ikeja Home Studio", pct: 0, status: "RESULTED", action: "Verify winner" },
-  { name: "Abuja Generator Pack", pct: 0, status: "COMPLETED", action: "Archive" },
-  { name: "PH Laptop Suite", pct: 0, status: "CLOSED", action: "Settle partner" },
-  { name: "Eko Weekend Giveaway", pct: 0, status: "DRAFT", action: "Publish schedule" },
-  { name: "Lekki Jewelry Set", pct: 0, status: "DRAFT", action: "Add asset" },
-];
+function toMs(value: unknown): number {
+  try {
+    const v = value as any;
+    if (v && typeof v.toDate === "function") return (v.toDate() as Date).getTime();
+  } catch {
+    // ignore
+  }
+  if (typeof value === "string" && value) {
+    const t = new Date(value).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }
+  if (typeof value === "number") return value;
+  return 0;
+}
+
+function initialsOfName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.slice(0, 1) ?? "") + (parts[1]?.slice(0, 1) ?? "")).toUpperCase() || "U";
+}
+
+function mapCompStatus(raw: unknown): CompStatus {
+  const s = String(raw ?? "").toUpperCase();
+  const known: CompStatus[] = ["DRAFT", "SCHEDULED", "LIVE", "DRAWING", "RESULTED", "CLOSED", "COMPLETED"];
+  if ((known as string[]).includes(s)) return s as CompStatus;
+  if (s === "ENDED") return "CLOSED";
+  return "SCHEDULED";
+}
+
+function actionFor(status: CompStatus): string {
+  switch (status) {
+    case "LIVE":
+      return "Monitor entries";
+    case "DRAWING":
+      return "Start draw now";
+    case "SCHEDULED":
+      return "Review asset";
+    case "RESULTED":
+      return "Verify winner";
+    case "COMPLETED":
+      return "Archive";
+    case "CLOSED":
+      return "Settle partner";
+    default:
+      return "Publish schedule";
+  }
+}
 
 const statusTone: Record<CompStatus, string> = {
   DRAFT: "bg-ink/10 text-ink",
@@ -253,6 +291,188 @@ const statusTone: Record<CompStatus, string> = {
 };
 
 export function AdminOverview() {
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [userWeekDelta, setUserWeekDelta] = useState("—");
+  const [userWeekUp, setUserWeekUp] = useState(true);
+  const [activeComps, setActiveComps] = useState(0);
+  const [totalComps, setTotalComps] = useState(0);
+  const [tickets7d, setTickets7d] = useState(0);
+  const [revenue7d, setRevenue7d] = useState(0);
+  const [revenueMtd, setRevenueMtd] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingSum, setPendingSum] = useState(0);
+  const [referralPool, setReferralPool] = useState(0);
+  const [chartTickets, setChartTickets] = useState<number[]>(Array(14).fill(0));
+  const [chartRevenue, setChartRevenue] = useState<number[]>(Array(14).fill(0));
+  const [registrations, setRegistrations] = useState<RegistrationRow[]>([]);
+  const [payoutQueue, setPayoutQueue] = useState<PayoutRow[]>([]);
+  const [lifecycle, setLifecycle] = useState<
+    Array<{ name: string; pct: number; status: CompStatus; action: string }>
+  >([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const [usersSnap, compsSnap, purchaseSnap, payoutSnap] = await Promise.all([
+          getDocs(query(collection(db, "users"), limit(300))),
+          getDocs(query(collection(db, "competitions"), limit(100))),
+          getDocs(
+            query(
+              collection(db, "activityLogs"),
+              where("eventType", "==", "TICKET_PURCHASE"),
+              limit(500),
+            ),
+          ),
+          getDocs(query(collection(db, "payouts"), limit(100))).catch(() => null),
+        ]);
+        if (cancelled) return;
+
+        const now = Date.now();
+        const dayMs = 86400000;
+        const weekAgo = now - 7 * dayMs;
+        const twoWeeksAgo = now - 14 * dayMs;
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+
+        // Users
+        const userDocs = usersSnap.docs.map((d) => ({
+          id: d.id,
+          v: d.data() as Record<string, unknown>,
+        }));
+        setTotalUsers(userDocs.length);
+        let thisWeek = 0;
+        let prevWeek = 0;
+        let pool = 0;
+        const regs: Array<{ ms: number; row: RegistrationRow }> = [];
+        userDocs.forEach((u, i) => {
+          const ms = toMs(u.v["createdAt"]);
+          if (ms >= weekAgo) thisWeek++;
+          else if (ms >= twoWeeksAgo) prevWeek++;
+          pool += Number(u.v["referralEarningsKobo"] ?? 0) || 0;
+          const first = (u.v["firstName"] as string) || "";
+          const last = (u.v["lastName"] as string) || "";
+          const display =
+            (u.v["displayName"] as string) || `${first} ${last}`.trim() || u.v["handle"] || u.id.slice(0, 8);
+          regs.push({
+            ms,
+            row: {
+              id: u.id,
+              name: String(display),
+              email: (u.v["email"] as string) || "",
+              initials: initialsOfName(String(display)),
+              tint: REG_TINTS[i % REG_TINTS.length]!,
+              date: ms ? new Date(ms).toLocaleDateString("en-NG", { day: "2-digit", month: "short" }) : "—",
+              verified: u.v["verified"] === true,
+            },
+          });
+        });
+        setReferralPool(pool);
+        if (prevWeek > 0) {
+          const pct = Math.round(((thisWeek - prevWeek) / prevWeek) * 100);
+          setUserWeekDelta(`${pct >= 0 ? "+" : ""}${pct}% week`);
+          setUserWeekUp(pct >= 0);
+        } else {
+          setUserWeekDelta(thisWeek > 0 ? `${thisWeek} new this week` : "0% week");
+          setUserWeekUp(true);
+        }
+        regs.sort((a, b) => b.ms - a.ms);
+        setRegistrations(regs.slice(0, 6).map((r) => r.row));
+
+        // Competitions
+        const comps = compsSnap.docs.map((d) => ({ id: d.id, v: d.data() as Record<string, unknown> }));
+        setTotalComps(comps.length);
+        setActiveComps(comps.filter((c) => String(c.v["status"] ?? "").toUpperCase() === "LIVE").length);
+        setLifecycle(
+          comps.slice(0, 8).map((c) => {
+            const total = Number(c.v["totalEntries"] ?? 0) || 0;
+            const sold = Number(c.v["entriesSold"] ?? 0) || 0;
+            const status = mapCompStatus(c.v["status"]);
+            return {
+              name: String(c.v["title"] ?? c.v["name"] ?? c.id),
+              pct: total > 0 ? Math.min(100, Math.round((sold / total) * 100)) : 0,
+              status,
+              action: actionFor(status),
+            };
+          }),
+        );
+
+        // Ticket purchases → 7d / MTD / 14-day chart
+        const tickets = Array(14).fill(0) as number[];
+        const revenue = Array(14).fill(0) as number[];
+        let count7 = 0;
+        let rev7 = 0;
+        let revM = 0;
+        purchaseSnap.docs.forEach((d) => {
+          const v = d.data() as Record<string, unknown>;
+          const ms = toMs(v["createdAt"]) || toMs(v["clientAt"]);
+          if (!ms) return;
+          const det = (v["details"] as Record<string, unknown>) ?? {};
+          const amt = Number(det["entryPriceKobo"] ?? det["amountKobo"] ?? 0) || 0;
+          const dayIdx = Math.floor((now - ms) / dayMs);
+          if (dayIdx >= 0 && dayIdx < 14) {
+            tickets[13 - dayIdx]! += 1;
+            revenue[13 - dayIdx]! += amt;
+          }
+          if (ms >= weekAgo) {
+            count7++;
+            rev7 += amt;
+          }
+          if (ms >= monthStart.getTime()) revM += amt;
+        });
+        setChartTickets(tickets);
+        setChartRevenue(revenue);
+        setTickets7d(count7);
+        setRevenue7d(rev7);
+        setRevenueMtd(revM);
+
+        // Payouts (collection may not exist yet)
+        if (payoutSnap) {
+          const pend = payoutSnap.docs.filter((d) => {
+            const s = String((d.data() as Record<string, unknown>)["status"] ?? "").toLowerCase();
+            return s === "pending" || s === "processing" || s === "queued";
+          });
+          setPendingCount(pend.length);
+          let sum = 0;
+          const rows: PayoutRow[] = pend.slice(0, 5).map((d, i) => {
+            const v = d.data() as Record<string, unknown>;
+            const amt = Number(v["amountKobo"] ?? v["amount"] ?? 0) || 0;
+            sum += amt;
+            const who = String(v["userName"] ?? v["user"] ?? v["email"] ?? d.id);
+            return {
+              id: d.id,
+              user: who,
+              initials: initialsOfName(who),
+              tint: (["lemon", "sky", "mint", "coral", "lilac"] as const)[i % 5]!,
+              amount: amt,
+            };
+          });
+          setPendingSum(sum);
+          setPayoutQueue(rows);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          const code = err?.code as string | undefined;
+          setLoadError(
+            code === "permission-denied"
+              ? "Firestore denied access. Publish the latest firestore.rules, then refresh."
+              : err?.message || "Could not load dashboard data",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <AdminShell activeNav="dashboard" title="Dashboard">
       <header className="mb-6">
@@ -263,45 +483,58 @@ export function AdminOverview() {
           Dashboard
         </h1>
         <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
-          Key metrics and live snapshot of the Raffila platform.
+          Key metrics and live snapshot of the Raffila platform.{" "}
+          {!loading && !loadError && <span className="text-emerald-700">Live from Firestore.</span>}
         </p>
+        {loadError && (
+          <p className="mt-2 max-w-2xl rounded-xl bg-coral/10 px-4 py-2 text-sm font-bold text-coral">
+            {loadError}
+          </p>
+        )}
       </header>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <KpiCard
           label="Total users"
-          value="0"
-          delta="0% week"
-          deltaPositive
+          value={loading ? "…" : String(totalUsers)}
+          delta={userWeekDelta}
+          deltaPositive={userWeekUp}
           icon={Users}
           tone="ink"
         />
-        <KpiCard label="Active competitions" value="0" icon={Trophy} tone="sky" />
+        <KpiCard
+          label="Active competitions"
+          value={loading ? "…" : String(activeComps)}
+          {...(loading ? {} : { sub: `${totalComps} total` })}
+          icon={Trophy}
+          tone="sky"
+        />
         <KpiCard
           label="Tickets sold (7 days)"
-          value="0"
-          sub={formatNaira(0)}
-          delta="0%"
-          deltaPositive
+          value={loading ? "…" : String(tickets7d)}
+          sub={formatNaira(revenue7d)}
           icon={Ticket}
           tone="lemon"
         />
         <KpiCard
           label="Revenue (MTD)"
-          value={formatNaira(0)}
-          delta="0%"
-          deltaPositive
+          value={formatNaira(revenueMtd)}
           icon={DollarSign}
           tone="coral"
         />
         <KpiCard
           label="Pending payouts"
-          value="0"
-          sub={formatNaira(0)}
+          value={loading ? "…" : String(pendingCount)}
+          sub={formatNaira(pendingSum)}
           icon={Banknote}
           tone="lilac"
         />
-        <KpiCard label="Referral pool (all-time)" value={formatNaira(0)} icon={Gift} tone="mint" />
+        <KpiCard
+          label="Referral pool (all-time)"
+          value={formatNaira(referralPool)}
+          icon={Gift}
+          tone="mint"
+        />
       </section>
 
       <section className="mt-6">
@@ -326,7 +559,7 @@ export function AdminOverview() {
               </div>
             </div>
             <div className="mt-4 -mx-2">
-              <DualChartBars />
+              <DualChartBars tickets={chartTickets} revenueBase={chartRevenue} />
             </div>
           </CardContent>
         </Card>
@@ -361,7 +594,21 @@ export function AdminOverview() {
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-ink/10">
-                  {REGISTRATIONS.map((r, i) => (
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-8 text-center text-sm font-bold text-ink/55">
+                        Loading…
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!loading && registrations.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-8 text-center text-sm font-bold text-ink/55">
+                        No registrations yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {registrations.map((r, i) => (
                     <TableRow key={i} className="hover:bg-lilac/10">
                       <TableCell className="px-0 py-3">
                         <div className="flex items-center gap-3">
@@ -420,11 +667,16 @@ export function AdminOverview() {
                 </h3>
               </div>
               <Badge className="rounded-full bg-coral/15 px-2.5 py-1 text-[10px] font-extrabold text-coral ring-0">
-                0 items
+                {payoutQueue.length} items
               </Badge>
             </div>
             <div className="mt-4 space-y-2.5">
-              {PAYOUTS_QUEUE.map((p, i) => (
+              {!loading && payoutQueue.length === 0 && (
+                <p className="rounded-2xl bg-cream/50 px-4 py-6 text-center text-xs font-bold text-ink/55">
+                  No pending payouts.
+                </p>
+              )}
+              {payoutQueue.map((p, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-3 rounded-2xl bg-cream/50 px-3 py-2.5"
@@ -480,7 +732,21 @@ export function AdminOverview() {
                   </TableRow>
                 </TableHeader>
                 <TableBody className="[&_tr]:border-ink/10">
-                  {COMP_LIFECYCLE.map((c, i) => (
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-8 text-center text-sm font-bold text-ink/55">
+                        Loading…
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!loading && lifecycle.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-8 text-center text-sm font-bold text-ink/55">
+                        No competitions yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {lifecycle.map((c, i) => (
                     <TableRow key={i} className="hover:bg-lilac/10">
                       <TableCell className="px-0 py-3">
                         <p className="truncate text-sm font-extrabold text-ink max-w-[220px]">

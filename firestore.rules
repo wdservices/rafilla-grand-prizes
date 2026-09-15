@@ -116,5 +116,10 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow update, delete: if false;
     }
+
+    // Fraud case review states — admin only.
+    match /fraudCases/{caseId} {
+      allow read, write: if isAdmin();
+    }
   }
 }

@@ -490,16 +490,38 @@ export function AdminCompetitionsPage() {
         openEdit(comp);
         break;
       case "duplicate":
+        void logActivity({
+          eventType: "COMPETITION_CREATE",
+          targetType: "competition",
+          targetId: comp.slug,
+          summary: `Duplicated competition "${comp.name}" to DRAFT`,
+        });
         toast.success("Competition duplicated", {
           description: `Copy of ${comp.name} created in DRAFT.`,
         });
         break;
       case "pause":
+        void logActivity({
+          eventType: "COMPETITION_UPDATE",
+          targetType: "competition",
+          targetId: comp.slug,
+          summary: `${comp.status === "LIVE" ? "Paused" : "Resumed"} competition "${comp.name}"`,
+          oldValue: { status: comp.status },
+          newValue: { status: comp.status === "LIVE" ? "PAUSED" : "LIVE" },
+        });
         toast.success(comp.status === "LIVE" ? "Competition paused" : "Competition resumed", {
           description: `${comp.name} status toggled.`,
         });
         break;
       case "cancel":
+        void logActivity({
+          eventType: "COMPETITION_CANCEL",
+          targetType: "competition",
+          targetId: comp.slug,
+          summary: `Cancelled competition "${comp.name}" (no refunds auto-issued)`,
+          oldValue: { status: comp.status },
+          newValue: { status: "CANCELLED" },
+        });
         toast.warning("Competition cancelled", {
           description: `${comp.name} moved to CANCELLED · no refunds auto-issued.`,
         });
@@ -761,7 +783,15 @@ export function AdminCompetitionsPage() {
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={() => toast.success("Starting draw", { description: c.name })}
+                            onClick={() => {
+                              void logActivity({
+                                eventType: "COMPETITION_DRAW",
+                                targetType: "competition",
+                                targetId: c.slug,
+                                summary: `Started draw for "${c.name}"`,
+                              });
+                              toast.success("Starting draw", { description: c.name });
+                            }}
                           >
                             <PlayCircle className="size-3.5" />
                             Draw now
@@ -878,9 +908,15 @@ export function AdminCompetitionsPage() {
                               <Button
                                 variant="primary"
                                 size="sm"
-                                onClick={() =>
-                                  toast.success("Starting draw", { description: c.name })
-                                }
+                                onClick={() => {
+                                  void logActivity({
+                                    eventType: "COMPETITION_DRAW",
+                                    targetType: "competition",
+                                    targetId: c.slug,
+                                    summary: `Started draw for "${c.name}"`,
+                                  });
+                                  toast.success("Starting draw", { description: c.name });
+                                }}
                               >
                                 <PlayCircle className="size-3.5" />
                                 Draw
@@ -1334,6 +1370,15 @@ export function AdminCompetitionsPage() {
                   variant="ghost"
                   onClick={() => {
                     setSubmitted(true);
+                    void logActivity({
+                      eventType: "COMPETITION_UPDATE",
+                      targetType: "competition",
+                      targetId:
+                        form.slug ||
+                        form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") ||
+                        "unsaved-draft",
+                      summary: `Saved draft for "${form.assetName || form.name || "Untitled competition"}"`,
+                    });
                     toast.success("Draft saved", { description: "Saved without publishing." });
                   }}
                   disabled={submitting}

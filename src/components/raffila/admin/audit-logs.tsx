@@ -5,8 +5,10 @@ import {
   limit,
   orderBy,
   query,
+  where,
   type Timestamp,
 } from "firebase/firestore";
+import * as XLSX from "xlsx";
 import { db } from "@/lib/firebase";
 import { ACTIVITY_EVENTS, type ActivityEventType, type ActivityRisk } from "@/lib/activity-log";
 import { AdminShell } from "./admin-shell";
@@ -51,6 +53,8 @@ import {
   Calendar,
   Shield,
   Eye,
+  History,
+  Download,
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
@@ -98,6 +102,39 @@ interface AuditLog {
   oldValue: Record<string, unknown> | null;
   newValue: Record<string, unknown> | null;
   riskLevel: RiskLevel;
+}
+
+/** All audit timestamps render in West Africa Time (Africa/Lagos, GMT+1, no DST). */
+const LAGOS_TZ = "Africa/Lagos";
+
+function lagosDayKey(iso: string | number): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: LAGOS_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+}
+
+function formatLagosTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-NG", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: LAGOS_TZ,
+  });
+}
+
+function formatLagosDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-NG", {
+    day: "2-digit",
+    month: "short",
+    timeZone: LAGOS_TZ,
+  });
+}
+
+function formatLagosDateTime(iso: string): string {
+  return `${formatLagosDate(iso)}, ${formatLagosTime(iso)} GMT+1`;
 }
 
 function toIso(value: unknown, fallback?: unknown): string {
@@ -345,6 +382,105 @@ export function AdminAuditLogsPage() {
     );
   };
 
+  function logsToSheet(logs: AuditLog[]) {
+    return logs.map((l) => ({
+      Date: formatLagosDateTime(l.timestamp),
+      Actor: l.actorName,
+      Email: l.actorEmail,
+      ActorID: l.actorId,
+      Role: l.actorRole,
+      Event: l.eventType,
+      Target: l.targetType,
+      TargetID: l.targetId,
+      Risk: l.riskLevel,
+      Summary: l.summary || "",
+      Details: Object.keys(l.details || {}).length > 0 ? JSON.stringify(l.details) : "",
+    }));
+  }
+
+  const exportExcel = (logs: AuditLog[], filename: string) => {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(logsToSheet(logs));
+    ws["!cols"] = [
+      { wch: 20 },
+      { wch: 22 },
+      { wch: 28 },
+      { wch: 22 },
+      { wch: 10 },
+      { wch: 22 },
+      { wch: 16 },
+      { wch: 24 },
+      { wch: 10 },
+      { wch: 44 },
+      { wch: 50 },
+    ];
+    XLSX.utils.book_append_sheet(wb, ws, "Activity");
+    XLSX.writeFile(wb, filename);
+  };
+
+  // ---- Per-user consolidated history ----
+  const [historyActor, setHistoryActor] = useState<{
+    actorId: string;
+    actorName: string;
+    actorEmail: string;
+  } | null>(null);
+  const [historyLogs, setHistoryLogs] = useState<AuditLog[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  useEffect(() => {
+    if (!historyActor) return;
+    let cancelled = false;
+    (async () => {
+      setHistoryLoading(true);
+      try {
+        const snap = await getDocs(
+          query(
+            collection(db, "activityLogs"),
+            where("actorId", "==", historyActor.actorId),
+            limit(300),
+          ),
+        );
+        if (cancelled) return;
+        const rows = snap.docs.map((d) => docToLog(d.id, d.data() as Record<string, unknown>));
+        rows.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
+        setHistoryLogs(rows);
+      } catch {
+        if (!cancelled) setHistoryLogs([]);
+      } finally {
+        if (!cancelled) setHistoryLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [historyActor]);
+
+  const historyGroups = useMemo(() => {
+    const groups: Array<{ key: string; label: string; logs: AuditLog[] }> = [];
+    const now = Date.now();
+    const todayKey = lagosDayKey(now);
+    const yesterdayKey = lagosDayKey(now - 86400000);
+    for (const l of historyLogs) {
+      const dayKey = lagosDayKey(l.timestamp);
+      const label =
+        dayKey === todayKey
+          ? "Today"
+          : dayKey === yesterdayKey
+            ? "Yesterday"
+            : new Date(l.timestamp).toLocaleDateString("en-NG", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+                timeZone: LAGOS_TZ,
+              });
+      const last = groups[groups.length - 1];
+      if (last && last.label === label) last.logs.push(l);
+      else groups.push({ key: label, label, logs: [l] });
+    }
+    return groups;
+  }, [historyLogs]);
+
   return (
     <AdminShell activeNav="audit-logs" title="Audit Logs">
       <div className="space-y-5">
@@ -375,6 +511,15 @@ export function AdminAuditLogsPage() {
             </Button>
             <Button variant="outline" className="rounded-full" onClick={exportCsv}>
               <FileText className="w-4 h-4 mr-2" /> Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() =>
+                exportExcel(filtered, `raffila-audit-${new Date().toISOString().slice(0, 10)}.xlsx`)
+              }
+            >
+              <Download className="w-4 h-4 mr-2" /> Export Excel
             </Button>
             <Button variant="outline" className="rounded-full" onClick={exportJson}>
               <FileText className="w-4 h-4 mr-2" /> Export JSON
@@ -536,8 +681,11 @@ export function AdminAuditLogsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-body text-xs uppercase text-ink/50">
-                      Timestamp
+                    <TableHead
+                      className="font-body text-xs uppercase text-ink/50"
+                      title="West Africa Time (GMT+1)"
+                    >
+                      Timestamp · GMT+1
                     </TableHead>
                     <TableHead className="font-body text-xs uppercase text-ink/50">Actor</TableHead>
                     <TableHead className="font-body text-xs uppercase text-ink/50">Event</TableHead>
@@ -588,20 +736,31 @@ export function AdminAuditLogsPage() {
                     <TableRow key={l.id}>
                       <TableCell className="font-body text-sm whitespace-nowrap">
                         <div className="text-ink">
-                          {new Date(l.timestamp).toLocaleString("en-NG", {
-                            day: "2-digit",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {formatLagosDate(l.timestamp)}, {formatLagosTime(l.timestamp)}{" "}
+                          <span className="text-[10px] font-bold text-ink/40">GMT+1</span>
                         </div>
                         <div className="text-ink/40 text-[11px]">{l.id}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-body text-sm text-ink">{l.actorName}</div>
-                        <div className="text-[11px] text-ink/40 font-mono truncate max-w-[220px]">
-                          {l.actorEmail || l.actorId}
-                        </div>
+                        <button
+                          type="button"
+                          className="text-left group"
+                          title="View full history for this user"
+                          onClick={() =>
+                            setHistoryActor({
+                              actorId: l.actorId,
+                              actorName: l.actorName,
+                              actorEmail: l.actorEmail,
+                            })
+                          }
+                        >
+                          <div className="font-body text-sm text-ink underline-offset-2 group-hover:underline group-hover:text-coral">
+                            {l.actorName}
+                          </div>
+                          <div className="text-[11px] text-ink/40 font-mono truncate max-w-[220px]">
+                            {l.actorEmail || l.actorId}
+                          </div>
+                        </button>
                       </TableCell>
                       <TableCell>{eventBadge(l.eventType)}</TableCell>
                       <TableCell>
@@ -629,14 +788,31 @@ export function AdminAuditLogsPage() {
                       </TableCell>
                       <TableCell>{riskBadge(l.riskLevel)}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="rounded-full"
-                          onClick={() => setDiffLog(l)}
-                        >
-                          <Eye className="w-3.5 h-3.5 mr-1" /> Diff
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full"
+                            onClick={() => setDiffLog(l)}
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1" /> Diff
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full"
+                            title="Full history for this user"
+                            onClick={() =>
+                              setHistoryActor({
+                                actorId: l.actorId,
+                                actorName: l.actorName,
+                                actorEmail: l.actorEmail,
+                              })
+                            }
+                          >
+                            <History className="w-3.5 h-3.5 mr-1" /> History
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                     ))
@@ -706,7 +882,7 @@ export function AdminAuditLogsPage() {
                 <>
                   <span className="font-mono text-ink">{diffLog.eventType}</span> by{" "}
                   <span className="text-ink font-semibold">{diffLog.actorName}</span> ·{" "}
-                  {new Date(diffLog.timestamp).toLocaleString("en-NG")}
+                  {formatLagosDateTime(diffLog.timestamp)}
                 </>
               )}
             </DialogDescription>
@@ -778,6 +954,77 @@ export function AdminAuditLogsPage() {
             </Button>
             <Button className="rounded-full">
               <Edit3 className="w-4 h-4 mr-2" /> Escalate to review
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!historyActor} onOpenChange={(o) => !o && setHistoryActor(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-ink flex items-center gap-2">
+              <History className="w-5 h-5 text-coral" /> {historyActor?.actorName} — full history
+            </DialogTitle>
+            <DialogDescription className="font-body">
+              Every recorded activity for{" "}
+              <span className="font-mono text-ink">{historyActor?.actorEmail}</span> · newest
+              first · {historyLogs.length} event{historyLogs.length === 1 ? "" : "s"}
+            </DialogDescription>
+          </DialogHeader>
+          {historyLoading ? (
+            <div className="flex items-center justify-center gap-2 py-10 text-sm font-bold text-ink/55">
+              <Activity className="w-5 h-5 animate-pulse" /> Loading history…
+            </div>
+          ) : historyLogs.length === 0 ? (
+            <p className="py-10 text-center text-sm font-bold text-ink/55">
+              No activity recorded for this user yet.
+            </p>
+          ) : (
+            <div className="space-y-5">
+              {historyGroups.map((g) => (
+                <div key={g.key}>
+                  <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                    {g.label}
+                  </p>
+                  <ul className="space-y-2">
+                    {g.logs.map((l) => (
+                      <li
+                        key={l.id}
+                        className="flex flex-wrap items-center gap-2 rounded-2xl bg-cream/50 px-3.5 py-2.5 ring-1 ring-ink/5"
+                      >
+                        <span className="font-mono text-[11px] font-bold text-ink/55 whitespace-nowrap">
+                          {formatLagosTime(l.timestamp)}{" "}
+                          <span className="text-ink/40">GMT+1</span>
+                        </span>
+                        {eventBadge(l.eventType)}
+                        <span className="min-w-0 flex-1 text-xs font-bold text-ink/75">
+                          {l.summary || l.targetType || "—"}
+                        </span>
+                        {riskBadge(l.riskLevel)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" className="rounded-full" onClick={() => setHistoryActor(null)}>
+              Close
+            </Button>
+            <Button
+              variant="primary"
+              className="rounded-full"
+              disabled={historyLogs.length === 0}
+              onClick={() =>
+                historyActor &&
+                exportExcel(
+                  historyLogs,
+                  `raffila-${historyActor.actorName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-history-${new Date().toISOString().slice(0, 10)}.xlsx`,
+                )
+              }
+            >
+              <Download className="w-4 h-4 mr-2" /> Download Excel
             </Button>
           </DialogFooter>
         </DialogContent>

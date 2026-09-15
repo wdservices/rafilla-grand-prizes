@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { collection, doc, getDocs, limit, query as fsQuery, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { AdminShell } from "./admin-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -167,52 +169,22 @@ const SIGNAL_META: Record<SignalType, { label: string; icon: React.ReactNode; ti
   },
 };
 
-const FIRST_NAMES = [
-  "Amaka",
-  "Tunde",
-  "Funmi",
-  "Chidi",
-  "Sade",
-  "Kemi",
-  "Bola",
-  "Ifeoma",
-  "Dele",
-  "Zainab",
-  "Emeka",
-  "Ngozi",
-  "Seun",
-  "Tobi",
-  "Wale",
-  "Aisha",
-  "Musa",
-  "Ebi",
-  "Dapo",
-  "Rita",
-];
-const LAST_NAMES = [
-  "Okafor",
-  "Bakare",
-  "Adeyemi",
-  "Eze",
-  "Lawal",
-  "Hassan",
-  "Tinubu",
-  "Dike",
-  "Ogun",
-  "Aliyu",
-  "Nwosu",
-  "Obi",
-  "Adeyinka",
-  "Balogun",
-  "Olayiwola",
-  "Musa",
-  "Sani",
-  "Abubakar",
-  "Okoro",
-  "Ezeigbo",
-];
-const TINTS = ["coral", "mint", "lemon", "sky", "lilac"];
-const EMAILS = ["gmail.com", "yahoo.com", "outlook.com", "proton.me", "hotmail.com"];
+/**
+ * Real-data fraud heuristics. There is no IP/device/bank telemetry backend,
+ * so only signals computable from Firestore fire. Every signal below cites
+ * the real numbers it was derived from — nothing is fabricated.
+ *
+ * - high_velocity: 4+ ticket purchases inside any 60-minute window
+ * - ticket_stuffing: 20+ entries held across competitions
+ * - new_account_spend: account < 7 days old with > ₦50,000 in purchases
+ * - duplicate_phone: normalized phone number shared by 2+ accounts
+ */
+const VELOCITY_COUNT = 4;
+const VELOCITY_WINDOW_MS = 3600000;
+const STUFFING_THRESHOLD = 20;
+const NEW_ACCOUNT_DAYS = 7;
+const NEW_ACCOUNT_SPEND_KOBO = 5000000;
+
 const ALL_SIGNALS: SignalType[] = [
   "multiple_entry",
   "duplicate_ip",
@@ -228,75 +200,62 @@ const ALL_SIGNALS: SignalType[] = [
   "proxy_vpn",
 ];
 
-function makeCases(count: number): FraudCase[] {
-  const cases: FraudCase[] = [];
-  const now = Date.now();
-  for (let i = 0; i < count; i++) {
-    const sevRoll = i % 9;
-    const severity: Severity =
-      sevRoll <= 3 ? "low" : sevRoll <= 6 ? "medium" : sevRoll === 7 ? "high" : "critical";
-    const baseScore =
-      severity === "low"
-        ? 18 + (i % 17)
-        : severity === "medium"
-          ? 40 + (i % 22)
-          : severity === "high"
-            ? 68 + (i % 17)
-            : 88 + (i % 12);
-    const signalCount = severity === "low" ? 1 : severity === "medium" ? 2 + (i % 2) : 3 + (i % 3);
-    const signals: SignalType[] = [];
-    for (let s = 0; s < signalCount; s++) {
-      const sType = ALL_SIGNALS[(i * 3 + s * 7) % ALL_SIGNALS.length]!;
-      if (!signals.includes(sType)) signals.push(sType);
-    }
-    const first = FIRST_NAMES[i % FIRST_NAMES.length]!;
-    const last = LAST_NAMES[(i * 3) % LAST_NAMES.length]!;
-    const sigDetails: FraudSignal[] = signals.map((st, idx) => ({
-      id: `sg-${i}-${idx}`,
-      timestamp: new Date(now - (i * 86400000 + idx * 3600000)).toISOString(),
-      type: st,
-      detail:
-        st === "duplicate_ip"
-          ? `192.168.${(i * 3) % 255}.${(i * 7) % 255} shared with ${3 + (i % 5)} other users`
-          : st === "high_velocity"
-            ? `${120 + i * 17} purchases in 60min window`
-            : st === "multiple_entry"
-              ? `${2 + (i % 6)} linked accounts entered same competition`
-              : st === "bot_pattern"
-                ? "Keystroke timing variance < 2σ across 40+ interactions"
-                : st === "ticket_stuffing"
-                  ? `${500 + i * 37} entries in single competition (>3σ mean)`
-                  : st === "proxy_vpn"
-                    ? `Exit node AS${14000 + i * 13} tagged VPN (MaxMind)`
-                    : st === "referral_farm"
-                      ? `${7 + (i % 4)} L1 referrals from same /24 subnet`
-                      : `Triggered ${SIGNAL_META[st].label.toLowerCase()} heuristic`,
-      scoreContribution:
-        severity === "critical" ? 12 + idx * 4 : severity === "high" ? 8 + idx * 3 : 4 + idx * 2,
-    }));
-    cases.push({
-      id: `FRQ-${String(100000 + i).slice(0, 6)}`,
-      riskScore: Math.min(99, baseScore),
-      severity,
-      userId: `RF-USR-${String(20000 + i).slice(0, 5)}`,
-      userName: `${first} ${last}`,
-      userEmail: `${first.toLowerCase()}.${last.toLowerCase()}${i}@${EMAILS[i % EMAILS.length]!}`,
-      userPhone: `+234 ${8000000000 + i * 137}`,
-      userInitials: `${first[0]!}${last[0]!}`,
-      userTint: TINTS[i % TINTS.length]!,
-      signals,
-      signalDetails: sigDetails,
-      firstSeen: new Date(now - (i + 1) * 86400000).toISOString(),
-      lastSeen: new Date(now - i * 3600000).toISOString(),
-      ticketsInvolved: 40 + i * 53,
-      valueAtRiskKobo: (500000 + i * 275000) * 100,
-      status: i % 5 === 0 ? "reviewing" : i % 7 === 0 ? "resolved" : "open",
-    });
-  }
-  return cases;
+const TINT_BG: Record<string, string> = {
+  coral: "bg-coral/20 text-coral",
+  mint: "bg-mint/35 text-ink",
+  lemon: "bg-lemon/40 text-ink",
+  sky: "bg-sky/30 text-ink",
+  lilac: "bg-lilac/35 text-ink",
+};
+
+const AVATAR_TINTS = ["coral", "mint", "lemon", "sky", "lilac"];
+
+function tintFor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return AVATAR_TINTS[h % AVATAR_TINTS.length]!;
 }
 
-const ALL_CASES = makeCases(28);
+function toMs(value: unknown): number {
+  try {
+    const v = value as any;
+    if (v && typeof v.toDate === "function") return (v.toDate() as Date).getTime();
+  } catch {
+    // ignore
+  }
+  if (typeof value === "string" && value) {
+    const t = new Date(value).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }
+  if (typeof value === "number") return value;
+  return 0;
+}
+
+function initialsOfName(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.slice(0, 1) ?? "") + (parts[1]?.slice(0, 1) ?? "")).toUpperCase() || "U";
+}
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/\D/g, "").replace(/^234/, "0");
+}
+
+interface PurchaseHit {
+  ms: number;
+  amountKobo: number;
+}
+
+function maxInWindow(stamps: number[], windowMs: number): number {
+  const sorted = [...stamps].sort((a, b) => a - b);
+  let best = 0;
+  let left = 0;
+  for (let right = 0; right < sorted.length; right++) {
+    while (sorted[right]! - sorted[left]! > windowMs) left++;
+    best = Math.max(best, right - left + 1);
+  }
+  return best;
+}
+
 import { formatNaira } from "@/lib/utils";
 
 function severityBadge(s: Severity) {
@@ -343,7 +302,228 @@ export function AdminFraudQueuePage() {
   const [logoutSessions, setLogoutSessions] = useState(true);
   const [notifyCompliance, setNotifyCompliance] = useState(false);
 
-  const filtered = ALL_CASES.filter((c) => {
+  const [cases, setCases] = useState<FraudCase[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const [usersSnap, purchaseSnap, caseSnap] = await Promise.all([
+          getDocs(fsQuery(collection(db, "users"), limit(200))),
+          getDocs(
+            fsQuery(
+              collection(db, "activityLogs"),
+              where("eventType", "==", "TICKET_PURCHASE"),
+              limit(500),
+            ),
+          ).catch(() => null),
+          getDocs(fsQuery(collection(db, "fraudCases"), limit(200))).catch(() => null),
+        ]);
+        if (cancelled) return;
+
+        const now = Date.now();
+        const statusByUid: Record<string, { status: FraudCase["status"]; note?: string }> = {};
+        caseSnap?.docs.forEach((d) => {
+          const v = d.data() as Record<string, unknown>;
+          const s = String(v["status"] ?? "open");
+          const note = v["note"];
+          statusByUid[d.id] = {
+            status: s === "reviewing" || s === "resolved" ? s : "open",
+            ...(typeof note === "string" ? { note } : {}),
+          };
+        });
+
+        // Purchases grouped by actor
+        const purchasesByActor = new Map<string, PurchaseHit[]>();
+        purchaseSnap?.docs.forEach((d) => {
+          const v = d.data() as Record<string, unknown>;
+          const actor = String(v["actorId"] ?? "");
+          if (!actor) return;
+          const ms = toMs(v["createdAt"]) || toMs(v["clientAt"]);
+          if (!ms) return;
+          const det = (v["details"] as Record<string, unknown>) ?? {};
+          const amt = Number(det["entryPriceKobo"] ?? det["amountKobo"] ?? 0) || 0;
+          const list = purchasesByActor.get(actor) ?? [];
+          list.push({ ms, amountKobo: amt });
+          purchasesByActor.set(actor, list);
+        });
+
+        type RawUser = { id: string; v: Record<string, unknown>; entries: number };
+        const raws: RawUser[] = await Promise.all(
+          usersSnap.docs.map(async (d) => {
+            let entries = 0;
+            try {
+              const es = await getDocs(fsQuery(collection(db, "users", d.id, "entries"), limit(500)));
+              entries = es.size;
+            } catch {
+              entries = 0;
+            }
+            return { id: d.id, v: d.data() as Record<string, unknown>, entries };
+          }),
+        );
+
+        // Shared phone numbers across accounts
+        const phoneGroups = new Map<string, string[]>();
+        raws.forEach((u) => {
+          const p = normalizePhone(String(u.v["phone"] ?? ""));
+          if (p.length < 7) return;
+          const g = phoneGroups.get(p) ?? [];
+          g.push(u.id);
+          phoneGroups.set(p, g);
+        });
+
+        const built: FraudCase[] = [];
+        for (const u of raws) {
+          const first = String(u.v["firstName"] ?? "");
+          const last = String(u.v["lastName"] ?? "");
+          const name =
+            (String(u.v["displayName"] ?? "") || `${first} ${last}`.trim() || u.v["handle"] || u.id.slice(0, 8)) as string;
+          const email = String(u.v["email"] ?? "");
+          const phone = String(u.v["phone"] ?? "");
+          const createdMs = toMs(u.v["createdAt"]);
+          const hits = purchasesByActor.get(u.id) ?? [];
+          const totalSpend = hits.reduce((s, h) => s + h.amountKobo, 0);
+          const lastPurchase = hits.length ? Math.max(...hits.map((h) => h.ms)) : 0;
+
+          const signals: SignalType[] = [];
+          const details: FraudSignal[] = [];
+          const push = (type: SignalType, detail: string, score: number, ms: number) => {
+            signals.push(type);
+            details.push({
+              id: `sg-${u.id}-${type}`,
+              timestamp: new Date(ms || now).toISOString(),
+              type,
+              detail,
+              scoreContribution: score,
+            });
+          };
+
+          const burst = maxInWindow(
+            hits.map((h) => h.ms),
+            VELOCITY_WINDOW_MS,
+          );
+          if (burst >= VELOCITY_COUNT) {
+            push(
+              "high_velocity",
+              `${burst} ticket purchases inside a 60-minute window`,
+              30,
+              lastPurchase,
+            );
+          }
+          if (u.entries >= STUFFING_THRESHOLD) {
+            push("ticket_stuffing", `${u.entries} entries held across competitions`, 25, lastPurchase);
+          }
+          if (createdMs && now - createdMs < NEW_ACCOUNT_DAYS * 86400000 && totalSpend > NEW_ACCOUNT_SPEND_KOBO) {
+            const ageDays = Math.max(1, Math.round((now - createdMs) / 86400000));
+            push(
+              "new_account_spend",
+              `${formatNaira(totalSpend)} spent within ${ageDays} day${ageDays === 1 ? "" : "s"} of signup`,
+              20,
+              lastPurchase || createdMs,
+            );
+          }
+          const p = normalizePhone(phone);
+          const group = p.length >= 7 ? (phoneGroups.get(p) ?? []) : [];
+          if (group.length >= 2) {
+            push(
+              "duplicate_bank",
+              `Phone number shared with ${group.length - 1} other account${group.length === 2 ? "" : "s"}`,
+              15,
+              lastPurchase || createdMs,
+            );
+          }
+
+          if (signals.length === 0) continue;
+
+          let score = 10;
+          details.forEach((d) => {
+            score += d.scoreContribution;
+          });
+          score = Math.min(99, score);
+          const severity: Severity =
+            score >= 80 ? "critical" : score >= 55 ? "high" : score >= 30 ? "medium" : "low";
+          const stored = statusByUid[u.id];
+
+          built.push({
+            id: `FR-${u.id.slice(0, 6).toUpperCase()}`,
+            riskScore: score,
+            severity,
+            userId: u.id,
+            userName: name,
+            userEmail: email,
+            userPhone: phone,
+            userInitials: initialsOfName(name),
+            userTint: tintFor(u.id),
+            signals,
+            signalDetails: details,
+            firstSeen: new Date(createdMs || now).toISOString(),
+            lastSeen: new Date(lastPurchase || createdMs || now).toISOString(),
+            ticketsInvolved: u.entries,
+            valueAtRiskKobo: totalSpend,
+            status: stored?.status ?? "open",
+          });
+        }
+
+        built.sort((a, b) => b.riskScore - a.riskScore);
+        if (!cancelled) setCases(built);
+      } catch (err: any) {
+        if (!cancelled) {
+          const code = err?.code as string | undefined;
+          setLoadError(
+            code === "permission-denied"
+              ? "Firestore denied access. Publish the latest firestore.rules, then refresh."
+              : err?.message || "Could not load fraud cases",
+          );
+          setCases([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
+  const persistCaseStatus = async (
+    c: FraudCase,
+    status: FraudCase["status"],
+    note: string,
+    extra?: { suspendUser?: boolean },
+  ) => {
+    await setDoc(
+      doc(db, "fraudCases", c.userId),
+      {
+        status,
+        note: note || "",
+        holdFunds,
+        logoutSessions,
+        notifyCompliance,
+        riskScore: c.riskScore,
+        severity: c.severity,
+        signals: c.signals,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+    if (extra?.suspendUser) {
+      await updateDoc(doc(db, "users", c.userId), {
+        status: "suspended",
+        suspendedReason: note || "Fraud review suspension",
+        suspendedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    }
+    setCases((prev) => prev.map((x) => (x.id === c.id ? { ...x, status } : x)));
+    setReviewCase((prev) => (prev && prev.id === c.id ? { ...prev, status } : prev));
+  };
+
+  const filtered = cases.filter((c) => {
     if (severityFilter !== "all" && c.severity !== severityFilter) return false;
     if (statusFilter !== "all" && c.status !== statusFilter) return false;
     if (signalFilter !== "all" && !c.signals.includes(signalFilter)) return false;
@@ -363,13 +543,42 @@ export function AdminFraudQueuePage() {
   });
 
   const stats = {
-    total: ALL_CASES.length,
-    open: ALL_CASES.filter((c) => c.status === "open").length,
-    low: ALL_CASES.filter((c) => c.severity === "low").length,
-    med: ALL_CASES.filter((c) => c.severity === "medium").length,
-    high: ALL_CASES.filter((c) => c.severity === "high").length,
-    crit: ALL_CASES.filter((c) => c.severity === "critical").length,
-    atRisk: ALL_CASES.reduce((s, c) => s + c.valueAtRiskKobo, 0),
+    total: cases.length,
+    open: cases.filter((c) => c.status === "open").length,
+    low: cases.filter((c) => c.severity === "low").length,
+    med: cases.filter((c) => c.severity === "medium").length,
+    high: cases.filter((c) => c.severity === "high").length,
+    crit: cases.filter((c) => c.severity === "critical").length,
+    atRisk: cases.reduce((s, c) => s + c.valueAtRiskKobo, 0),
+  };
+
+  const exportCases = () => {
+    const rows = [
+      ["case", "user", "email", "phone", "score", "severity", "status", "signals", "tickets", "value_kobo", "first_seen", "last_seen"],
+      ...filtered.map((c) => [
+        c.id,
+        c.userName,
+        c.userEmail,
+        c.userPhone,
+        String(c.riskScore),
+        c.severity,
+        c.status,
+        c.signals.join(";"),
+        String(c.ticketsInvolved),
+        String(c.valueAtRiskKobo),
+        c.firstSeen,
+        c.lastSeen,
+      ]),
+    ];
+    const blob = new Blob([rows.map((r) => r.map((x) => `"${x}"`).join(",")).join("\n")], {
+      type: "text/csv",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `raffila-fraud-cases-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -381,11 +590,21 @@ export function AdminFraudQueuePage() {
               <ShieldAlert className="w-8 h-8 text-coral" /> Fraud Queue
             </h1>
             <p className="font-body text-ink/60 text-sm mt-1">
-              Signal-driven risk cases. AVERAGE TIME TO REVIEW: 14min.
+              Signal-driven risk cases computed live from Firestore activity.{" "}
+              {!loading && !loadError && (
+                <span className="text-emerald-700 font-bold">
+                  {stats.open} open · {stats.total} total.
+                </span>
+              )}
             </p>
+            {loadError && (
+              <p className="mt-2 max-w-2xl rounded-xl bg-coral/10 px-4 py-2 font-body text-sm font-bold text-coral">
+                {loadError}
+              </p>
+            )}
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" className="rounded-full">
+            <Button variant="outline" className="rounded-full" onClick={exportCases}>
               <FileText className="w-4 h-4 mr-2" /> Export cases
             </Button>
             <Button className="rounded-full bg-coral hover:bg-coral/90">
@@ -582,7 +801,27 @@ export function AdminFraudQueuePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.slice(0, 18).map((c) => (
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={8} className="py-12 text-center font-body text-sm font-bold text-ink/55">
+                        Scanning Firestore activity for risk signals…
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!loading && !loadError && filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={8} className="py-12 text-center">
+                        <p className="font-body text-sm font-extrabold text-ink">
+                          No risk cases detected
+                        </p>
+                        <p className="font-body text-xs text-ink/55 mt-1">
+                          No accounts currently trip the velocity, stuffing, new-spend or
+                          shared-phone heuristics.
+                        </p>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {filtered.map((c) => (
                     <TableRow key={c.id} className={c.severity === "critical" ? "bg-coral/5" : ""}>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -630,7 +869,7 @@ export function AdminFraudQueuePage() {
                         <div className="flex items-center gap-2">
                           <Avatar className="w-9 h-9 border-2 border-paper shrink-0">
                             <AvatarFallback
-                              className={`bg-${c.userTint} text-ink font-display font-semibold text-sm`}
+                              className={`${TINT_BG[c.userTint] ?? TINT_BG["lilac"]} font-display font-semibold text-sm`}
                             >
                               {c.userInitials}
                             </AvatarFallback>
@@ -739,7 +978,7 @@ export function AdminFraudQueuePage() {
                     <div className="flex items-center gap-3">
                       <Avatar className="w-14 h-14 border-2 border-paper">
                         <AvatarFallback
-                          className={`bg-${reviewCase.userTint} text-ink font-display font-bold text-lg`}
+                          className={`${TINT_BG[reviewCase.userTint] ?? TINT_BG["lilac"]} font-display font-bold text-lg`}
                         >
                           {reviewCase.userInitials}
                         </AvatarFallback>
@@ -914,16 +1153,30 @@ export function AdminFraudQueuePage() {
                       variant="outline"
                       className="rounded-full"
                       onClick={() => {
-                        import("@/lib/activity-log").then(({ logActivity }) =>
-                          logActivity({
-                            eventType: "FRAUD_RESOLVE",
-                            targetType: "fraud_case",
-                            targetId: reviewCase?.id,
-                            summary: `Dismissed fraud case ${reviewCase?.id ?? ""}`,
-                          }),
-                        );
-                        toast.success("Case dismissed");
-                        setReviewCase(null);
+                        const c = reviewCase;
+                        if (!c) return;
+                        persistCaseStatus(c, "resolved", resolutionNote)
+                          .then(() =>
+                            import("@/lib/activity-log").then(({ logActivity }) =>
+                              logActivity({
+                                eventType: "FRAUD_RESOLVE",
+                                targetType: "fraud_case",
+                                targetId: c.id,
+                                summary: `Dismissed fraud case ${c.id} (${c.userName})`,
+                                details: { note: resolutionNote || "No note" },
+                              }),
+                            ),
+                          )
+                          .then(() => {
+                            toast.success("Case dismissed");
+                            setResolutionNote("");
+                            setReviewCase(null);
+                          })
+                          .catch((err: any) =>
+                            toast.error("Dismiss failed", {
+                              description: err?.message || String(err),
+                            }),
+                          );
                       }}
                     >
                       <ThumbsUp className="w-4 h-4 mr-2" /> Dismiss
@@ -932,16 +1185,30 @@ export function AdminFraudQueuePage() {
                       variant="outline"
                       className="rounded-full"
                       onClick={() => {
-                        import("@/lib/activity-log").then(({ logActivity }) =>
-                          logActivity({
-                            eventType: "FRAUD_FLAG",
-                            targetType: "fraud_case",
-                            targetId: reviewCase?.id,
-                            summary: `Issued warning for fraud case ${reviewCase?.id ?? ""}`,
-                          }),
-                        );
-                        toast.info("Warning issued to user");
-                        setReviewCase(null);
+                        const c = reviewCase;
+                        if (!c) return;
+                        persistCaseStatus(c, "reviewing", resolutionNote)
+                          .then(() =>
+                            import("@/lib/activity-log").then(({ logActivity }) =>
+                              logActivity({
+                                eventType: "FRAUD_FLAG",
+                                targetType: "fraud_case",
+                                targetId: c.id,
+                                summary: `Issued warning for fraud case ${c.id} (${c.userName})`,
+                                details: { note: resolutionNote || "No note" },
+                              }),
+                            ),
+                          )
+                          .then(() => {
+                            toast.info("Warning issued to user");
+                            setResolutionNote("");
+                            setReviewCase(null);
+                          })
+                          .catch((err: any) =>
+                            toast.error("Warning failed", {
+                              description: err?.message || String(err),
+                            }),
+                          );
                       }}
                     >
                       <MessageSquareWarning className="w-4 h-4 mr-2" /> Warning
@@ -950,16 +1217,32 @@ export function AdminFraudQueuePage() {
                       variant="outline"
                       className="rounded-full border-coral text-coral hover:bg-coral hover:text-white"
                       onClick={() => {
-                        import("@/lib/activity-log").then(({ logActivity }) =>
-                          logActivity({
-                            eventType: "USER_SUSPEND",
-                            targetType: "fraud_case",
-                            targetId: reviewCase?.id,
-                            summary: `Suspended user from fraud case ${reviewCase?.id ?? ""}`,
-                          }),
-                        );
-                        toast.error("User suspended");
-                        setReviewCase(null);
+                        const c = reviewCase;
+                        if (!c) return;
+                        persistCaseStatus(c, "resolved", resolutionNote, { suspendUser: true })
+                          .then(() =>
+                            import("@/lib/activity-log").then(({ logActivity }) =>
+                              logActivity({
+                                eventType: "USER_SUSPEND",
+                                targetType: "user",
+                                targetId: c.userId,
+                                summary: `Suspended ${c.userName} from fraud case ${c.id}`,
+                                details: { note: resolutionNote || "No note" },
+                                oldValue: { status: "active" },
+                                newValue: { status: "suspended" },
+                              }),
+                            ),
+                          )
+                          .then(() => {
+                            toast.error("User suspended");
+                            setResolutionNote("");
+                            setReviewCase(null);
+                          })
+                          .catch((err: any) =>
+                            toast.error("Suspend failed", {
+                              description: err?.message || String(err),
+                            }),
+                          );
                       }}
                     >
                       <Ban className="w-4 h-4 mr-2" /> Suspend user
@@ -967,10 +1250,31 @@ export function AdminFraudQueuePage() {
                     <Button
                       className="rounded-full bg-coral hover:bg-coral/90 text-white"
                       onClick={() => {
-                        toast("Funds held & account restricted", {
-                          icon: <Hand className="w-4 h-4" />,
-                        });
-                        setReviewCase(null);
+                        const c = reviewCase;
+                        if (!c) return;
+                        persistCaseStatus(c, "reviewing", resolutionNote || "Funds held pending investigation")
+                          .then(() =>
+                            import("@/lib/activity-log").then(({ logActivity }) =>
+                              logActivity({
+                                eventType: "FRAUD_FLAG",
+                                targetType: "fraud_case",
+                                targetId: c.id,
+                                summary: `Held funds for fraud case ${c.id} (${c.userName})`,
+                              }),
+                            ),
+                          )
+                          .then(() => {
+                            toast("Funds held & account restricted", {
+                              icon: <Hand className="w-4 h-4" />,
+                            });
+                            setResolutionNote("");
+                            setReviewCase(null);
+                          })
+                          .catch((err: any) =>
+                            toast.error("Hold failed", {
+                              description: err?.message || String(err),
+                            }),
+                          );
                       }}
                     >
                       <Hand className="w-4 h-4 mr-2" /> Hold funds

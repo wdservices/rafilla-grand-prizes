@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AdminShell } from "./admin-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,7 @@ import {
   Circle,
 } from "lucide-react";
 import { formatNaira } from "@/lib/utils";
+import type { AdminNotification } from "@/lib/admin-notifications";
 
 type Channel = "inapp" | "email" | "sms";
 type ReadState = "all" | "unread" | "read";
@@ -59,190 +60,99 @@ interface NTFY {
   metricValue?: string;
 }
 
-const ICONS = [
-  { i: <Trophy className="w-4 h-4" />, t: "bg-coral/20 border-coral text-coral" },
-  { i: <Wallet className="w-4 h-4" />, t: "bg-mint/30 border-mint text-ink" },
-  { i: <Users className="w-4 h-4" />, t: "bg-sky/20 border-sky text-sky" },
-  { i: <Ticket className="w-4 h-4" />, t: "bg-lemon/30 border-lemon text-ink" },
-  { i: <CreditCard className="w-4 h-4" />, t: "bg-mint/20 border-mint text-ink" },
-  { i: <AlertTriangle className="w-4 h-4" />, t: "bg-coral/20 border-coral text-coral" },
-  { i: <Settings className="w-4 h-4" />, t: "bg-lilac/20 border-lilac text-lilac" },
-  { i: <FileText className="w-4 h-4" />, t: "bg-ink/10 border-ink/20 text-ink" },
-  { i: <Gift className="w-4 h-4" />, t: "bg-lilac/20 border-lilac text-lilac" },
-  { i: <Shield className="w-4 h-4" />, t: "bg-coral/20 border-coral text-coral" },
-  { i: <Target className="w-4 h-4" />, t: "bg-sky/20 border-sky text-sky" },
-  { i: <Star className="w-4 h-4" />, t: "bg-lemon/30 border-lemon text-ink" },
+const KIND_STYLE: Record<string, { icon: React.ReactNode; tint: string }> = {
+  USER_CREATE: {
+    icon: <Users className="w-4 h-4" />,
+    tint: "bg-sky/20 border-sky text-sky",
+  },
+  AUTH_REGISTER: {
+    icon: <Users className="w-4 h-4" />,
+    tint: "bg-sky/20 border-sky text-sky",
+  },
+  COMPETITION_CREATE: {
+    icon: <Trophy className="w-4 h-4" />,
+    tint: "bg-coral/20 border-coral text-coral",
+  },
+  FRAUD_FLAG: {
+    icon: <AlertTriangle className="w-4 h-4" />,
+    tint: "bg-coral/20 border-coral text-coral",
+  },
+  USER_SUSPEND: {
+    icon: <AlertTriangle className="w-4 h-4" />,
+    tint: "bg-coral/20 border-coral text-coral",
+  },
+  USER_DELETE: {
+    icon: <AlertTriangle className="w-4 h-4" />,
+    tint: "bg-coral/20 border-coral text-coral",
+  },
+  PAYOUT_INITIATE: {
+    icon: <CreditCard className="w-4 h-4" />,
+    tint: "bg-mint/20 border-mint text-ink",
+  },
+  PAYOUT_COMPLETE: {
+    icon: <Wallet className="w-4 h-4" />,
+    tint: "bg-mint/30 border-mint text-ink",
+  },
+  PAYOUT_REVERSE: {
+    icon: <CreditCard className="w-4 h-4" />,
+    tint: "bg-coral/20 border-coral text-coral",
+  },
+  WALLET_FUND: {
+    icon: <Wallet className="w-4 h-4" />,
+    tint: "bg-mint/30 border-mint text-ink",
+  },
+  CONFIG_CHANGE: {
+    icon: <Settings className="w-4 h-4" />,
+    tint: "bg-lilac/20 border-lilac text-lilac",
+  },
+  TICKET_PURCHASE: {
+    icon: <Ticket className="w-4 h-4" />,
+    tint: "bg-lemon/30 border-lemon text-ink",
+  },
+  EMAIL: {
+    icon: <Mail className="w-4 h-4" />,
+    tint: "bg-sky/20 border-sky text-sky",
+  },
+  _default: {
+    icon: <Bell className="w-4 h-4" />,
+    tint: "bg-ink/10 border-ink/20 text-ink",
+  },
+};
+
+const RECIPIENT_TINTS = [
+  "bg-coral/20 text-ink",
+  "bg-mint/30 text-ink",
+  "bg-lemon/30 text-ink",
+  "bg-sky/20 text-ink",
+  "bg-lilac/20 text-ink",
 ];
 
-const TITLES: { t: string; p: string; iconIdx: number }[] = [
-  {
-    t: "🏆 Winner confirmed — RF-CMP-88472",
-    p: "Chidi Eze has won the 2024 Lexus RX 350. Prize value ₦48,500,000. Initiate payout workflow.",
-    iconIdx: 0,
-  },
-  {
-    t: "Wallet funded — ₦1,250,000",
-    p: "Amaka Okafor (RF-USR-20041) topped up via Paystack. Ref: PYS-99288173.",
-    iconIdx: 1,
-  },
-  {
-    t: "New partner application",
-    p: "Victoria Island Motors submitted asset listing for 2024 Mercedes GLE450. Awaiting KYC review.",
-    iconIdx: 2,
-  },
-  {
-    t: "🚨 Competition goes LIVE in 30min",
-    p: "“Land in Lekki Phase 1” — RF-CMP-90112 final entries window. Last push notification queued.",
-    iconIdx: 3,
-  },
-  {
-    t: "💸 Payout batch #482 complete",
-    p: "12 winners settled totalling ₦18,420,000. 1 item failed — see fraud queue.",
-    iconIdx: 4,
-  },
-  {
-    t: "⚠ Suspicious activity flagged",
-    p: "FRQ-100414 score 91/99. 6 accounts sharing AS4123 VPN node. Review now.",
-    iconIdx: 5,
-  },
-  {
-    t: "Platform config updated",
-    p: "Referral L1 rate changed 8% → 10% by Admin Console (Super Admin). Effective immediately.",
-    iconIdx: 6,
-  },
-  {
-    t: "New KYC submissions (14)",
-    p: "Partners & VIP tier users submitted identity verification. SLA 24h — 8 overdue.",
-    iconIdx: 7,
-  },
-  {
-    t: "🎁 Referral bonus pool released",
-    p: "₦4,820,000 distributed across L1-L5 for week 37. Top referrer: RF-USR-18820.",
-    iconIdx: 8,
-  },
-  {
-    t: "🛡 Security: 2FA bulk enabled",
-    p: "1,284 users activated TOTP this week. Coverage now 62.4% (target 80%).",
-    iconIdx: 9,
-  },
-  {
-    t: "Milestone: 125,000 tickets sold (7d)",
-    p: "Beat target 100k. +₦62.28M revenue vs LW. Consider extending LIVE draws.",
-    iconIdx: 10,
-  },
-  {
-    t: "⭐ VIP upgrade — Kemi Hassan",
-    p: "Lifetime spend threshold hit (₦10M+). Tier: Champion. Auto-added to private draws.",
-    iconIdx: 11,
-  },
-  {
-    t: "Draw engine: RESULTED",
-    p: "“iPhone 15 Pro Max x 5” completed. 5 winners picked (draw id: DRAW-24-09-331).",
-    iconIdx: 0,
-  },
-  {
-    t: "Dispute opened — payout #PY-8874",
-    p: "User claims wrong bank. Evidence uploaded. Assign to finance.",
-    iconIdx: 4,
-  },
-  {
-    t: "SMS delivery report: 98.2%",
-    p: "Campaign “Weekend Mega” reached 8,412 recipients. 152 bounces cleaned.",
-    iconIdx: 2,
-  },
-];
-
-const FIRST = [
-  "Amaka",
-  "Tunde",
-  "Funmi",
-  "Chidi",
-  "Sade",
-  "Kemi",
-  "Bola",
-  "Ifeoma",
-  "Dele",
-  "Zainab",
-  "Emeka",
-  "Ngozi",
-  "Seun",
-  "Tobi",
-  "Wale",
-  "Aisha",
-  "Musa",
-  "Ebi",
-  "Dapo",
-  "Rita",
-];
-const LAST = [
-  "Okafor",
-  "Bakare",
-  "Adeyemi",
-  "Eze",
-  "Lawal",
-  "Hassan",
-  "Tinubu",
-  "Dike",
-  "Ogun",
-  "Aliyu",
-  "Nwosu",
-  "Obi",
-  "Adeyinka",
-  "Balogun",
-  "Olayiwola",
-];
-const TINTS = ["coral", "mint", "lemon", "sky", "lilac"];
-
-function mkList(channel: Channel): NTFY[] {
-  const now = Date.now();
-  return TITLES.map((tpl, i) => {
-    const icon = ICONS[tpl.iconIdx]!;
-    const first = FIRST[(i * 3) % FIRST.length]!;
-    const last = LAST[(i * 7) % LAST.length]!;
-    const name = `${first} ${last}`;
-    const minsAgo = i * 31 + 4;
-    const result: NTFY = {
-      id: `NTF-${channel.toUpperCase()}-${String(500000 + i).slice(0, 6)}`,
-      channel,
-      title: tpl.t,
-      preview: tpl.p,
-      icon: icon.i,
-      iconTint: icon.t,
-      time: new Date(now - minsAgo * 60 * 1000).toISOString(),
-      unread: i < 6,
-      recipient: name,
-      recipientInitials: `${first[0]!}${last[0]!}`,
-      recipientTint: TINTS[i % TINTS.length]!,
-    };
-    if (i === 1) {
-      result.metricLabel = "Top-up amount";
-      result.metricValue = formatNaira(1250000 * 100);
-    } else if (i === 4) {
-      result.metricLabel = "Batch total";
-      result.metricValue = formatNaira(18420000 * 100);
-    } else if (i === 8) {
-      result.metricLabel = "Pool released";
-      result.metricValue = formatNaira(4820000 * 100);
-    } else if (i === 10) {
-      result.metricLabel = "Tickets / Revenue";
-      result.metricValue = "124,560 / " + formatNaira(62280000 * 100);
-    }
-    return result;
-  });
+function toNtfy(n: AdminNotification, unread: boolean): NTFY {
+  const style = KIND_STYLE[n.kind] ?? KIND_STYLE["_default"]!;
+  const name = n.recipient || "System";
+  const initials =
+    name
+      .split(/\s+/)
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "R";
+  let h = 0;
+  for (let i = 0; i < n.id.length; i++) h = (h * 31 + n.id.charCodeAt(i)) >>> 0;
+  return {
+    id: n.id,
+    channel: n.channel,
+    title: n.title,
+    preview: n.preview,
+    icon: style.icon,
+    iconTint: style.tint,
+    time: n.time,
+    unread,
+    recipient: name,
+    recipientInitials: initials,
+    recipientTint: RECIPIENT_TINTS[h % RECIPIENT_TINTS.length]!,
+  };
 }
-
-const INAPP = mkList("inapp");
-const EMAIL = mkList("email").map((n) => ({
-  ...n,
-  title: "[Raffila] " + n.title,
-  unread: n.unread || n.id.endsWith("1"),
-}));
-const SMS = mkList("sms").map((n, i) => ({
-  ...n,
-  preview: n.preview.slice(0, 70) + "…",
-  unread: i < 4,
-}));
-
 function fmtTime(iso: string) {
   const d = new Date(iso);
   const now = new Date();
@@ -267,13 +177,49 @@ export function AdminNotificationsCenterPage() {
   const [tab, setTab] = useState<Channel>("inapp");
   const [readFilter, setReadFilter] = useState<ReadState>("all");
   const [query, setQuery] = useState("");
-  const [items, setItems] = useState<{ inapp: NTFY[]; email: NTFY[]; sms: NTFY[] }>({
-    inapp: INAPP,
-    email: EMAIL,
-    sms: SMS,
-  });
+  const [items, setItems] = useState<{ inapp: NTFY[]; email: NTFY[]; sms: NTFY[] } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const allItems = items[tab];
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const [{ fetchAdminNotifications, getReadIds, getDismissedIds }] = await Promise.all([
+          import("@/lib/admin-notifications"),
+        ]);
+        const data = await fetchAdminNotifications();
+        if (cancelled) return;
+        const read = getReadIds();
+        const dismissed = getDismissedIds();
+        const map = (list: AdminNotification[]) =>
+          list
+            .filter((n) => !dismissed.has(n.id))
+            .map((n) => toNtfy(n, !read.has(n.id)));
+        setItems({ inapp: map(data.inapp), email: map(data.email), sms: map(data.sms) });
+      } catch (err: any) {
+        if (!cancelled) {
+          const code = err?.code as string | undefined;
+          setLoadError(
+            code === "permission-denied"
+              ? "Firestore denied access. Publish the latest firestore.rules, then refresh."
+              : err?.message || "Could not load notifications",
+          );
+          setItems({ inapp: [], email: [], sms: [] });
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
+  const allItems = items?.[tab] ?? [];
   const filtered = allItems.filter((n) => {
     if (readFilter === "unread" && !n.unread) return false;
     if (readFilter === "read" && n.unread) return false;
@@ -290,29 +236,57 @@ export function AdminNotificationsCenterPage() {
   });
 
   const unreadCounts = {
-    inapp: items.inapp.filter((n) => n.unread).length,
-    email: items.email.filter((n) => n.unread).length,
-    sms: items.sms.filter((n) => n.unread).length,
+    inapp: (items?.inapp ?? []).filter((n) => n.unread).length,
+    email: (items?.email ?? []).filter((n) => n.unread).length,
+    sms: (items?.sms ?? []).filter((n) => n.unread).length,
   };
   const totalUnread = unreadCounts.inapp + unreadCounts.email + unreadCounts.sms;
 
   const markAllRead = () => {
-    setItems({
-      inapp: items.inapp.map((n) => ({ ...n, unread: false })),
-      email: items.email.map((n) => ({ ...n, unread: false })),
-      sms: items.sms.map((n) => ({ ...n, unread: false })),
+    if (!items) return;
+    import("@/lib/admin-notifications").then(({ markAllNotifsRead }) => {
+      const ids = [...items.inapp, ...items.email, ...items.sms].map((n) => n.id);
+      markAllNotifsRead(ids);
+      setItems({
+        inapp: items.inapp.map((n) => ({ ...n, unread: false })),
+        email: items.email.map((n) => ({ ...n, unread: false })),
+        sms: items.sms.map((n) => ({ ...n, unread: false })),
+      });
+      toast.success(`Marked ${totalUnread} notifications as read`);
     });
-    toast.success(`Marked ${totalUnread} notifications as read`);
   };
 
   const markOneRead = (id: string) => {
-    setItems({
-      ...items,
-      [tab]: items[tab].map((n) => (n.id === id ? { ...n, unread: false } : n)),
+    if (!items) return;
+    import("@/lib/admin-notifications").then(({ markNotifRead }) => {
+      markNotifRead(id);
+      setItems({
+        ...items,
+        [tab]: items[tab].map((n) => (n.id === id ? { ...n, unread: false } : n)),
+      });
+    });
+  };
+
+  const dismissOne = (id: string) => {
+    if (!items) return;
+    import("@/lib/admin-notifications").then(({ dismissNotif }) => {
+      dismissNotif(id);
+      setItems({
+        ...items,
+        [tab]: items[tab].filter((n) => n.id !== id),
+      });
     });
   };
 
   const resend = (n: NTFY) => {
+    import("@/lib/activity-log").then(({ logActivity }) =>
+      logActivity({
+        eventType: "NOTIFICATION_SEND",
+        targetType: "notification",
+        targetId: n.id,
+        summary: `Queued ${n.channel.toUpperCase()} resend — ${n.title.slice(0, 40)}`,
+      }),
+    );
     toast.success(`Queued ${n.channel.toUpperCase()} resend — ${n.title.slice(0, 40)}…`);
   };
 
@@ -325,16 +299,22 @@ export function AdminNotificationsCenterPage() {
               <Bell className="w-7 h-7 text-coral" /> Notifications Center
             </h1>
             <p className="font-body text-ink/60 text-sm mt-1">
-              Monitor system-wide broadcasts across in-app, email, and SMS channels.
+              Live from Firestore — high-risk activity, new users, new competitions, and queued
+              emails.
             </p>
+            {loadError && (
+              <p className="mt-2 max-w-2xl rounded-xl bg-coral/10 px-4 py-2 font-body text-sm font-bold text-coral">
+                {loadError}
+              </p>
+            )}
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button
               variant="outline"
               className="rounded-full"
-              onClick={() => toast.info("Compose notification — draft wizard (mock)")}
+              onClick={() => setRefreshKey((k) => k + 1)}
             >
-              <Bell className="w-4 h-4 mr-2" /> Compose
+              <RotateCcw className="w-4 h-4 mr-2" /> Refresh
             </Button>
             <Button
               variant="outline"
@@ -458,12 +438,20 @@ export function AdminNotificationsCenterPage() {
                 <TabsContent key={ch} value={ch} className="m-0 mt-0">
                   <Card className="border-ink/10 overflow-hidden">
                     <div className="divide-y divide-ink/5">
-                      {filtered.length === 0 && (
+                      {loading && (
+                        <div className="p-12 text-center">
+                          <Bell className="w-12 h-12 text-ink/20 mx-auto mb-3 animate-pulse" />
+                          <p className="font-display text-ink text-lg">Loading notifications…</p>
+                        </div>
+                      )}
+                      {!loading && filtered.length === 0 && (
                         <div className="p-12 text-center">
                           <Bell className="w-12 h-12 text-ink/20 mx-auto mb-3" />
                           <p className="font-display text-ink text-lg">No notifications</p>
                           <p className="font-body text-ink/50 text-sm">
-                            Try adjusting filters or compose a new broadcast.
+                            {tab === "sms"
+                              ? "SMS pipeline is not connected yet — nothing to show."
+                              : "Try adjusting filters."}
                           </p>
                         </div>
                       )}
@@ -524,7 +512,7 @@ export function AdminNotificationsCenterPage() {
                                 <div className="flex items-center gap-2">
                                   <Avatar className="w-7 h-7 border border-ink/10">
                                     <AvatarFallback
-                                      className={`bg-${n.recipientTint} text-ink font-display font-semibold text-xs`}
+                                      className={`${n.recipientTint} font-display font-semibold text-xs`}
                                     >
                                       {n.recipientInitials}
                                     </AvatarFallback>
@@ -575,6 +563,8 @@ export function AdminNotificationsCenterPage() {
                                   variant="ghost"
                                   size="sm"
                                   className="rounded-full text-ink/40 hover:text-coral"
+                                  title="Dismiss"
+                                  onClick={() => dismissOne(n.id)}
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>

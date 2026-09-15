@@ -17,7 +17,7 @@ import {
   ExternalLink,
   LogOut,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -134,6 +134,51 @@ function NavGroup({ label, items, activeNav, onNavigate }: NavGroupProps) {
         })}
       </div>
     </div>
+  );
+}
+
+function AdminBell() {
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [{ fetchAdminNotifications, getReadIds, getDismissedIds }] = await Promise.all([
+          import("@/lib/admin-notifications"),
+        ]);
+        const data = await fetchAdminNotifications();
+        if (cancelled) return;
+        const read = getReadIds();
+        const dismissed = getDismissedIds();
+        setUnread(data.inapp.filter((n) => !read.has(n.id) && !dismissed.has(n.id)).length);
+      } catch {
+        if (!cancelled) setUnread(0);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <Link
+      to="/admin/notifications"
+      aria-label="Admin notifications"
+      className="relative grid size-11 place-items-center rounded-full bg-white text-ink ring-1 ring-ink/10 transition-colors hover:ring-coral/30"
+    >
+      <Bell className="size-4.5" />
+      {unread > 0 ? (
+        <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-coral px-1 text-[10px] font-extrabold leading-5 text-white ring-2 ring-white">
+          {unread > 99 ? "99+" : unread}
+        </span>
+      ) : (
+        <span
+          className="absolute right-3 top-3 size-2 rounded-full bg-ink/20 ring-2 ring-white"
+          aria-hidden="true"
+        />
+      )}
+    </Link>
   );
 }
 
@@ -271,18 +316,7 @@ export function AdminShell({ children, title, activeNav }: AdminShellProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="relative size-11 rounded-full ring-1 ring-ink/10"
-              aria-label="Admin notifications"
-            >
-              <Bell className="size-4.5" />
-              <span
-                className="absolute right-3 top-3 size-2 rounded-full bg-coral ring-2 ring-white"
-                aria-hidden="true"
-              />
-            </Button>
+            <AdminBell />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

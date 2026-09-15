@@ -202,6 +202,7 @@ export async function sendAdminInvite(
     try {
       await addDoc(collection(db, "mail"), {
         to: clean,
+        createdAt: serverTimestamp(),
         message: {
           subject: "You're invited to administer Raffila",
           text: `${inviter} has invited you to become an administrator on Raffila.\n\nTo accept:\n1. Go to ${origin}/auth\n2. Sign in or create your account with this exact email address (${clean})\n3. You will land directly on the admin dashboard with full access.\n\nIf you weren't expecting this, you can safely ignore it — nothing changes until you sign in.`,
