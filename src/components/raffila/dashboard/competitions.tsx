@@ -3,12 +3,14 @@ import { Ticket, Clock, Flame } from "lucide-react";
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { competitions, formatNaira, getProgress } from "@/lib/raffila-data";
+import { formatNaira, getProgress } from "@/lib/raffila-data";
+import { useCompetitions } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 import { TicketPurchaseModal } from "@/components/raffila/purchase";
 
 export function DashboardCompetitionsPage() {
   const [modalSlug, setModalSlug] = useState<string | null>(null);
+  const { competitions } = useCompetitions();
 
   const accentMap = {
     coral: { ring: "ring-coral/15", badge: "bg-coral/15 text-coral", progress: "bg-coral" },

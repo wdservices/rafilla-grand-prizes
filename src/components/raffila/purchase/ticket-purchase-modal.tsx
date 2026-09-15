@@ -28,7 +28,8 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FundWalletModal } from "@/components/raffila/dashboard/wallet";
-import { competitions, formatNaira, getProgress } from "@/lib/raffila-data";
+import { formatNaira, getProgress } from "@/lib/raffila-data";
+import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
 import { cn, formatNaira as formatNairaKobo } from "@/lib/utils";
 import { OversellBanner, ReservationTimeoutBar } from "./checkout-banner";
 
@@ -81,7 +82,8 @@ export function TicketPurchaseModal({
   competitionSlug: string;
   initialQuantity?: number;
 }) {
-  const competition = competitions.find((c) => c.slug === competitionSlug);
+  const { competitions } = useCompetitions();
+  const competition = findCompetition(competitions, competitionSlug);
   const maxQty = competition
     ? Math.max(1, Math.min(50, competition.totalEntries - competition.entriesSold))
     : 50;

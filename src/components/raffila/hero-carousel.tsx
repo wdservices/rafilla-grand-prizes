@@ -11,12 +11,12 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import {
-  competitions as allCompetitions,
-  featuredCompetitions,
+  featuredCompetitions as mockFeatured,
   formatNaira,
   getProgress,
   type Competition,
 } from "@/lib/raffila-data";
+import { useCompetitions } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 
 const AUTOPLAY_MS = 30_000;
@@ -197,8 +197,14 @@ export function HeroFeaturedCarousel() {
     };
   }, [api, current, count, userPaused]);
 
+  const { competitions: liveCompetitions } = useCompetitions();
+  const liveFeatured = liveCompetitions.filter((c) => c.featured);
   const slides =
-    featuredCompetitions.length > 0 ? featuredCompetitions : allCompetitions.slice(0, 8);
+    liveFeatured.length > 0
+      ? liveFeatured
+      : mockFeatured.length > 0
+        ? mockFeatured
+        : liveCompetitions.slice(0, 8);
 
   if (!mounted) {
     const c = slides[0]!;

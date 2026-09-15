@@ -88,12 +88,10 @@ import {
 } from "@/components/ui/pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  competitions,
   categories,
   partners,
   featuredCompetition,
   formatNaira,
-  getCompetition,
   getProgress,
   faqs,
   competitionFaqs,
@@ -103,6 +101,7 @@ import {
   type SortKey,
   REWARD_POOL,
 } from "@/lib/raffila-data";
+import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
 import { HeroFeaturedCarousel } from "@/components/raffila/hero-carousel";
 import { cn, formatNaira as formatNairaKobo } from "@/lib/utils";
 import { useCountdownDays } from "@/hooks/useCountdown";
@@ -110,6 +109,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 export function HomePage() {
+  const { competitions } = useCompetitions();
   return (
     <div>
       <section className="mx-auto max-w-7xl px-4 pb-8 pt-8 sm:px-6 sm:pt-12 lg:px-8 lg:pb-12">
@@ -695,6 +695,7 @@ export function CompetitionsFilterBar({
 }
 
 export function CompetitionsPage() {
+  const { competitions } = useCompetitions();
   const [state, setState] = useState<CompetitionsFilterState>({
     query: "",
     category: "All",
@@ -736,7 +737,7 @@ export function CompetitionsPage() {
       return true;
     });
     return applySort(list, state.sort);
-  }, [state]);
+  }, [state, competitions]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(state.page, totalPages);
   const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
@@ -930,10 +931,11 @@ function LiveCountdownPill({ competition }: { competition: Competition }) {
 
 export function CompetitionDetailPage() {
   const { slug } = useParams({ from: "/competitions/$slug" });
+  const { competitions, loading } = useCompetitions();
   const [modalOpen, setModalOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement | null>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
-  const competition = getCompetition(slug);
+  const competition = findCompetition(competitions, slug);
   const [qty, setQty] = useState<number>(1);
   const cd = useCountdownDays(Math.max(1, competition?.daysUntilClose ?? 1));
   const related = useMemo(() => {
@@ -941,13 +943,13 @@ export function CompetitionDetailPage() {
       .filter((c) => c.slug !== competition?.slug)
       .sort(() => Math.random() - 0.5)
       .slice(0, 4);
-  }, [competition?.slug]);
+  }, [competitions, competition?.slug]);
   const partnerCompetitions = useMemo(
     () =>
       competitions
         .filter((c) => c.partner === competition?.partner && c.slug !== competition?.slug)
         .slice(0, 3),
-    [competition?.partner, competition?.slug],
+    [competitions, competition?.partner, competition?.slug],
   );
 
   useEffect(() => {
@@ -965,6 +967,13 @@ export function CompetitionDetailPage() {
     io.observe(el);
     return () => io.disconnect();
   }, [slug]);
+
+  if (!competition && loading)
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-24 text-center sm:px-6">
+        <p className="font-display text-2xl font-extrabold text-ink">Loading competition…</p>
+      </div>
+    );
 
   if (!competition)
     return (

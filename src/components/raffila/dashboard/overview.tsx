@@ -4,7 +4,8 @@ import { ArrowRight, Wallet, Users, Ticket, Trophy, Copy, Check, Clock } from "l
 
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
-import { competitions, formatNaira } from "@/lib/raffila-data";
+import { formatNaira } from "@/lib/raffila-data";
+import { useCompetitions } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/useAuthSession";
 
@@ -54,6 +55,7 @@ const statusStyles: Record<(typeof recentEntries)[number]["status"], string> = {
 
 export function DashboardOverviewPage() {
   const { user } = useAuthSession();
+  const { competitions } = useCompetitions();
   const firstName = user?.firstName || "there";
   const [copiedId, setCopiedId] = useState<string | null>(null);
 

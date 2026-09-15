@@ -4,7 +4,7 @@ import { Search, Copy, Check, FileDown, Ticket, Eye, X, QrCode } from "lucide-re
 
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
-import { competitions, formatNaira } from "@/lib/raffila-data";
+import { formatNaira } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/useAuthSession";
 

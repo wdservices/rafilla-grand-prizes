@@ -29,7 +29,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { competitions, getCompetition, winnerCards } from "@/lib/raffila-data";
+import { getCompetition, winnerCards, type Competition } from "@/lib/raffila-data";
+import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 import mercedesImage from "@/assets/raffila-mercedes.jpg";
 
@@ -59,8 +60,12 @@ type DrawRecord = {
   verifiedChecks: boolean[];
 };
 
-function makeDrawRecord(slug: string, forceStatus?: DrawStatus): DrawRecord {
-  const competition = getCompetition(slug);
+function makeDrawRecord(
+  slug: string,
+  forceStatus?: DrawStatus,
+  liveList?: Competition[],
+): DrawRecord {
+  const competition = (liveList ? findCompetition(liveList, slug) : undefined) ?? getCompetition(slug);
   const winner = winnerCards[0];
   const status: DrawStatus = forceStatus ?? "VERIFIED";
   return {
@@ -139,7 +144,8 @@ function HowStepCard({
 
 export function DrawVerificationPage({ campaignId }: { campaignId?: string }) {
   const slug = campaignId ?? "mercedes-benz-c-class";
-  const record = useMemo(() => makeDrawRecord(slug), [slug]);
+  const { competitions } = useCompetitions();
+  const record = useMemo(() => makeDrawRecord(slug, undefined, competitions), [slug, competitions]);
   const [secondsLeft, setSecondsLeft] = useState(record.drawCountdownSeconds);
 
   useEffect(() => {

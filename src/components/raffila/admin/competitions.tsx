@@ -1,5 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  collection,
+  doc,
+  getDocs,
+  limit,
+  query,
+  setDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { slugifyTitle } from "@/lib/competitions-feed";
 import {
   Search,
   Plus,
@@ -33,13 +42,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import mercedesImage from "@/assets/raffila-mercedes.jpg";
-import techBundleImage from "@/assets/raffila-tech-bundle.jpg";
-import apartmentImage from "@/assets/raffila-apartment.jpg";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -96,6 +104,8 @@ interface MockComp {
   totalEntries: number;
   ticketPrice: number;
   image: string;
+  images?: string[];
+  assetName?: string;
   partner: string;
   drawDate: string;
   condition?: "new" | "likenew" | "refurbished" | "used";
@@ -108,7 +118,6 @@ interface MockComp {
   maxPerUser?: number;
 }
 
-const IMAGES = [mercedesImage, techBundleImage, apartmentImage];
 const PARTNERS = [
   "Lux Wheels Ltd",
   "TechHome NG",
@@ -117,64 +126,6 @@ const PARTNERS = [
   "Abuja Tech Hub",
 ];
 const CATEGORIES = ["Auto", "Tech", "Property", "Jewelry", "Home", "Experience"];
-const STATUSES: CompStatus[] = [
-  "LIVE",
-  "SCHEDULED",
-  "DRAFT",
-  "COMPLETED",
-  "LIVE",
-  "LIVE",
-  "SCHEDULED",
-  "DRAFT",
-  "COMPLETED",
-  "LIVE",
-  "SCHEDULED",
-  "LIVE",
-];
-
-const NAMES = [
-  "Mercedes-Benz C-Class 2025",
-  "Nova X1 Tech Bundle",
-  "Luxury 2-Bed Apartment",
-  "Ikeja Home Studio",
-  "Abuja Generator Pack",
-  "PH Laptop Suite",
-  "Eko Weekend Giveaway",
-  "Lekki Jewelry Set",
-  "Lagos Yacht Experience",
-  "Jos Land Plot",
-  "Kano Textile Bundle",
-  "VI Penthouse Week",
-];
-
-const TOTAL_ENTRIES_POOL = [
-  5000, 10000, 22500, 6000, 5000, 4000, 8000, 3000, 2500, 15000, 10000, 5000,
-];
-const TICKET_PRICE_POOL = [
-  10000, 5000, 2500, 1500, 1000, 7500, 2000, 5000, 20000, 3000, 6000, 4000,
-];
-
-const COMPS: MockComp[] = NAMES.map((n, i) => ({
-  id: `RF-C-${String(i + 1).padStart(5, "0")}`,
-  name: n,
-  slug: n.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-  category: CATEGORIES[i % CATEGORIES.length]!,
-  status: STATUSES[i % STATUSES.length]!,
-  entriesSold: Math.floor(Math.random() * 4500) + 200,
-  totalEntries: TOTAL_ENTRIES_POOL[i]!,
-  ticketPrice: TICKET_PRICE_POOL[i]! * 100,
-  image: IMAGES[i % IMAGES.length]!,
-  partner: PARTNERS[i % PARTNERS.length]!,
-  drawDate: `2026-${String((i % 11) + 2).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
-  condition: (["new", "likenew", "refurbished", "used"] as const)[i % 4],
-  marketValue: (TOTAL_ENTRIES_POOL[i]! * TICKET_PRICE_POOL[i]! * 100) / 3,
-  description: `Premium ${CATEGORIES[i % CATEGORIES.length]} asset. Verified authenticity, full documentation, and insured delivery to anywhere in Nigeria.`,
-  featured: i === 0 || i === 2,
-  publicResults: i % 3 !== 0,
-  startDate: `2026-${String((i % 11) + 1).padStart(2, "0")}-01T09:00`,
-  liveDelay: 60 + i * 5,
-  maxPerUser: 50 + i * 15,
-}));
 
 const statusTone: Record<CompStatus, string> = {
   DRAFT: "bg-ink/10 text-ink",
@@ -238,23 +189,118 @@ function emptyForm(): FormState {
   };
 }
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+function toDateInput(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function parseDateInput(s: string): Date | undefined {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return undefined;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
+function formatDateTimeDisplay(dateStr: string, timeStr: string): string {
+  const d = parseDateInput(dateStr);
+  if (!d) return "Pick a date";
+  const date = d.toLocaleDateString("en-NG", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  const tm = /^(\d{2}):(\d{2})/.exec(timeStr);
+  if (!tm) return date;
+  const hh = Number(tm[1]);
+  const ampm = hh >= 12 ? "PM" : "AM";
+  const h12 = hh % 12 === 0 ? 12 : hh % 12;
+  return `${date} · ${pad2(h12)}:${tm[2]} ${ampm}`;
+}
+
+function DateTimeField({
+  label,
+  value,
+  defaultTime,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  defaultTime: string;
+  onChange: (next: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [datePart, timePart] = value.split("T");
+  const dateStr = datePart ?? "";
+  const timeStr = (timePart ?? "").slice(0, 5) || defaultTime;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+        {label}
+      </Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex h-12 w-full items-center gap-2 rounded-2xl bg-white px-4 text-left text-sm font-bold text-ink ring-1 ring-ink/10 transition-colors hover:ring-coral/40"
+          >
+            <CalendarDays className="size-4 shrink-0 text-coral" />
+            <span className={dateStr ? "" : "text-ink/40"}>
+              {dateStr ? formatDateTimeDisplay(dateStr, timeStr) : "Pick a date"}
+            </span>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto rounded-[22px] bg-white p-3 ring-1 ring-ink/10" align="start">
+          <Calendar
+            mode="single"
+            selected={parseDateInput(dateStr)}
+            disabled={{ before: today }}
+            onSelect={(d) => {
+              if (!d) return;
+              onChange(`${toDateInput(d)}T${timeStr}`);
+              setOpen(false);
+            }}
+          />
+          <div className="flex items-center gap-2 border-t border-ink/10 px-2 pb-1 pt-3">
+            <Clock className="size-4 shrink-0 text-ink/45" />
+            <input
+              type="time"
+              value={timeStr}
+              onChange={(e) => {
+                const t = e.target.value || defaultTime;
+                onChange(`${dateStr || toDateInput(new Date())}T${t}`);
+              }}
+              className="h-10 w-full rounded-xl bg-cream px-3 text-sm font-bold text-ink outline-none ring-1 ring-ink/10 focus:ring-coral"
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 function compToForm(c: MockComp): FormState {
+  const assets = (c.images ?? []).filter(Boolean);
+  if (assets.length === 0 && c.image) assets.push(c.image);
+  const drawDate = c.drawDate.includes("T") ? c.drawDate : `${c.drawDate}T21:00`;
   return {
     id: c.id,
     name: c.name,
     slug: c.slug,
     category: c.category.toLowerCase(),
     description: c.description ?? "",
-    assetName: c.name,
-    assets: [c.image],
+    assetName: c.assetName || c.name,
+    assets,
     marketValue: String(c.marketValue ? Math.round(c.marketValue / 100) : 12000000),
     condition: c.condition ?? "new",
     partner: c.partner.toLowerCase().replace(/[^a-z]/g, ""),
     ticketPrice: String(c.ticketPrice / 100),
     totalEntries: String(c.totalEntries),
     maxPerUser: String(c.maxPerUser ?? 200),
-    startDate: c.startDate ?? "2026-04-01T09:00",
-    drawDate: `${c.drawDate}T21:00`,
+    startDate: c.startDate || "2026-04-01T09:00",
+    drawDate,
     liveDelay: String(c.liveDelay ?? 60),
     featured: !!c.featured,
     publicResults: !!c.publicResults,
@@ -282,6 +328,77 @@ export function AdminCompetitionsPage() {
   const [entriesPage, setEntriesPage] = useState(1);
   const PAGE_SIZE = 10;
 
+  // Live competition rows from Firestore (refreshes after every save).
+  const [rows, setRows] = useState<MockComp[]>([]);
+  const [rowsLoading, setRowsLoading] = useState(true);
+  const [rowsError, setRowsError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setRowsLoading(true);
+      setRowsError(null);
+      try {
+        const snap = await getDocs(query(collection(db, "competitions"), limit(100)));
+        if (cancelled) return;
+        setRows(
+          snap.docs.map((d) => {
+            const v = d.data() as Record<string, unknown>;
+            const images = Array.isArray(v["images"]) ? (v["images"] as string[]) : [];
+            const statusRaw = String(v["status"] ?? "DRAFT").toUpperCase();
+            const status: CompStatus =
+              statusRaw === "LIVE" || statusRaw === "SCHEDULED" || statusRaw === "COMPLETED"
+                ? statusRaw
+                : "DRAFT";
+            return {
+              id: d.id,
+              name: String(v["title"] ?? v["assetName"] ?? d.id),
+              slug: String(v["slug"] ?? d.id),
+              category: String(v["category"] ?? "General"),
+              status,
+              entriesSold: Number(v["entriesSold"] ?? 0) || 0,
+              totalEntries: Number(v["totalEntries"] ?? 0) || 0,
+              ticketPrice: Number(v["entryPrice"] ?? 0) || 0,
+              image: String(v["image"] ?? images[0] ?? ""),
+              images,
+              assetName: String(v["assetName"] ?? ""),
+              partner: String(v["partner"] ?? ""),
+              drawDate: String(v["drawDate"] ?? "").slice(0, 10),
+              condition: (["new", "likenew", "refurbished", "used"] as const).includes(
+                v["condition"] as any,
+              )
+                ? (v["condition"] as MockComp["condition"])
+                : "new",
+              marketValue: Number(v["marketValueKobo"] ?? 0) || 0,
+              description: String(v["description"] ?? ""),
+              featured: Boolean(v["featured"]),
+              publicResults: Boolean(v["publicResults"]),
+              startDate: String(v["startDate"] ?? ""),
+              liveDelay: Number(v["liveDelay"] ?? 60) || 60,
+              maxPerUser: Number(v["maxPerUser"] ?? 200) || 200,
+            } as MockComp;
+          }),
+        );
+      } catch (err: any) {
+        if (!cancelled) {
+          const code = err?.code as string | undefined;
+          setRowsError(
+            code === "permission-denied"
+              ? "Firestore denied access. Publish the latest firestore.rules, then refresh."
+              : err?.message || "Could not load competitions",
+          );
+          setRows([]);
+        }
+      } finally {
+        if (!cancelled) setRowsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
   const statusMap: Record<string, CompStatus | "all"> = {
     live: "LIVE",
     scheduled: "SCHEDULED",
@@ -292,7 +409,7 @@ export function AdminCompetitionsPage() {
 
   const filtered = useMemo(
     () =>
-      COMPS.filter((c) => {
+      rows.filter((c) => {
         const s = search.toLowerCase();
         if (
           s &&
@@ -305,13 +422,13 @@ export function AdminCompetitionsPage() {
         if (st === "all") return true;
         return c.status === st;
       }),
-    [tab, search],
+    [tab, search, rows],
   );
 
   const entriesSource = useMemo(() => {
-    const comp = COMPS.find((c) => c.id === entriesFor);
+    const comp = rows.find((c) => c.id === entriesFor);
     if (!comp) return { comp: null, rows: [] as any[] };
-    const rows = Array.from({ length: Math.min(comp.entriesSold, 286) }).map((_, i) => {
+    const entryRows = Array.from({ length: Math.min(comp.entriesSold, 286) }).map((_, i) => {
       const names = [
         "Tunmise Adebayo",
         "Aisha Mohammed",
@@ -372,8 +489,8 @@ export function AdminCompetitionsPage() {
         status: statuses[i % statuses.length]!,
       };
     });
-    return { comp, rows };
-  }, [entriesFor]);
+    return { comp, rows: entryRows };
+  }, [entriesFor, rows]);
 
   const visibleEntries = useMemo(() => {
     let rows = entriesSource.rows;
@@ -398,8 +515,11 @@ export function AdminCompetitionsPage() {
     return rows.slice(0, entriesPage * PAGE_SIZE);
   }, [entriesSource.rows, entriesFilter, entriesSearch, entriesPage]);
 
+  const slugTouched = useRef(false);
+
   function openNew() {
     setForm(emptyForm());
+    slugTouched.current = false;
     setStepIdx(0);
     setSubmitted(false);
     setEditId(null);
@@ -407,10 +527,27 @@ export function AdminCompetitionsPage() {
   }
   function openEdit(comp: MockComp) {
     setForm(compToForm(comp));
+    slugTouched.current = true;
     setStepIdx(0);
     setSubmitted(false);
     setEditId(comp.id);
     setModalMode("edit");
+  }
+
+  function handleNameChange(name: string) {
+    setForm((prev) => ({
+      ...prev,
+      name,
+      slug: slugTouched.current ? prev.slug : slugifyTitle(name),
+    }));
+  }
+
+  function handleSlugChange(slug: string) {
+    slugTouched.current = true;
+    setForm((prev) => ({
+      ...prev,
+      slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+    }));
   }
   function closeModal() {
     setModalMode(null);
@@ -422,14 +559,17 @@ export function AdminCompetitionsPage() {
     }, 220);
   }
 
-  async function submitDraft() {
+  async function saveCompetition(statusOverride?: CompStatus) {
+    const status = statusOverride ?? form.status;
+    if (!form.name.trim()) {
+      toast.error("Name required", { description: "Enter a competition name first." });
+      return;
+    }
     setSubmitting(true);
     try {
-      const compId =
-        form.slug || form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || `comp-${Date.now()}`;
+      const compId = form.slug || slugifyTitle(form.name) || `comp-${Date.now()}`;
       const imageData = form.assets.length > 0 ? form.assets[0] : "";
-
-      await setDoc(doc(db, "competitions", compId), {
+      const payload = {
         slug: compId,
         title: form.name,
         category: form.category,
@@ -448,37 +588,59 @@ export function AdminCompetitionsPage() {
         liveDelay: Number(form.liveDelay),
         featured: form.featured,
         publicResults: form.publicResults,
-        status: form.status,
-        entriesSold: 0,
-        createdAt: serverTimestamp(),
+        status,
         updatedAt: serverTimestamp(),
-      });
+      };
+
+      if (modalMode === "edit") {
+        // Merge so live sales counters and creation time survive edits.
+        await setDoc(doc(db, "competitions", compId), payload, { merge: true });
+      } else {
+        await setDoc(doc(db, "competitions", compId), {
+          ...payload,
+          entriesSold: 0,
+          createdAt: serverTimestamp(),
+        });
+      }
 
       setSubmitting(false);
       setSubmitted(true);
+      if (statusOverride) setForm((prev) => ({ ...prev, status }));
       void logActivity({
         eventType: modalMode === "edit" ? "COMPETITION_UPDATE" : "COMPETITION_CREATE",
         targetType: "competition",
         targetId: compId,
-        summary: `${modalMode === "edit" ? "Updated" : "Created"} competition "${form.assetName || form.name}" (${form.status})`,
+        summary: `${modalMode === "edit" ? "Updated" : "Created"} competition "${form.assetName || form.name}" (${status})`,
         details: {
           title: form.name,
           category: form.category,
           partner: form.partner,
-          status: form.status,
+          status,
           entryPriceKobo: Math.round(Number(form.ticketPrice) * 100),
           totalEntries: Number(form.totalEntries),
         },
       });
-      toast.success(`${modalMode === "edit" ? "Competition updated" : "Competition created"}`, {
-        description: `${form.assetName || form.name || "Untitled competition"} · saved as ${form.status} · ${compId}`,
-      });
+      toast.success(
+        statusOverride === "DRAFT"
+          ? "Draft saved"
+          : modalMode === "edit"
+            ? "Competition updated"
+            : "Competition created",
+        {
+          description: `${form.assetName || form.name || "Untitled competition"} · saved as ${status} · ${compId}`,
+        },
+      );
+      setRefreshKey((k) => k + 1);
     } catch (err) {
       setSubmitting(false);
       toast.error("Failed to save competition", {
         description: err instanceof Error ? err.message : "Unknown error",
       });
     }
+  }
+
+  async function submitDraft() {
+    await saveCompetition();
   }
 
   function performAction(comp: MockComp, action: string) {
@@ -626,7 +788,36 @@ export function AdminCompetitionsPage() {
             </div>
           </div>
 
-          {view === "grid" ? (
+          {rowsLoading && (
+            <div className="rounded-[24px] bg-white p-10 text-center text-sm font-bold text-ink/55 ring-1 ring-ink/10">
+              Loading competitions from Firestore…
+            </div>
+          )}
+          {!rowsLoading && rowsError && (
+            <div className="rounded-[24px] bg-coral/10 p-6 text-center ring-1 ring-coral/20">
+              <p className="text-sm font-extrabold text-coral">{rowsError}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 rounded-full"
+                onClick={() => setRefreshKey((k) => k + 1)}
+              >
+                Retry
+              </Button>
+            </div>
+          )}
+          {!rowsLoading && !rowsError && filtered.length === 0 && (
+            <div className="rounded-[24px] bg-white p-10 text-center ring-1 ring-ink/10">
+              <p className="font-display text-xl font-extrabold text-ink">No competitions yet</p>
+              <p className="mx-auto mt-2 max-w-md text-sm font-bold text-ink/55">
+                {rows.length === 0
+                  ? "Create your first competition to publish it to the site."
+                  : "No competitions match the current tab or search."}
+              </p>
+            </div>
+          )}
+
+          {!rowsLoading && !rowsError && filtered.length > 0 && view === "grid" ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {filtered.map((c) => {
                 const pct = Math.min(100, Math.round((c.entriesSold / c.totalEntries) * 100));
@@ -803,7 +994,7 @@ export function AdminCompetitionsPage() {
                 );
               })}
             </div>
-          ) : (
+          ) : !rowsLoading && !rowsError && filtered.length > 0 ? (
             <div className="overflow-x-auto -mx-2 px-2">
               <Table>
                 <TableHeader className="[&_tr]:border-ink/10">
@@ -930,7 +1121,7 @@ export function AdminCompetitionsPage() {
                 </TableBody>
               </Table>
             </div>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 
@@ -1040,23 +1231,18 @@ export function AdminCompetitionsPage() {
                       <Input
                         placeholder="e.g. 2026 Mercedes-Benz C-Class Grand Prize"
                         value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        onChange={(e) => handleNameChange(e.target.value)}
                         className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
-                        URL slug
+                        URL slug · auto-generates from the name
                       </Label>
                       <Input
                         placeholder="mercedes-c-class-2026"
                         value={form.slug}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
-                          })
-                        }
+                        onChange={(e) => handleSlugChange(e.target.value)}
                         className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink placeholder:text-ink/40 ring-1 ring-ink/10 focus-visible:ring-coral"
                       />
                     </div>
@@ -1243,28 +1429,18 @@ export function AdminCompetitionsPage() {
 
                 {stepIdx === 3 && (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
-                        Start date
-                      </Label>
-                      <Input
-                        type="datetime-local"
-                        value={form.startDate}
-                        onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                        className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10 focus-visible:ring-coral"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
-                        Draw date
-                      </Label>
-                      <Input
-                        type="datetime-local"
-                        value={form.drawDate}
-                        onChange={(e) => setForm({ ...form, drawDate: e.target.value })}
-                        className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10 focus-visible:ring-coral"
-                      />
-                    </div>
+                    <DateTimeField
+                      label="Start date"
+                      value={form.startDate}
+                      defaultTime="09:00"
+                      onChange={(v) => setForm({ ...form, startDate: v })}
+                    />
+                    <DateTimeField
+                      label="Draw date"
+                      value={form.drawDate}
+                      defaultTime="21:00"
+                      onChange={(v) => setForm({ ...form, drawDate: v })}
+                    />
                     <div className="space-y-2">
                       <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
                         Live push delay (mins)
@@ -1281,6 +1457,29 @@ export function AdminCompetitionsPage() {
 
                 {stepIdx === 4 && (
                   <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-3 rounded-2xl bg-white px-4 py-4 ring-1 ring-ink/10">
+                      <div>
+                        <p className="text-sm font-extrabold text-ink">Publishing status</p>
+                        <p className="text-xs font-bold text-ink/55">
+                          Live competitions appear on the site immediately.
+                        </p>
+                      </div>
+                      <Select
+                        value={form.status}
+                        onValueChange={(v) => setForm({ ...form, status: v as CompStatus })}
+                      >
+                        <SelectTrigger className="h-11 w-40 rounded-2xl bg-cream px-4 text-sm font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-[22px] bg-white p-1 ring-1 ring-ink/10">
+                          {(["DRAFT", "SCHEDULED", "LIVE"] as CompStatus[]).map((s) => (
+                            <SelectItem key={s} value={s} className="rounded-xl font-bold">
+                              {s === "DRAFT" ? "Draft" : s === "SCHEDULED" ? "Scheduled" : "Live"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-4 ring-1 ring-ink/10">
                       <div>
                         <p className="text-sm font-extrabold text-ink">Featured competition</p>
@@ -1329,7 +1528,7 @@ export function AdminCompetitionsPage() {
                       {
                         k: "Schedule",
                         title: `Draw · ${form.drawDate.replace("T", " ")}`,
-                        sub: `Start ${form.startDate.replace("T", " ")} · delay ${form.liveDelay}m · ${form.featured ? "featured" : "not featured"} · ${form.publicResults ? "public" : "private"} results`,
+                        sub: `Start ${form.startDate.replace("T", " ")} · delay ${form.liveDelay}m · ${form.status} · ${form.featured ? "featured" : "not featured"} · ${form.publicResults ? "public" : "private"} results`,
                       },
                     ].map((s) => (
                       <Card
@@ -1369,17 +1568,7 @@ export function AdminCompetitionsPage() {
                 <Button
                   variant="ghost"
                   onClick={() => {
-                    setSubmitted(true);
-                    void logActivity({
-                      eventType: "COMPETITION_UPDATE",
-                      targetType: "competition",
-                      targetId:
-                        form.slug ||
-                        form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") ||
-                        "unsaved-draft",
-                      summary: `Saved draft for "${form.assetName || form.name || "Untitled competition"}"`,
-                    });
-                    toast.success("Draft saved", { description: "Saved without publishing." });
+                    void saveCompetition("DRAFT");
                   }}
                   disabled={submitting}
                 >
@@ -1403,7 +1592,13 @@ export function AdminCompetitionsPage() {
                     ) : (
                       <>
                         <Sparkles className="size-4" />
-                        {modalMode === "edit" ? "Save changes" : "Create competition"}
+                        {modalMode === "edit"
+                          ? "Save changes"
+                          : form.status === "LIVE"
+                            ? "Publish competition"
+                            : form.status === "SCHEDULED"
+                              ? "Schedule competition"
+                              : "Create draft"}
                       </>
                     )}
                   </Button>
