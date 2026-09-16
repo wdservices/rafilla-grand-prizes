@@ -104,38 +104,12 @@ interface AuditLog {
   riskLevel: RiskLevel;
 }
 
-/** All audit timestamps render in West Africa Time (Africa/Lagos, GMT+1, no DST). */
-const LAGOS_TZ = "Africa/Lagos";
-
-function lagosDayKey(iso: string | number): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: LAGOS_TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(iso));
-}
-
-function formatLagosTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("en-NG", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: LAGOS_TZ,
-  });
-}
-
-function formatLagosDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-NG", {
-    day: "2-digit",
-    month: "short",
-    timeZone: LAGOS_TZ,
-  });
-}
-
-function formatLagosDateTime(iso: string): string {
-  return `${formatLagosDate(iso)}, ${formatLagosTime(iso)} GMT+1`;
-}
+import {
+  lagosDayKey,
+  lagosDateShort,
+  lagosTime,
+  lagosDateTime,
+} from "@/lib/format";
 
 function toIso(value: unknown, fallback?: unknown): string {
   try {
@@ -384,7 +358,7 @@ export function AdminAuditLogsPage() {
 
   function logsToSheet(logs: AuditLog[]) {
     return logs.map((l) => ({
-      Date: formatLagosDateTime(l.timestamp),
+      Date: lagosDateTime(l.timestamp),
       Actor: l.actorName,
       Email: l.actorEmail,
       ActorID: l.actorId,
@@ -472,7 +446,7 @@ export function AdminAuditLogsPage() {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
-                timeZone: LAGOS_TZ,
+                timeZone: "Africa/Lagos",
               });
       const last = groups[groups.length - 1];
       if (last && last.label === label) last.logs.push(l);
@@ -736,7 +710,7 @@ export function AdminAuditLogsPage() {
                     <TableRow key={l.id}>
                       <TableCell className="font-body text-sm whitespace-nowrap">
                         <div className="text-ink">
-                          {formatLagosDate(l.timestamp)}, {formatLagosTime(l.timestamp)}{" "}
+                          {lagosDateShort(l.timestamp)}, {lagosTime(l.timestamp)}{" "}
                           <span className="text-[10px] font-bold text-ink/40">GMT+1</span>
                         </div>
                         <div className="text-ink/40 text-[11px]">{l.id}</div>
@@ -882,7 +856,7 @@ export function AdminAuditLogsPage() {
                 <>
                   <span className="font-mono text-ink">{diffLog.eventType}</span> by{" "}
                   <span className="text-ink font-semibold">{diffLog.actorName}</span> ·{" "}
-                  {formatLagosDateTime(diffLog.timestamp)}
+                  {lagosDateTime(diffLog.timestamp)}
                 </>
               )}
             </DialogDescription>
@@ -993,7 +967,7 @@ export function AdminAuditLogsPage() {
                         className="flex flex-wrap items-center gap-2 rounded-2xl bg-cream/50 px-3.5 py-2.5 ring-1 ring-ink/5"
                       >
                         <span className="font-mono text-[11px] font-bold text-ink/55 whitespace-nowrap">
-                          {formatLagosTime(l.timestamp)}{" "}
+                          {lagosTime(l.timestamp)}{" "}
                           <span className="text-ink/40">GMT+1</span>
                         </span>
                         {eventBadge(l.eventType)}

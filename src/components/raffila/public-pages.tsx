@@ -899,14 +899,24 @@ export function CompetitionsPage() {
   );
 }
 
-function CountdownUnit({ value, label }: { value: number; label: string }) {
+function CountdownUnit({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
   const str = value.toString().padStart(2, "0");
   return (
-    <div className="grid place-items-center min-w-[52px]">
-      <div className="rounded-xl bg-paper px-2.5 py-1.5 ring-1 ring-ink/10">
-        <span className="font-display text-lg font-extrabold text-ink tabular-nums">{str}</span>
+    <div className="grid place-items-center">
+      <div
+        className={`rounded-2xl px-3 py-2 ring-1 ring-ink/10 ${
+          accent ? "bg-coral/10 ring-coral/20 min-w-[72px]" : "bg-paper min-w-[56px]"
+        }`}
+      >
+        <span
+          className={`font-display font-extrabold text-ink tabular-nums ${
+            accent ? "text-2xl" : "text-lg"
+          }`}
+        >
+          {str}
+        </span>
       </div>
-      <span className="mt-1 text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+      <span className="mt-1.5 text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
         {label}
       </span>
     </div>
@@ -1143,12 +1153,10 @@ export function CompetitionDetailPage() {
                   Ends in
                 </div>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  <div className="rounded-lg bg-paper px-2 py-1 text-xs font-extrabold tabular-nums ring-1 ring-ink/10">
-                    {cd.d}d
-                  </div>
-                  <CountdownUnit value={cd.h} label="" />
-                  <CountdownUnit value={cd.m} label="" />
-                  <CountdownUnit value={cd.s} label="" />
+                  <CountdownUnit value={cd.d} label="days" accent />
+                  <CountdownUnit value={cd.h} label="hrs" />
+                  <CountdownUnit value={cd.m} label="min" />
+                  <CountdownUnit value={cd.s} label="sec" />
                 </div>
               </div>
               <div className="flex items-center gap-3 rounded-2xl bg-lemon/30 p-3 ring-1 ring-ink/5">
@@ -2555,18 +2563,19 @@ function HowItWorksPreview() {
         />
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {[
-            "Create your account",
-            "Fund your wallet",
-            "Choose a prize",
-            "Buy entries",
-            "Watch the draw",
-            "Be the winner",
+            { title: "Create your account", desc: "Sign up in seconds — email or Google, no paperwork." },
+            { title: "Fund your wallet", desc: "Top up with card or transfer via Paystack in one tap." },
+            { title: "Choose a prize", desc: "Browse premium gadgets, phones, and lifestyle products." },
+            { title: "Buy entries", desc: "Pick how many entries you want and confirm — you're in." },
+            { title: "Watch the draw", desc: "Every draw is live on camera — fully transparent, no tricks." },
+            { title: "Be the winner", desc: "Winners are notified instantly and prizes ship to your door." },
           ].map((step, index) => (
-            <div key={step} className="rounded-[20px] bg-paper p-4 ring-1 ring-ink/5">
+            <div key={step.title} className="rounded-[20px] bg-paper p-4 ring-1 ring-ink/5">
               <span className="font-display text-2xl font-extrabold text-coral">{index + 1}</span>
               <p className="mt-3 text-sm font-extrabold leading-snug text-ink tracking-tight">
-                {step}
+                {step.title}
               </p>
+              <p className="mt-1 text-xs leading-relaxed text-ink/50">{step.desc}</p>
             </div>
           ))}
         </div>

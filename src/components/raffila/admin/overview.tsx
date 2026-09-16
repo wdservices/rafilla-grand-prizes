@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { lagosChartLabels, lagosDateShort } from "@/lib/format";
 import {
   collection,
   getDocs,
@@ -121,11 +122,7 @@ function DualChartBars({ tickets, revenueBase }: { tickets: number[]; revenueBas
   const gap = (barArea / days) * 0.62;
   const toYT = (v: number) => h - pad - (v / maxT) * (h - pad * 2);
   const toYR = (v: number) => h - pad - (v / maxR) * (h - pad * 2);
-  const now = new Date();
-  const labels = Array.from({ length: days }, (_, i) => {
-    const d = new Date(now.getTime() - (days - 1 - i) * 86400000);
-    return d.toLocaleDateString("en-NG", { weekday: "short", day: "numeric" });
-  });
+  const labels = lagosChartLabels(days);
   const coralOklch = "oklch(0.75 0.14 35)";
   const skyOklch = "oklch(0.76 0.12 255)";
   const gridOklch = "oklch(0.929 0.013 255.508)";
@@ -367,7 +364,7 @@ export function AdminOverview() {
               email: (u.v["email"] as string) || "",
               initials: initialsOfName(String(display)),
               tint: REG_TINTS[i % REG_TINTS.length]!,
-              date: ms ? new Date(ms).toLocaleDateString("en-NG", { day: "2-digit", month: "short" }) : "—",
+              date: ms ? lagosDateShort(ms) : "—",
               verified: u.v["verified"] === true,
             },
           });

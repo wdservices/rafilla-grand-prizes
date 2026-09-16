@@ -88,7 +88,7 @@ function makeStl(i: number): Settlement {
   const s = statuses[i % statuses.length]!;
   const wStart = new Date(Date.now() - (i + 1) * 7 * 86400000);
   const wEnd = new Date(wStart.getTime() + 6 * 86400000);
-  const fmtD = (d: Date) => d.toLocaleDateString("en-NG", { day: "2-digit", month: "short" });
+  const fmtD = (d: Date) => d.toLocaleDateString("en-NG", { day: "2-digit", month: "short", timeZone: "Africa/Lagos" });
   const payoutD = new Date(
     wEnd.getTime() +
       (s === "pending" ? 2 : s === "processing" ? 1 : s === "paid" ? 3 : 5) * 86400000,
@@ -107,6 +107,7 @@ function makeStl(i: number): Settlement {
       day: "2-digit",
       month: "short",
       year: "2-digit",
+      timeZone: "Africa/Lagos",
     }),
     txnRef:
       s === "paid"

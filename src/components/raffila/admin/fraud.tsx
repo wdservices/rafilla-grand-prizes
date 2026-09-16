@@ -35,6 +35,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { lagosDateShort, lagosDateTime } from "@/lib/format";
 import {
   ShieldAlert,
   ShieldCheck,
@@ -912,18 +913,12 @@ export function AdminFraudQueuePage() {
                       </TableCell>
                       <TableCell>
                         <div className="font-body text-xs text-ink whitespace-nowrap">
-                          {new Date(c.firstSeen).toLocaleDateString("en-NG", {
-                            day: "2-digit",
-                            month: "short",
-                          })}
+                           {lagosDateShort(c.firstSeen)}
                         </div>
                         <div className="text-[10px] text-ink/40 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           Last{" "}
-                          {new Date(c.lastSeen).toLocaleDateString("en-NG", {
-                            day: "2-digit",
-                            month: "short",
-                          })}
+                           {lagosDateShort(c.lastSeen)}
                         </div>
                       </TableCell>
                       <TableCell>{severityBadge(c.severity)}</TableCell>
@@ -1051,12 +1046,7 @@ export function AdminFraudQueuePage() {
                               +{sg.scoreContribution} pts
                             </Badge>
                             <span className="text-[11px] text-ink/40 font-mono ml-auto">
-                              {new Date(sg.timestamp).toLocaleString("en-NG", {
-                                day: "2-digit",
-                                month: "short",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                               {lagosDateTime(sg.timestamp)}
                             </span>
                           </div>
                           <p className="text-sm font-body text-ink/80">{sg.detail}</p>

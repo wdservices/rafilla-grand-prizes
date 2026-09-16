@@ -91,6 +91,7 @@ import { AssetUploader } from "@/components/raffila/admin/asset-uploader";
 import { cn, formatNaira } from "@/lib/utils";
 import { logActivity } from "@/lib/activity-log";
 import { db } from "@/lib/firebase";
+import { formatCloses, formatDrawDate } from "@/lib/format";
 
 type CompStatus = "DRAFT" | "SCHEDULED" | "LIVE" | "COMPLETED";
 
@@ -364,7 +365,7 @@ export function AdminCompetitionsPage() {
               images,
               assetName: String(v["assetName"] ?? ""),
               partner: String(v["partner"] ?? ""),
-              drawDate: String(v["drawDate"] ?? "").slice(0, 10),
+              drawDate: String(v["drawDate"] ?? ""),
               condition: (["new", "likenew", "refurbished", "used"] as const).includes(
                 v["condition"] as any,
               )
@@ -938,7 +939,7 @@ export function AdminCompetitionsPage() {
                       <div className="flex items-center justify-between text-[11px] font-extrabold">
                         <span className="inline-flex items-center gap-1 text-ink/60">
                           <CalendarDays className="size-3" />
-                          Draw {c.drawDate}
+                          Draw {formatDrawDate(c.drawDate)}
                         </span>
                         <span className="text-ink whitespace-nowrap">
                           {formatNaira(c.ticketPrice)}
@@ -1067,7 +1068,7 @@ export function AdminCompetitionsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="py-3 whitespace-nowrap text-xs font-bold text-ink/65">
-                          {c.drawDate}
+                          {formatDrawDate(c.drawDate)}
                         </TableCell>
                         <TableCell className="py-3 text-right">
                           <div className="flex items-center justify-end gap-1">
@@ -1527,8 +1528,8 @@ export function AdminCompetitionsPage() {
                       },
                       {
                         k: "Schedule",
-                        title: `Draw · ${form.drawDate.replace("T", " ")}`,
-                        sub: `Start ${form.startDate.replace("T", " ")} · delay ${form.liveDelay}m · ${form.status} · ${form.featured ? "featured" : "not featured"} · ${form.publicResults ? "public" : "private"} results`,
+                        title: `Draw · ${formatDrawDate(form.drawDate)}`,
+                        sub: `Start ${formatCloses(form.startDate)} · delay ${form.liveDelay}m · ${form.status} · ${form.featured ? "featured" : "not featured"} · ${form.publicResults ? "public" : "private"} results`,
                       },
                     ].map((s) => (
                       <Card

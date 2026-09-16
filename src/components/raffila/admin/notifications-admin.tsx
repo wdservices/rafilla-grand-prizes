@@ -153,19 +153,7 @@ function toNtfy(n: AdminNotification, unread: boolean): NTFY {
     recipientTint: RECIPIENT_TINTS[h % RECIPIENT_TINTS.length]!,
   };
 }
-function fmtTime(iso: string) {
-  const d = new Date(iso);
-  const now = new Date();
-  const diff = now.getTime() - d.getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return d.toLocaleDateString("en-NG", { day: "2-digit", month: "short" });
-}
+import { lagosRelativeTime } from "@/lib/format";
 
 function ChannelIcon({ ch }: { ch: Channel }) {
   if (ch === "inapp") return <Bell className="w-4 h-4" />;
@@ -498,7 +486,7 @@ export function AdminNotificationsCenterPage() {
                                   </span>
                                 </Badge>
                                 <span className="text-[11px] text-ink/40 font-mono whitespace-nowrap">
-                                  {fmtTime(n.time)}
+                                  {lagosRelativeTime(n.time)}
                                 </span>
                               </div>
                             </div>

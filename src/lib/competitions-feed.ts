@@ -1,6 +1,7 @@
 import { collection, getDocs, limit, query } from "firebase/firestore";
 
 import { db } from "./firebase";
+import { formatCloses, formatDrawDate } from "./format";
 import { competitions as mockCompetitions, type Competition } from "./raffila-data";
 
 const ACCENTS: Competition["accent"][] = ["coral", "sky", "lemon", "mint", "lilac"];
@@ -64,7 +65,8 @@ export function docToCompetition(
   const totalEntries = Number(data["totalEntries"] ?? 0) || 0;
   const entriesSold = Number(data["entriesSold"] ?? 0) || 0;
   const marketValueKobo = Number(data["marketValueKobo"] ?? data["prizeValueKobo"] ?? 0) || 0;
-  const drawDate = String(data["drawDate"] ?? data["closes"] ?? "");
+  const drawDateRaw = String(data["drawDate"] ?? data["closes"] ?? "");
+  const closesRaw = String(data["closes"] ?? drawDateRaw);
   const closesMs = toMs(data["closes"] ?? data["drawDate"]);
   const daysUntilClose = closesMs
     ? Math.max(0, Math.ceil((closesMs - Date.now()) / 86400000))
@@ -82,7 +84,7 @@ export function docToCompetition(
     entryPrice,
     totalEntries,
     entriesSold,
-    closes: String(data["closes"] ?? drawDate),
+    closes: formatCloses(closesRaw),
     daysUntilClose,
     status,
     featured: Boolean(data["featured"] ?? index === 0),
@@ -90,7 +92,7 @@ export function docToCompetition(
     imageAlt: String(data["imageAlt"] ?? data["assetName"] ?? title),
     accent: accentFor(slug),
     specs: Array.isArray(data["specs"]) ? (data["specs"] as string[]) : [],
-    drawDate,
+    drawDate: formatDrawDate(drawDateRaw),
     prizeCondition: String(data["prizeCondition"] ?? data["condition"] ?? "New"),
     warranty: String(data["warranty"] ?? ""),
     make: String(data["make"] ?? ""),

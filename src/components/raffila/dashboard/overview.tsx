@@ -5,6 +5,7 @@ import { ArrowRight, Wallet, Users, Ticket, Trophy, Copy, Check, Clock } from "l
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/raffila-data";
+import { lagosGreeting } from "@/lib/format";
 import { useCompetitions } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/useAuthSession";
@@ -65,13 +66,7 @@ export function DashboardOverviewPage() {
     setTimeout(() => setCopiedId(null), 1500);
   };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
-  };
-  const greeting = getGreeting();
+  const greeting = lagosGreeting();
 
   return (
     <DashboardAppShell

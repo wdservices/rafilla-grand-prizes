@@ -198,13 +198,12 @@ export function HeroFeaturedCarousel() {
   }, [api, current, count, userPaused]);
 
   const { competitions: liveCompetitions } = useCompetitions();
-  const liveFeatured = liveCompetitions.filter((c) => c.featured);
   const slides =
-    liveFeatured.length > 0
-      ? liveFeatured
+    liveCompetitions.length > 0
+      ? [...liveCompetitions].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
       : mockFeatured.length > 0
         ? mockFeatured
-        : liveCompetitions.slice(0, 8);
+        : [];
 
   if (!mounted) {
     const c = slides[0]!;
