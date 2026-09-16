@@ -19,6 +19,7 @@ import { Route as CompetitionsRouteImport } from './routes/competitions'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as PartnerSignupRouteImport } from './routes/partner-signup'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as RobotsRouteImport } from './routes/robots'
 import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
@@ -104,6 +105,11 @@ const FaqRoute = FaqRouteImport.update({
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerSignupRoute = PartnerSignupRouteImport.update({
+  id: '/partner-signup',
+  path: '/partner-signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
@@ -300,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/partner-signup': typeof PartnerSignupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
@@ -347,6 +354,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/partner-signup': typeof PartnerSignupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
@@ -396,6 +404,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/partner-signup': typeof PartnerSignupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
@@ -446,6 +455,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/how-it-works'
+    | '/partner-signup'
     | '/privacy-policy'
     | '/robots'
     | '/terms-and-conditions'
@@ -493,6 +503,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/how-it-works'
+    | '/partner-signup'
     | '/privacy-policy'
     | '/robots'
     | '/terms-and-conditions'
@@ -541,6 +552,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/faq'
     | '/how-it-works'
+    | '/partner-signup'
     | '/privacy-policy'
     | '/robots'
     | '/terms-and-conditions'
@@ -590,6 +602,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  PartnerSignupRoute: typeof PartnerSignupRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   RobotsRoute: typeof RobotsRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
@@ -695,6 +708,13 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partner-signup': {
+      id: '/partner-signup'
+      path: '/partner-signup'
+      fullPath: '/partner-signup'
+      preLoaderRoute: typeof PartnerSignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy-policy': {
@@ -988,6 +1008,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
   HowItWorksRoute: HowItWorksRoute,
+  PartnerSignupRoute: PartnerSignupRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   RobotsRoute: RobotsRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
