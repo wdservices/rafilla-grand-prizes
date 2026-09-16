@@ -1,9 +1,10 @@
+import { useState, useEffect } from "react";
+import { Link } from "@tanstack/react-router";
 import { PartnerShell } from "./partner-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   ListOrdered,
   Ticket,
@@ -15,449 +16,451 @@ import {
   Calendar,
   FileText,
   Sparkles,
-  Car,
-  Gem,
-  Watch,
-  Smartphone,
+  ShieldCheck,
+  CheckCircle2,
+  Building2,
+  PieChart,
+  Percent,
+  Banknote,
+  AlertCircle,
 } from "lucide-react";
 import { formatNaira } from "@/lib/utils";
-
-const WEEKLY_ENTRIES = [145, 220, 187, 312, 408, 354, 498, 432, 514, 587, 612, 678];
-const WEEKS = [
-  "Wk27",
-  "Wk28",
-  "Wk29",
-  "Wk30",
-  "Wk31",
-  "Wk32",
-  "Wk33",
-  "Wk34",
-  "Wk35",
-  "Wk36",
-  "Wk37",
-  "Wk38",
-];
-
-function WeeklyBarsChart() {
-  const max = Math.max(...WEEKLY_ENTRIES);
-  return (
-    <div className="space-y-2">
-      <div className="flex items-end gap-1.5 sm:gap-2 h-40 px-1">
-        {WEEKLY_ENTRIES.map((v, i) => {
-          const h = (v / max) * 100;
-          const isMax = v === max;
-          return (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-              <span
-                className={`text-[10px] font-mono font-bold ${isMax ? "text-coral" : "text-ink/50"} opacity-0 group-hover:opacity-100 transition`}
-              >
-                {v.toLocaleString()}
-              </span>
-              <div
-                className={`w-full rounded-t-xl transition-all ${isMax ? "bg-gradient-to-t from-coral to-coral/70" : "bg-gradient-to-t from-sky/40 to-sky"} group-hover:from-coral/80 group-hover:to-coral`}
-                style={{ height: `${h}%` }}
-                title={`${WEEKS[i]}: ${v.toLocaleString()} entries`}
-              />
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex items-end gap-1.5 sm:gap-2 px-1">
-        {WEEKS.map((w, i) => (
-          <div key={i} className="flex-1 text-center">
-            <span className="text-[9px] font-mono text-ink/40">{w}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-interface Settlement {
-  id: string;
-  period: string;
-  amountKobo: number;
-  status: "paid" | "pending" | "processing";
-  date: string;
-}
-const SETTLEMENTS: Settlement[] = [
-  {
-    id: "STL-W38-4021",
-    period: "Week 38 · Sep 16 – 22",
-    amountKobo: 182400000,
-    status: "pending",
-    date: "Pending · Sep 27",
-  },
-  {
-    id: "STL-W37-3988",
-    period: "Week 37 · Sep 09 – 15",
-    amountKobo: 213600000,
-    status: "processing",
-    date: "Processing · Sep 23",
-  },
-  {
-    id: "STL-W36-3944",
-    period: "Week 36 · Sep 02 – 08",
-    amountKobo: 145900000,
-    status: "paid",
-    date: "Paid · Sep 13",
-  },
-  {
-    id: "STL-W35-3899",
-    period: "Week 35 · Aug 26 – Sep 01",
-    amountKobo: 98400000,
-    status: "paid",
-    date: "Paid · Sep 06",
-  },
-  {
-    id: "STL-W34-3855",
-    period: "Week 34 · Aug 19 – 25",
-    amountKobo: 128700000,
-    status: "paid",
-    date: "Paid · Aug 30",
-  },
-];
-
-const TOP_FIRST = [
-  "Tunde",
-  "Amaka",
-  "Chidi",
-  "Sade",
-  "Funmi",
-  "Kemi",
-  "Bola",
-  "Ifeoma",
-  "Dele",
-  "Zainab",
-  "Emeka",
-  "Ngozi",
-];
-const TOP_LAST = [
-  "Bakare",
-  "Okafor",
-  "Eze",
-  "Lawal",
-  "Adeyemi",
-  "Hassan",
-  "Tinubu",
-  "Dike",
-  "Ogun",
-  "Aliyu",
-  "Nwosu",
-  "Obi",
-];
-const TINTS = ["coral", "mint", "lemon", "sky", "lilac"];
-
-function statusBadge(s: Settlement["status"]) {
-  if (s === "paid")
-    return (
-      <Badge className="rounded-full bg-mint/40 border-mint text-ink text-[10px] font-bold">
-        PAID
-      </Badge>
-    );
-  if (s === "processing")
-    return (
-      <Badge variant="outline" className="rounded-full bg-sky/20 border-sky text-ink text-[10px]">
-        PROCESSING
-      </Badge>
-    );
-  return (
-    <Badge variant="outline" className="rounded-full bg-lemon/30 border-lemon text-ink text-[10px]">
-      PENDING
-    </Badge>
-  );
-}
+import { partnerStore } from "@/lib/partner-store";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import type { PartnerProfile, PartnerCompetition } from "@/types/partner";
 
 export function PartnerOverviewPage() {
-  const kpis = [
-    {
-      label: "Live listings",
-      value: "8",
-      sub: "+2 this month",
-      icon: <ListOrdered className="w-5 h-5" />,
-      tint: "bg-sky/20 text-sky border-sky/40",
-      accent: "text-sky",
-    },
-    {
-      label: "Total entries sold",
-      value: "12,480",
-      sub: "+34.2% vs 12w ago",
-      icon: <Ticket className="w-5 h-5" />,
-      tint: "bg-coral/20 text-coral border-coral/40",
-      accent: "text-coral",
-    },
-    {
-      label: "Revenue share earned",
-      value: formatNaira(4824000000),
-      sub: "All-time · 18.2% margin",
-      icon: <Wallet className="w-5 h-5" />,
-      tint: "bg-mint/30 text-ink border-mint/50",
-      accent: "text-ink",
-    },
-    {
-      label: "Pending settlement",
-      value: formatNaira(642000000),
-      sub: "Releases Sep 27",
-      icon: <Clock className="w-5 h-5" />,
-      tint: "bg-lemon/30 text-ink border-lemon/50",
-      accent: "text-ink",
-    },
-  ];
+  const { session } = useAuthSession();
+  const [partners, setPartners] = useState<PartnerProfile[]>(partnerStore.getPartners());
+  const [partnerCompetitions, setPartnerCompetitions] = useState<PartnerCompetition[]>([]);
+
+  const activePartnerId = session?.user?.partnerId || "partner_abc_motors";
+
+  useEffect(() => {
+    const updateData = () => {
+      setPartners(partnerStore.getPartners());
+      setPartnerCompetitions(partnerStore.getPartnerCompetitions(activePartnerId));
+    };
+
+    updateData();
+    const unsub = partnerStore.subscribe(updateData);
+    return unsub;
+  }, [activePartnerId]);
+
+  const activePartner: PartnerProfile = partnerStore.getPartnerById(activePartnerId) ||
+    partners[0] || {
+      id: "partner_abc_motors",
+      businessName: session?.user?.businessName || "ABC Motors Ltd",
+      businessType: "Automotive",
+      cacNumber: "RC-1849204",
+      address: "Victoria Island",
+      city: "Lagos",
+      state: "Lagos",
+      country: "Nigeria",
+      companyEmail: session?.user?.email || "partner.demo@abcmotors.example",
+      companyPhone: "+234 803 111 2233",
+      description: "Verified Partner",
+      authorizedRepresentative: {
+        fullName: `${session?.user?.firstName || "Michael"} ${session?.user?.lastName || "Ade"}`,
+        position: "Managing Director",
+        email: session?.user?.email || "partner.demo@abcmotors.example",
+        phone: "+234 803 111 2233",
+      },
+      documents: {},
+      verificationStatus: "APPROVED",
+      createdAt: "",
+      updatedAt: "",
+    };
+
+  const activeCompetitions = partnerCompetitions.filter((c) => c.status === "ACTIVE");
+  const completedCompetitions = partnerCompetitions.filter((c) => c.status === "COMPLETED");
+  const totalTicketsSold = partnerCompetitions.reduce((sum, c) => sum + c.ticketsSold, 0);
+  const totalGrossKobo = partnerCompetitions.reduce((sum, c) => sum + c.grossRevenueKobo, 0);
+  const partnerShareKobo = partnerCompetitions.reduce((sum, c) => sum + c.partnerAmountKobo, 0);
+  const raffilaShareKobo = partnerCompetitions.reduce((sum, c) => sum + c.raffilaAmountKobo, 0);
+
+  const partnerPayouts = partnerStore.getPartnerPayouts(activePartner.id);
+  const pendingPayoutsKobo = partnerPayouts
+    .filter((p) => p.status === "PENDING" || p.status === "PROCESSING")
+    .reduce((sum, p) => sum + p.amountKobo, 0);
 
   return (
-    <PartnerShell activeNav="overview" title="Overview">
-      <div className="space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <PartnerShell activeNav="overview" title="Partner Overview">
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="font-display text-3xl text-ink">Good morning, Adaeze 👋</h1>
-            <p className="font-body text-ink/60 text-sm mt-1">
-              Here's how Lekki Luxury Autos is performing on Raffila this week.
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-ink/50">
+                Partner Portal · ID: {activePartner.id}
+              </span>
+              <Badge
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border-0 ${
+                  activePartner.verificationStatus === "APPROVED"
+                    ? "bg-mint/40 text-ink"
+                    : "bg-lemon/40 text-ink"
+                }`}
+              >
+                {activePartner.verificationStatus === "APPROVED" ? (
+                  <>
+                    <ShieldCheck className="size-3 mr-1 inline text-mint-700" />
+                    Verified Partner
+                  </>
+                ) : (
+                  <>
+                    <Clock className="size-3 mr-1 inline" />
+                    Pending Verification
+                  </>
+                )}
+              </Badge>
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">
+              Welcome, {activePartner.businessName}
+            </h1>
+            <p className="font-body text-ink/65 text-sm mt-1">
+              Real-time campaign performance, ticket sales analytics, and automated revenue share
+              settlements.
             </p>
           </div>
+
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" className="rounded-full">
-              <FileText className="w-4 h-4 mr-2" /> Monthly report
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-full border-ink/20 font-bold text-xs h-10 px-4"
+            >
+              <Link to="/partner/settlements">
+                <Banknote className="size-4 mr-2 text-mint-700" /> View Settlements
+              </Link>
             </Button>
-            <Button className="rounded-full bg-coral hover:bg-coral/90 text-white">
-              <Upload className="w-4 h-4 mr-2" /> Submit new asset
+            <Button
+              asChild
+              className="rounded-full bg-coral hover:bg-coral/90 text-white font-bold text-xs h-10 px-5 shadow-sm"
+            >
+              <Link to="/partner/submit">
+                <Upload className="size-4 mr-2" /> Submit New Asset
+              </Link>
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {kpis.map((k) => (
-            <Card key={k.label} className="border-ink/10 overflow-hidden">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`p-2.5 rounded-2xl border ${k.tint}`}>{k.icon}</div>
-                  <Badge
-                    variant="outline"
-                    className="rounded-full text-[10px] bg-cream text-ink/60 border-ink/10 font-body"
-                  >
-                    <TrendingUp className="w-3 h-3 mr-1 text-mint" /> +{10 + (k.label.length % 20)}%
-                  </Badge>
-                </div>
-                <p className="text-xs font-body uppercase tracking-wider text-ink/50 mb-1">
-                  {k.label}
+        {/* Verification / Onboarding Status Notice */}
+        {activePartner.verificationStatus === "PENDING" && (
+          <div className="rounded-2xl border border-lemon/40 bg-lemon/20 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-start gap-3">
+              <div className="size-10 rounded-xl bg-lemon/50 flex items-center justify-center text-amber-900 shrink-0 mt-0.5">
+                <Clock className="size-5" />
+              </div>
+              <div>
+                <h4 className="font-display text-sm font-extrabold text-ink">
+                  Partner Application Under Compliance Review
+                </h4>
+                <p className="text-xs text-ink/75 mt-0.5 leading-relaxed">
+                  Welcome to Raffila,{" "}
+                  <strong className="font-extrabold">{activePartner.businessName}</strong>! Your CAC
+                  corporate verification documents and initial asset proposal have been logged. Your
+                  partner portal is live, and you can track campaign performance, submit new assets,
+                  and view settlements anytime.
                 </p>
-                <p className={`font-display text-2xl sm:text-3xl ${k.accent}`}>{k.value}</p>
-                <p className="text-[11px] font-body text-ink/50 mt-1 flex items-center gap-1">
-                  <ArrowUpRight className="w-3 h-3 text-coral" /> {k.sub}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-          <Card className="xl:col-span-2 border-ink/10">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                  <CardTitle className="font-display text-ink text-lg flex items-center gap-2">
-                    <Ticket className="w-5 h-5 text-coral" /> Entries by week
-                  </CardTitle>
-                  <CardDescription className="font-body text-sm mt-1">
-                    Last 12 weeks — competition entries driven by your listings
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge className="rounded-full bg-sky/20 text-ink border-sky/40">LIVE</Badge>
-                  <Badge
-                    variant="outline"
-                    className="rounded-full bg-coral/10 border-coral/30 text-coral"
-                  >
-                    Peak: {Math.max(...WEEKLY_ENTRIES).toLocaleString()} · Wk38
-                  </Badge>
-                </div>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <WeeklyBarsChart />
-              <Separator className="my-4 bg-ink/10" />
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-cream/60">
-                  <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">
-                    12w total
-                  </p>
-                  <p className="font-display text-xl text-ink mt-0.5">5,149</p>
-                </div>
-                <div className="p-3 rounded-xl bg-cream/60">
-                  <p className="text-[10px] uppercase tracking-wider text-ink/50 font-body">
-                    Avg / listing
-                  </p>
-                  <p className="font-display text-xl text-ink mt-0.5">1,562</p>
-                </div>
-                <div className="p-3 rounded-xl bg-coral/10 border border-coral/20">
-                  <p className="text-[10px] uppercase tracking-wider text-coral font-body">
-                    Best listing
-                  </p>
-                  <p className="font-display text-sm text-ink mt-0.5 truncate">2024 Lexus RX 350</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="rounded-full border-ink/20 text-xs font-bold bg-white"
+              >
+                <Link to="/partner/submit">
+                  <Upload className="size-3.5 mr-1 text-coral" /> My Assets
+                </Link>
+              </Button>
+            </div>
+          </div>
+        )}
 
-          <Card className="border-ink/10">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-display text-ink text-lg flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-coral" /> Top performers
-              </CardTitle>
-              <CardDescription className="font-body text-sm">
-                Players with most entries
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => {
-                const first = TOP_FIRST[i % TOP_FIRST.length]!;
-                const last = TOP_LAST[(i * 3) % TOP_LAST.length]!;
-                const entries = 340 - i * 53;
-                const pct = Math.round((entries / 340) * 100);
-                return (
-                  <div key={i} className="flex items-center gap-3">
-                    <Badge
-                      variant="outline"
-                      className={`rounded-full w-7 h-7 p-0 justify-center shrink-0 ${
-                        i === 0
-                          ? "bg-coral text-white border-coral"
-                          : i === 1
-                            ? "bg-lemon/40 border-lemon"
-                            : "bg-cream border-ink/20"
-                      }`}
-                    >
-                      {i + 1}
-                    </Badge>
-                    <Avatar className="w-9 h-9 shrink-0">
-                      <AvatarFallback
-                        className={`bg-${TINTS[i % TINTS.length]} text-ink font-display font-semibold text-sm`}
-                      >
-                        {first[0]!}
-                        {last[0]!}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="font-body text-sm text-ink font-semibold truncate">
-                          {first} {last}
-                        </p>
-                        <p className="font-display text-sm text-coral font-bold">{entries}</p>
-                      </div>
-                      <div className="h-1.5 w-full bg-ink/5 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-coral"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-          <Card className="lg:col-span-3 border-ink/10">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div>
-                  <CardTitle className="font-display text-ink text-lg flex items-center gap-2">
-                    <Wallet className="w-5 h-5 text-mint" /> Recent settlements
-                  </CardTitle>
-                  <CardDescription className="font-body text-sm">
-                    Weekly disbursements to your Zenith account
-                  </CardDescription>
+        {/* 7 Core Dashboard Cards as requested */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {/* Card 1: ACTIVE COMPETITIONS */}
+          <Card className="border-ink/10 rounded-2xl bg-white shadow-sm overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="size-11 rounded-2xl bg-sky/20 text-sky-700 flex items-center justify-center">
+                  <ListOrdered className="size-5" />
                 </div>
-                <Button variant="ghost" size="sm" className="rounded-full">
-                  View all <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0 divide-y divide-ink/5">
-              {SETTLEMENTS.map((s) => (
-                <div key={s.id} className="py-3 flex items-center gap-3 flex-wrap">
-                  <div className="w-10 h-10 rounded-2xl bg-mint/20 flex items-center justify-center text-mint shrink-0">
-                    <FileText className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-body font-semibold text-ink">{s.period}</p>
-                      {statusBadge(s.status)}
-                    </div>
-                    <p className="text-[11px] font-mono text-ink/40">
-                      {s.id} · {s.date}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-display text-lg text-ink font-bold">
-                      {formatNaira(s.amountKobo)}
-                    </p>
-                    <p className="text-[10px] font-body text-ink/50">Net after 5% platform fee</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-2 bg-gradient-to-br from-ink via-ink to-ink/90 text-cream overflow-hidden relative">
-            <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-coral/20 blur-3xl" />
-            <div className="absolute -bottom-20 -left-10 w-44 h-44 rounded-full bg-lemon/10 blur-3xl" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-start justify-between mb-6">
-                <div className="p-3 rounded-2xl bg-coral/20 border border-coral/30 text-coral">
-                  <Upload className="w-6 h-6" />
-                </div>
-                <Badge className="rounded-full bg-coral text-white border-coral font-bold">
-                  NEW
+                <Badge className="bg-sky/15 text-sky-800 text-[10px] font-bold border-0 rounded-full px-2 py-0.5">
+                  LIVE NOW
                 </Badge>
               </div>
-              <h3 className="font-display text-2xl text-cream mb-2 leading-tight">
-                Have a new asset to list?
-              </h3>
-              <p className="font-body text-cream/70 text-sm mb-6">
-                Submit high-res photos, set market value, and our team will approve within 24 hours.
-                Average time to LIVE: <span className="text-coral font-bold">6.2 hours</span>.
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
+                ACTIVE COMPETITIONS
               </p>
-
-              <div className="space-y-2 mb-6">
-                {[
-                  {
-                    icon: <Car className="w-4 h-4" />,
-                    label: "Luxury vehicles · ₦20M+ avg ticket",
-                  },
-                  {
-                    icon: <Watch className="w-4 h-4" />,
-                    label: "Watches & jewelry · High sell-through",
-                  },
-                  {
-                    icon: <Smartphone className="w-4 h-4" />,
-                    label: "Electronics · Fastest draws",
-                  },
-                  {
-                    icon: <Gem className="w-4 h-4" />,
-                    label: "Real estate · Premium carousel slot",
-                  },
-                ].map((t) => (
-                  <div
-                    key={t.label}
-                    className="flex items-center gap-2 text-cream/80 text-sm font-body"
-                  >
-                    <span className="text-mint">{t.icon}</span>
-                    {t.label}
-                  </div>
-                ))}
-              </div>
-
-              <Button className="w-full rounded-full bg-coral hover:bg-coral/90 text-white py-6 text-base">
-                <Upload className="w-5 h-5 mr-2" /> Submit asset for approval
-              </Button>
-              <p className="text-center text-[11px] text-cream/50 mt-3 font-body">
-                <Calendar className="w-3 h-3 inline mr-1" /> Typical review · 24 hours · 94%
-                approval rate
+              <p className="font-display text-3xl font-extrabold text-ink mt-1">
+                {activeCompetitions.length}
+              </p>
+              <p className="text-xs text-ink/60 mt-1 font-medium">
+                Currently open for ticket sales
               </p>
             </CardContent>
           </Card>
+
+          {/* Card 2: COMPLETED COMPETITIONS */}
+          <Card className="border-ink/10 rounded-2xl bg-white shadow-sm overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="size-11 rounded-2xl bg-mint/30 text-mint-700 flex items-center justify-center">
+                  <CheckCircle2 className="size-5" />
+                </div>
+                <Badge className="bg-mint/20 text-mint-800 text-[10px] font-bold border-0 rounded-full px-2 py-0.5">
+                  SETTLED
+                </Badge>
+              </div>
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
+                COMPLETED COMPETITIONS
+              </p>
+              <p className="font-display text-3xl font-extrabold text-ink mt-1">
+                {completedCompetitions.length}
+              </p>
+              <p className="text-xs text-ink/60 mt-1 font-medium">Successfully drawn & awarded</p>
+            </CardContent>
+          </Card>
+
+          {/* Card 3: TOTAL TICKETS SOLD */}
+          <Card className="border-ink/10 rounded-2xl bg-white shadow-sm overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="size-11 rounded-2xl bg-coral/15 text-coral flex items-center justify-center">
+                  <Ticket className="size-5" />
+                </div>
+                <Badge className="bg-coral/10 text-coral text-[10px] font-bold border-0 rounded-full px-2 py-0.5">
+                  ALL-TIME
+                </Badge>
+              </div>
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
+                TOTAL TICKETS SOLD
+              </p>
+              <p className="font-display text-3xl font-extrabold text-ink mt-1">
+                {totalTicketsSold.toLocaleString()}
+              </p>
+              <p className="text-xs text-ink/60 mt-1 font-medium">Across all partner campaigns</p>
+            </CardContent>
+          </Card>
+
+          {/* Card 4: TOTAL GROSS ENTRY REVENUE */}
+          <Card className="border-ink/10 rounded-2xl bg-white shadow-sm overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="size-11 rounded-2xl bg-lemon/35 text-ink flex items-center justify-center">
+                  <Banknote className="size-5 text-amber-700" />
+                </div>
+                <Badge className="bg-lemon/40 text-ink text-[10px] font-bold border-0 rounded-full px-2 py-0.5">
+                  GROSS
+                </Badge>
+              </div>
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
+                TOTAL GROSS ENTRY REVENUE
+              </p>
+              <p className="font-display text-2xl sm:text-3xl font-extrabold text-ink mt-1 truncate">
+                {formatNaira(totalGrossKobo)}
+              </p>
+              <p className="text-xs text-ink/60 mt-1 font-medium">
+                100% of validated ticket receipts
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Card 5: PARTNER SHARE */}
+          <Card className="border-ink/10 rounded-2xl bg-white shadow-sm overflow-hidden ring-1 ring-mint/40">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="size-11 rounded-2xl bg-mint/35 text-ink flex items-center justify-center">
+                  <Percent className="size-5 text-mint-700" />
+                </div>
+                <Badge className="bg-mint/30 text-ink text-[10px] font-bold border-0 rounded-full px-2 py-0.5">
+                  YOUR EARNINGS
+                </Badge>
+              </div>
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
+                PARTNER SHARE
+              </p>
+              <p className="font-display text-2xl sm:text-3xl font-extrabold text-mint-700 mt-1 truncate">
+                {formatNaira(partnerShareKobo)}
+              </p>
+              <p className="text-xs text-ink/60 mt-1 font-medium">
+                {totalGrossKobo > 0
+                  ? `${((partnerShareKobo / totalGrossKobo) * 100).toFixed(1)}% weighted average`
+                  : "Based on agreed split"}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Card 6: RAFFILA SHARE */}
+          <Card className="border-ink/10 rounded-2xl bg-white shadow-sm overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="size-11 rounded-2xl bg-lilac/30 text-ink flex items-center justify-center">
+                  <PieChart className="size-5 text-indigo-700" />
+                </div>
+                <Badge className="bg-lilac/30 text-ink text-[10px] font-bold border-0 rounded-full px-2 py-0.5">
+                  PLATFORM FEE
+                </Badge>
+              </div>
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
+                RAFFILA SHARE
+              </p>
+              <p className="font-display text-2xl sm:text-3xl font-extrabold text-ink mt-1 truncate">
+                {formatNaira(raffilaShareKobo)}
+              </p>
+              <p className="text-xs text-ink/60 mt-1 font-medium">
+                Platform marketing & operations
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Card 7: PENDING PAYOUTS */}
+          <Card className="border-ink/10 rounded-2xl bg-white shadow-sm overflow-hidden col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-2">
+            <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="size-8 rounded-xl bg-lemon/40 text-amber-800 flex items-center justify-center">
+                    <Clock className="size-4" />
+                  </div>
+                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-ink/50">
+                    PENDING PAYOUTS
+                  </p>
+                </div>
+                <p className="font-display text-3xl font-extrabold text-ink mt-1">
+                  {formatNaira(pendingPayoutsKobo)}
+                </p>
+                <p className="text-xs text-ink/60 mt-0.5">
+                  Scheduled for automated bank disbursement this Friday
+                </p>
+              </div>
+              <Button
+                asChild
+                variant="outline"
+                className="rounded-full text-xs font-bold border-ink/20 shrink-0"
+              >
+                <Link to="/partner/settlements">
+                  View Ledger & Invoices <ArrowUpRight className="size-3.5 ml-1" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Competitions Table Preview */}
+        <Card className="border-ink/10 rounded-[28px] bg-white shadow-sm overflow-hidden">
+          <CardHeader className="p-6 border-b border-ink/5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <CardTitle className="font-display text-xl font-extrabold text-ink flex items-center gap-2">
+                  <ListOrdered className="size-5 text-coral" /> My Partner Competitions
+                </CardTitle>
+                <CardDescription className="text-xs text-ink/60 mt-1">
+                  Every live and concluded competition powered by {activePartner.businessName}{" "}
+                  assets.
+                </CardDescription>
+              </div>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="rounded-full text-xs font-bold text-coral"
+              >
+                <Link to="/partner/listings">
+                  View All Competitions <ArrowUpRight className="size-3.5 ml-1" />
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-0">
+            {partnerCompetitions.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <div className="size-16 rounded-full bg-paper mx-auto flex items-center justify-center text-ink/30 mb-3">
+                  <ListOrdered className="size-8" />
+                </div>
+                <p className="font-display text-lg font-bold text-ink">
+                  No Competitions Created Yet
+                </p>
+                <p className="text-xs text-ink/60 max-w-sm mx-auto mt-1">
+                  Submit your first luxury prize asset for admin compliance review to launch your
+                  first campaign.
+                </p>
+                <Button
+                  asChild
+                  size="sm"
+                  className="rounded-full bg-coral text-white mt-4 font-bold"
+                >
+                  <Link to="/partner/submit">Submit Asset Proposal</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-paper border-b border-ink/5 text-ink/50 uppercase font-extrabold tracking-wider">
+                    <tr>
+                      <th className="py-3.5 px-5">Competition & Prize</th>
+                      <th className="py-3.5 px-4">Status</th>
+                      <th className="py-3.5 px-4">Ticket Price</th>
+                      <th className="py-3.5 px-4">Tickets Sold</th>
+                      <th className="py-3.5 px-4">Gross Revenue</th>
+                      <th className="py-3.5 px-4 text-right">Partner Share</th>
+                      <th className="py-3.5 px-4 text-right">Closing Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink/5">
+                    {partnerCompetitions.map((comp) => (
+                      <tr key={comp.id} className="hover:bg-paper/40 transition">
+                        <td className="py-4 px-5">
+                          <p className="font-bold text-ink text-sm">{comp.title}</p>
+                          <p className="text-[11px] text-ink/55 mt-0.5">{comp.prizeName}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <Badge
+                            className={`text-[10px] font-bold rounded-full border-0 px-2.5 py-0.5 ${
+                              comp.status === "ACTIVE"
+                                ? "bg-mint/35 text-ink"
+                                : comp.status === "COMPLETED"
+                                  ? "bg-sky/20 text-sky-800"
+                                  : "bg-paper text-ink/60"
+                            }`}
+                          >
+                            {comp.status}
+                          </Badge>
+                        </td>
+                        <td className="py-4 px-4 font-bold text-ink">
+                          {formatNaira(comp.entryPriceKobo)}
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="font-extrabold text-ink">
+                            {comp.ticketsSold.toLocaleString()}
+                          </span>{" "}
+                          <span className="text-ink/40 text-[10px]">
+                            / {comp.totalEntries.toLocaleString()}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 font-bold text-ink">
+                          {formatNaira(comp.grossRevenueKobo)}
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <p className="font-extrabold text-mint-700 text-sm">
+                            {formatNaira(comp.partnerAmountKobo)}
+                          </p>
+                          <p className="text-[10px] text-ink/40">{comp.partnerPercentage}% split</p>
+                        </td>
+                        <td className="py-4 px-4 text-right text-ink/65 font-medium">
+                          {comp.closingDate}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </PartnerShell>
   );

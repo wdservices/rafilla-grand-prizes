@@ -11,7 +11,7 @@ const links = [
   { label: "Competitions", to: "/competitions" as const },
   { label: "How it works", to: "/how-it-works" as const },
   { label: "Winners", to: "/winners" as const },
-  { label: "Become a partner", to: "/become-a-partner" as const },
+  { label: "Become a partner", to: "/partner-signup" as const },
   { label: "About Raffila", to: "/about" as const },
   { label: "FAQ", to: "/faq" as const },
   { label: "Contact", to: "/contact" as const },
@@ -58,6 +58,17 @@ export function SiteHeader() {
             </Link>
           ))}
           <Link
+            to="/partner-signup"
+            className={cn(
+              "text-sm font-bold text-ink/60 transition-colors hover:text-coral",
+              (pathname === "/partner-signup" || pathname === "/become-a-partner") &&
+                "text-coral font-extrabold",
+            )}
+            aria-current={pathname === "/partner-signup" ? "page" : undefined}
+          >
+            Become a partner
+          </Link>
+          <Link
             to="/about"
             className="text-sm font-bold text-ink/60 transition-colors hover:text-ink"
             aria-current={pathname === "/about" ? "page" : undefined}
@@ -67,9 +78,11 @@ export function SiteHeader() {
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
               <Button asChild variant="outline" size="sm">
-                <Link to={role === "admin" ? "/admin" : "/dashboard"}>
+                <Link
+                  to={role === "admin" ? "/admin" : role === "partner" ? "/partner" : "/dashboard"}
+                >
                   <LayoutDashboard className="size-4" />
-                  {role === "admin" ? "Admin" : "Dashboard"}
+                  {role === "admin" ? "Admin" : role === "partner" ? "Partner Portal" : "Dashboard"}
                 </Link>
               </Button>
               <Button variant="ghost" size="sm" onClick={() => signOut({ to: "/" })}>
@@ -92,8 +105,10 @@ export function SiteHeader() {
         <div className="flex items-center gap-2 lg:hidden">
           {isAuthenticated ? (
             <Button asChild variant="outline" size="sm">
-              <Link to={role === "admin" ? "/admin" : "/dashboard"}>
-                {role === "admin" ? "Admin" : "Dashboard"}
+              <Link
+                to={role === "admin" ? "/admin" : role === "partner" ? "/partner" : "/dashboard"}
+              >
+                {role === "admin" ? "Admin" : role === "partner" ? "Partner" : "Dashboard"}
               </Link>
             </Button>
           ) : (
@@ -142,11 +157,12 @@ export function SiteHeader() {
           {isAuthenticated ? (
             <>
               <Link
-                to={role === "admin" ? "/admin" : "/dashboard"}
+                to={role === "admin" ? "/admin" : role === "partner" ? "/partner" : "/dashboard"}
                 onClick={() => setOpen(false)}
                 className="mt-1 block rounded-2xl bg-ink px-4 py-3 text-center text-sm font-extrabold text-paper"
               >
-                Go to {role === "admin" ? "Admin" : "Dashboard"}
+                Go to{" "}
+                {role === "admin" ? "Admin" : role === "partner" ? "Partner Portal" : "Dashboard"}
               </Link>
               <button
                 onClick={() => {

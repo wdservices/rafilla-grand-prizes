@@ -1,11 +1,19 @@
-import { useState, type ReactNode } from "react";
-import { Link, useLocation } from "@tanstack/react-router";
+import { useState, useEffect, type ReactNode } from "react";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard,
   ListOrdered,
@@ -22,7 +30,13 @@ import {
   Award,
   Sparkles,
   ShieldCheck,
+  Building2,
+  Clock,
+  ChevronDown,
 } from "lucide-react";
+import { useAuthSession, useAuthActions } from "@/hooks/useAuthSession";
+import { partnerStore } from "@/lib/partner-store";
+import type { PartnerProfile } from "@/types/partner";
 
 export type PartnerNavKey =
   "overview" | "listings" | "submit" | "analytics" | "settlements" | "profile";
@@ -43,31 +57,31 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     key: "listings",
-    label: "My listings",
+    label: "My Competitions",
     icon: <ListOrdered className="w-5 h-5" />,
     path: "/partner/listings",
   },
   {
     key: "submit",
-    label: "Submit asset",
+    label: "My Assets",
     icon: <Upload className="w-5 h-5" />,
     path: "/partner/submit",
   },
   {
-    key: "analytics",
-    label: "Analytics",
-    icon: <BarChart3 className="w-5 h-5" />,
-    path: "/partner/analytics",
-  },
-  {
     key: "settlements",
-    label: "Settlements",
+    label: "Settlements & Payouts",
     icon: <Landmark className="w-5 h-5" />,
     path: "/partner/settlements",
   },
   {
+    key: "analytics",
+    label: "Revenue Analytics",
+    icon: <BarChart3 className="w-5 h-5" />,
+    path: "/partner/analytics",
+  },
+  {
     key: "profile",
-    label: "Profile",
+    label: "Business Profile",
     icon: <UserCircle2 className="w-5 h-5" />,
     path: "/partner/profile",
   },
@@ -77,22 +91,127 @@ interface PartnerShellProps {
   children: ReactNode;
   title: string;
   activeNav: PartnerNavKey;
+  activePartnerId?: string;
+  onPartnerChange?: (partnerId: string) => void;
 }
 
 export function PartnerShell({ children, title, activeNav }: PartnerShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { session } = useAuthSession();
+  const { signOut } = useAuthActions();
+
+  const [partners, setPartners] = useState<PartnerProfile[]>(partnerStore.getPartners());
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string>(() => {
+    if (session?.user?.partnerId) return session.user.partnerId;
+    return "partner_abc_motors";
+  });
+
+  useEffect(() => {
+    const unsub = partnerStore.subscribe(() => {
+      setPartners(partnerStore.getPartners());
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (session?.user?.partnerId) {
+      setSelectedPartnerId(session.user.partnerId);
+    }
+  }, [session?.user?.partnerId]);
+
+  const activePartner: PartnerProfile = partnerStore.getPartnerById(selectedPartnerId) ||
+    partners[0] || {
+      id: "partner_abc_motors",
+      businessName: session?.user?.businessName || "ABC Motors Ltd",
+      businessType: "Automotive",
+      cacNumber: "RC-1849204",
+      address: "Victoria Island",
+      city: "Lagos",
+      state: "Lagos",
+      country: "Nigeria",
+      companyEmail: session?.user?.email || "partner.demo@abcmotors.example",
+      companyPhone: "+234 803 111 2233",
+      description: "Verified Partner",
+      authorizedRepresentative: {
+        fullName: `${session?.user?.firstName || "Michael"} ${session?.user?.lastName || "Ade"}`,
+        position: "Managing Director",
+        email: session?.user?.email || "partner.demo@abcmotors.example",
+        phone: "+234 803 111 2233",
+      },
+      documents: {},
+      verificationStatus: "APPROVED",
+      createdAt: "",
+      updatedAt: "",
+    };
+
+  const isApproved = activePartner.verificationStatus === "APPROVED";
 
   const BrandBlock = () => (
-    <div className="flex items-center gap-3 p-4">
-      <div className="w-12 h-12 rounded-2xl bg-coral flex items-center justify-center text-white shrink-0 border-4 border-paper shadow-sm">
-        <Car className="w-6 h-6" />
+    <div className="p-4">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-2xl bg-coral flex items-center justify-center text-white shrink-0 border-4 border-paper shadow-sm font-display font-extrabold text-base">
+          {activePartner.logoInitials || activePartner.businessName.slice(0, 2).toUpperCase()}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-ink text-base font-extrabold leading-tight truncate">
+            {activePartner.businessName}
+          </p>
+          {isApproved ? (
+            <Badge className="rounded-full bg-mint/40 border-mint text-ink text-[10px] font-bold mt-1">
+              <ShieldCheck className="w-3 h-3 mr-1 text-mint-700" /> Verified Partner
+            </Badge>
+          ) : (
+            <Badge className="rounded-full bg-lemon/40 border-lemon text-ink text-[10px] font-bold mt-1">
+              <Clock className="w-3 h-3 mr-1" /> Pending Review
+            </Badge>
+          )}
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-display text-ink text-base leading-tight truncate">Lekki Luxury Autos</p>
-        <Badge className="rounded-full bg-mint/40 border-mint text-ink text-[10px] font-bold mt-0.5">
-          <ShieldCheck className="w-3 h-3 mr-1" /> Approved Partner
-        </Badge>
+
+      {/* Partner Switcher for multi-partner testing */}
+      <div className="mt-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl bg-paper/60 hover:bg-paper border border-ink/10 text-xs font-bold text-ink/75 transition"
+            >
+              <span className="truncate">Switch Partner View</span>
+              <ChevronDown className="size-3.5 text-ink/40 ml-1 shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-64 rounded-2xl p-1.5 shadow-lg">
+            <DropdownMenuLabel className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40">
+              Demo Partner Accounts
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {partners.map((p) => (
+              <DropdownMenuItem
+                key={p.id}
+                onClick={() => setSelectedPartnerId(p.id)}
+                className={`rounded-xl font-bold text-xs py-2 cursor-pointer flex items-center justify-between ${
+                  p.id === activePartner.id ? "bg-lilac/30 text-ink" : "text-ink/80"
+                }`}
+              >
+                <div className="min-w-0">
+                  <p className="truncate">{p.businessName}</p>
+                  <p className="text-[10px] text-ink/45 font-medium">{p.businessType}</p>
+                </div>
+                <Badge
+                  className={`text-[9px] px-1.5 py-0.5 rounded-full ${
+                    p.verificationStatus === "APPROVED"
+                      ? "bg-mint/30 text-ink"
+                      : "bg-lemon/35 text-ink"
+                  }`}
+                >
+                  {p.verificationStatus}
+                </Badge>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
@@ -111,8 +230,8 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
             onClick={() => onNavigate?.()}
             className={`group flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-sm font-body transition-all ${
               isActive
-                ? "bg-coral text-white shadow-md shadow-coral/20"
-                : "text-ink/75 hover:bg-coral/15 hover:text-ink"
+                ? "bg-coral text-white shadow-md shadow-coral/20 font-bold"
+                : "text-ink/75 hover:bg-coral/15 hover:text-ink font-semibold"
             }`}
             aria-current={isActive ? "page" : undefined}
           >
@@ -121,15 +240,20 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
             >
               {item.icon}
             </span>
-            <span className="font-semibold">{item.label}</span>
+            <span className="truncate">{item.label}</span>
             {item.key === "submit" && !isActive && (
-              <Sparkles className="w-3.5 h-3.5 text-coral ml-auto" />
+              <Sparkles className="w-3.5 h-3.5 text-coral ml-auto shrink-0" />
             )}
           </Link>
         );
       })}
     </nav>
   );
+
+  const handleSignOut = () => {
+    signOut();
+    navigate({ to: "/auth" });
+  };
 
   return (
     <div className="min-h-screen bg-paper text-ink flex">
@@ -153,17 +277,22 @@ export function PartnerShell({ children, title, activeNav }: PartnerShellProps) 
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-paper border border-ink/10">
             <Avatar className="w-10 h-10">
               <AvatarFallback className="bg-mint/40 text-ink font-display font-bold">
-                MA
+                {activePartner.authorizedRepresentative.fullName.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="font-body text-sm font-semibold text-ink truncate">Mrs. Adaeze</p>
-              <p className="text-[11px] text-ink/50 truncate">adaeze@lekkiluxury.ng</p>
+              <p className="font-body text-sm font-semibold text-ink truncate">
+                {activePartner.authorizedRepresentative.fullName}
+              </p>
+              <p className="text-[11px] text-ink/50 truncate">
+                {activePartner.authorizedRepresentative.email}
+              </p>
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full text-ink/50 hover:text-coral"
+              onClick={handleSignOut}
+              className="rounded-full text-ink/50 hover:text-coral hover:bg-coral/10"
               aria-label="Sign out"
             >
               <LogOut className="w-4 h-4" />

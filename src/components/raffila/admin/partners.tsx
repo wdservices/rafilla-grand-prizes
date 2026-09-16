@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
-  MoreHorizontal,
   Building2,
   User,
   Mail,
@@ -9,13 +8,18 @@ import {
   Check,
   X,
   Eye,
-  UserCog,
-  ThumbsUp,
-  ThumbsDown,
+  Percent,
   TrendingUp,
-  Trophy,
-  UserPlus,
-  Send,
+  Package,
+  ShieldCheck,
+  AlertCircle,
+  FileCheck2,
+  Clock,
+  Ban,
+  CheckCircle2,
+  Plus,
+  ArrowUpRight,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,726 +35,923 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { AdminShell } from "@/components/raffila/admin/admin-shell";
-import { cn, formatNaira } from "@/lib/utils";
-
-type PartnerStatus = "APPROVED" | "PENDING" | "REJECTED" | "SUSPENDED";
-
-interface MockPartner {
-  id: string;
-  name: string;
-  logoTint: "sky" | "mint" | "coral" | "lemon" | "lilac";
-  logoInitials: string;
-  contactPerson: string;
-  email: string;
-  phone: string;
-  approved: boolean;
-  assetsListed: number;
-  totalRevenue: number;
-  status: PartnerStatus;
-  joined: string;
-}
-
-const TINTS: MockPartner["logoTint"][] = ["sky", "mint", "coral", "lemon", "lilac"];
-const STATUSES: PartnerStatus[] = [
-  "APPROVED",
-  "APPROVED",
-  "PENDING",
-  "APPROVED",
-  "REJECTED",
-  "APPROVED",
-  "PENDING",
-  "APPROVED",
-];
-
-const COMPANIES = [
-  { name: "Lux Wheels Ltd", contact: "Tunde Adebayo" },
-  { name: "TechHome NG", contact: "Amaka Ibe" },
-  { name: "Adebayo Homes", contact: "Chidi Okafor" },
-  { name: "Lekki Luxury Autos", contact: "Ifeoma Nwosu" },
-  { name: "Abuja Tech Hub", contact: "Uche Dike" },
-  { name: "Port Harcourt Jewelry", contact: "Zainab Mohammed" },
-  { name: "Eko Furniture Co.", contact: "Bola Tinubu" },
-  { name: "Ikeja Electronics", contact: "Kemi Olusanya" },
-  { name: "VI Properties", contact: "Obioma Eze" },
-  { name: "Lagos Yacht Club", contact: "Ngozi Chukwu" },
-  { name: "Jos Mining Co.", contact: "Musa Shehu" },
-  { name: "Kano Textiles", contact: "Hauwa Abubakar" },
-];
-
-const tintBg: Record<MockPartner["logoTint"], string> = {
-  sky: "bg-sky/25 text-ink",
-  mint: "bg-mint/30 text-ink",
-  coral: "bg-coral/15 text-coral",
-  lemon: "bg-lemon/35 text-ink",
-  lilac: "bg-lilac/30 text-ink",
-};
-
-const statusPill: Record<PartnerStatus, string> = {
-  APPROVED: "bg-mint/30 text-ink",
-  PENDING: "bg-lemon/35 text-ink",
-  REJECTED: "bg-coral/15 text-coral",
-  SUSPENDED: "bg-ink/12 text-ink",
-};
-
-let partnerList: MockPartner[] = COMPANIES.map((c, i) => ({
-  id: `RF-P-${String(i + 1).padStart(5, "0")}`,
-  name: c.name,
-  logoTint: TINTS[i % TINTS.length]!,
-  logoInitials: c.name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]!)
-    .join(""),
-  contactPerson: c.contact,
-  email: `partners@${c.name.toLowerCase().replace(/[^a-z]/g, "")}.ng`,
-  phone: `+234 80${String(10000000 + i * 91).slice(0, 8)}`,
-  approved: STATUSES[i % STATUSES.length]! === "APPROVED",
-  assetsListed: Math.floor(Math.random() * 14) + (i % 3),
-  totalRevenue: (Math.floor(Math.random() * 480) + 25) * 1000000,
-  status: STATUSES[i % STATUSES.length]!,
-  joined: `2025-${String((i % 11) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
-}));
-
-const FILTERS = ["All", "Approved", "Pending", "Rejected", "Suspended"] as const;
-type FilterKey = (typeof FILTERS)[number];
-
-const CATEGORIES = [
-  "All categories",
-  "Auto",
-  "Tech",
-  "Property",
-  "Jewelry",
-  "Home",
-  "Experience",
-] as const;
-const MANAGERS = ["Aisha Olamide", "Tunmise Adebayo", "Musa Bello", "Amaka Chukwu"] as const;
+import { formatNaira } from "@/lib/utils";
+import { partnerStore } from "@/lib/partner-store";
+import type { PartnerProfile, PartnerAsset } from "@/types/partner";
 
 export function AdminPartnersPage() {
-  const [filter, setFilter] = useState<FilterKey>("All");
+  const [activeTab, setActiveTab] = useState<"directory" | "assets">("directory");
+  const [partners, setPartners] = useState<PartnerProfile[]>([]);
+  const [assets, setAssets] = useState<PartnerAsset[]>([]);
   const [search, setSearch] = useState("");
-  const [partners, setPartners] = useState<MockPartner[]>(partnerList);
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteForm, setInviteForm] = useState({
-    company: "",
-    contact: "",
-    email: "",
-    phone: "",
-    category: "Auto",
-    manager: "Aisha Olamide",
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+
+  // Dialog States
+  const [selectedPartner, setSelectedPartner] = useState<PartnerProfile | null>(null);
+  const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
+  const [splitPartner, setSplitPartner] = useState<PartnerProfile | null>(null);
+  const [newSplitPercentage, setNewSplitPercentage] = useState<number>(85);
+
+  const [rejectAssetTarget, setRejectAssetTarget] = useState<PartnerAsset | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+
+  const [createPartnerOpen, setCreatePartnerOpen] = useState(false);
+  const [newPartnerForm, setNewPartnerForm] = useState({
+    businessName: "",
+    tradingName: "",
+    cacRegistrationNumber: "",
+    taxIdentificationNumber: "",
+    contactPersonName: "",
+    contactPersonRole: "Managing Director",
+    businessEmail: "",
+    businessPhone: "",
+    businessAddress: "Lagos, Nigeria",
+    defaultRevenueSplitPercentage: 85,
   });
 
-  const filtered = partners.filter((p) => {
-    const s = search.toLowerCase();
-    if (
-      s &&
-      !p.name.toLowerCase().includes(s) &&
-      !p.contactPerson.toLowerCase().includes(s) &&
-      !p.email.toLowerCase().includes(s)
-    )
-      return false;
-    switch (filter) {
-      case "Approved":
-        return p.status === "APPROVED";
-      case "Pending":
-        return p.status === "PENDING";
-      case "Rejected":
-        return p.status === "REJECTED";
-      case "Suspended":
-        return p.status === "SUSPENDED";
-      default:
-        return true;
+  const refreshData = () => {
+    setPartners(partnerStore.getAllPartners());
+    setAssets(partnerStore.getAllAssets());
+  };
+
+  useEffect(() => {
+    refreshData();
+    const unsub = partnerStore.subscribe(refreshData);
+    return unsub;
+  }, []);
+
+  // Filter partners
+  const filteredPartners = partners.filter((p) => {
+    if (statusFilter !== "ALL" && p.verificationStatus !== statusFilter) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return (
+        p.businessName.toLowerCase().includes(q) ||
+        p.tradingName.toLowerCase().includes(q) ||
+        p.contactPerson.name.toLowerCase().includes(q) ||
+        p.businessEmail.toLowerCase().includes(q) ||
+        p.cacRegistrationNumber.toLowerCase().includes(q)
+      );
     }
+    return true;
   });
 
-  const kpis = [
-    { label: "Total partners", val: partners.length, tone: "ink" as const, icon: Building2 },
-    {
-      label: "Approved",
-      val: partners.filter((p) => p.status === "APPROVED").length,
-      tone: "mint" as const,
-      icon: Check,
-    },
-    {
-      label: "Pending review",
-      val: partners.filter((p) => p.status === "PENDING").length,
-      tone: "lemon" as const,
-      icon: X,
-    },
-    {
-      label: "Revenue driven",
-      val: formatNaira(partners.reduce((a, b) => a + b.totalRevenue, 0)),
-      tone: "coral" as const,
-      icon: TrendingUp,
-    },
-  ];
-
-  const submitInvite = () => {
-    if (!inviteForm.company || !inviteForm.contact || !inviteForm.email) {
-      toast.error("Please fill required fields", {
-        description: "Company name, contact person, and email are required.",
-      });
-      return;
+  // Filter assets
+  const filteredAssets = assets.filter((a) => {
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return (
+        a.name.toLowerCase().includes(q) ||
+        a.category.toLowerCase().includes(q) ||
+        a.physicalLocation.toLowerCase().includes(q)
+      );
     }
-    const nextIdx = partners.length;
-    const tintIdx = nextIdx % TINTS.length;
-    const newPartner: MockPartner = {
-      id: `RF-P-${String(nextIdx + 1).padStart(5, "0")}`,
-      name: inviteForm.company,
-      logoTint: TINTS[tintIdx]!,
-      logoInitials:
-        inviteForm.company
-          .split(" ")
-          .slice(0, 2)
-          .map((w) => w[0]!)
-          .filter(Boolean)
-          .join("")
-          .toUpperCase() || "XX",
-      contactPerson: inviteForm.contact,
-      email: inviteForm.email,
-      phone: inviteForm.phone || "—",
-      approved: false,
-      assetsListed: 0,
-      totalRevenue: 0,
-      status: "PENDING",
-      joined: new Date().toISOString().slice(0, 10),
-    };
-    const next = [...partners, newPartner];
-    setPartners(next);
-    partnerList = next;
-    import("@/lib/activity-log").then(({ logActivity }) =>
-      logActivity({
-        eventType: "PARTNER_INVITE",
-        targetType: "partner",
-        targetId: newPartner.id,
-        summary: `Invited partner ${inviteForm.company} (${inviteForm.email})`,
-        details: { company: inviteForm.company, email: inviteForm.email, manager: inviteForm.manager },
-      }),
-    );
-    toast.success("Invitation sent", {
-      description: `Partner invite for ${inviteForm.company} emailed to ${inviteForm.email} · assigned to ${inviteForm.manager}.`,
-    });
-    setInviteOpen(false);
-    setInviteForm({
-      company: "",
-      contact: "",
-      email: "",
-      phone: "",
-      category: "Auto",
-      manager: "Aisha Olamide",
+    return true;
+  });
+
+  const pendingAssetsCount = assets.filter((a) => a.status === "UNDER_REVIEW").length;
+
+  const handleApprovePartner = (id: string, name: string) => {
+    partnerStore.approvePartner(id);
+    toast.success("Partner Approved!", {
+      description: `${name} is now approved to list assets and run competitions.`,
     });
   };
 
-  return (
-    <AdminShell activeNav="partners" title="Partners">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-coral">
-            Admin · Partners
-          </p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl">
-            Partners
-          </h1>
-          <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
-            Onboard, approve, and monitor prize asset partners and their revenue contribution.
-          </p>
-        </div>
-        <Button
-          variant="primary"
-          onClick={() => setInviteOpen(true)}
-          className="rounded-full h-11 px-5"
-        >
-          <UserPlus className="size-4 mr-1.5" /> Invite partner
-        </Button>
-      </header>
+  const handleRejectPartner = (id: string, name: string) => {
+    partnerStore.rejectPartner(id, "Corporate document verification failed.");
+    toast.error("Partner Application Rejected", {
+      description: `${name} status set to REJECTED.`,
+    });
+  };
 
-      <section className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {kpis.map((s, i) => {
-          const bg: Record<string, string> = {
-            ink: "bg-ink/8",
-            mint: "bg-mint/25",
-            lemon: "bg-lemon/35",
-            coral: "bg-coral/15",
-          };
-          const ic: Record<string, string> = {
-            ink: "text-ink",
-            mint: "text-ink",
-            lemon: "text-ink",
-            coral: "text-coral",
-          };
-          return (
-            <Card
-              key={i}
-              className="rounded-[24px] border-0 bg-white p-0 ring-1 ring-ink/8 shadow-sm"
-            >
-              <CardContent className="flex items-center gap-4 p-5">
-                <div
-                  className={cn("grid size-12 place-items-center rounded-2xl shrink-0", bg[s.tone])}
-                >
-                  <s.icon className={cn("size-5", ic[s.tone])} />
+  const handleSuspendPartner = (id: string, name: string) => {
+    partnerStore.suspendPartner(id, "Account under administrative audit.");
+    toast.warning("Partner Suspended", {
+      description: `${name} has been suspended from publishing new campaigns.`,
+    });
+  };
+
+  const handleSaveRevenueSplit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!splitPartner) return;
+    partnerStore.setRevenueSplit(splitPartner.id, Number(newSplitPercentage));
+    toast.success("Revenue Split Updated", {
+      description: `${splitPartner.businessName} default share set to ${newSplitPercentage}% (Raffila: ${100 - newSplitPercentage}%).`,
+    });
+    setIsSplitModalOpen(false);
+  };
+
+  const handleApproveAsset = (asset: PartnerAsset) => {
+    partnerStore.approveAsset(asset.id);
+    toast.success("Prize Asset Approved!", {
+      description: `${asset.name} is now eligible for active competition assignments.`,
+    });
+  };
+
+  const handleConfirmRejectAsset = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rejectAssetTarget) return;
+    if (!rejectionReason.trim()) {
+      toast.error("Please provide a reason for rejecting this asset.");
+      return;
+    }
+    partnerStore.rejectAsset(rejectAssetTarget.id, rejectionReason);
+    toast.error("Asset Rejected", {
+      description: `${rejectAssetTarget.name} has been rejected. Notification sent to partner.`,
+    });
+    setRejectAssetTarget(null);
+    setRejectionReason("");
+  };
+
+  const handleCreatePartner = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPartnerForm.businessName || !newPartnerForm.businessEmail) {
+      toast.error("Business Name and Email are required");
+      return;
+    }
+
+    partnerStore.registerPartner({
+      businessName: newPartnerForm.businessName,
+      tradingName: newPartnerForm.tradingName || newPartnerForm.businessName,
+      cacRegistrationNumber: newPartnerForm.cacRegistrationNumber || "RC-PENDING",
+      taxIdentificationNumber: newPartnerForm.taxIdentificationNumber || "TIN-PENDING",
+      contactPerson: {
+        name: newPartnerForm.contactPersonName || "Primary Contact",
+        role: newPartnerForm.contactPersonRole,
+        email: newPartnerForm.businessEmail,
+        phone: newPartnerForm.businessPhone || "+234 800 000 0000",
+      },
+      businessAddress: newPartnerForm.businessAddress,
+      businessPhone: newPartnerForm.businessPhone || "+234 800 000 0000",
+      businessEmail: newPartnerForm.businessEmail,
+      settlementAccount: {
+        bankName: "Zenith Bank",
+        accountNumber: "1012398472",
+        accountName: newPartnerForm.businessName.toUpperCase(),
+        payoutSchedule: "Weekly every Friday",
+      },
+      defaultRevenueSplitPercentage: Number(newPartnerForm.defaultRevenueSplitPercentage) || 85,
+      verificationDocuments: [],
+    });
+
+    toast.success("Partner Registered!", {
+      description: `${newPartnerForm.businessName} created in PENDING review status.`,
+    });
+    setCreatePartnerOpen(false);
+  };
+
+  const getPartnerStatusBadge = (status: PartnerProfile["verificationStatus"]) => {
+    switch (status) {
+      case "APPROVED":
+        return (
+          <Badge className="bg-mint/40 text-ink border-mint text-[10px] font-bold rounded-full px-2.5 py-0.5">
+            <CheckCircle2 className="size-3 mr-1 text-mint-700 inline" /> APPROVED
+          </Badge>
+        );
+      case "PENDING":
+        return (
+          <Badge className="bg-lemon/40 text-ink text-[10px] font-bold rounded-full px-2.5 py-0.5">
+            <Clock className="size-3 mr-1 inline" /> PENDING
+          </Badge>
+        );
+      case "SUSPENDED":
+        return (
+          <Badge className="bg-ink/15 text-ink text-[10px] font-bold rounded-full px-2.5 py-0.5">
+            <Ban className="size-3 mr-1 inline" /> SUSPENDED
+          </Badge>
+        );
+      case "REJECTED":
+        return (
+          <Badge className="bg-coral/20 text-coral text-[10px] font-bold rounded-full px-2.5 py-0.5">
+            <X className="size-3 mr-1 inline" /> REJECTED
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const getAssetStatusBadge = (status: PartnerAsset["status"]) => {
+    switch (status) {
+      case "ACTIVE_IN_COMPETITION":
+        return (
+          <Badge className="bg-mint/40 text-ink border-mint text-[10px] font-bold rounded-full px-2 py-0.5">
+            IN COMPETITION
+          </Badge>
+        );
+      case "APPROVED":
+        return (
+          <Badge className="bg-mint/30 text-ink text-[10px] font-bold rounded-full px-2 py-0.5">
+            APPROVED
+          </Badge>
+        );
+      case "UNDER_REVIEW":
+        return (
+          <Badge className="bg-lemon/40 text-ink text-[10px] font-bold rounded-full px-2 py-0.5 animate-pulse">
+            UNDER REVIEW
+          </Badge>
+        );
+      case "REJECTED":
+        return (
+          <Badge className="bg-coral/20 text-coral text-[10px] font-bold rounded-full px-2 py-0.5">
+            REJECTED
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  return (
+    <AdminShell activeNav="partners" title="Partner & Asset Management">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="font-display text-3xl font-extrabold text-ink tracking-tight flex items-center gap-2">
+              <Building2 className="size-8 text-coral" /> Partner Management
+            </h1>
+            <p className="font-body text-ink/65 text-sm mt-1">
+              Verify dealerships, configure contractual revenue splits, and review physical prize
+              assets.
+            </p>
+          </div>
+
+          <Button
+            onClick={() => setCreatePartnerOpen(true)}
+            className="rounded-full bg-coral hover:bg-coral/90 text-white font-bold text-xs h-10 px-5 shadow-sm"
+          >
+            <Plus className="size-4 mr-1.5" /> Register New Partner
+          </Button>
+        </div>
+
+        {/* Primary Tabs */}
+        <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink/10 pb-4">
+            <TabsList className="rounded-full p-1 bg-paper/80 h-11">
+              <TabsTrigger
+                value="directory"
+                className="rounded-full text-xs font-extrabold px-5 data-[state=active]:bg-coral data-[state=active]:text-white"
+              >
+                <Building2 className="size-4 mr-2" /> Partner Directory ({partners.length})
+              </TabsTrigger>
+              <TabsTrigger
+                value="assets"
+                className="rounded-full text-xs font-extrabold px-5 data-[state=active]:bg-coral data-[state=active]:text-white"
+              >
+                <Package className="size-4 mr-2" /> Asset Approvals
+                {pendingAssetsCount > 0 && (
+                  <span className="ml-2 bg-coral text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    {pendingAssetsCount}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="flex items-center gap-3">
+              {activeTab === "directory" && (
+                <div className="flex items-center gap-1 bg-paper/60 p-1 rounded-full border border-ink/10 overflow-x-auto">
+                  {["ALL", "APPROVED", "PENDING", "SUSPENDED"].map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setStatusFilter(st)}
+                      className={`text-[11px] font-bold px-3 py-1 rounded-full transition ${
+                        statusFilter === st
+                          ? "bg-white shadow-xs text-ink"
+                          : "text-ink/60 hover:text-ink"
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45 whitespace-nowrap">
-                    {s.label}
-                  </p>
-                  <p className="font-display text-xl font-extrabold text-ink mt-0.5 whitespace-nowrap">
-                    {s.val}
-                  </p>
+              )}
+
+              <div className="relative min-w-[220px]">
+                <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-ink/40" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search partner, contact, asset..."
+                  className="pl-8 h-9 rounded-full bg-paper/60 border-ink/10 text-xs font-bold"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* TAB 1: PARTNER DIRECTORY */}
+          <TabsContent value="directory" className="pt-4 m-0">
+            <Card className="border-ink/10 rounded-[28px] bg-white shadow-sm overflow-hidden">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs whitespace-nowrap">
+                    <thead className="bg-paper border-b border-ink/10 text-ink/50 uppercase font-extrabold tracking-wider">
+                      <tr>
+                        <th className="py-3.5 px-5">Business Name</th>
+                        <th className="py-3.5 px-4">Contact Person</th>
+                        <th className="py-3.5 px-4">Email & Phone</th>
+                        <th className="py-3.5 px-4">CAC Number</th>
+                        <th className="py-3.5 px-4">Verification Status</th>
+                        <th className="py-3.5 px-4">Active Comps</th>
+                        <th className="py-3.5 px-4">Revenue Generated</th>
+                        <th className="py-3.5 px-4">Partner Payout Total</th>
+                        <th className="py-3.5 px-4 font-bold text-mint-800">Split %</th>
+                        <th className="py-3.5 px-5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink/5">
+                      {filteredPartners.map((p) => {
+                        const comps = partnerStore.getPartnerCompetitions(p.id);
+                        const activeCompsCount = comps.filter((c) => c.status === "ACTIVE").length;
+                        const totalRevKobo = comps.reduce((sum, c) => sum + c.grossRevenueKobo, 0);
+                        const totalPayoutKobo = comps.reduce(
+                          (sum, c) => sum + c.partnerAmountKobo,
+                          0,
+                        );
+
+                        return (
+                          <tr key={p.id} className="hover:bg-paper/40 transition">
+                            {/* Business Name */}
+                            <td className="py-4 px-5">
+                              <p className="font-extrabold text-ink text-sm">{p.businessName}</p>
+                              <p className="text-[10px] text-ink/40 font-mono mt-0.5">{p.id}</p>
+                            </td>
+
+                            {/* Contact Person */}
+                            <td className="py-4 px-4">
+                              <p className="font-bold text-ink">{p.contactPerson.name}</p>
+                              <p className="text-[10px] text-ink/50">{p.contactPerson.role}</p>
+                            </td>
+
+                            {/* Email & Phone */}
+                            <td className="py-4 px-4">
+                              <p className="text-ink font-medium">{p.businessEmail}</p>
+                              <p className="text-[10px] text-ink/50">{p.businessPhone}</p>
+                            </td>
+
+                            {/* CAC Number */}
+                            <td className="py-4 px-4 font-mono font-bold text-ink/80">
+                              {p.cacRegistrationNumber}
+                            </td>
+
+                            {/* Verification Status */}
+                            <td className="py-4 px-4">
+                              {getPartnerStatusBadge(p.verificationStatus)}
+                            </td>
+
+                            {/* Active Competitions Count */}
+                            <td className="py-4 px-4 font-extrabold text-ink">
+                              {activeCompsCount} active
+                            </td>
+
+                            {/* Total Revenue Generated */}
+                            <td className="py-4 px-4 font-bold text-ink">
+                              {formatNaira(totalRevKobo)}
+                            </td>
+
+                            {/* Partner Payout Total */}
+                            <td className="py-4 px-4 font-extrabold text-mint-700 bg-mint/5">
+                              {formatNaira(totalPayoutKobo)}
+                            </td>
+
+                            {/* Default Revenue Split % */}
+                            <td className="py-4 px-4 font-extrabold text-ink">
+                              <Badge className="bg-coral/10 text-coral text-[10px] font-bold border-0">
+                                {p.defaultRevenueSplitPercentage}% Partner
+                              </Badge>
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-4 px-5 text-right space-x-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setSelectedPartner(p)}
+                                className="rounded-full text-[10px] font-bold h-7 px-2.5 border-ink/20"
+                              >
+                                View Profile
+                              </Button>
+
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSplitPartner(p);
+                                  setNewSplitPercentage(p.defaultRevenueSplitPercentage);
+                                  setIsSplitModalOpen(true);
+                                }}
+                                className="rounded-full text-[10px] font-bold h-7 px-2.5 border-ink/20 text-coral hover:bg-coral/10"
+                              >
+                                Split %
+                              </Button>
+
+                              {p.verificationStatus !== "APPROVED" && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleApprovePartner(p.id, p.businessName)}
+                                  className="rounded-full text-[10px] font-bold h-7 px-2.5 bg-mint/40 text-ink hover:bg-mint"
+                                >
+                                  Approve
+                                </Button>
+                              )}
+
+                              {p.verificationStatus === "PENDING" && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleRejectPartner(p.id, p.businessName)}
+                                  className="rounded-full text-[10px] font-bold h-7 px-2.5 bg-coral/20 text-coral hover:bg-coral hover:text-white"
+                                >
+                                  Reject
+                                </Button>
+                              )}
+
+                              {p.verificationStatus === "APPROVED" && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleSuspendPartner(p.id, p.businessName)}
+                                  className="rounded-full text-[10px] font-bold h-7 px-2.5 text-ink/50 hover:bg-ink/10"
+                                >
+                                  Suspend
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
-      </section>
+          </TabsContent>
 
-      <Card className="rounded-[24px] border-0 bg-white p-0 ring-1 ring-ink/8 shadow-sm">
-        <CardContent className="space-y-4 p-6">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 min-w-[260px] max-w-lg">
-              <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink/40" />
-              <Input
-                placeholder="Search partner name, contact, email…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-12 rounded-full border-0 bg-white ring-1 ring-ink/10 pl-11 pr-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral focus-visible:ring-2"
-              />
-            </div>
-            <Tabs
-              value={filter}
-              onValueChange={(v) => setFilter(v as FilterKey)}
-              className="w-auto"
-            >
-              <TabsList className="rounded-full bg-cream p-1.5">
-                {FILTERS.map((f) => (
-                  <TabsTrigger
-                    key={f}
-                    value={f}
-                    className="rounded-full px-4.5 py-1.5 text-xs font-extrabold data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm data-[state=inactive]:text-ink/60"
-                  >
-                    {f}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-            <Select defaultValue="all">
-              <SelectTrigger className="h-12 w-48 rounded-full bg-white ring-1 ring-ink/10 px-5 text-sm font-extrabold text-ink shadow-none focus:ring-coral">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-[22px] bg-white p-1.5 ring-1 ring-ink/10">
-                {CATEGORIES.map((cat) => (
-                  <SelectItem
-                    key={cat}
-                    value={
-                      cat === "All categories" ? "all" : cat.toLowerCase().replace(/[^a-z]/g, "")
-                    }
-                    className="rounded-xl font-bold"
-                  >
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* TAB 2: ASSET APPROVALS */}
+          <TabsContent value="assets" className="pt-4 m-0">
+            <Card className="border-ink/10 rounded-[28px] bg-white shadow-sm overflow-hidden">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs whitespace-nowrap">
+                    <thead className="bg-paper border-b border-ink/10 text-ink/50 uppercase font-extrabold tracking-wider">
+                      <tr>
+                        <th className="py-3.5 px-5">Asset Name</th>
+                        <th className="py-3.5 px-4">Partner Business Name</th>
+                        <th className="py-3.5 px-4">Category</th>
+                        <th className="py-3.5 px-4">Declared Retail Value</th>
+                        <th className="py-3.5 px-4">Date Submitted</th>
+                        <th className="py-3.5 px-4">Proof Documents</th>
+                        <th className="py-3.5 px-4">Status</th>
+                        <th className="py-3.5 px-5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink/5">
+                      {filteredAssets.map((asset) => {
+                        const ownerPartner = partners.find((p) => p.id === asset.partnerId);
 
-          <div className="overflow-x-auto -mx-2 px-2">
-            <Table>
-              <TableHeader className="[&_tr]:border-ink/10">
-                <TableRow>
-                  <TableHead className="py-3.5 font-extrabold text-ink/65">Partner</TableHead>
-                  <TableHead className="py-3.5 font-extrabold text-ink/65">
-                    Contact person
-                  </TableHead>
-                  <TableHead className="py-3.5 font-extrabold text-ink/65">Email</TableHead>
-                  <TableHead className="py-3.5 font-extrabold text-ink/65">Phone</TableHead>
-                  <TableHead className="py-3.5 font-extrabold text-ink/65">Approved</TableHead>
-                  <TableHead className="py-3.5 text-right font-extrabold text-ink/65">
-                    Assets listed
-                  </TableHead>
-                  <TableHead className="py-3.5 text-right font-extrabold text-ink/65">
-                    Revenue driven
-                  </TableHead>
-                  <TableHead className="py-3.5 font-extrabold text-ink/65">Status</TableHead>
-                  <TableHead className="py-3.5 text-right font-extrabold text-ink/65">
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="[&_tr]:border-ink/10">
-                {filtered.map((p) => (
-                  <TableRow key={p.id} className="hover:bg-lilac/10">
-                    <TableCell className="py-3.5">
-                      <div className="flex items-center gap-3.5">
-                        <Avatar className={cn("size-11 ring-2 ring-white", tintBg[p.logoTint])}>
-                          <AvatarFallback
-                            className={cn("text-[11px] font-extrabold", tintBg[p.logoTint])}
-                          >
-                            {p.logoInitials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 max-w-[200px]">
-                          <p className="truncate text-sm font-extrabold text-ink">{p.name}</p>
-                          <p className="truncate text-[11px] font-bold text-ink/50">
-                            Joined {p.joined}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3.5">
-                      <div className="flex items-center gap-2">
-                        <User className="size-3.5 text-ink/40" />
-                        <span className="text-xs font-bold text-ink/75">{p.contactPerson}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3.5">
-                      <div className="flex items-center gap-2">
-                        <Mail className="size-3.5 text-ink/40" />
-                        <span className="text-xs font-bold text-ink/65 truncate max-w-[200px]">
-                          {p.email}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3.5 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Phone className="size-3.5 text-ink/40" />
-                        <span className="text-xs font-bold text-ink/65">{p.phone}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3.5">
-                      {p.approved ? (
-                        <Badge className="rounded-full bg-mint/30 px-2.5 py-0.5 text-[10px] font-extrabold text-ink ring-0">
-                          <Check className="mr-0.5 size-2.5" /> Approved
-                        </Badge>
-                      ) : (
-                        <Badge className="rounded-full bg-ink/10 px-2.5 py-0.5 text-[10px] font-extrabold text-ink/60 ring-0">
-                          <X className="mr-0.5 size-2.5" /> No
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-3.5 text-right">
-                      <div className="inline-flex items-center gap-1.5 text-xs font-bold text-ink/70">
-                        <Trophy className="size-3.5 text-coral" />
-                        {p.assetsListed}
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3.5 text-right text-xs font-extrabold text-ink whitespace-nowrap">
-                      {formatNaira(p.totalRevenue)}
-                    </TableCell>
-                    <TableCell className="py-3.5">
-                      <Badge
-                        className={cn(
-                          "rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
-                          statusPill[p.status],
-                        )}
-                      >
-                        {p.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {p.status === "PENDING" && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-9 text-mint-700 hover:bg-mint/20 rounded-full"
-                              onClick={() => {
-                                const next = partners.map((x) =>
-                                  x.id === p.id
-                                    ? { ...x, status: "APPROVED" as PartnerStatus, approved: true }
-                                    : x,
-                                );
-                                setPartners(next);
-                                partnerList = next;
-                                import("@/lib/activity-log").then(({ logActivity }) =>
-                                  logActivity({
-                                    eventType: "PARTNER_APPROVE",
-                                    targetType: "partner",
-                                    targetId: p.id,
-                                    summary: `Approved partner ${p.name}`,
-                                  }),
-                                );
-                                toast.success("Partner approved", {
-                                  description: `${p.name} is now active.`,
-                                });
-                              }}
-                            >
-                              <ThumbsUp className="size-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-9 text-coral hover:bg-coral/15 rounded-full"
-                              onClick={() => {
-                                const next = partners.map((x) =>
-                                  x.id === p.id
-                                    ? { ...x, status: "REJECTED" as PartnerStatus, approved: false }
-                                    : x,
-                                );
-                                setPartners(next);
-                                partnerList = next;
-                                import("@/lib/activity-log").then(({ logActivity }) =>
-                                  logActivity({
-                                    eventType: "PARTNER_REJECT",
-                                    targetType: "partner",
-                                    targetId: p.id,
-                                    summary: `Rejected partner ${p.name}`,
-                                  }),
-                                );
-                                toast.info("Partner rejected", {
-                                  description: `${p.name} · rejection sent.`,
-                                });
-                              }}
-                            >
-                              <ThumbsDown className="size-4" />
-                            </Button>
-                          </>
-                        )}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-9 rounded-full">
-                              <MoreHorizontal className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-48 rounded-[22px] bg-white p-1.5 ring-1 ring-ink/10"
-                          >
-                            <DropdownMenuLabel className="rounded-xl px-3 py-2 text-[11px] font-extrabold uppercase tracking-wider text-ink/45">
-                              {p.name}
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink">
-                              <Eye className="mr-2 size-4" /> View
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink">
-                              <UserCog className="mr-2 size-4" /> Edit
-                            </DropdownMenuItem>
-                            {p.status !== "PENDING" && p.status !== "APPROVED" && (
-                              <DropdownMenuItem
-                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-mint-700 focus:bg-mint/20"
-                                onClick={() => {
-                                  const next = partners.map((x) =>
-                                    x.id === p.id
-                                      ? {
-                                          ...x,
-                                          status: "APPROVED" as PartnerStatus,
-                                          approved: true,
-                                        }
-                                      : x,
-                                  );
-                                  setPartners(next);
-                                  partnerList = next;
-                                  import("@/lib/activity-log").then(({ logActivity }) =>
-                                    logActivity({
-                                      eventType: "PARTNER_APPROVE",
-                                      targetType: "partner",
-                                      targetId: p.id,
-                                      summary: `Approved partner ${p.name}`,
-                                    }),
-                                  );
-                                  toast.success("Partner approved", { description: p.name });
-                                }}
-                              >
-                                <ThumbsUp className="mr-2 size-4" /> Approve
-                              </DropdownMenuItem>
-                            )}
-                            {p.status === "APPROVED" && (
-                              <DropdownMenuItem
-                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15"
-                                onClick={() => {
-                                  const next = partners.map((x) =>
-                                    x.id === p.id
-                                      ? {
-                                          ...x,
-                                          status: "SUSPENDED" as PartnerStatus,
-                                          approved: false,
-                                        }
-                                      : x,
-                                  );
-                                  setPartners(next);
-                                  partnerList = next;
-                                  import("@/lib/activity-log").then(({ logActivity }) =>
-                                    logActivity({
-                                      eventType: "USER_SUSPEND",
-                                      targetType: "partner",
-                                      targetId: p.id,
-                                      summary: `Suspended partner ${p.name}`,
-                                    }),
-                                  );
-                                  toast.info("Partner suspended", { description: p.name });
-                                }}
-                              >
-                                <ThumbsDown className="mr-2 size-4" /> Suspend
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-14 text-ink/50 font-bold">
-                      No partners match your filters.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                        return (
+                          <tr key={asset.id} className="hover:bg-paper/40 transition">
+                            <td className="py-4 px-5">
+                              <p className="font-extrabold text-ink text-sm">{asset.name}</p>
+                              <p className="text-[10px] text-ink/50">
+                                {asset.physicalLocation} · {asset.condition}
+                              </p>
+                            </td>
 
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="rounded-[28px] bg-white border-0 ring-1 ring-ink/10 shadow-xl max-w-[520px] sm:max-w-[560px] p-0 overflow-hidden">
-          <div className="bg-gradient-to-r from-mint/25 via-sky/15 to-lemon/30 px-7 pt-7 pb-5">
-            <DialogHeader>
-              <div className="flex items-center gap-3">
-                <div className="grid size-11 place-items-center rounded-2xl bg-white ring-1 ring-ink/10 shadow-sm">
-                  <Send className="size-5 text-coral" />
+                            <td className="py-4 px-4 font-bold text-ink">
+                              {ownerPartner?.businessName || asset.partnerId}
+                            </td>
+
+                            <td className="py-4 px-4 font-medium text-ink/80">{asset.category}</td>
+
+                            <td className="py-4 px-4 font-extrabold text-coral text-sm">
+                              {formatNaira(asset.declaredRetailValueKobo)}
+                            </td>
+
+                            <td className="py-4 px-4 text-ink/65 font-medium">
+                              {asset.submittedDate}
+                            </td>
+
+                            <td className="py-4 px-4">
+                              <Badge className="bg-mint/25 text-ink font-bold text-[10px] border-0 rounded-full px-2 py-0.5">
+                                <FileCheck2 className="size-3 mr-1 text-mint-700 inline" /> Title
+                                Attached
+                              </Badge>
+                            </td>
+
+                            <td className="py-4 px-4">{getAssetStatusBadge(asset.status)}</td>
+
+                            <td className="py-4 px-5 text-right space-x-1.5">
+                              {asset.status === "UNDER_REVIEW" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleApproveAsset(asset)}
+                                    className="rounded-full text-[10px] font-bold h-7 px-3 bg-mint/40 text-ink hover:bg-mint"
+                                  >
+                                    Approve Asset
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => setRejectAssetTarget(asset)}
+                                    className="rounded-full text-[10px] font-bold h-7 px-3 bg-coral/20 text-coral hover:bg-coral hover:text-white"
+                                  >
+                                    Reject
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      toast.info("Physical Inspection Scheduled", {
+                                        description: `Inspection order dispatched for ${asset.name} at ${asset.physicalLocation}.`,
+                                      })
+                                    }
+                                    className="rounded-full text-[10px] font-bold h-7 px-3 border-ink/20"
+                                  >
+                                    Request Inspection
+                                  </Button>
+                                </>
+                              )}
+                              {asset.status === "APPROVED" && (
+                                <Badge className="bg-mint/20 text-mint-800 text-[10px] font-bold rounded-full">
+                                  Eligible for Draw
+                                </Badge>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                <div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* View Profile Dialog */}
+        <Dialog
+          open={Boolean(selectedPartner)}
+          onOpenChange={(o) => !o && setSelectedPartner(null)}
+        >
+          <DialogContent className="max-w-xl rounded-[32px] p-6 sm:p-8 bg-white max-h-[90vh] overflow-y-auto">
+            {selectedPartner && (
+              <div className="space-y-5">
+                <DialogHeader>
+                  <div className="flex items-center gap-2 mb-1">
+                    {getPartnerStatusBadge(selectedPartner.verificationStatus)}
+                    <span className="text-[10px] font-mono text-ink/40">{selectedPartner.id}</span>
+                  </div>
                   <DialogTitle className="font-display text-2xl font-extrabold text-ink">
-                    Invite a partner
+                    {selectedPartner.businessName}
                   </DialogTitle>
-                  <DialogDescription className="text-sm font-bold text-ink/55 mt-1">
-                    Send an onboarding invite to a prize asset partner. They'll receive a setup
-                    email.
+                  <DialogDescription className="text-xs text-ink/60">
+                    Trading Name: {selectedPartner.tradingName} · Registered in Nigeria
                   </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-2xl bg-paper">
+                    <span className="text-ink/50 block">CAC Registration Number</span>
+                    <span className="font-mono font-bold text-ink">
+                      {selectedPartner.cacRegistrationNumber}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-paper">
+                    <span className="text-ink/50 block">Tax ID Number (TIN)</span>
+                    <span className="font-mono font-bold text-ink">
+                      {selectedPartner.taxIdentificationNumber}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-paper/60 border border-ink/10 space-y-2 text-xs">
+                  <p className="font-extrabold uppercase tracking-wider text-ink/65 text-[10px]">
+                    Authorized Contact
+                  </p>
+                  <div className="flex justify-between">
+                    <span className="text-ink/60">Full Name</span>
+                    <span className="font-bold text-ink">{selectedPartner.contactPerson.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-ink/60">Role</span>
+                    <span className="font-bold text-ink">{selectedPartner.contactPerson.role}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-ink/60">Email</span>
+                    <span className="font-bold text-ink">{selectedPartner.businessEmail}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-ink/60">Phone</span>
+                    <span className="font-bold text-ink">{selectedPartner.businessPhone}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-ink/60">Physical Address</span>
+                    <span className="font-bold text-ink">{selectedPartner.businessAddress}</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-mint/15 border border-mint/30 space-y-2 text-xs">
+                  <p className="font-extrabold uppercase tracking-wider text-mint-800 text-[10px]">
+                    Settlement Bank Account
+                  </p>
+                  <div className="flex justify-between">
+                    <span className="text-ink/60">Bank</span>
+                    <span className="font-bold text-ink">
+                      {selectedPartner.settlementAccount.bankName}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-ink/60">Account Number</span>
+                    <span className="font-mono font-bold text-ink">
+                      {selectedPartner.settlementAccount.accountNumber}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-ink/60">Beneficiary Name</span>
+                    <span className="font-bold text-ink">
+                      {selectedPartner.settlementAccount.accountName}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedPartner(null)}
+                    className="rounded-full text-xs font-bold border-ink/20"
+                  >
+                    Close Profile
+                  </Button>
                 </div>
               </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Set Revenue Split Modal */}
+        <Dialog open={isSplitModalOpen} onOpenChange={setIsSplitModalOpen}>
+          <DialogContent className="max-w-md rounded-[32px] p-6 bg-white">
+            <DialogHeader>
+              <DialogTitle className="font-display text-xl font-extrabold text-ink">
+                Set Contractual Revenue Split
+              </DialogTitle>
+              <DialogDescription className="text-xs text-ink/60">
+                Configure default gross ticket split percentage for {splitPartner?.businessName}.
+              </DialogDescription>
             </DialogHeader>
-          </div>
-          <div className="space-y-4 px-7 py-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2 space-y-2">
-                <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
-                  Company name *
+
+            <form onSubmit={handleSaveRevenueSplit} className="space-y-4 pt-2">
+              <div>
+                <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1.5">
+                  Partner Revenue Share % *
                 </Label>
-                <Input
-                  placeholder="e.g. Lux Wheels Ltd"
-                  value={inviteForm.company}
-                  onChange={(e) => setInviteForm((f) => ({ ...f, company: e.target.value }))}
-                  className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 px-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral focus-visible:ring-2"
-                />
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={newSplitPercentage}
+                    onChange={(e) => setNewSplitPercentage(Number(e.target.value))}
+                    required
+                    className="h-11 rounded-xl border-ink/15 font-bold text-base"
+                  />
+                  <span className="text-sm font-bold text-ink">%</span>
+                </div>
+                <p className="text-xs text-ink/60 mt-1.5">
+                  Raffila platform fee will be{" "}
+                  <span className="font-bold text-coral">{100 - newSplitPercentage}%</span>.
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
-                  Contact person *
-                </Label>
-                <Input
-                  placeholder="Full name"
-                  value={inviteForm.contact}
-                  onChange={(e) => setInviteForm((f) => ({ ...f, contact: e.target.value }))}
-                  className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 px-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral focus-visible:ring-2"
-                />
+
+              <div className="p-3 rounded-xl bg-paper/60 border border-ink/10 text-xs space-y-1">
+                <p className="font-bold text-ink">Preview on ₦100,000,000 Campaign Sellout:</p>
+                <p className="text-mint-700 font-extrabold">
+                  Partner Receives: {formatNaira(10000000000 * (newSplitPercentage / 100))}
+                </p>
+                <p className="text-ink/60">
+                  Raffila Receives: {formatNaira(10000000000 * ((100 - newSplitPercentage) / 100))}
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
-                  Email *
-                </Label>
-                <Input
-                  type="email"
-                  placeholder="partners@company.ng"
-                  value={inviteForm.email}
-                  onChange={(e) => setInviteForm((f) => ({ ...f, email: e.target.value }))}
-                  className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 px-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral focus-visible:ring-2"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
-                  Phone
-                </Label>
-                <Input
-                  placeholder="+234 800 000 0000"
-                  value={inviteForm.phone}
-                  onChange={(e) => setInviteForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="h-12 rounded-2xl border-0 bg-white ring-1 ring-ink/10 px-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral focus-visible:ring-2"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
-                  Partner category
-                </Label>
-                <Select
-                  value={inviteForm.category}
-                  onValueChange={(v) => setInviteForm((f) => ({ ...f, category: v }))}
+
+              <div className="pt-2 flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsSplitModalOpen(false)}
+                  className="rounded-full text-xs font-bold border-ink/20"
                 >
-                  <SelectTrigger className="h-12 rounded-2xl bg-white ring-1 ring-ink/10 px-4 text-sm font-extrabold text-ink shadow-none focus:ring-coral">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-[22px] bg-white p-1.5 ring-1 ring-ink/10">
-                    {["Auto", "Tech", "Property", "Jewelry", "Home", "Experience"].map((c) => (
-                      <SelectItem key={c} value={c} className="rounded-xl font-bold">
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="sm:col-span-2 space-y-2">
-                <Label className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
-                  Assigned manager
-                </Label>
-                <Select
-                  value={inviteForm.manager}
-                  onValueChange={(v) => setInviteForm((f) => ({ ...f, manager: v }))}
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="rounded-full bg-coral hover:bg-coral/90 text-white font-bold text-xs px-6 shadow-sm"
                 >
-                  <SelectTrigger className="h-12 rounded-2xl bg-white ring-1 ring-ink/10 px-4 text-sm font-extrabold text-ink shadow-none focus:ring-coral">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-[22px] bg-white p-1.5 ring-1 ring-ink/10">
-                    {MANAGERS.map((m) => (
-                      <SelectItem key={m} value={m} className="rounded-xl font-bold">
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  Save Split
+                </Button>
               </div>
-            </div>
-          </div>
-          <DialogFooter className="px-7 pb-7 pt-0 flex-row gap-2 sm:justify-end">
-            <Button
-              variant="outline"
-              onClick={() => setInviteOpen(false)}
-              className="rounded-full h-11 px-6"
-            >
-              Cancel
-            </Button>
-            <Button variant="primary" onClick={submitInvite} className="rounded-full h-11 px-6">
-              <Send className="size-4 mr-1.5" /> Send invite
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reject Asset Dialog */}
+        <Dialog
+          open={Boolean(rejectAssetTarget)}
+          onOpenChange={(o) => !o && setRejectAssetTarget(null)}
+        >
+          <DialogContent className="max-w-md rounded-[32px] p-6 bg-white">
+            <DialogHeader>
+              <DialogTitle className="font-display text-xl font-extrabold text-coral">
+                Reject Prize Asset
+              </DialogTitle>
+              <DialogDescription className="text-xs text-ink/60">
+                Provide specific reasons why {rejectAssetTarget?.name} failed compliance or
+                inspection.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleConfirmRejectAsset} className="space-y-4 pt-2">
+              <div>
+                <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1.5">
+                  Rejection Reason *
+                </Label>
+                <Textarea
+                  placeholder="e.g. Incomplete title documents, odometer discrepancy, missing ownership affidavit..."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  required
+                  rows={3}
+                  className="rounded-xl border-ink/15 text-xs font-bold"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setRejectAssetTarget(null)}
+                  className="rounded-full text-xs font-bold border-ink/20"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="rounded-full bg-coral hover:bg-coral/90 text-white font-bold text-xs px-6 shadow-sm"
+                >
+                  Confirm Rejection
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Register New Partner Dialog */}
+        <Dialog open={createPartnerOpen} onOpenChange={setCreatePartnerOpen}>
+          <DialogContent className="max-w-xl rounded-[32px] p-6 sm:p-8 bg-white max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-display text-2xl font-extrabold text-ink">
+                Register New Enterprise Partner
+              </DialogTitle>
+              <DialogDescription className="text-xs text-ink/60">
+                Onboard a car dealership, real estate developer, or luxury asset merchant.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleCreatePartner} className="space-y-4 pt-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1">
+                    Business Legal Name *
+                  </Label>
+                  <Input
+                    required
+                    placeholder="e.g. ABC Luxury Motors Limited"
+                    value={newPartnerForm.businessName}
+                    onChange={(e) =>
+                      setNewPartnerForm((f) => ({ ...f, businessName: e.target.value }))
+                    }
+                    className="h-11 rounded-xl text-xs font-bold"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1">
+                    CAC Registration (RC/BN)
+                  </Label>
+                  <Input
+                    placeholder="RC-1294829"
+                    value={newPartnerForm.cacRegistrationNumber}
+                    onChange={(e) =>
+                      setNewPartnerForm((f) => ({ ...f, cacRegistrationNumber: e.target.value }))
+                    }
+                    className="h-11 rounded-xl text-xs font-bold"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1">
+                    Tax ID Number (TIN)
+                  </Label>
+                  <Input
+                    placeholder="29384721-0001"
+                    value={newPartnerForm.taxIdentificationNumber}
+                    onChange={(e) =>
+                      setNewPartnerForm((f) => ({ ...f, taxIdentificationNumber: e.target.value }))
+                    }
+                    className="h-11 rounded-xl text-xs font-bold"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1">
+                    Contact Person Name
+                  </Label>
+                  <Input
+                    placeholder="Managing Director Name"
+                    value={newPartnerForm.contactPersonName}
+                    onChange={(e) =>
+                      setNewPartnerForm((f) => ({ ...f, contactPersonName: e.target.value }))
+                    }
+                    className="h-11 rounded-xl text-xs font-bold"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1">
+                    Business Email *
+                  </Label>
+                  <Input
+                    type="email"
+                    required
+                    placeholder="partner@domain.ng"
+                    value={newPartnerForm.businessEmail}
+                    onChange={(e) =>
+                      setNewPartnerForm((f) => ({ ...f, businessEmail: e.target.value }))
+                    }
+                    className="h-11 rounded-xl text-xs font-bold"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1">
+                    Business Phone
+                  </Label>
+                  <Input
+                    placeholder="+234 803 000 0000"
+                    value={newPartnerForm.businessPhone}
+                    onChange={(e) =>
+                      setNewPartnerForm((f) => ({ ...f, businessPhone: e.target.value }))
+                    }
+                    className="h-11 rounded-xl text-xs font-bold"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1">
+                    Default Partner Revenue %
+                  </Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={newPartnerForm.defaultRevenueSplitPercentage}
+                    onChange={(e) =>
+                      setNewPartnerForm((f) => ({
+                        ...f,
+                        defaultRevenueSplitPercentage: Number(e.target.value),
+                      }))
+                    }
+                    className="h-11 rounded-xl text-xs font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2 border-t border-ink/10">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCreatePartnerOpen(false)}
+                  className="rounded-full text-xs font-bold border-ink/20"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="rounded-full bg-coral hover:bg-coral/90 text-white font-bold text-xs px-6 shadow-sm"
+                >
+                  Complete Registration
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
     </AdminShell>
   );
 }

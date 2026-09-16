@@ -31,10 +31,13 @@ import {
   Check,
   Copy,
   ExternalLink,
+  Handshake,
+  CheckCircle2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { partnerStore } from "@/lib/partner-store";
 
 import { CompetitionCard, QuantityStepper } from "@/components/raffila/competition-card";
 import { WinnerCard } from "@/components/raffila/winner-card";
@@ -962,6 +965,21 @@ export function CompetitionDetailPage() {
     [competitions, competition?.partner, competition?.slug],
   );
 
+  const assignedPartner = useMemo(() => {
+    if (!competition?.partner) return null;
+    const partners = partnerStore.getAllPartners();
+    return (
+      partners.find(
+        (p) =>
+          p.businessName.toLowerCase().includes(competition.partner.toLowerCase()) ||
+          p.tradingName.toLowerCase().includes(competition.partner.toLowerCase()) ||
+          competition.partner.toLowerCase().includes(p.tradingName.toLowerCase()),
+      ) ||
+      partners[0] ||
+      null
+    );
+  }, [competition?.partner]);
+
   useEffect(() => {
     const el = heroRef.current;
     if (!el) return;
@@ -1010,6 +1028,7 @@ export function CompetitionDetailPage() {
     .map((w) => w[0])
     .slice(0, 2)
     .join("");
+
   return (
     <>
       <div
@@ -1115,8 +1134,15 @@ export function CompetitionDetailPage() {
               <Badge className="h-6 rounded-full bg-mint/30 px-3 text-[11px] font-extrabold text-ink ring-0">
                 {competition.status}
               </Badge>
-              <span className="ml-auto inline-flex items-center gap-1.5 text-[11px] font-extrabold text-ink/55">
-                <BadgeCheck className="size-3.5 text-mint" /> By {competition.partner}
+              <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-cream px-3 py-1 text-[11px] font-extrabold text-ink ring-1 ring-ink/10 shadow-xs">
+                <Handshake className="size-3.5 text-coral" />
+                In Partnership with{" "}
+                <span className="text-coral font-black">
+                  {assignedPartner?.tradingName ||
+                    assignedPartner?.businessName ||
+                    competition.partner}
+                </span>
+                <BadgeCheck className="size-3.5 text-mint-700" />
               </span>
             </div>
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-tight tracking-tight text-ink sm:text-5xl">
@@ -1217,6 +1243,63 @@ export function CompetitionDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Partner Info Card (Requirement 31) */}
+        {assignedPartner && (
+          <div className="mt-8 rounded-[28px] border border-ink/10 bg-white p-6 shadow-xs sm:p-7">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-paper border border-ink/10 font-display text-xl font-extrabold text-coral shadow-inner">
+                  {assignedPartner.businessName.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-ink/40">
+                      Sourced &amp; Consigned By
+                    </span>
+                    <Badge className="bg-mint/40 text-ink border-mint text-[10px] font-extrabold rounded-full px-2.5 py-0.5 shadow-none">
+                      <CheckCircle2 className="size-3 mr-1 text-mint-700 inline" /> Verified
+                      Enterprise Partner
+                    </Badge>
+                  </div>
+                  <h3 className="font-display text-xl font-extrabold text-ink">
+                    {assignedPartner.businessName}
+                  </h3>
+                  <p className="flex items-center gap-1.5 text-xs font-medium text-ink/65">
+                    <MapPin className="size-3.5 text-coral shrink-0" />
+                    {assignedPartner.businessAddress || "Lagos Automotive & Luxury Hub, Nigeria"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <a
+                  href={`mailto:${assignedPartner.businessEmail || "partner@raffila.ng"}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-paper px-4 py-2 text-xs font-bold text-ink hover:bg-white transition"
+                >
+                  <Mail className="size-3.5 text-coral" /> Contact Partner
+                </a>
+                <a
+                  href="https://raffila.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-paper px-4 py-2 text-xs font-bold text-ink hover:bg-white transition"
+                >
+                  <Globe className="size-3.5 text-coral" /> Partner Website
+                </a>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-ink/10 flex items-center gap-2.5 text-xs font-bold text-ink/70 bg-paper/60 rounded-xl px-4 py-3">
+              <ShieldCheck className="size-4 text-mint-700 shrink-0" />
+              <span>
+                <strong className="text-ink font-extrabold">Custody &amp; Escrow Guarantee:</strong>{" "}
+                All assets verified and held in escrow/custody prior to draw.
+              </span>
+            </div>
+          </div>
+        )}
+
         <div className="mt-10 grid gap-3 grid-cols-1 xs:grid-cols-2 lg:grid-cols-4">
           <Card className="rounded-2xl border-0 bg-paper p-5 shadow-sm ring-1 ring-ink/5">
             <div className="flex items-center gap-2">
@@ -1834,11 +1917,21 @@ export function PartnerPage() {
             approval.
           </p>
         </div>
-        <Button asChild variant="primary" size="lg">
-          <Link to="/contact">
-            Start a conversation <ArrowRight className="size-4" />
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button asChild variant="primary" size="lg">
+            <Link to="/partner-signup">
+              Fill Partner Application Form <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="border-cream/20 text-cream hover:bg-cream/10"
+          >
+            <Link to="/contact">Contact Team</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
