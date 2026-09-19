@@ -43,6 +43,8 @@ import {
   Camera,
 } from "lucide-react";
 import { formatNaira } from "@/lib/utils";
+import { partnerStore } from "@/lib/partner-store";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const BANKS = [
   "Zenith Bank",
@@ -83,35 +85,38 @@ interface DocItem {
 }
 
 export function PartnerProfilePage() {
-  const [orgName, setOrgName] = useState("Lekki Luxury Autos Limited");
-  const [rcNumber, setRcNumber] = useState("RC-1872456");
-  const [taxId, setTaxId] = useState("24187642-0001");
-  const [bizType, setBizType] = useState("Limited Liability Company");
-  const [industry, setIndustry] = useState("Automotive / Luxury Assets");
-  const [website, setWebsite] = useState("https://lekkiluxuryautos.ng");
-  const [instagram, setInstagram] = useState("@lekkiluxuryautos");
-  const [founded, setFounded] = useState("2018");
-  const [employees, setEmployees] = useState("10-49");
-  const [about, setAbout] = useState(
-    "Premium luxury automobile dealer based in Victoria Island, Lagos. Specialising in Tokunbo and brand new vehicles, high-end watches, jewelry, and curated experiences for discerning Nigerian clients. In business since 2018 with 500+ successful deliveries nationwide.",
-  );
-  const [address1, setAddress1] = useState("14A Adeyemi Lawson Street");
-  const [address2, setAddress2] = useState("Victoria Island");
-  const [city, setCity] = useState("Lagos");
-  const [state, setState] = useState("Lagos");
-  const [postal, setPostal] = useState("101241");
-  const [cpTitle, setCpTitle] = useState("Mrs.");
-  const [cpFirst, setCpFirst] = useState("Adaeze");
-  const [cpLast, setCpLast] = useState("Okafor-Chukwu");
-  const [cpRole, setCpRole] = useState("Managing Director / CEO");
-  const [cpEmail, setCpEmail] = useState("adaeze@lekkiluxuryautos.ng");
-  const [cpPhone, setCpPhone] = useState("+234 803 444 0077");
-  const [cpDob, setCpDob] = useState("1988-03-14");
-  const [bank, setBank] = useState("Zenith Bank");
-  const [acctName, setAcctName] = useState("Lekki Luxury Autos Limited");
-  const [acctNo, setAcctNo] = useState("101****7821");
-  const [acctType, setAcctType] = useState("Current");
-  const [bankCode, setBankCode] = useState("057");
+  const { session } = useAuthSession();
+  const activePartnerId = session?.user?.partnerId || "";
+  const p = partnerStore.getPartnerById(activePartnerId);
+
+  const [orgName, setOrgName] = useState(p?.businessName || "");
+  const [rcNumber, setRcNumber] = useState(p?.cacNumber || "");
+  const [taxId, setTaxId] = useState("");
+  const [bizType, setBizType] = useState(p?.businessType || "");
+  const [industry, setIndustry] = useState(p?.businessType || "");
+  const [website, setWebsite] = useState(p?.website || "");
+  const [instagram, setInstagram] = useState("");
+  const [founded, setFounded] = useState("");
+  const [employees, setEmployees] = useState("");
+  const [about, setAbout] = useState(p?.description || "");
+  const [address1, setAddress1] = useState(p?.address || "");
+  const [address2, setAddress2] = useState("");
+  const [city, setCity] = useState(p?.city || "");
+  const [state, setState] = useState(p?.state || "");
+  const [postal, setPostal] = useState("");
+  const rep = p?.authorizedRepresentative;
+  const [cpTitle, setCpTitle] = useState("");
+  const [cpFirst, setCpFirst] = useState(rep?.fullName?.split(" ")[0] || "");
+  const [cpLast, setCpLast] = useState(rep?.fullName?.split(" ").slice(1).join(" ") || "");
+  const [cpRole, setCpRole] = useState(rep?.position || "");
+  const [cpEmail, setCpEmail] = useState(rep?.email || p?.companyEmail || "");
+  const [cpPhone, setCpPhone] = useState(rep?.phone || p?.companyPhone || "");
+  const [cpDob, setCpDob] = useState("");
+  const [bank, setBank] = useState("");
+  const [acctName, setAcctName] = useState(p?.businessName || "");
+  const [acctNo, setAcctNo] = useState("");
+  const [acctType, setAcctType] = useState("");
+  const [bankCode, setBankCode] = useState("");
   const [settlementDay, setSettlementDay] = useState("friday");
   const [minSettle, setMinSettle] = useState("500000");
   const [notifyEmail, setNotifyEmail] = useState(true);
@@ -218,7 +223,7 @@ export function PartnerProfilePage() {
               <UserCircle2 className="w-7 h-7 text-coral" /> Partner Profile
             </h1>
             <p className="font-body text-ink/60 text-sm mt-1">
-              Manage Lekki Luxury Autos business information, settlement details, and documentation.
+              Manage your business information, settlement details, and documentation.
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">

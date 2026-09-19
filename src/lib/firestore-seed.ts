@@ -138,10 +138,9 @@ export async function seedFirestoreDatabase(
     const partnerBatch = writeBatch(db);
     for (const p of partners) {
       const partnerDocId = p.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-      partnerBatch.set(doc(db, "partners", partnerDocId), {
-        name: p,
-        verified: true,
-        status: "APPROVED",
+      partnerBatch.set(doc(db, "partner_profiles", partnerDocId), {
+        businessName: p,
+        verificationStatus: "APPROVED",
         createdAt: new Date().toISOString(),
       });
       stats.partners++;

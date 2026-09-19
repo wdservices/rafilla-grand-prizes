@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Eye, EyeOff, Loader2, AlertCircle, Check } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertCircle, Check, Building2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -694,6 +694,17 @@ export function RegisterForm() {
           Sign in
         </Link>
       </p>
+
+      <div className="rounded-2xl bg-lilac/20 p-4 text-center ring-1 ring-ink/5">
+        <p className="text-xs font-bold text-ink/55">Are you a business or asset owner?</p>
+        <Link
+          to="/partner-signup"
+          className="mt-2 inline-flex items-center gap-1.5 text-sm font-extrabold text-coral hover:underline hover:underline-offset-2"
+        >
+          <Building2 className="size-4" />
+          Become a Partner
+        </Link>
+      </div>
     </form>
   );
 }

@@ -73,12 +73,12 @@ export function PartnerSettlementsPage() {
 
   // Bank Edit Dialog State
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
-  const [bankName, setBankName] = useState(partner?.settlementAccount?.bankName || "Zenith Bank");
+  const [bankName, setBankName] = useState(partner?.bankDetails?.bankName || "Zenith Bank");
   const [accountNumber, setAccountNumber] = useState(
-    partner?.settlementAccount?.accountNumber || "1012398472",
+    partner?.bankDetails?.accountNumber || "1012398472",
   );
   const [accountName, setAccountName] = useState(
-    partner?.settlementAccount?.accountName || "ABC MOTORS LTD - REVENUE ESCROW",
+    partner?.bankDetails?.accountName || "ABC MOTORS LTD - REVENUE ESCROW",
   );
 
   useEffect(() => {
@@ -86,10 +86,10 @@ export function PartnerSettlementsPage() {
       const p = partnerStore.getPartnerById(activePartnerId);
       setPartner(p);
       setSettlements(partnerStore.getPartnerPayouts(activePartnerId));
-      if (p?.settlementAccount) {
-        setBankName(p.settlementAccount.bankName);
-        setAccountNumber(p.settlementAccount.accountNumber);
-        setAccountName(p.settlementAccount.accountName);
+      if (p?.bankDetails) {
+        setBankName(p.bankDetails.bankName);
+        setAccountNumber(p.bankDetails.accountNumber);
+        setAccountName(p.bankDetails.accountName);
       }
     };
     update();
@@ -109,11 +109,10 @@ export function PartnerSettlementsPage() {
     }
 
     partnerStore.updatePartnerProfile(activePartnerId, {
-      settlementAccount: {
+      bankDetails: {
         bankName,
         accountNumber,
         accountName,
-        payoutSchedule: partner?.settlementAccount?.payoutSchedule || "Weekly every Friday",
       },
     });
 
@@ -255,7 +254,7 @@ export function PartnerSettlementsPage() {
                 Payout Schedule
               </p>
               <p className="font-display text-base font-extrabold text-ink mt-1 truncate">
-                {partner?.settlementAccount?.payoutSchedule || "Weekly every Friday"}
+                Weekly every Friday
               </p>
               <p className="text-xs text-ink/60 mt-1 font-medium">Disbursed via automated NIP</p>
             </CardContent>
@@ -287,19 +286,19 @@ export function PartnerSettlementsPage() {
                   <div>
                     <span className="text-ink/50 block">Bank Name</span>
                     <span className="font-extrabold text-ink">
-                      {partner?.settlementAccount?.bankName || "Zenith Bank"}
+                      {partner?.bankDetails?.bankName || "Zenith Bank"}
                     </span>
                   </div>
                   <div>
                     <span className="text-ink/50 block">Account Number (NUBAN)</span>
                     <span className="font-mono font-extrabold text-ink tracking-wider">
-                      {partner?.settlementAccount?.accountNumber || "1012398472"}
+                      {partner?.bankDetails?.accountNumber || "1012398472"}
                     </span>
                   </div>
                   <div>
                     <span className="text-ink/50 block">Account Beneficiary Name</span>
                     <span className="font-extrabold text-ink truncate block">
-                      {partner?.settlementAccount?.accountName || partner?.businessName}
+                      {partner?.bankDetails?.accountName || partner?.businessName}
                     </span>
                   </div>
                 </div>

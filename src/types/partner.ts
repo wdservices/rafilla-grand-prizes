@@ -133,6 +133,24 @@ export interface PartnerPayoutRecord {
   createdAt: string;
 }
 
+export interface PartnerCompetition {
+  id: string;
+  title: string;
+  prizeName: string;
+  status: "ACTIVE" | "COMPLETED" | "DRAFT";
+  entryPriceKobo: number;
+  ticketsSold: number;
+  totalEntries: number;
+  grossRevenueKobo: number;
+  partnerAmountKobo: number;
+  partnerPercentage: number;
+  rafillaAmountKobo: number;
+  rafillaPercentage: number;
+  closingDate: string;
+  drawStatus: string;
+  competitionSlug?: string;
+}
+
 export interface PartnerAuditLog {
   id: string;
   actorId: string;

@@ -117,7 +117,7 @@ export function useAuthActions() {
           }
         }
 
-        const redirect = user.role === "admin" ? "/admin" : "/dashboard";
+        const redirect = user.role === "admin" ? "/admin" : user.role === "partner" ? "/partner" : "/dashboard";
         void logActivity({
           eventType: "AUTH_LOGIN",
           targetType: "session",
@@ -218,7 +218,7 @@ export function useAuthActions() {
         };
         setFirebaseSession(user, true);
 
-        const redirect = user.role === "admin" ? "/admin" : "/dashboard";
+        const redirect = user.role === "admin" ? "/admin" : user.role === "partner" ? "/partner" : "/dashboard";
         void logActivity({
           eventType: "AUTH_LOGIN",
           targetType: "session",

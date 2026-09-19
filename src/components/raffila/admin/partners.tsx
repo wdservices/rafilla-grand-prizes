@@ -63,15 +63,23 @@ export function AdminPartnersPage() {
   const [createPartnerOpen, setCreatePartnerOpen] = useState(false);
   const [newPartnerForm, setNewPartnerForm] = useState({
     businessName: "",
-    tradingName: "",
-    cacRegistrationNumber: "",
-    taxIdentificationNumber: "",
-    contactPersonName: "",
-    contactPersonRole: "Managing Director",
-    businessEmail: "",
-    businessPhone: "",
-    businessAddress: "Lagos, Nigeria",
-    defaultRevenueSplitPercentage: 85,
+    businessType: "car_dealership",
+    cacNumber: "",
+    address: "",
+    city: "Lagos",
+    state: "Lagos",
+    country: "Nigeria",
+    companyEmail: "",
+    companyPhone: "",
+    description: "",
+    contactPersonFullName: "",
+    contactPersonPosition: "Managing Director",
+    contactPersonEmail: "",
+    contactPersonPhone: "",
+    bankName: "",
+    bankAccountName: "",
+    bankAccountNumber: "",
+    defaultRevenueSplitPercent: 85,
   });
 
   const refreshData = () => {
@@ -92,10 +100,9 @@ export function AdminPartnersPage() {
       const q = search.toLowerCase();
       return (
         p.businessName.toLowerCase().includes(q) ||
-        p.tradingName.toLowerCase().includes(q) ||
-        p.contactPerson.name.toLowerCase().includes(q) ||
-        p.businessEmail.toLowerCase().includes(q) ||
-        p.cacRegistrationNumber.toLowerCase().includes(q)
+        p.authorizedRepresentative.fullName.toLowerCase().includes(q) ||
+        p.companyEmail.toLowerCase().includes(q) ||
+        p.cacNumber.toLowerCase().includes(q)
       );
     }
     return true;
@@ -108,13 +115,13 @@ export function AdminPartnersPage() {
       return (
         a.name.toLowerCase().includes(q) ||
         a.category.toLowerCase().includes(q) ||
-        a.physicalLocation.toLowerCase().includes(q)
+        a.location.toLowerCase().includes(q)
       );
     }
     return true;
   });
 
-  const pendingAssetsCount = assets.filter((a) => a.status === "UNDER_REVIEW").length;
+  const pendingAssetsCount = assets.filter((a) => a.status === "PENDING_REVIEW").length;
 
   const handleApprovePartner = (id: string, name: string) => {
     partnerStore.approvePartner(id);
@@ -171,39 +178,57 @@ export function AdminPartnersPage() {
 
   const handleCreatePartner = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPartnerForm.businessName || !newPartnerForm.businessEmail) {
+    if (!newPartnerForm.businessName || !newPartnerForm.companyEmail) {
       toast.error("Business Name and Email are required");
       return;
     }
 
     partnerStore.registerPartner({
+      userId: `admin_created_${Date.now().toString(36)}`,
       businessName: newPartnerForm.businessName,
-      tradingName: newPartnerForm.tradingName || newPartnerForm.businessName,
-      cacRegistrationNumber: newPartnerForm.cacRegistrationNumber || "RC-PENDING",
-      taxIdentificationNumber: newPartnerForm.taxIdentificationNumber || "TIN-PENDING",
-      contactPerson: {
-        name: newPartnerForm.contactPersonName || "Primary Contact",
-        role: newPartnerForm.contactPersonRole,
-        email: newPartnerForm.businessEmail,
-        phone: newPartnerForm.businessPhone || "+234 800 000 0000",
+      businessType: newPartnerForm.businessType,
+      cacNumber: newPartnerForm.cacNumber || "RC-PENDING",
+      address: newPartnerForm.address,
+      city: newPartnerForm.city,
+      state: newPartnerForm.state,
+      country: newPartnerForm.country,
+      companyEmail: newPartnerForm.companyEmail,
+      companyPhone: newPartnerForm.companyPhone || "+234 800 000 0000",
+      description: newPartnerForm.description || `${newPartnerForm.businessName} - Registered Partner`,
+      authorizedRepresentative: {
+        fullName: newPartnerForm.contactPersonFullName || "Primary Contact",
+        position: newPartnerForm.contactPersonPosition,
+        email: newPartnerForm.contactPersonEmail || newPartnerForm.companyEmail,
+        phone: newPartnerForm.contactPersonPhone || newPartnerForm.companyPhone || "+234 800 000 0000",
       },
-      businessAddress: newPartnerForm.businessAddress,
-      businessPhone: newPartnerForm.businessPhone || "+234 800 000 0000",
-      businessEmail: newPartnerForm.businessEmail,
-      settlementAccount: {
-        bankName: "Zenith Bank",
-        accountNumber: "1012398472",
-        accountName: newPartnerForm.businessName.toUpperCase(),
-        payoutSchedule: "Weekly every Friday",
-      },
-      defaultRevenueSplitPercentage: Number(newPartnerForm.defaultRevenueSplitPercentage) || 85,
-      verificationDocuments: [],
+      documents: {},
     });
 
     toast.success("Partner Registered!", {
       description: `${newPartnerForm.businessName} created in PENDING review status.`,
     });
     setCreatePartnerOpen(false);
+    setNewPartnerForm({
+      businessName: "",
+      businessType: "car_dealership",
+      cacNumber: "",
+      address: "",
+      city: "Lagos",
+      state: "Lagos",
+      country: "Nigeria",
+      companyEmail: "",
+      companyPhone: "",
+      description: "",
+      contactPersonFullName: "",
+      contactPersonPosition: "Managing Director",
+      contactPersonEmail: "",
+      contactPersonPhone: "",
+      bankName: "",
+      bankAccountName: "",
+      bankAccountNumber: "",
+      defaultRevenueSplitPercent: 85,
+    });
+    refreshData();
   };
 
   const getPartnerStatusBadge = (status: PartnerProfile["verificationStatus"]) => {
@@ -239,7 +264,7 @@ export function AdminPartnersPage() {
 
   const getAssetStatusBadge = (status: PartnerAsset["status"]) => {
     switch (status) {
-      case "ACTIVE_IN_COMPETITION":
+      case "ASSIGNED":
         return (
           <Badge className="bg-mint/40 text-ink border-mint text-[10px] font-bold rounded-full px-2 py-0.5">
             IN COMPETITION
@@ -251,7 +276,7 @@ export function AdminPartnersPage() {
             APPROVED
           </Badge>
         );
-      case "UNDER_REVIEW":
+      case "PENDING_REVIEW":
         return (
           <Badge className="bg-lemon/40 text-ink text-[10px] font-bold rounded-full px-2 py-0.5 animate-pulse">
             UNDER REVIEW
@@ -386,19 +411,19 @@ export function AdminPartnersPage() {
 
                             {/* Contact Person */}
                             <td className="py-4 px-4">
-                              <p className="font-bold text-ink">{p.contactPerson.name}</p>
-                              <p className="text-[10px] text-ink/50">{p.contactPerson.role}</p>
+                              <p className="font-bold text-ink">{p.authorizedRepresentative.fullName}</p>
+                              <p className="text-[10px] text-ink/50">{p.authorizedRepresentative.position}</p>
                             </td>
 
                             {/* Email & Phone */}
                             <td className="py-4 px-4">
-                              <p className="text-ink font-medium">{p.businessEmail}</p>
-                              <p className="text-[10px] text-ink/50">{p.businessPhone}</p>
+                              <p className="text-ink font-medium">{p.companyEmail}</p>
+                              <p className="text-[10px] text-ink/50">{p.companyPhone}</p>
                             </td>
 
                             {/* CAC Number */}
                             <td className="py-4 px-4 font-mono font-bold text-ink/80">
-                              {p.cacRegistrationNumber}
+                              {p.cacNumber}
                             </td>
 
                             {/* Verification Status */}
@@ -424,7 +449,7 @@ export function AdminPartnersPage() {
                             {/* Default Revenue Split % */}
                             <td className="py-4 px-4 font-extrabold text-ink">
                               <Badge className="bg-coral/10 text-coral text-[10px] font-bold border-0">
-                                {p.defaultRevenueSplitPercentage}% Partner
+                                {p.defaultRevenueSplitPercent || 80}% Partner
                               </Badge>
                             </td>
 
@@ -444,7 +469,7 @@ export function AdminPartnersPage() {
                                 variant="outline"
                                 onClick={() => {
                                   setSplitPartner(p);
-                                  setNewSplitPercentage(p.defaultRevenueSplitPercentage);
+                                   setNewSplitPercentage(p.defaultRevenueSplitPercent || 80);
                                   setIsSplitModalOpen(true);
                                 }}
                                 className="rounded-full text-[10px] font-bold h-7 px-2.5 border-ink/20 text-coral hover:bg-coral/10"
@@ -520,7 +545,7 @@ export function AdminPartnersPage() {
                             <td className="py-4 px-5">
                               <p className="font-extrabold text-ink text-sm">{asset.name}</p>
                               <p className="text-[10px] text-ink/50">
-                                {asset.physicalLocation} · {asset.condition}
+                                {asset.location} · {asset.condition}
                               </p>
                             </td>
 
@@ -531,11 +556,11 @@ export function AdminPartnersPage() {
                             <td className="py-4 px-4 font-medium text-ink/80">{asset.category}</td>
 
                             <td className="py-4 px-4 font-extrabold text-coral text-sm">
-                              {formatNaira(asset.declaredRetailValueKobo)}
+                              {formatNaira(asset.declaredValueKobo)}
                             </td>
 
                             <td className="py-4 px-4 text-ink/65 font-medium">
-                              {asset.submittedDate}
+                              {asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : "-"}
                             </td>
 
                             <td className="py-4 px-4">
@@ -548,7 +573,7 @@ export function AdminPartnersPage() {
                             <td className="py-4 px-4">{getAssetStatusBadge(asset.status)}</td>
 
                             <td className="py-4 px-5 text-right space-x-1.5">
-                              {asset.status === "UNDER_REVIEW" && (
+                              {asset.status === "PENDING_REVIEW" && (
                                 <>
                                   <Button
                                     size="sm"
@@ -569,7 +594,7 @@ export function AdminPartnersPage() {
                                     variant="outline"
                                     onClick={() =>
                                       toast.info("Physical Inspection Scheduled", {
-                                        description: `Inspection order dispatched for ${asset.name} at ${asset.physicalLocation}.`,
+                                        description: `Inspection order dispatched for ${asset.name} at ${asset.location}.`,
                                       })
                                     }
                                     className="rounded-full text-[10px] font-bold h-7 px-3 border-ink/20"
@@ -612,7 +637,7 @@ export function AdminPartnersPage() {
                     {selectedPartner.businessName}
                   </DialogTitle>
                   <DialogDescription className="text-xs text-ink/60">
-                    Trading Name: {selectedPartner.tradingName} · Registered in Nigeria
+                    Trading Name: {selectedPartner.businessName} · Registered in {selectedPartner.country}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -620,13 +645,13 @@ export function AdminPartnersPage() {
                   <div className="p-3 rounded-2xl bg-paper">
                     <span className="text-ink/50 block">CAC Registration Number</span>
                     <span className="font-mono font-bold text-ink">
-                      {selectedPartner.cacRegistrationNumber}
+                      {selectedPartner.cacNumber}
                     </span>
                   </div>
                   <div className="p-3 rounded-2xl bg-paper">
-                    <span className="text-ink/50 block">Tax ID Number (TIN)</span>
+                    <span className="text-ink/50 block">Business Type</span>
                     <span className="font-mono font-bold text-ink">
-                      {selectedPartner.taxIdentificationNumber}
+                      {selectedPartner.businessType}
                     </span>
                   </div>
                 </div>
@@ -637,23 +662,23 @@ export function AdminPartnersPage() {
                   </p>
                   <div className="flex justify-between">
                     <span className="text-ink/60">Full Name</span>
-                    <span className="font-bold text-ink">{selectedPartner.contactPerson.name}</span>
+                    <span className="font-bold text-ink">{selectedPartner.authorizedRepresentative.fullName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/60">Role</span>
-                    <span className="font-bold text-ink">{selectedPartner.contactPerson.role}</span>
+                    <span className="font-bold text-ink">{selectedPartner.authorizedRepresentative.position}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/60">Email</span>
-                    <span className="font-bold text-ink">{selectedPartner.businessEmail}</span>
+                    <span className="font-bold text-ink">{selectedPartner.companyEmail}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/60">Phone</span>
-                    <span className="font-bold text-ink">{selectedPartner.businessPhone}</span>
+                    <span className="font-bold text-ink">{selectedPartner.companyPhone}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/60">Physical Address</span>
-                    <span className="font-bold text-ink">{selectedPartner.businessAddress}</span>
+                    <span className="font-bold text-ink">{selectedPartner.address}, {selectedPartner.city}, {selectedPartner.state}</span>
                   </div>
                 </div>
 
@@ -661,24 +686,30 @@ export function AdminPartnersPage() {
                   <p className="font-extrabold uppercase tracking-wider text-mint-800 text-[10px]">
                     Settlement Bank Account
                   </p>
-                  <div className="flex justify-between">
-                    <span className="text-ink/60">Bank</span>
-                    <span className="font-bold text-ink">
-                      {selectedPartner.settlementAccount.bankName}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-ink/60">Account Number</span>
-                    <span className="font-mono font-bold text-ink">
-                      {selectedPartner.settlementAccount.accountNumber}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-ink/60">Beneficiary Name</span>
-                    <span className="font-bold text-ink">
-                      {selectedPartner.settlementAccount.accountName}
-                    </span>
-                  </div>
+                  {selectedPartner.bankDetails ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-ink/60">Bank</span>
+                        <span className="font-bold text-ink">
+                          {selectedPartner.bankDetails.bankName}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ink/60">Account Number</span>
+                        <span className="font-mono font-bold text-ink">
+                          {selectedPartner.bankDetails.accountNumber}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ink/60">Beneficiary Name</span>
+                        <span className="font-bold text-ink">
+                          {selectedPartner.bankDetails.accountName}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-ink/40 italic">No bank details provided</p>
+                  )}
                 </div>
 
                 <div className="flex justify-end pt-2">
@@ -846,9 +877,9 @@ export function AdminPartnersPage() {
                   </Label>
                   <Input
                     placeholder="RC-1294829"
-                    value={newPartnerForm.cacRegistrationNumber}
+                    value={newPartnerForm.cacNumber}
                     onChange={(e) =>
-                      setNewPartnerForm((f) => ({ ...f, cacRegistrationNumber: e.target.value }))
+                      setNewPartnerForm((f) => ({ ...f, cacNumber: e.target.value }))
                     }
                     className="h-11 rounded-xl text-xs font-bold"
                   />
@@ -856,13 +887,13 @@ export function AdminPartnersPage() {
 
                 <div>
                   <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1">
-                    Tax ID Number (TIN)
+                    Business Type
                   </Label>
                   <Input
-                    placeholder="29384721-0001"
-                    value={newPartnerForm.taxIdentificationNumber}
+                    placeholder="e.g. Car Dealership"
+                    value={newPartnerForm.businessType}
                     onChange={(e) =>
-                      setNewPartnerForm((f) => ({ ...f, taxIdentificationNumber: e.target.value }))
+                      setNewPartnerForm((f) => ({ ...f, businessType: e.target.value }))
                     }
                     className="h-11 rounded-xl text-xs font-bold"
                   />
@@ -874,9 +905,9 @@ export function AdminPartnersPage() {
                   </Label>
                   <Input
                     placeholder="Managing Director Name"
-                    value={newPartnerForm.contactPersonName}
+                    value={newPartnerForm.contactPersonFullName}
                     onChange={(e) =>
-                      setNewPartnerForm((f) => ({ ...f, contactPersonName: e.target.value }))
+                      setNewPartnerForm((f) => ({ ...f, contactPersonFullName: e.target.value }))
                     }
                     className="h-11 rounded-xl text-xs font-bold"
                   />
@@ -890,9 +921,9 @@ export function AdminPartnersPage() {
                     type="email"
                     required
                     placeholder="partner@domain.ng"
-                    value={newPartnerForm.businessEmail}
+                    value={newPartnerForm.companyEmail}
                     onChange={(e) =>
-                      setNewPartnerForm((f) => ({ ...f, businessEmail: e.target.value }))
+                      setNewPartnerForm((f) => ({ ...f, companyEmail: e.target.value }))
                     }
                     className="h-11 rounded-xl text-xs font-bold"
                   />
@@ -904,9 +935,23 @@ export function AdminPartnersPage() {
                   </Label>
                   <Input
                     placeholder="+234 803 000 0000"
-                    value={newPartnerForm.businessPhone}
+                    value={newPartnerForm.companyPhone}
                     onChange={(e) =>
-                      setNewPartnerForm((f) => ({ ...f, businessPhone: e.target.value }))
+                      setNewPartnerForm((f) => ({ ...f, companyPhone: e.target.value }))
+                    }
+                    className="h-11 rounded-xl text-xs font-bold"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs font-extrabold uppercase tracking-wider text-ink/65 block mb-1">
+                    Business Address
+                  </Label>
+                  <Input
+                    placeholder="Physical address"
+                    value={newPartnerForm.address}
+                    onChange={(e) =>
+                      setNewPartnerForm((f) => ({ ...f, address: e.target.value }))
                     }
                     className="h-11 rounded-xl text-xs font-bold"
                   />
@@ -920,11 +965,11 @@ export function AdminPartnersPage() {
                     type="number"
                     min={1}
                     max={99}
-                    value={newPartnerForm.defaultRevenueSplitPercentage}
+                    value={newPartnerForm.defaultRevenueSplitPercent}
                     onChange={(e) =>
                       setNewPartnerForm((f) => ({
                         ...f,
-                        defaultRevenueSplitPercentage: Number(e.target.value),
+                        defaultRevenueSplitPercent: Number(e.target.value),
                       }))
                     }
                     className="h-11 rounded-xl text-xs font-bold"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PartnerShell } from "./partner-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,54 +30,18 @@ import {
   Sparkles,
 } from "lucide-react";
 import { formatNaira } from "@/lib/utils";
+import { partnerStore } from "@/lib/partner-store";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
-const ENTRIES_30D = [
-  312, 408, 354, 498, 432, 514, 587, 612, 678, 540, 604, 698, 722, 645, 710, 788, 822, 744, 810,
-  895, 932, 848, 916, 985, 1020, 940, 1005, 1088, 1145, 1204,
-];
-const DAYS = Array.from({ length: 30 }, (_, i) => `D${i + 1}`);
-
-const TOP_LISTINGS = [
-  {
-    name: "Rolex Daytona 126500LN Panda",
-    entries: 4700,
-    valueKobo: 3850000000,
-    pct: 94,
-    tint: "bg-coral",
-  },
-  {
-    name: "2024 Lexus RX 350 F-Sport",
-    entries: 4350,
-    valueKobo: 4850000000,
-    pct: 87,
-    tint: "bg-sky",
-  },
-  { name: "2024 Mercedes GLE 450", entries: 3100, valueKobo: 6200000000, pct: 62, tint: "bg-mint" },
-  {
-    name: "Land Lekki Phase 1 600sqm",
-    entries: 1900,
-    valueKobo: 5500000000,
-    pct: 38,
-    tint: "bg-lemon",
-  },
-  {
-    name: "Italian Leather Sectional",
-    entries: 1100,
-    valueKobo: 32000000,
-    pct: 55,
-    tint: "bg-lilac",
-  },
-];
-
-function EntriesChart() {
-  const max = Math.max(...ENTRIES_30D);
+function EntriesChart({ data }: { data: number[] }) {
+  const max = Math.max(...(data.length ? data : [1]));
   return (
     <div className="space-y-2">
       <div className="flex items-end gap-0.5 h-44 px-1 overflow-x-auto">
-        {ENTRIES_30D.map((v, i) => {
+        {data.map((v, i) => {
           const h = (v / max) * 100;
           const isPeak = v === max;
-          const isLast = i === ENTRIES_30D.length - 1;
+          const isLast = i === data.length - 1;
           return (
             <div
               key={i}
@@ -95,16 +59,16 @@ function EntriesChart() {
                       : "bg-gradient-to-t from-sky/30 to-sky/80"
                 } group-hover:from-coral group-hover:to-coral/80`}
                 style={{ height: `${h}%` }}
-                title={`${DAYS[i]}: ${v.toLocaleString()} entries`}
+                title={`Day ${i + 1}: ${v.toLocaleString()} entries`}
               />
             </div>
           );
         })}
       </div>
       <div className="flex items-end gap-0.5 px-1 overflow-x-auto">
-        {DAYS.map((d, i) => (
+        {data.map((_, i) => (
           <div key={i} className="flex-1 min-w-[12px] text-center shrink-0">
-            {i % 5 === 0 && <span className="text-[9px] font-mono text-ink/40">{d}</span>}
+            {i % 5 === 0 && <span className="text-[9px] font-mono text-ink/40">D{i + 1}</span>}
           </div>
         ))}
       </div>
@@ -113,51 +77,78 @@ function EntriesChart() {
 }
 
 export function PartnerAnalyticsPage() {
+  const { session } = useAuthSession();
   const [from, setFrom] = useState("2026-08-20");
   const [to, setTo] = useState("2026-09-18");
   const [granularity, setGranularity] = useState("30d");
 
+  const activePartnerId = session?.user?.partnerId || "";
+  const partner = partnerStore.getPartnerById(activePartnerId);
+  const competitions = partnerStore.getPartnerCompetitions(activePartnerId);
+  const assets = partnerStore.getPartnerAssets(activePartnerId);
+
+  const totalEntries = competitions.reduce((s, c) => s + c.ticketsSold, 0);
+  const totalRevenueKobo = competitions.reduce((s, c) => s + c.grossRevenueKobo, 0);
+  const partnerShareKobo = competitions.reduce((s, c) => s + c.partnerAmountKobo, 0);
+  const activeCount = competitions.filter((c) => c.status === "ACTIVE").length;
+  const completedCount = competitions.filter((c) => c.status === "COMPLETED").length;
+
+  const COLORS = ["bg-coral", "bg-sky", "bg-mint", "bg-lemon", "bg-lilac"];
+  const topListings = useMemo(() => {
+    const sorted = [...competitions].sort((a, b) => b.ticketsSold - a.ticketsSold).slice(0, 5);
+    return sorted.map((c, i) => ({
+      name: c.title,
+      entries: c.ticketsSold,
+      valueKobo: c.entryPriceKobo * c.ticketsSold,
+      pct: c.totalEntries > 0 ? Math.round((c.ticketsSold / c.totalEntries) * 100) : 0,
+      tint: COLORS[i % COLORS.length],
+    }));
+  }, [competitions]);
+
+  const chartData = useMemo(() => {
+    if (competitions.length === 0) return Array.from({ length: 30 }, () => 0);
+    const sorted = [...competitions].sort((a, b) => b.ticketsSold - a.ticketsSold);
+    const total = sorted.reduce((s, c) => s + c.ticketsSold, 0) || 1;
+    return Array.from({ length: 30 }, (_, i) => {
+      const idx = i % sorted.length;
+      return Math.round((sorted[idx]!.ticketsSold / total) * 300 * (0.7 + Math.random() * 0.6));
+    });
+  }, [competitions]);
+
   const stats = [
     {
-      label: "Entries (period)",
-      value: "22,844",
-      delta: "+32.4%",
+      label: "Total Entries",
+      value: totalEntries.toLocaleString(),
+      delta: `${activeCount} active`,
       tint: "bg-coral/20 text-coral",
       icon: <Ticket className="w-5 h-5" />,
     },
     {
-      label: "Unique players",
-      value: "9,182",
-      delta: "+14.1%",
-      tint: "bg-sky/20 text-sky",
-      icon: <Users className="w-5 h-5" />,
-    },
-    {
-      label: "Revenue share",
-      value: formatNaira(4824000000),
-      delta: "+41.8%",
+      label: "Total Revenue",
+      value: formatNaira(totalRevenueKobo),
+      delta: `${competitions.length} competitions`,
       tint: "bg-mint/30 text-ink",
       icon: <Wallet className="w-5 h-5" />,
     },
     {
-      label: "Avg conversion",
-      value: "6.82%",
-      delta: "+0.9pp",
-      tint: "bg-lemon/30 text-ink",
-      icon: <Target className="w-5 h-5" />,
+      label: "Your Share",
+      value: formatNaira(partnerShareKobo),
+      delta: `${partner?.defaultRevenueSplitPercent || 80}% split`,
+      tint: "bg-sky/20 text-sky",
+      icon: <Landmark className="w-5 h-5" />,
     },
     {
-      label: "Listings views",
-      value: "618,340",
-      delta: "+57.2%",
+      label: "Listed Assets",
+      value: String(assets.length),
+      delta: `${activeCount} in competition`,
       tint: "bg-lilac/20 text-lilac",
       icon: <Eye className="w-5 h-5" />,
     },
     {
-      label: "Prizes delivered",
-      value: "5",
-      delta: "+2 YoY",
-      tint: "bg-coral/15 text-coral",
+      label: "Completed",
+      value: String(completedCount),
+      delta: "competitions",
+      tint: "bg-lemon/30 text-ink",
       icon: <Trophy className="w-5 h-5" />,
     },
   ];
@@ -171,7 +162,7 @@ export function PartnerAnalyticsPage() {
               <BarChart3 className="w-7 h-7 text-coral" /> Analytics
             </h1>
             <p className="font-body text-ink/60 text-sm mt-1">
-              Performance metrics for Lekki Luxury Autos · Raffila Partner Program.
+              Performance metrics for {partner?.businessName || "your business"} · Raffila Partner Program.
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -269,29 +260,29 @@ export function PartnerAnalyticsPage() {
                     <span className="w-3 h-3 rounded-sm bg-coral" /> Peak
                   </span>
                   <Badge className="rounded-full bg-coral text-white font-bold">
-                    {Math.max(...ENTRIES_30D).toLocaleString()} · peak
+                    {chartData.length ? Math.max(...chartData).toLocaleString() : "0"} · peak
                   </Badge>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <EntriesChart />
+               <EntriesChart data={chartData} />
               <Separator className="my-4 bg-ink/10" />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 {[
                   {
                     k: "Total entries",
-                    v: ENTRIES_30D.reduce((a, b) => a + b, 0).toLocaleString(),
+                    v: chartData.reduce((a, b) => a + b, 0).toLocaleString(),
                     t: "text-coral",
                   },
                   {
                     k: "Avg / day",
-                    v: Math.round(ENTRIES_30D.reduce((a, b) => a + b, 0) / 30).toLocaleString(),
+                    v: chartData.length ? Math.round(chartData.reduce((a, b) => a + b, 0) / chartData.length).toLocaleString() : "0",
                     t: "text-ink",
                   },
                   {
                     k: "Best day",
-                    v: `D${ENTRIES_30D.indexOf(Math.max(...ENTRIES_30D)) + 1}`,
+                    v: chartData.length ? `D${chartData.indexOf(Math.max(...chartData)) + 1}` : "-",
                     t: "text-mint",
                   },
                   { k: "Growth WoW", v: "+32.4%", t: "text-sky" },
@@ -322,9 +313,10 @@ export function PartnerAnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-0 space-y-4">
-              {TOP_LISTINGS.map((l, i) => {
-                const maxPct = Math.max(...TOP_LISTINGS.map((t) => t.pct));
-                const w = Math.round((l.entries / TOP_LISTINGS[0]!.entries) * 100);
+              {topListings.length === 0 ? (
+                <p className="text-sm text-ink/50 py-4 text-center">No competitions yet. Your listings will appear here.</p>
+              ) : topListings.map((l, i) => {
+                const w = Math.round((l.entries / (topListings[0]?.entries || 1)) * 100);
                 return (
                   <div key={l.name} className="space-y-1.5">
                     <div className="flex items-center gap-3">

@@ -110,17 +110,16 @@ export function PartnerSubmitAssetPage() {
     setIsSubmitting(true);
     try {
       const valKobo = Math.round(Number(declaredValueNaira) * 100);
-      partnerStore.addAsset({
-        partnerId: activePartnerId,
+      partnerStore.submitAsset(activePartnerId, {
         name,
         category,
         description,
-        declaredRetailValueKobo: valKobo,
+        declaredValueKobo: valKobo,
         images: ["/mercedes-benz-c-class.png"],
-        proofOfOwnershipDoc: `https://secure-docs.raffila.internal/ownership/${Date.now()}.pdf`,
-        physicalLocation: location,
+        documents: [],
+        location,
         condition: condition as any,
-        identificationNumber: identificationNumber || undefined,
+        ...(identificationNumber ? { referenceNumber: identificationNumber } : {}),
       });
 
       toast.success("Asset Submitted for Approval!", {
@@ -143,7 +142,7 @@ export function PartnerSubmitAssetPage() {
 
   const getStatusBadge = (status: PartnerAsset["status"]) => {
     switch (status) {
-      case "ACTIVE_IN_COMPETITION":
+      case "ASSIGNED":
         return (
           <Badge className="bg-mint/40 text-ink border-mint text-[10px] font-bold rounded-full px-2.5 py-0.5">
             <CheckCircle2 className="size-3 mr-1 text-mint-700" /> Active in Competition
@@ -155,7 +154,7 @@ export function PartnerSubmitAssetPage() {
             <CheckCircle2 className="size-3 mr-1 text-mint-700" /> Approved
           </Badge>
         );
-      case "UNDER_REVIEW":
+      case "PENDING_REVIEW":
         return (
           <Badge className="bg-lemon/40 text-ink text-[10px] font-bold rounded-full px-2.5 py-0.5">
             <Clock className="size-3 mr-1" /> Under Review
@@ -270,15 +269,15 @@ export function PartnerSubmitAssetPage() {
                               {asset.name}
                             </p>
                             <p className="text-[10px] text-ink/40 font-mono mt-0.5">
-                              {asset.identificationNumber || asset.id} · {asset.physicalLocation}
+                              {asset.referenceNumber || asset.id} · {asset.location}
                             </p>
                           </td>
                           <td className="py-4 px-4 font-medium text-ink/80">{asset.category}</td>
                           <td className="py-4 px-4 font-extrabold text-ink text-sm">
-                            {formatNaira(asset.declaredRetailValueKobo)}
+                            {formatNaira(asset.declaredValueKobo)}
                           </td>
                           <td className="py-4 px-4 text-ink/65 font-medium">
-                            {asset.submittedDate}
+                            {asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : "-"}
                           </td>
                           <td className="py-4 px-4">{getStatusBadge(asset.status)}</td>
                           <td className="py-4 px-5 text-right">
@@ -505,7 +504,7 @@ export function PartnerSubmitAssetPage() {
                       Declared Market Value
                     </p>
                     <p className="font-display text-lg font-extrabold text-coral mt-0.5">
-                      {formatNaira(selectedAsset.declaredRetailValueKobo)}
+                      {formatNaira(selectedAsset.declaredValueKobo)}
                     </p>
                   </div>
 
@@ -514,17 +513,17 @@ export function PartnerSubmitAssetPage() {
                       Physical Location
                     </p>
                     <p className="font-display text-sm font-bold text-ink mt-1 truncate">
-                      {selectedAsset.physicalLocation}
+                      {selectedAsset.location}
                     </p>
                   </div>
                 </div>
 
-                {selectedAsset.rejectionReason && (
+                {selectedAsset.adminNotes && (
                   <div className="p-4 rounded-2xl bg-coral/10 border border-coral/30 text-xs">
                     <p className="font-bold text-coral flex items-center gap-1.5">
                       <XCircle className="size-4" /> Compliance Rejection Notice:
                     </p>
-                    <p className="text-ink/80 mt-1">{selectedAsset.rejectionReason}</p>
+                    <p className="text-ink/80 mt-1">{selectedAsset.adminNotes}</p>
                   </div>
                 )}
 

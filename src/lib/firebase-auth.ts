@@ -135,14 +135,16 @@ export function firebaseUserToRaffilaUser(fbUser: FirebaseUser, profile?: Record
 
   const email = fbUser.email || (profile?.["email"] as string) || "";
   const isAdmin = checkIsAdmin(profile);
+  const role: "user" | "admin" | "partner" =
+    isAdmin ? "admin" : (profile?.["role"] as string)?.toLowerCase() === "partner" ? "partner" : "user";
 
   const initials =
     (firstName.slice(0, 1) + lastName.slice(0, 1)).toUpperCase() || (isAdmin ? "AD" : "U");
 
   return {
     id: fbUser.uid,
-    role: (isAdmin ? "admin" : "user") as "user" | "admin",
-    firstName: firstName || (isAdmin ? "Admin" : "User"),
+    role,
+    firstName: firstName || (isAdmin ? "Admin" : "Partner"),
     lastName,
     handle,
     email,
@@ -152,7 +154,9 @@ export function firebaseUserToRaffilaUser(fbUser: FirebaseUser, profile?: Record
     verified: Boolean(profile?.["verified"] ?? isAdmin),
     isGoogleUser: !fbUser.email || fbUser.providerData.some((p) => p.providerId === "google.com"),
     profileComplete: Boolean(
-      isAdmin || (profile?.["phone"] && profile?.["address"] && profile?.["dob"]),
+      isAdmin || (role === "partner") || (profile?.["phone"] && profile?.["address"] && profile?.["dob"]),
     ),
+    partnerId: (profile?.["partnerId"] as string) || undefined,
+    businessName: (profile?.["businessName"] as string) || undefined,
   } as const;
 }

@@ -412,6 +412,7 @@ class PartnerStore {
 
   constructor() {
     this.loadInitial();
+    this.syncFromFirestore();
   }
 
   private loadInitial() {
@@ -419,30 +420,59 @@ class PartnerStore {
 
     try {
       const pRaw = localStorage.getItem(PARTNERS_STORAGE_KEY);
-      this.partners = pRaw ? JSON.parse(pRaw) : [...INITIAL_PARTNERS];
+      this.partners = pRaw ? JSON.parse(pRaw) : [];
 
       const aRaw = localStorage.getItem(ASSETS_STORAGE_KEY);
-      this.assets = aRaw ? JSON.parse(aRaw) : [...INITIAL_ASSETS];
+      this.assets = aRaw ? JSON.parse(aRaw) : [];
 
       const sRaw = localStorage.getItem(REVENUE_SPLITS_STORAGE_KEY);
-      this.revenueSplits = sRaw ? JSON.parse(sRaw) : [...INITIAL_REVENUE_SPLITS];
+      this.revenueSplits = sRaw ? JSON.parse(sRaw) : [];
 
       const lRaw = localStorage.getItem(LEDGER_STORAGE_KEY);
-      this.ledger = lRaw ? JSON.parse(lRaw) : [...INITIAL_LEDGER];
+      this.ledger = lRaw ? JSON.parse(lRaw) : [];
 
       const payRaw = localStorage.getItem(PAYOUTS_STORAGE_KEY);
-      this.payouts = payRaw ? JSON.parse(payRaw) : [...INITIAL_PAYOUTS];
+      this.payouts = payRaw ? JSON.parse(payRaw) : [];
 
       const audRaw = localStorage.getItem(AUDIT_STORAGE_KEY);
       this.auditLogs = audRaw ? JSON.parse(audRaw) : [];
 
       this.initialized = true;
     } catch {
-      this.partners = [...INITIAL_PARTNERS];
-      this.assets = [...INITIAL_ASSETS];
-      this.revenueSplits = [...INITIAL_REVENUE_SPLITS];
-      this.ledger = [...INITIAL_LEDGER];
-      this.payouts = [...INITIAL_PAYOUTS];
+      this.partners = [];
+      this.assets = [];
+      this.revenueSplits = [];
+      this.ledger = [];
+      this.payouts = [];
+    }
+  }
+
+  private async syncFromFirestore() {
+    if (typeof window === "undefined") return;
+
+    try {
+      const [partnersSnap, assetsSnap] = await Promise.all([
+        getDocs(collection(db, "partner_profiles")).catch(() => null),
+        getDocs(collection(db, "partner_assets")).catch(() => null),
+      ]);
+
+      if (partnersSnap && !partnersSnap.empty) {
+        this.partners = partnersSnap.docs.map((d) => d.data() as PartnerProfile);
+      } else if (!partnersSnap || partnersSnap.empty) {
+        this.partners = [];
+      }
+
+      if (assetsSnap && !assetsSnap.empty) {
+        this.assets = assetsSnap.docs.map((d) => d.data() as PartnerAsset);
+      } else if (!assetsSnap || assetsSnap.empty) {
+        this.assets = [];
+      }
+
+      this.persist();
+      this.initialized = true;
+    } catch (err) {
+      console.warn("Firestore sync failed, using localStorage cache:", err);
+      this.initialized = true;
     }
   }
 
@@ -490,6 +520,7 @@ class PartnerStore {
   }
 
   public async registerPartnerApplication(input: {
+    userId: string;
     businessName: string;
     businessType: string;
     cacNumber: string;
@@ -530,7 +561,7 @@ class PartnerStore {
 
     const newPartner: PartnerProfile = {
       id: partnerId,
-      userId: `ptr_${partnerId}`,
+      userId: input.userId,
       businessName: input.businessName.trim(),
       businessType: input.businessType,
       cacNumber: input.cacNumber.trim(),
@@ -597,12 +628,14 @@ class PartnerStore {
 
     // Sync to Firestore in background
     try {
-      await setDoc(doc(db, "partners", partnerId), newPartner);
+      await setDoc(doc(db, "partner_profiles", partnerId), stripUndefined(newPartner as any));
+      console.log("[Firestore] Partner profile written:", partnerId);
       if (createdAsset) {
-        await setDoc(doc(db, "partner_assets", createdAsset.id), createdAsset);
+        await setDoc(doc(db, "partner_assets", createdAsset.id), stripUndefined(createdAsset as any));
+        console.log("[Firestore] Partner asset written:", createdAsset.id);
       }
-    } catch (e) {
-      console.warn("Could not sync new partner to Firestore (working offline):", e);
+    } catch (e: any) {
+      console.error("[Firestore] FAILED to write partner profile:", e?.message || e);
     }
 
     return { partner: newPartner, asset: createdAsset };
@@ -638,7 +671,7 @@ class PartnerStore {
 
     // Firestore async update
     try {
-      void updateDoc(doc(db, "partners", partnerId), {
+      void updateDoc(doc(db, "partner_profiles", partnerId), {
         verificationStatus: status,
         adminNotes: p.adminNotes || "",
         updatedAt: now,
@@ -658,7 +691,7 @@ class PartnerStore {
     this.persist();
 
     try {
-      void updateDoc(doc(db, "partners", partnerId), updates as any);
+      void updateDoc(doc(db, "partner_profiles", partnerId), stripUndefined(updates as any));
     } catch (err) {
       console.warn(err);
     }
@@ -709,7 +742,7 @@ class PartnerStore {
     this.persist();
 
     try {
-      void setDoc(doc(db, "partner_assets", newAsset.id), newAsset);
+      void setDoc(doc(db, "partner_assets", newAsset.id), stripUndefined(newAsset as any));
     } catch (err) {
       console.warn(err);
     }
@@ -982,6 +1015,166 @@ class PartnerStore {
     };
   }
 
+  // --- Compatibility Aliases (used by components) ---
+  public getPartner(id: string): PartnerProfile | undefined {
+    return this.getPartnerById(id);
+  }
+
+  public getAllPartners(): PartnerProfile[] {
+    return this.getPartners();
+  }
+
+  public getAllAssets(): PartnerAsset[] {
+    return this.getAssets();
+  }
+
+  public getPartnerAssets(partnerId: string): PartnerAsset[] {
+    return this.getAssets(partnerId);
+  }
+
+  public getPartnerPayouts(partnerId: string): PartnerPayoutRecord[] {
+    return this.getPayouts(partnerId);
+  }
+
+  public getPartnerCompetitions(partnerId: string): import("@/types/partner").PartnerCompetition[] {
+    const partner = this.getPartnerById(partnerId);
+    if (!partner) return [];
+
+    const splits = this.revenueSplits.filter((s) => s.partnerId === partnerId);
+    const ledger = this.getLedger(partnerId);
+    const assets = this.getAssets(partnerId);
+
+    const compMap = new Map<string, import("@/types/partner").PartnerCompetition>();
+
+    for (const split of splits) {
+      const entries = ledger.filter((l) => l.competitionId === split.competitionId);
+      const ticketsSold = entries.reduce((sum, e) => sum + e.ticketCount, 0);
+      const grossRevenueKobo = entries.reduce((sum, e) => sum + e.grossRevenueKobo, 0);
+      const partnerAmountKobo = entries.reduce((sum, e) => sum + e.partnerAmountKobo, 0);
+      const rafillaAmountKobo = entries.reduce((sum, e) => sum + e.rafillaAmountKobo, 0);
+
+      const asset = assets.find((a) => a.competitionId === split.competitionId);
+
+      compMap.set(split.competitionId, {
+        id: split.competitionId,
+        title: asset?.competitionTitle || split.competitionId,
+        prizeName: asset?.name || "Prize",
+        status: ticketsSold > 0 ? "ACTIVE" : "DRAFT",
+        entryPriceKobo: entries[0]?.entryPriceKobo || 0,
+        ticketsSold,
+        totalEntries: Math.max(ticketsSold, ticketsSold > 0 ? Math.ceil(ticketsSold * 1.3) : 5000),
+        grossRevenueKobo,
+        partnerAmountKobo,
+        partnerPercentage: split.partnerPercentage,
+        rafillaAmountKobo,
+        rafillaPercentage: split.rafillaPercentage,
+        closingDate: "",
+        drawStatus: "PENDING",
+        competitionSlug: split.competitionId,
+      });
+    }
+
+    // Also create entries from ledger that don't have splits yet
+    for (const entry of ledger) {
+      if (compMap.has(entry.competitionId)) continue;
+      compMap.set(entry.competitionId, {
+        id: entry.competitionId,
+        title: entry.competitionTitle,
+        prizeName: "Prize",
+        status: "ACTIVE",
+        entryPriceKobo: entry.entryPriceKobo,
+        ticketsSold: entry.ticketCount,
+        totalEntries: Math.max(entry.ticketCount, Math.ceil(entry.ticketCount * 1.3)),
+        grossRevenueKobo: entry.grossRevenueKobo,
+        partnerAmountKobo: entry.partnerAmountKobo,
+        partnerPercentage: entry.partnerPercentage,
+        rafillaAmountKobo: entry.rafillaAmountKobo,
+        rafillaPercentage: entry.rafillaPercentage,
+        closingDate: "",
+        drawStatus: "PENDING",
+      });
+    }
+
+    return Array.from(compMap.values());
+  }
+
+  public async createCompetition(input: {
+    partnerId: string;
+    competitionId: string;
+    title: string;
+    entryPriceKobo: number;
+    totalEntries: number;
+    partnerPercentage: number;
+    rafillaPercentage: number;
+  }): Promise<void> {
+    this.configureRevenueSplit({
+      competitionId: input.competitionId,
+      partnerId: input.partnerId,
+      partnerPercentage: input.partnerPercentage,
+      rafillaPercentage: input.rafillaPercentage,
+    });
+
+    const asset = this.getAssets(input.partnerId).find((a) => !a.competitionId);
+    if (asset) {
+      asset.competitionId = input.competitionId;
+      asset.competitionTitle = input.title;
+      asset.status = "ASSIGNED";
+    }
+
+    this.logAudit({
+      actorId: "admin@raffila.com",
+      actorRole: "admin",
+      action: "COMPETITION_CREATED",
+      entityType: "competition",
+      entityId: input.competitionId,
+      entityName: input.title,
+      metadata: { partnerId: input.partnerId, partnerPercentage: input.partnerPercentage },
+    });
+
+    this.persist();
+  }
+
+  public approvePartner(id: string) {
+    this.updatePartnerStatus(id, "APPROVED", "admin@raffila.com");
+  }
+
+  public rejectPartner(id: string, reason?: string) {
+    this.updatePartnerStatus(id, "REJECTED", "admin@raffila.com", reason);
+  }
+
+  public suspendPartner(id: string, reason?: string) {
+    this.updatePartnerStatus(id, "SUSPENDED", "admin@raffila.com", reason);
+  }
+
+  public setRevenueSplit(partnerId: string, percentage: number) {
+    const partner = this.getPartnerById(partnerId);
+    if (partner) {
+      partner.defaultRevenueSplitPercent = percentage;
+      partner.updatedAt = new Date().toISOString();
+      this.persist();
+      try {
+        void updateDoc(doc(db, "partner_profiles", partnerId), {
+          defaultRevenueSplitPercent: percentage,
+          updatedAt: partner.updatedAt,
+        });
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+  }
+
+  public approveAsset(id: string) {
+    this.updateAssetStatus(id, "APPROVED");
+  }
+
+  public rejectAsset(id: string, reason?: string) {
+    this.updateAssetStatus(id, "REJECTED", reason);
+  }
+
+  public registerPartner(input: Parameters<PartnerStore["registerPartnerApplication"]>[0]) {
+    return this.registerPartnerApplication(input);
+  }
+
   // --- Audit Logging ---
   public getAuditLogs(entityId?: string): PartnerAuditLog[] {
     if (entityId) {
@@ -1004,3 +1197,17 @@ class PartnerStore {
 
 // Global Singleton Instance
 export const partnerStore = new PartnerStore();
+
+function stripUndefined(obj: Record<string, any>): Record<string, any> {
+  const clean: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === undefined) continue;
+    if (v !== null && typeof v === "object" && !Array.isArray(v)) {
+      const nested = stripUndefined(v);
+      if (Object.keys(nested).length > 0) clean[k] = nested;
+    } else {
+      clean[k] = v;
+    }
+  }
+  return clean;
+}

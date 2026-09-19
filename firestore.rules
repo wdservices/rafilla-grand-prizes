@@ -50,9 +50,38 @@ service cloud.firestore {
     }
 
     // Partner profiles (publicly viewable, editable by partner or admin)
-    match /partners/{partnerId} {
+    match /partner_profiles/{partnerId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (
+        isAdmin() ||
+        (resource.data.userId == request.auth.uid)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Partner prize assets (readable publicly, manageable by partner owner or admin)
+    match /partner_assets/{assetId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (
+        isAdmin() ||
+        (resource.data.partnerId != null && exists(/databases/$(database)/documents/partner_profiles/$(resource.data.partnerId)) && get(/databases/$(database)/documents/partner_profiles/$(resource.data.partnerId)).data.userId == request.auth.uid)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Transactions
+    match /transactions/{txId} {
+      allow read: if request.auth != null && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if request.auth != null;
+      allow update: if isAdmin();
+    }
+
+    // Wallets
+    match /wallets/{walletId} {
+      allow read: if request.auth != null && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create, update: if request.auth != null;
     }
 
     // User accounts & private subcollections

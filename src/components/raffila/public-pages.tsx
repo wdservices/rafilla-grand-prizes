@@ -972,8 +972,7 @@ export function CompetitionDetailPage() {
       partners.find(
         (p) =>
           p.businessName.toLowerCase().includes(competition.partner.toLowerCase()) ||
-          p.tradingName.toLowerCase().includes(competition.partner.toLowerCase()) ||
-          competition.partner.toLowerCase().includes(p.tradingName.toLowerCase()),
+          competition.partner.toLowerCase().includes(p.businessName.toLowerCase()),
       ) ||
       partners[0] ||
       null
@@ -1138,8 +1137,7 @@ export function CompetitionDetailPage() {
                 <Handshake className="size-3.5 text-coral" />
                 In Partnership with{" "}
                 <span className="text-coral font-black">
-                  {assignedPartner?.tradingName ||
-                    assignedPartner?.businessName ||
+                  {assignedPartner?.businessName ||
                     competition.partner}
                 </span>
                 <BadgeCheck className="size-3.5 text-mint-700" />
@@ -1267,14 +1265,14 @@ export function CompetitionDetailPage() {
                   </h3>
                   <p className="flex items-center gap-1.5 text-xs font-medium text-ink/65">
                     <MapPin className="size-3.5 text-coral shrink-0" />
-                    {assignedPartner.businessAddress || "Lagos Automotive & Luxury Hub, Nigeria"}
+                    {assignedPartner.address || "Lagos, Nigeria"}
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
                 <a
-                  href={`mailto:${assignedPartner.businessEmail || "partner@raffila.ng"}`}
+                  href={`mailto:${assignedPartner.companyEmail || "partner@raffila.ng"}`}
                   className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-paper px-4 py-2 text-xs font-bold text-ink hover:bg-white transition"
                 >
                   <Mail className="size-3.5 text-coral" /> Contact Partner

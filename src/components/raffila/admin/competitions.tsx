@@ -471,18 +471,12 @@ export function AdminCompetitionsPage() {
       try {
         partnerStore.createCompetition({
           partnerId: form.assignedPartnerId,
-          partnerBusinessName:
-            partnerStore.getPartner(form.assignedPartnerId)?.businessName || form.partner,
-          name: form.name || form.assetName || "Prize Competition",
-          slug: compId,
-          category: form.category,
-          ticketPriceKobo: Math.round(Number(form.ticketPrice) * 100),
-          totalTickets: Number(form.totalEntries),
-          ticketsSold: 0,
-          drawDate: form.drawDate,
-          assetValueKobo: Math.round(Number(form.marketValue) * 100),
-          partnerSplitPercentage: form.partnerRevenueSharePct,
-          status: "DRAFT",
+          competitionId: compId,
+          title: form.name || form.assetName || "Prize Competition",
+          entryPriceKobo: Math.round(Number(form.ticketPrice) * 100),
+          totalEntries: Number(form.totalEntries),
+          partnerPercentage: form.partnerRevenueSharePct,
+          rafillaPercentage: 100 - form.partnerRevenueSharePct,
         });
       } catch (e) {
         console.warn("Could not register in partnerStore:", e);
@@ -1179,8 +1173,8 @@ export function AdminCompetitionsPage() {
                               setForm({
                                 ...form,
                                 assignedPartnerId: val,
-                                partner: p?.tradingName || p?.businessName || val,
-                                partnerRevenueSharePct: p?.defaultRevenueSplitPercentage || 85,
+                                partner: p?.businessName || val,
+                                partnerRevenueSharePct: p?.defaultRevenueSplitPercent || 85,
                               });
                             }}
                           >
@@ -1193,7 +1187,7 @@ export function AdminCompetitionsPage() {
                                 .filter((p) => p.verificationStatus === "APPROVED")
                                 .map((p) => (
                                   <SelectItem key={p.id} value={p.id} className="text-xs font-bold">
-                                    {p.businessName} ({p.defaultRevenueSplitPercentage}% default)
+                                    {p.businessName} ({p.defaultRevenueSplitPercent || 85}% default)
                                   </SelectItem>
                                 ))}
                             </SelectContent>
@@ -1217,7 +1211,7 @@ export function AdminCompetitionsPage() {
                                   partnerAssetId: val,
                                   assetName: asset.name,
                                   marketValue: String(
-                                    Math.round(asset.declaredRetailValueKobo / 100),
+                                    Math.round(asset.declaredValueKobo / 100),
                                   ),
                                   condition: asset.condition || "new",
                                 });
@@ -1232,7 +1226,7 @@ export function AdminCompetitionsPage() {
                             <SelectContent className="rounded-xl bg-white">
                               {partnerStore.getPartnerAssets(form.assignedPartnerId).map((a) => (
                                 <SelectItem key={a.id} value={a.id} className="text-xs font-bold">
-                                  {a.name} · {formatNaira(a.declaredRetailValueKobo)}
+                                  {a.name} · {formatNaira(a.declaredValueKobo)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
