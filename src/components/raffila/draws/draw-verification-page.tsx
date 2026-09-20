@@ -30,6 +30,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { getCompetition, winnerCards, type Competition } from "@/lib/raffila-data";
+import type { DrawLifecycleStatus } from "@/lib/draw-system";
 import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 import mercedesImage from "@/assets/raffila-mercedes.jpg";
@@ -145,7 +146,57 @@ function HowStepCard({
 export function DrawVerificationPage({ campaignId }: { campaignId?: string }) {
   const slug = campaignId ?? "mercedes-benz-c-class";
   const { competitions } = useCompetitions();
-  const record = useMemo(() => makeDrawRecord(slug, undefined, competitions), [slug, competitions]);
+  const mock = useMemo(() => makeDrawRecord(slug, undefined, competitions), [slug, competitions]);
+  // Overlay the real persisted draw record when one exists (public-safe
+  // fields only — display name/handle, never email/phone/address).
+  const [live, setLive] = useState<{
+    winningTicket?: string;
+    winnerName?: string;
+    winnerHandle?: string;
+    totalEntries?: number;
+    status?: DrawLifecycleStatus;
+    verificationReference?: string;
+    snapshotHash?: string;
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { getDrawRecord } = await import("@/lib/draw-system");
+        const rec = await getDrawRecord(slug);
+        if (!cancelled && rec?.winningTicketNumber) {
+          setLive({
+            ...(rec.winningTicketNumber ? { winningTicket: rec.winningTicketNumber } : {}),
+            ...(rec.winnerDisplayName ? { winnerName: rec.winnerDisplayName } : {}),
+            ...(rec.winnerHandle ? { winnerHandle: rec.winnerHandle } : {}),
+            ...(rec.eligibleTicketCount ? { totalEntries: rec.eligibleTicketCount } : {}),
+            status: rec.status,
+            ...(rec.verificationReference
+              ? { verificationReference: rec.verificationReference }
+              : {}),
+            ...(rec.snapshotHash ? { snapshotHash: rec.snapshotHash } : {}),
+          });
+        }
+      } catch {
+        /* offline — mock record stands in */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+  const record = useMemo(
+    () => ({
+      ...mock,
+      ...(live?.winningTicket ? { winningTicket: live.winningTicket } : {}),
+      ...(live?.winnerName ? { winnerName: live.winnerName } : {}),
+      ...(live?.winnerHandle ? { winnerHandle: live.winnerHandle } : {}),
+      ...(typeof live?.totalEntries === "number" ? { totalEntries: live.totalEntries } : {}),
+      ...(live?.snapshotHash ? { snapshotHash: live.snapshotHash } : {}),
+      status: (live?.status === "COMPLETED" ? "VERIFIED" : mock.status) as typeof mock.status,
+    }),
+    [mock, live],
+  );
   const [secondsLeft, setSecondsLeft] = useState(record.drawCountdownSeconds);
 
   useEffect(() => {

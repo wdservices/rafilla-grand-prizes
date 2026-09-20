@@ -116,12 +116,45 @@ export function TicketPurchaseModal({
 
   useEffect(() => {
     if (step !== 4 || purchaseComplete) return;
-    const ids = generateRFIDs(3);
-    const tix = generateTicketNumbers(Math.min(qty, 5));
-    setRfids(ids);
+    // ONE entry ID per purchase; EVERY ticket number participates in the draw.
+    const entryId = generateRFIDs(1)[0]!;
+    const tix = generateTicketNumbers(qty);
+    setRfids([entryId]);
     setTicketNumbers(tix);
     const t = setTimeout(() => {
       setPurchaseComplete(true);
+      const sessionUser =
+        (JSON.parse(
+          window.localStorage.getItem("raffila:auth:session:v1") ?? "null",
+        ) as any)?.user ?? {};
+      const rawId: string = sessionUser?.id ?? "guest";
+      const userId = String(rawId).startsWith("firebase_")
+        ? String(rawId).slice("firebase_".length)
+        : String(rawId);
+      const userName =
+        [sessionUser?.firstName, sessionUser?.lastName].filter(Boolean).join(" ") || "Raffila Member";
+      // Persist every ticket to the draw pool (connects purchase → draw).
+      // Number format unchanged; entry ID ↔ N ticket numbers preserved.
+      import("@/lib/draw-system").then(({ persistPurchaseTickets }) =>
+        persistPurchaseTickets({
+          competitionId: competitionSlug,
+          competitionSlug,
+          entryId,
+          ticketNumbers: tix,
+          userId,
+          userName,
+          userHandle: sessionUser?.handle ?? "",
+          userEmail: sessionUser?.email ?? "",
+        }).catch((err) => console.warn("Ticket persist failed:", err)),
+      );
+      // Best-effort live counter bump (rules-gated; failures are non-fatal).
+      import("@/lib/firebase").then(({ db }) =>
+        import("firebase/firestore").then(({ doc, updateDoc, increment }) =>
+          updateDoc(doc(db, "competitions", competitionSlug), {
+            entriesSold: increment(qty),
+          }).catch(() => {}),
+        ),
+      );
       import("@/lib/activity-log").then(({ logActivity }) =>
         logActivity({
           eventType: "TICKET_PURCHASE",
@@ -132,6 +165,7 @@ export function TicketPurchaseModal({
             competitionSlug,
             quantity: qty,
             paymentSource,
+            entryId,
             ticketNumbers: tix,
             entryPriceKobo: competition ? competition.entryPrice * qty : 0,
           },
@@ -195,6 +229,13 @@ export function TicketPurchaseModal({
 
   const handleConfirmPurchase = () => {
     if (!agreeChecked) return;
+    // Closed competitions never accept new entries (backend enforces too).
+    if (competition.status === "COMPLETED") {
+      toast.error("Entries closed", {
+        description: "This competition has closed. No new entries are accepted.",
+      });
+      return;
+    }
     nextStep(4);
   };
 

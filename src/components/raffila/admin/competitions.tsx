@@ -1,5 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  deleteDoc,
+  serverTimestamp,
+  collection,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+} from "firebase/firestore";
 import {
   Search,
   Plus,
@@ -30,6 +41,10 @@ import {
   Eye,
   Filter,
   TrendingUp,
+  Target,
+  Dices,
+  History,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -82,10 +97,28 @@ import { AdminShell } from "@/components/raffila/admin/admin-shell";
 import { AssetUploader } from "@/components/raffila/admin/asset-uploader";
 import { cn, formatNaira } from "@/lib/utils";
 import { db } from "@/lib/firebase";
+import { logActivity } from "@/lib/activity-log";
 import { partnerStore } from "@/lib/partner-store";
+import {
+  checkAndCloseCompetitions,
+  deriveDrawState,
+  executeDraw,
+  fetchDrawPoolStats,
+  getDrawRecord,
+  listDraws,
+  type DrawPoolStats,
+  type DrawRecord,
+} from "@/lib/draw-system";
 import { Handshake } from "lucide-react";
 
-type CompStatus = "DRAFT" | "SCHEDULED" | "LIVE" | "COMPLETED";
+type CompStatus =
+  | "DRAFT"
+  | "SCHEDULED"
+  | "LIVE"
+  | "DRAW_READY"
+  | "DRAW_IN_PROGRESS"
+  | "WINNER_SELECTED"
+  | "COMPLETED";
 
 interface MockComp {
   id: string;
@@ -181,6 +214,9 @@ const statusTone: Record<CompStatus, string> = {
   DRAFT: "bg-ink/10 text-ink",
   SCHEDULED: "bg-sky/25 text-ink",
   LIVE: "bg-mint/35 text-ink",
+  DRAW_READY: "bg-lemon/50 text-ink",
+  DRAW_IN_PROGRESS: "bg-lilac/40 text-ink",
+  WINNER_SELECTED: "bg-mint/50 text-ink",
   COMPLETED: "bg-coral/20 text-coral",
 };
 
@@ -275,7 +311,9 @@ function compToForm(c: MockComp): FormState {
 type EntriesFilter = "all" | "paid" | "won" | "pending";
 
 export function AdminCompetitionsPage() {
-  const [tab, setTab] = useState<"live" | "scheduled" | "draft" | "completed" | "all">("live");
+  const [tab, setTab] = useState<
+    "live" | "scheduled" | "draft" | "draw-ready" | "completed" | "all"
+  >("live");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
 
@@ -292,17 +330,131 @@ export function AdminCompetitionsPage() {
   const [entriesPage, setEntriesPage] = useState(1);
   const PAGE_SIZE = 10;
 
+  // ---- Live draw lifecycle state (Firestore-backed, merged over catalogue) ----
+  const [dbCompData, setDbCompData] = useState<Record<string, Record<string, unknown>>>({});
+  const [drawRecords, setDrawRecords] = useState<Record<string, DrawRecord>>({});
+  const [drawHistory, setDrawHistory] = useState<DrawRecord[]>([]);
+  const [drawRefreshKey, setDrawRefreshKey] = useState(0);
+
+  // Draw flow UI state
+  const [drawTarget, setDrawTarget] = useState<MockComp | null>(null);
+  const [drawStats, setDrawStats] = useState<DrawPoolStats | null>(null);
+  const [drawStatsLoading, setDrawStatsLoading] = useState(false);
+  const [drawPhase, setDrawPhase] = useState<"confirm" | "drawing" | "result" | null>(null);
+  const [drawResult, setDrawResult] = useState<DrawRecord | null>(null);
+  const [drawError, setDrawError] = useState<string | null>(null);
+  const [resultFor, setResultFor] = useState<DrawRecord | null>(null);
+
+  // Delete competition state
+  const [deleteTarget, setDeleteTarget] = useState<MockComp | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deletedSlugs, setDeletedSlugs] = useState<Set<string>>(new Set());
+
+  const refreshDrawState = async () => {
+    try {
+      // Auto-close past-close competitions (LIVE -> DRAW_READY) on every load.
+      await checkAndCloseCompetitions().catch(() => {});
+      const compSnap = await getDocs(query(collection(db, "competitions"), limit(100)));
+      const compData: Record<string, Record<string, unknown>> = {};
+      compSnap.docs.forEach((d) => {
+        compData[d.id] = d.data() as Record<string, unknown>;
+      });
+      setDbCompData(compData);
+      const draws = await listDraws(100).catch(() => [] as DrawRecord[]);
+      const byComp: Record<string, DrawRecord> = {};
+      draws.forEach((r) => {
+        byComp[r.competitionId] = r;
+      });
+      setDrawRecords(byComp);
+      setDrawHistory(draws);
+    } catch (err) {
+      console.warn("Draw state refresh failed:", err);
+    }
+  };
+
+  useEffect(() => {
+    void refreshDrawState();
+    const t = setInterval(() => void refreshDrawState(), 60000);
+    return () => clearInterval(t);
+  }, [drawRefreshKey]);
+
+  /** Catalogue merged with live Firestore state (draw lifecycle overlay). */
+  const mergedComps: MockComp[] = useMemo(() => {
+    const seen = new Set(COMPS.map((c) => c.slug));
+    const live: MockComp[] = COMPS.map((c) => {
+      if (deletedSlugs.has(c.slug)) return null as any;
+      const data = dbCompData[c.slug];
+      if (!data) return c;
+      const draw = drawRecords[c.slug] ?? null;
+      const state = deriveDrawState(data, draw as any);
+      const mapped: MockComp["status"] =
+        state === "DRAW_READY" ||
+        state === "DRAW_IN_PROGRESS" ||
+        state === "WINNER_SELECTED" ||
+        state === "COMPLETED"
+          ? state
+          : (String(data["status"] ?? c.status).toUpperCase() as MockComp["status"]);
+      return {
+        ...c,
+        status: mapped,
+        entriesSold: Number(data["entriesSold"] ?? c.entriesSold),
+        totalEntries: Number(data["totalEntries"] ?? c.totalEntries),
+      };
+    });
+    // Firestore-only competitions (created via the form) appended live.
+    Object.entries(dbCompData).forEach(([id, data], i) => {
+      if (seen.has(id)) return;
+      if (deletedSlugs.has(id)) return;
+      const draw = drawRecords[id] ?? null;
+      const state = deriveDrawState(data, draw as any);
+      const raw = String(data["status"] ?? "DRAFT").toUpperCase();
+      const mapped: MockComp["status"] = (
+        state === "DRAW_READY" ||
+        state === "DRAW_IN_PROGRESS" ||
+        state === "WINNER_SELECTED" ||
+        state === "COMPLETED"
+          ? state
+          : ["LIVE", "SCHEDULED", "DRAFT", "COMPLETED"].includes(raw)
+            ? raw
+            : "DRAFT"
+      ) as MockComp["status"];
+      const images = Array.isArray(data["images"]) ? (data["images"] as string[]) : [];
+      live.push({
+        id: `RF-C-${id.slice(0, 8).toUpperCase()}`,
+        name: String(data["title"] ?? data["assetName"] ?? id),
+        slug: String(data["slug"] ?? id),
+        category: String(data["category"] ?? "General"),
+        status: mapped,
+        entriesSold: Number(data["entriesSold"] ?? 0),
+        totalEntries: Number(data["totalEntries"] ?? 0),
+        ticketPrice: Number(data["entryPrice"] ?? 0),
+        image: String(data["image"] ?? images[0] ?? IMAGES[i % IMAGES.length]!),
+        partner: String(data["partner"] ?? "Raffila"),
+        drawDate: String(data["drawDate"] ?? ""),
+      });
+    });
+    return live.filter(Boolean) as MockComp[];
+  }, [dbCompData, drawRecords, deletedSlugs]);
+
+  const drawReadyCount = useMemo(
+    () => mergedComps.filter((c) => c.status === "DRAW_READY").length,
+    [mergedComps],
+  );
+
   const statusMap: Record<string, CompStatus | "all"> = {
     live: "LIVE",
     scheduled: "SCHEDULED",
     draft: "DRAFT",
+    "draw-ready": "DRAW_READY",
     completed: "COMPLETED",
     all: "all",
   };
 
-  const filtered = useMemo(
-    () =>
-      COMPS.filter((c) => {
+  const filtered = useMemo(() => {
+    const list = tab === "completed"
+      ? mergedComps.filter((c) => c.status === "COMPLETED" || c.status === "WINNER_SELECTED")
+      : mergedComps;
+    return list.filter((c) => {
         const s = search.toLowerCase();
         if (
           s &&
@@ -314,76 +466,84 @@ export function AdminCompetitionsPage() {
         const st = statusMap[tab];
         if (st === "all") return true;
         return c.status === st;
-      }),
-    [tab, search],
-  );
+      });
+    }, [tab, search, mergedComps]);
+
+  const [liveTicketRows, setLiveTicketRows] = useState<any[]>([]);
+  const [liveTicketsLoading, setLiveTicketsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!entriesFor) {
+      setLiveTicketRows([]);
+      return;
+    }
+    const comp = mergedComps.find((c) => c.id === entriesFor);
+    if (!comp) return;
+    let cancelled = false;
+    (async () => {
+      setLiveTicketsLoading(true);
+      try {
+        // Real ticket records, grouped by purchase (entryId) for the table.
+        const snap = await getDocs(
+          query(
+            collection(db, "competitions", comp.slug, "tickets"),
+            orderBy("purchasedAt", "desc"),
+            limit(500),
+          ),
+        ).catch(() => null);
+        if (cancelled) return;
+        if (!snap || snap.empty) {
+          setLiveTicketRows([]);
+          return;
+        }
+        const byEntry = new Map<string, any[]>();
+        snap.docs.forEach((d) => {
+          const t = d.data() as Record<string, unknown>;
+          const key = String(t["entryId"] || d.id);
+          if (!byEntry.has(key)) byEntry.set(key, []);
+          byEntry.get(key)!.push({ id: d.id, ...t });
+        });
+        setLiveTicketRows(
+          Array.from(byEntry.entries()).map(([entryId, tickets]) => {
+            const first = tickets[0] as Record<string, unknown>;
+            const name = String(first["userName"] || "Raffila Member");
+            const status = tickets.some((t: any) => String(t.status).toUpperCase() === "WINNER")
+              ? "Won"
+              : tickets.some((t: any) => !["ACTIVE", "CONFIRMED", "PAID"].includes(String(t.status).toUpperCase()))
+                ? "Pending"
+                : "Paid";
+            return {
+              id: entryId,
+              name,
+              handle: String(first["userHandle"] || ""),
+              monogram: name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase(),
+              tickets: tickets.length,
+              ticketNumbers: tickets.map((t: any) => String(t.ticketNumber)),
+              amount: tickets.length * comp.ticketPrice,
+              entered: String(first["purchasedAt"] || "").slice(0, 16).replace("T", " "),
+              status,
+            };
+          }),
+        );
+      } catch (err) {
+        console.warn("Live tickets load failed:", err);
+        if (!cancelled) setLiveTicketRows([]);
+      } finally {
+        if (!cancelled) setLiveTicketsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [entriesFor, mergedComps]);
 
   const entriesSource = useMemo(() => {
-    const comp = COMPS.find((c) => c.id === entriesFor);
+    const comp = mergedComps.find((c) => c.id === entriesFor);
     if (!comp) return { comp: null, rows: [] as any[] };
-    const rows = Array.from({ length: Math.min(comp.entriesSold, 286) }).map((_, i) => {
-      const names = [
-        "Tunmise Adebayo",
-        "Aisha Mohammed",
-        "Uche Dike",
-        "Zainab Abubakar",
-        "Tunde Okafor",
-        "Chidi Kelechi",
-        "Amaka Peace",
-        "Ifeoma Dike",
-        "Bola Tinubu",
-        "Amina Garba",
-        "Samuel Ola",
-        "Blessing Onyeka",
-      ];
-      const name = names[i % names.length]!;
-      const handles = [
-        "@tunmise_a",
-        "@aisha_m",
-        "@uche_d",
-        "@zainab_a",
-        "@tunde_o",
-        "@chidi_k",
-        "@amaka_p",
-        "@ifeoma_d",
-        "@bola_t",
-        "@amina_g",
-        "@samuel_o",
-        "@blessing_o",
-      ];
-      const statuses: Array<"Paid" | "Pending" | "Won" | "Refunded"> = [
-        "Paid",
-        "Paid",
-        "Paid",
-        "Pending",
-        "Won",
-        "Paid",
-        "Paid",
-        "Paid",
-        "Paid",
-        "Paid",
-        "Refunded",
-        "Pending",
-      ];
-      const tickets = (i % 50) + 1;
-      const id = `${comp.id}-E${String(i + 1).padStart(6, "0")}`;
-      return {
-        id,
-        name,
-        handle: handles[i % handles.length]!,
-        monogram: name
-          .split(" ")
-          .map((w) => w[0]!)
-          .join("")
-          .toUpperCase(),
-        tickets,
-        amount: tickets * comp.ticketPrice,
-        entered: `2026-${String((i % 5) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}  ${String((i % 23) + 7).padStart(2, "0")}:${String((i * 3) % 60).padStart(2, "0")}`,
-        status: statuses[i % statuses.length]!,
-      };
-    });
-    return { comp, rows };
-  }, [entriesFor]);
+    // Prefer live Firestore ticket records; fall back to an empty set
+    // (never mock rows) when the pool has no persisted tickets yet.
+    return { comp, rows: liveTicketRows };
+  }, [entriesFor, mergedComps, liveTicketRows]);
 
   const visibleEntries = useMemo(() => {
     let rows = entriesSource.rows;
@@ -536,6 +696,106 @@ export function AdminCompetitionsPage() {
     }
   }
 
+  // ---------------- Raffle draw flow (ticket-based, server-committed) ----------------
+  async function openDrawConfirm(comp: MockComp) {
+    setDrawTarget(comp);
+    setDrawError(null);
+    setDrawResult(null);
+    setDrawStats(null);
+    setDrawPhase("confirm");
+    setDrawStatsLoading(true);
+    try {
+      const stats = await fetchDrawPoolStats(comp.slug);
+      setDrawStats(stats);
+    } catch (err) {
+      console.warn("Draw pool stats failed:", err);
+      setDrawStats({ eligibleTickets: comp.entriesSold, participants: 0 });
+    } finally {
+      setDrawStatsLoading(false);
+    }
+  }
+
+  async function confirmDraw() {
+    if (!drawTarget) return;
+    setDrawPhase("drawing");
+    setDrawError(null);
+    // Minimum presentation beat so the ceremony reads as a real draw;
+    // the winner is committed by executeDraw before the reveal.
+    const startedAt = Date.now();
+    try {
+      const { record, resumed } = await executeDraw(drawTarget.slug);
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < 3500) await new Promise((r) => setTimeout(r, 3500 - elapsed));
+      setDrawResult(record);
+      setDrawPhase("result");
+      setDrawRefreshKey((k) => k + 1);
+      toast.success(resumed ? "Existing draw result loaded" : "Winner selected", {
+        description: `Ticket #${record.winningTicketNumber} · ${record.winnerDisplayName}`,
+      });
+    } catch (err) {
+      setDrawError(err instanceof Error ? err.message : "Draw failed. Please try again.");
+      setDrawPhase("confirm");
+    }
+  }
+
+  function closeDrawFlow() {
+    setDrawPhase(null);
+    setDrawTarget(null);
+    setDrawStats(null);
+    setDrawResult(null);
+    setDrawError(null);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, "competitions", deleteTarget.slug));
+      setDeletedSlugs((prev) => new Set(prev).add(deleteTarget.slug));
+      await logActivity({
+        eventType: "COMPETITION_DELETE",
+        targetType: "competition",
+        targetId: deleteTarget.slug,
+        summary: `Deleted competition "${deleteTarget.name}"`,
+        details: {
+          name: deleteTarget.name,
+          slug: deleteTarget.slug,
+          status: deleteTarget.status,
+          partner: deleteTarget.partner,
+        },
+      });
+      toast.success("Competition deleted", {
+        description: `${deleteTarget.name} has been permanently removed.`,
+      });
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error("Failed to delete competition", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function openDrawResult(comp: MockComp) {
+    try {
+      const rec =
+        drawRecords[comp.slug] ?? (await getDrawRecord(comp.slug));
+      if (!rec || !rec.winningTicketNumber) {
+        toast.error("No draw result yet", {
+          description: `${comp.name} has no completed draw record.`,
+        });
+        return;
+      }
+      setDrawRecords((m) => ({ ...m, [comp.slug]: rec }));
+      setResultFor(rec);
+    } catch (err) {
+      toast.error("Could not load draw result", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }
+
   return (
     <AdminShell activeNav="competitions" title="Competitions">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -568,6 +828,7 @@ export function AdminCompetitionsPage() {
                   { v: "live", l: "Live" },
                   { v: "scheduled", l: "Scheduled" },
                   { v: "draft", l: "Draft" },
+                  { v: "draw-ready", l: "Draw Ready", badge: drawReadyCount },
                   { v: "completed", l: "Completed" },
                   { v: "all", l: "All" },
                 ].map((t) => (
@@ -577,6 +838,11 @@ export function AdminCompetitionsPage() {
                     className="rounded-full px-4 py-1.5 text-xs font-extrabold data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm data-[state=inactive]:text-ink/60"
                   >
                     {t.l}
+                    {typeof (t as any).badge === "number" && (t as any).badge > 0 && (
+                      <span className="ml-1.5 inline-grid min-size-5 place-items-center rounded-full bg-coral px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums text-white">
+                        {(t as any).badge}
+                      </span>
+                    )}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -622,11 +888,19 @@ export function AdminCompetitionsPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {filtered.map((c) => {
                 const pct = Math.min(100, Math.round((c.entriesSold / c.totalEntries) * 100));
-                const full = pct >= 100;
+                const rec = drawRecords[c.slug] ?? null;
+                const isDrawReady = c.status === "DRAW_READY";
+                const isDrawing = c.status === "DRAW_IN_PROGRESS";
+                const hasWinner =
+                  c.status === "WINNER_SELECTED" ||
+                  (c.status === "COMPLETED" && rec?.winningTicketNumber);
                 return (
                   <Card
                     key={c.id}
-                    className="group rounded-[26px] border-0 bg-white p-0 ring-1 ring-ink/10 shadow-[0_2px_14px_-10px_rgba(0,0,0,0.15)] overflow-hidden"
+                    className={cn(
+                      "group rounded-[26px] border-0 bg-white p-0 ring-1 shadow-[0_2px_14px_-10px_rgba(0,0,0,0.15)] overflow-hidden",
+                      isDrawReady ? "ring-2 ring-lemon/70" : "ring-ink/10",
+                    )}
                   >
                     <div className="relative aspect-[16/10] overflow-hidden bg-cream">
                       <img
@@ -713,6 +987,24 @@ export function AdminCompetitionsPage() {
                               <TrendingUp className="mr-2 size-4" />
                               View analytics
                             </DropdownMenuItem>
+                            {isDrawReady && (
+                              <DropdownMenuItem
+                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-lemon/40 focus:text-ink"
+                                onClick={() => void openDrawConfirm(c)}
+                              >
+                                <Target className="mr-2 size-4" />
+                                View draw details
+                              </DropdownMenuItem>
+                            )}
+                            {hasWinner && (
+                              <DropdownMenuItem
+                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-mint/25 focus:text-ink"
+                                onClick={() => void openDrawResult(c)}
+                              >
+                                <Trophy className="mr-2 size-4" />
+                                View draw result
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-coral/15 focus:text-ink"
                               onClick={() => performAction(c, "share")}
@@ -722,11 +1014,18 @@ export function AdminCompetitionsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15"
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-coral/15 focus:text-ink"
                               onClick={() => performAction(c, "cancel")}
                             >
                               <AlertCircle className="mr-2 size-4" />
                               Cancel draw
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15"
+                              onClick={() => setDeleteTarget(c)}
+                            >
+                              <Trash2 className="mr-2 size-4" />
+                              Delete competition
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -736,52 +1035,130 @@ export function AdminCompetitionsPage() {
                       <h3 className="font-display text-[17px] font-extrabold leading-tight text-ink min-h-[2.5rem] line-clamp-2">
                         {c.name}
                       </h3>
-                      <div className="flex items-center justify-between text-[11px] font-extrabold">
-                        <span className="inline-flex items-center gap-1 text-ink/60">
-                          <CalendarDays className="size-3" />
-                          Draw {c.drawDate}
-                        </span>
-                        <span className="text-ink whitespace-nowrap">
-                          {formatNaira(c.ticketPrice)}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="mb-1.5 flex items-center justify-between text-[11px] font-extrabold text-ink/60">
-                          <span>Entries</span>
-                          <span>
-                            {c.entriesSold.toLocaleString("en-NG")} /{" "}
-                            {c.totalEntries.toLocaleString("en-NG")} · {pct}%
-                          </span>
-                        </div>
-                        <Progress
-                          value={pct}
-                          className="h-2 rounded-full bg-cream [&>div]:bg-coral [&>div]:rounded-full"
-                        />
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => performAction(c, "edit")}
-                        >
-                          <Pencil className="size-3.5" />
-                          Edit
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setEntriesFor(c.id)}>
-                          <Ticket className="size-3.5" />
-                          Manage entries
-                        </Button>
-                        {c.status === "LIVE" && full && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => toast.success("Starting draw", { description: c.name })}
-                          >
-                            <PlayCircle className="size-3.5" />
-                            Draw now
-                          </Button>
-                        )}
-                      </div>
+
+                      {isDrawReady ? (
+                        <>
+                          <div className="rounded-2xl bg-lemon/20 p-3.5 ring-1 ring-lemon/40">
+                            <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/55">
+                              Draw closed · {c.drawDate || "entries closed"}
+                            </p>
+                            <div className="mt-2 grid grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                                  Eligible tickets
+                                </p>
+                                <p className="font-display text-xl font-extrabold tabular-nums text-ink">
+                                  {(rec?.eligibleTicketCount || c.entriesSold).toLocaleString("en-NG")}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                                  Participants
+                                </p>
+                                <p className="font-display text-xl font-extrabold tabular-nums text-ink">
+                                  {(rec?.eligibleParticipantCount || 0).toLocaleString("en-NG")}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
+                            <Button variant="primary" size="sm" onClick={() => void openDrawConfirm(c)}>
+                              <Target className="size-3.5" />
+                              Start Draw
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setEntriesFor(c.id)}>
+                              <Ticket className="size-3.5" />
+                              Manage entries
+                            </Button>
+                          </div>
+                        </>
+                      ) : isDrawing ? (
+                        <>
+                          <div className="rounded-2xl bg-lilac/20 p-3.5 ring-1 ring-lilac/30">
+                            <p className="flex items-center gap-2 text-xs font-extrabold text-ink">
+                              <Dices className="size-4 animate-pulse text-ink" />
+                              Drawing… winner being selected
+                            </p>
+                            <p className="mt-1 text-[11px] font-bold text-ink/55">
+                              {(rec?.eligibleTicketCount || c.entriesSold).toLocaleString("en-NG")}{" "}
+                              eligible tickets · do not close this page
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void openDrawResult(c)}
+                            >
+                              <Eye className="size-3.5" />
+                              View draw
+                            </Button>
+                          </div>
+                        </>
+                      ) : hasWinner ? (
+                        <>
+                          <div className="rounded-2xl bg-mint/20 p-3.5 ring-1 ring-mint/40">
+                            <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/55">
+                              Winning ticket
+                            </p>
+                            <p className="font-display text-2xl font-extrabold tabular-nums text-ink">
+                              #{rec?.winningTicketNumber ?? "—"}
+                            </p>
+                            <p className="mt-1 text-xs font-extrabold text-ink/70">
+                              Winner · {rec?.winnerDisplayName ?? "—"}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void openDrawResult(c)}
+                            >
+                              <Trophy className="size-3.5" />
+                              View draw result
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between text-[11px] font-extrabold">
+                            <span className="inline-flex items-center gap-1 text-ink/60">
+                              <CalendarDays className="size-3" />
+                              Draw {c.drawDate}
+                            </span>
+                            <span className="text-ink whitespace-nowrap">
+                              {formatNaira(c.ticketPrice)}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="mb-1.5 flex items-center justify-between text-[11px] font-extrabold text-ink/60">
+                              <span>Entries</span>
+                              <span>
+                                {c.entriesSold.toLocaleString("en-NG")} /{" "}
+                                {c.totalEntries.toLocaleString("en-NG")} · {pct}%
+                              </span>
+                            </div>
+                            <Progress
+                              value={pct}
+                              className="h-2 rounded-full bg-cream [&>div]:bg-coral [&>div]:rounded-full"
+                            />
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => performAction(c, "edit")}
+                            >
+                              <Pencil className="size-3.5" />
+                              Edit
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setEntriesFor(c.id)}>
+                              <Ticket className="size-3.5" />
+                              Manage entries
+                            </Button>
+                          </div>
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -811,7 +1188,11 @@ export function AdminCompetitionsPage() {
                 <TableBody className="[&_tr]:border-ink/10">
                   {filtered.map((c) => {
                     const pct = Math.min(100, Math.round((c.entriesSold / c.totalEntries) * 100));
-                    const full = pct >= 100;
+                    const rec = drawRecords[c.slug] ?? null;
+                    const isDrawReady = c.status === "DRAW_READY";
+                    const hasWinner =
+                      c.status === "WINNER_SELECTED" ||
+                      (c.status === "COMPLETED" && rec?.winningTicketNumber);
                     return (
                       <TableRow key={c.id} className="hover:bg-sky/8">
                         <TableCell className="py-3">
@@ -888,18 +1269,34 @@ export function AdminCompetitionsPage() {
                             >
                               <Ticket className="size-4" />
                             </Button>
-                            {c.status === "LIVE" && full && (
+                            {isDrawReady && (
                               <Button
                                 variant="primary"
                                 size="sm"
-                                onClick={() =>
-                                  toast.success("Starting draw", { description: c.name })
-                                }
+                                onClick={() => void openDrawConfirm(c)}
                               >
-                                <PlayCircle className="size-3.5" />
-                                Draw
+                                <Target className="size-3.5" />
+                                Start Draw
                               </Button>
                             )}
+                            {hasWinner && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => void openDrawResult(c)}
+                              >
+                                <Trophy className="size-3.5" />
+                                Result
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 text-ink/70 hover:bg-coral/10 hover:text-coral"
+                              onClick={() => setDeleteTarget(c)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -911,6 +1308,348 @@ export function AdminCompetitionsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* ---------------- Draw history (immutable audit records) ---------------- */}
+      <Card className="mt-6 rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
+        <CardContent className="space-y-4 p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="grid size-10 place-items-center rounded-2xl bg-ink/10">
+                <History className="size-4.5 text-ink" />
+              </span>
+              <div>
+                <h2 className="font-display text-xl font-extrabold text-ink">Draw history</h2>
+                <p className="text-xs font-bold text-ink/55">
+                  Immutable record of every completed draw · {drawHistory.length} draw
+                  {drawHistory.length === 1 ? "" : "s"}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDrawRefreshKey((k) => k + 1)}
+            >
+              Refresh
+            </Button>
+          </div>
+          {drawHistory.length === 0 ? (
+            <p className="rounded-2xl bg-white px-4 py-6 text-center text-xs font-bold text-ink/50 ring-1 ring-ink/10">
+              No draws yet. Closed competitions will appear under Draw Ready.
+            </p>
+          ) : (
+            <div className="overflow-x-auto -mx-2 px-2">
+              <Table>
+                <TableHeader className="[&_tr]:border-ink/10">
+                  <TableRow>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Draw ID</TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Competition</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                      Tickets
+                    </TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                      Winning ticket
+                    </TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Winner</TableHead>
+                    <TableHead className="py-3 font-extrabold text-ink/65">Status</TableHead>
+                    <TableHead className="py-3 text-right font-extrabold text-ink/65">
+                      Details
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="[&_tr]:border-ink/10">
+                  {drawHistory.slice(0, 20).map((r) => (
+                    <TableRow key={r.id} className="hover:bg-sky/8">
+                      <TableCell className="py-3 font-mono text-[11px] font-extrabold text-ink">
+                        {r.verificationReference || r.id}
+                      </TableCell>
+                      <TableCell className="py-3 text-xs font-extrabold text-ink">
+                        {r.competitionTitle || r.competitionId}
+                      </TableCell>
+                      <TableCell className="py-3 text-right text-xs font-extrabold tabular-nums text-ink">
+                        {r.eligibleTicketCount.toLocaleString("en-NG")}
+                      </TableCell>
+                      <TableCell className="py-3 text-right font-display text-sm font-extrabold tabular-nums text-ink">
+                        {r.winningTicketNumber ? `#${r.winningTicketNumber}` : "—"}
+                      </TableCell>
+                      <TableCell className="py-3 text-xs font-bold text-ink/70">
+                        {r.winnerDisplayName ?? "—"}
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <Badge
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                            r.status === "COMPLETED"
+                              ? "bg-mint/40 text-ink"
+                              : r.status === "IN_PROGRESS"
+                                ? "bg-lilac/40 text-ink"
+                                : r.status === "FAILED"
+                                  ? "bg-coral/20 text-coral"
+                                  : "bg-lemon/50 text-ink",
+                          )}
+                        >
+                          {r.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setResultFor(r)}
+                        >
+                          <Eye className="size-3.5" /> View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ---------------- Pre-draw confirmation ---------------- */}
+      <Dialog open={drawPhase === "confirm" && !!drawTarget} onOpenChange={(v) => !v && closeDrawFlow()}>
+        <DialogContent className="rounded-[28px] bg-white p-6 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
+              <span className="grid size-10 place-items-center rounded-2xl bg-lemon/40">
+                <Target className="size-5 text-ink" />
+              </span>
+              Ready to start draw
+            </DialogTitle>
+            <DialogDescription className="text-sm font-bold text-ink/60">
+              {drawTarget?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-cream/60 p-3.5 ring-1 ring-ink/10">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                Eligible tickets
+              </p>
+              <p className="font-display text-2xl font-extrabold tabular-nums text-ink">
+                {drawStatsLoading ? "…" : (drawStats?.eligibleTickets ?? 0).toLocaleString("en-NG")}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-cream/60 p-3.5 ring-1 ring-ink/10">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                Participants
+              </p>
+              <p className="font-display text-2xl font-extrabold tabular-nums text-ink">
+                {drawStatsLoading ? "…" : (drawStats?.participants ?? 0).toLocaleString("en-NG")}
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 rounded-2xl bg-sky/15 p-4 text-xs font-bold leading-relaxed text-ink/70 ring-1 ring-sky/20">
+            Every eligible ticket number participates individually — a member with 10 tickets
+            has 10 independent chances. The winner is selected by a secure random process and
+            the result is frozen once committed.
+          </div>
+          {drawStats && drawStats.eligibleTickets === 0 && !drawStatsLoading && (
+            <p className="mt-3 rounded-2xl bg-coral/15 p-3 text-xs font-extrabold text-coral ring-1 ring-coral/30">
+              No eligible tickets are available for this competition. The draw cannot proceed.
+            </p>
+          )}
+          {drawError && (
+            <p className="mt-3 rounded-2xl bg-coral/15 p-3 text-xs font-extrabold text-coral ring-1 ring-coral/30">
+              {drawError}
+            </p>
+          )}
+          <DialogFooter className="mt-5 flex gap-2">
+            <Button variant="outline" onClick={closeDrawFlow} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1"
+              disabled={drawStatsLoading || !drawStats || drawStats.eligibleTickets === 0}
+              onClick={() => void confirmDraw()}
+            >
+              <Dices className="size-4" /> Proceed to draw
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---------------- Draw ceremony (presentation only) ---------------- */}
+      <Dialog open={drawPhase === "drawing"}>
+        <DialogContent className="rounded-[28px] bg-white p-8 text-center sm:max-w-md [&>button]:hidden">
+          <div className="mx-auto grid size-20 place-items-center rounded-full bg-lilac/25">
+            <Dices className="size-10 animate-spin text-ink [animation-duration:2.5s]" />
+          </div>
+          <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">
+            Drawing…
+          </h3>
+          <p className="mt-2 text-sm font-bold text-ink/60">
+            {drawTarget?.name} · selecting from{" "}
+            {(drawStats?.eligibleTickets ?? 0).toLocaleString("en-NG")} eligible tickets.
+            The result is being committed securely.
+          </p>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---------------- Winner reveal (from persisted record) ---------------- */}
+      <Dialog
+        open={drawPhase === "result" && !!drawResult}
+        onOpenChange={(v) => !v && closeDrawFlow()}
+      >
+        <DialogContent className="rounded-[28px] bg-white p-8 text-center sm:max-w-md">
+          <div className="mx-auto grid size-20 place-items-center rounded-full bg-mint/30">
+            <Trophy className="size-10 text-ink" />
+          </div>
+          <p className="mt-4 text-xs font-extrabold uppercase tracking-[0.16em] text-coral">
+            🎉 Congratulations
+          </p>
+          <h3 className="mt-1 font-display text-3xl font-extrabold text-ink">
+            {drawResult?.winnerDisplayName}
+          </h3>
+          <div className="mx-auto mt-4 max-w-xs space-y-2 rounded-2xl bg-cream/60 p-4 text-left ring-1 ring-ink/10">
+            <div className="flex items-center justify-between text-xs font-bold text-ink/60">
+              <span>Winning ticket</span>
+              <span className="font-display text-lg font-extrabold tabular-nums text-ink">
+                #{drawResult?.winningTicketNumber}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs font-bold text-ink/60">
+              <span>Draw ID</span>
+              <span className="font-mono font-extrabold text-ink">
+                {drawResult?.verificationReference || drawResult?.id}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs font-bold text-ink/60">
+              <span>Eligible tickets</span>
+              <span className="font-extrabold tabular-nums text-ink">
+                {(drawResult?.eligibleTicketCount ?? 0).toLocaleString("en-NG")}
+              </span>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-2">
+            <Button
+              variant="primary"
+              onClick={() => {
+                if (drawResult) setResultFor(drawResult);
+                closeDrawFlow();
+              }}
+            >
+              View draw details
+            </Button>
+            <Button variant="outline" onClick={closeDrawFlow}>
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---------------- Draw result details (admin) ---------------- */}
+      <Dialog open={!!resultFor} onOpenChange={(v) => !v && setResultFor(null)}>
+        <DialogContent className="rounded-[28px] bg-white p-6 sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl font-extrabold text-ink">
+              Draw result
+            </DialogTitle>
+            <DialogDescription className="text-sm font-bold text-ink/60">
+              {resultFor?.competitionTitle} · immutable audit record
+            </DialogDescription>
+          </DialogHeader>
+          {resultFor && (
+            <div className="mt-4 grid grid-cols-2 gap-3 text-left">
+              {[
+                ["Draw ID", resultFor.verificationReference || resultFor.id],
+                ["Status", resultFor.status],
+                [
+                  "Eligible tickets",
+                  resultFor.eligibleTicketCount.toLocaleString("en-NG"),
+                ],
+                [
+                  "Participants",
+                  resultFor.eligibleParticipantCount.toLocaleString("en-NG"),
+                ],
+                ["Winning ticket", `#${resultFor.winningTicketNumber ?? "—"}`],
+                ["Winner", resultFor.winnerDisplayName ?? "—"],
+                ["Initiated by", resultFor.initiatedBy || "—"],
+                ["Completed", resultFor.completedAt ? new Date(resultFor.completedAt).toLocaleString("en-NG") : "—"],
+              ].map(([k, v]) => (
+                <div key={k} className="rounded-2xl bg-cream/60 p-3.5 ring-1 ring-ink/10">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                    {k}
+                  </p>
+                  <p className="mt-0.5 break-words text-sm font-extrabold text-ink">{v}</p>
+                </div>
+              ))}
+              <div className="col-span-2 rounded-2xl bg-sky/15 p-3.5 ring-1 ring-sky/20">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                  Snapshot hash
+                </p>
+                <p className="mt-0.5 break-all font-mono text-[11px] font-bold text-ink/70">
+                  {resultFor.snapshotHash || "—"}
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="mt-5">
+            <Button variant="outline" onClick={() => setResultFor(null)} className="w-full">
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---------------- Delete competition confirmation ---------------- */}
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && !deleting && setDeleteTarget(null)}>
+        <DialogContent className="rounded-[28px] bg-white p-6 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
+              <span className="grid size-10 place-items-center rounded-2xl bg-coral/20">
+                <Trash2 className="size-5 text-coral" />
+              </span>
+              Delete competition
+            </DialogTitle>
+            <DialogDescription className="text-sm font-bold text-ink/60">
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 rounded-2xl bg-coral/10 p-4 ring-1 ring-coral/20">
+            <p className="text-sm font-extrabold text-ink">
+              {deleteTarget?.name}
+            </p>
+            <p className="mt-1 text-xs font-bold text-ink/60">
+              {deleteTarget?.slug} · {deleteTarget?.status} · {deleteTarget?.partner}
+            </p>
+          </div>
+          <p className="mt-3 text-xs font-bold leading-relaxed text-ink/60">
+            The competition document will be permanently removed from Firestore. Any associated
+            ticket records under this competition will become orphaned. This action is logged
+            for audit purposes.
+          </p>
+          <DialogFooter className="mt-5 flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1 bg-coral hover:bg-coral/90"
+              disabled={deleting}
+              onClick={() => void confirmDelete()}
+            >
+              {deleting ? (
+                <>
+                  <Sparkles className="size-4 animate-pulse" /> Deleting…
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-4" /> Delete permanently
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={modalMode !== null} onOpenChange={(v) => !v && closeModal()}>
         <DialogContent className="rounded-[28px] bg-white p-0 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.25)] sm:max-w-3xl max-h-[94vh] overflow-hidden flex flex-col">

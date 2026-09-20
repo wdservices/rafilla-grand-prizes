@@ -20,15 +20,31 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null;
 
+      // Individual raffle tickets — one doc per ticket number.
+      // Created at purchase (authenticated), immutable afterwards except
+      // admin draw commit (WINNER marking).
       match /tickets/{ticketId} {
         allow read: if true;
-        allow write: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update: if isAdmin();
+        allow delete: if false;
       }
 
       match /drawAudits/{auditId} {
         allow read: if true;
         allow write: if request.auth != null;
       }
+    }
+
+    // Raffle draw records — public read (verification), admin-only writes.
+    // Winner selection is committed via transaction; clients can never
+    // supply their own winner through these rules (no winner fields on create
+    // except through the admin flow).
+    match /draws/{drawId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if false;
     }
 
     // Raffle draws & cryptographic verification logs
