@@ -28,7 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FundWalletModal } from "@/components/raffila/dashboard/wallet";
-import { formatNaira, getProgress } from "@/lib/raffila-data";
+import { formatNaira, getProgress, trackEvent } from "@/lib/raffila-data";
 import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
 import { cn, formatNaira as formatNairaKobo } from "@/lib/utils";
 import { OversellBanner, ReservationTimeoutBar } from "./checkout-banner";
@@ -121,7 +121,7 @@ export function TicketPurchaseModal({
     const tix = generateTicketNumbers(qty);
     setRfids([entryId]);
     setTicketNumbers(tix);
-    const t = setTimeout(() => {
+    function completePurchase() {
       setPurchaseComplete(true);
       const sessionUser =
         (JSON.parse(
@@ -175,6 +175,43 @@ export function TicketPurchaseModal({
         className: "!bg-mint/30 !text-ink !border-0 !ring-1 !ring-mint/40",
         icon: <Check className="size-4 text-mint" />,
       });
+    }
+    const t = setTimeout(() => {
+      // Re-verify the competition is still accepting entries (live Firestore
+      // state — the backend rules enforce this too, this is for UX).
+      import("@/lib/firebase").then(({ db }) =>
+        import("firebase/firestore").then(async ({ doc, getDoc }) => {
+          try {
+            const snap = await getDoc(doc(db, "competitions", competitionSlug));
+            if (snap.exists()) {
+              const d = snap.data() as Record<string, unknown>;
+              const status = String(d["status"] ?? "").toUpperCase();
+              const closed =
+                d["entriesClosed"] === true ||
+                d["entriesPaused"] === true ||
+                [
+                  "DRAW_READY",
+                  "DRAW_IN_PROGRESS",
+                  "WINNER_SELECTED",
+                  "COMPLETED",
+                  "CLOSED",
+                  "CANCELLED",
+                  "SUSPENDED",
+                ].includes(status);
+              if (closed) {
+                toast.error("Entries are closed for this competition", {
+                  description: "No tickets were created and no charge was made.",
+                });
+                onClose();
+                return;
+              }
+            }
+          } catch {
+            /* read failed — proceed; backend rules remain the source of truth */
+          }
+          completePurchase();
+        }),
+      );
     }, 1600);
     return () => clearTimeout(t);
   }, [step, qty, purchaseComplete]);
@@ -223,6 +260,8 @@ export function TicketPurchaseModal({
   const quickQuantities = [1, 5, 10, 25, 50];
 
   const nextStep = (to: Step) => {
+    if (to === 2) trackEvent("checkout_start", { competition: competitionSlug, qty });
+    if (to === 4) trackEvent("payment_success", { competition: competitionSlug, qty, paymentSource });
     setStep(to);
     setStepAnimKey((k) => k + 1);
   };
@@ -426,7 +465,7 @@ export function TicketPurchaseModal({
                   <ShieldCheck className="size-5 shrink-0 text-sky" />
                   <p className="text-xs font-bold leading-relaxed text-ink/70">
                     <span className="font-extrabold text-ink">Limit {MAX_QTY} tickets</span> per
-                    user. Only Wallet and Referral commissions are accepted.
+                    user. Prize-first: browse free, pay only when you decide. Wallet and Referral commissions accepted now; direct payments subject to provider review.
                   </p>
                 </div>
 
@@ -604,13 +643,13 @@ export function TicketPurchaseModal({
 
                 <div className="rounded-2xl bg-cream p-4 ring-1 ring-ink/5">
                   <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                    Payment info
+                    Important notice
                   </p>
                   <p className="mt-2 text-sm font-bold leading-relaxed text-ink/70">
                     <span className="font-extrabold text-ink">
-                      Choose Wallet or Referrals to cover the full entry amount.
+                      Choose Wallet or Referrals to cover the full entry amount. Direct card/bank/USSD options unlock after provider approval.
                     </span>{" "}
-                    No card or bank debits are processed directly during checkout.
+                    No card or bank debits are processed directly during checkout. Card, bank transfer and USSD appear here only after payment-provider review.
                   </p>
                 </div>
 
@@ -623,6 +662,36 @@ export function TicketPurchaseModal({
                     </p>
                   </div>
                 </div>
+
+                <div className="grid gap-2 rounded-2xl bg-paper p-4 ring-1 ring-ink/5 sm:grid-cols-3">
+                  {[
+                    { label: "Card", note: "After provider review" },
+                    { label: "Bank transfer", note: "After provider review" },
+                    { label: "USSD", note: "After provider review" },
+                  ].map((m) => (
+                    <div
+                      key={m.label}
+                      className="rounded-xl bg-cream/60 px-3 py-2.5 text-center ring-1 ring-ink/5 opacity-70"
+                      aria-disabled="true"
+                      title="Subject to payment-provider review"
+                    >
+                      <p className="text-xs font-extrabold text-ink">{m.label}</p>
+                      <p className="mt-0.5 text-[10px] font-bold text-ink/50">{m.note}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-center text-xs font-bold text-ink/55">
+                  Wallet is spend-only and non-withdrawable. Entry fees follow the{" "}
+                  <Link to="/competition-rules" className="font-extrabold text-coral underline underline-offset-2">
+                    Competition Rules
+                  </Link>
+                  . Need help?{" "}
+                  <Link to="/faq" className="font-extrabold text-coral underline underline-offset-2">
+                    Get support
+                  </Link>
+                  .
+                </p>
 
                 <div className="flex gap-3 pt-2">
                   <Button variant="outline" size="lg" onClick={() => nextStep(1)}>
@@ -648,9 +717,30 @@ export function TicketPurchaseModal({
                     Confirm your entries
                   </h3>
                   <p className="mt-1 text-sm font-bold text-ink/55">
-                    Review and complete your purchase
+                    {`${qty} × ${formatNaira(competition.entryPrice)} = ${formatNairaKobo(subtotalKobo)} total`} · Review and complete your purchase
                   </p>
                 </div>
+
+                {typeof window !== "undefined" &&
+                  !window.localStorage.getItem("raffila:auth:session:v1") && (
+                    <div className="rounded-2xl bg-lemon/40 p-4 ring-1 ring-ink/10">
+                      <p className="text-sm font-extrabold text-ink">
+                        Create / verify your account to complete payment
+                      </p>
+                      <p className="mt-1 text-xs font-bold leading-relaxed text-ink/65">
+                        Phone/OTP first — most familiar on mobile. Email or Google also works. We
+                        only ask for KYC when required and explain why.
+                      </p>
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <Button asChild variant="primary" size="md" className="min-h-11 flex-1">
+                          <Link to="/auth">Continue with phone / OTP</Link>
+                        </Button>
+                        <Button asChild variant="outline" size="md" className="min-h-11 flex-1">
+                          <Link to="/auth">Email or Google</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                 <div className="rounded-2xl bg-coral/15 p-4 ring-1 ring-coral/25">
                   <div className="flex items-center gap-3">
@@ -794,10 +884,13 @@ export function TicketPurchaseModal({
                 </div>
                 <div>
                   <h3 className="font-display text-2xl font-extrabold text-ink sm:text-3xl">
-                    Congratulations! 🎉
+                    You're in!
                   </h3>
                   <p className="mt-2 text-base font-bold text-ink/60">
-                    Your {qty} {qty === 1 ? "entry is" : "entries are"} confirmed
+                    You have {qty} {qty === 1 ? "entry" : "entries"} · Draw date: {competition.drawDate}
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-ink/55">
+                    We'll notify you before the draw. Entry numbers are below.
                   </p>
                 </div>
 
@@ -890,7 +983,7 @@ export function TicketPurchaseModal({
                 <div className="grid gap-3 pt-1">
                   <Button asChild variant="primary" size="lg" className="w-full" onClick={onClose}>
                     <Link to="/dashboard/entries">
-                      View all entries <ArrowRight className="size-4" />
+                      View My Entries <ArrowRight className="size-4" />
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="lg" className="w-full" onClick={onClose}>

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { ArrowUpRight, CalendarDays, Minus, Plus, Ticket } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, CalendarDays, Minus, Plus, Ticket } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
-import { formatNaira, getProgress, type Competition } from "@/lib/raffila-data";
+import { formatNaira, getEntriesRemaining, getProgress, type Competition } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
 
 const accentStyles = {
@@ -29,17 +29,11 @@ export function CompetitionCard({
 }) {
   const accent = accentStyles[competition.accent];
   const progress = getProgress(competition);
-  const ticketsLeft = Math.max(0, competition.totalEntries - competition.entriesSold);
+  const ticketsLeft = getEntriesRemaining(competition);
   const maxQty = Math.max(1, Math.min(50, ticketsLeft));
   const [qty, setQty] = useState<number>(() => Math.max(1, Math.min(maxQty, defaultQuantity)));
   const entryTotalKobo = competition.entryPrice * qty;
-  const baseChancePct = competition.totalEntries > 0 ? (qty / competition.totalEntries) * 100 : 0;
-  const chanceDisplay =
-    qty <= 1
-      ? "Buy more tickets to improve your odds"
-      : baseChancePct >= 10
-        ? `${baseChancePct.toFixed(1)}% chance of winning`
-        : `${qty.toLocaleString("en-NG")}× better chance than 1 ticket`;
+  const closesShort = competition.closes.split("·")[0]?.trim() ?? competition.closes;
 
   if (featured) {
     return (
@@ -82,10 +76,19 @@ export function CompetitionCard({
               </div>
             </div>
             <ProgressDetails competition={competition} progress={progress} />
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-ink/60">
+              <span>{ticketsLeft.toLocaleString("en-NG")} entries remaining</span>
+              <span className="inline-flex items-center gap-1">
+                <CalendarDays className="size-3.5" /> Closes {closesShort}
+              </span>
+              <span className="inline-flex items-center gap-1 text-ink">
+                <BadgeCheck className="size-3.5 text-mint" /> Verified partner
+              </span>
+            </p>
             <div className="flex items-center gap-2">
-              <Button asChild variant="primary" size="lg" className="flex-1">
+              <Button asChild variant="primary" size="lg" className="min-h-12 flex-1 text-base">
                 <Link to="/competitions/$slug" params={{ slug: competition.slug }}>
-                  Explore competition
+                  Enter for {formatNaira(competition.entryPrice)}
                 </Link>
               </Button>
               <Button asChild variant="outline" size="icon" aria-label="See how Raffila works">
@@ -160,8 +163,8 @@ export function CompetitionCard({
                 </p>
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">Sold</p>
-                <p className="font-bold text-coral text-xs sm:text-sm">{progress}%</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">Entries remaining</p>
+                <p className="font-bold text-ink text-xs sm:text-sm">{ticketsLeft.toLocaleString("en-NG")}</p>
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">Closes</p>
@@ -183,9 +186,8 @@ export function CompetitionCard({
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <p className="mt-2 break-words rounded-2xl bg-raf-lime/25 px-3 py-1.5 text-[11px] font-extrabold text-ink ring-1 ring-raf-lime/40">
-                  <Ticket className="mr-1 inline size-3.5 text-raf-green" />
-                  {chanceDisplay}
+                <p className="mt-2 break-words rounded-2xl bg-cream px-3 py-1.5 text-[11px] font-bold text-ink/70 ring-1 ring-ink/10">
+                  {ticketsLeft.toLocaleString("en-NG")} entries remaining � Closes {closesShort} � <span className="inline-flex items-center gap-1 font-extrabold text-ink"><BadgeCheck className="size-3.5 text-mint" /> Verified partner</span>
                 </p>
               </div>
               <div className="flex items-center justify-between gap-2 sm:col-span-2 md:col-span-3 lg:contents">
@@ -206,11 +208,11 @@ export function CompetitionCard({
                 <Button
                   variant="primary"
                   size="md"
-                  className="w-full sm:w-auto md:col-span-1 shadow-[0_12px_28px_-12px_var(--coral)]"
+                  className="min-h-12 w-full text-base sm:w-auto md:col-span-1 shadow-[0_12px_28px_-12px_var(--coral)]"
                   onClick={() => onEnterDraw?.(qty)}
                   disabled={!onEnterDraw || ticketsLeft === 0}
                 >
-                  <Ticket className="size-4" /> Enter draw
+                  <Ticket className="size-4" /> Enter for {formatNaira(competition.entryPrice)}
                 </Button>
               </div>
             </div>
@@ -222,45 +224,42 @@ export function CompetitionCard({
 
   return (
     <article className="group flex min-w-0 flex-col overflow-hidden rounded-[22px] bg-paper p-3 shadow-sm ring-1 ring-ink/5 transition-transform duration-200 hover:-translate-y-1">
-      <div className="flex items-center gap-3">
+      <div className={cn("overflow-hidden rounded-[16px]", accent.surface)}>
         <img
           src={competition.image}
           alt={competition.imageAlt}
           width={768}
-          height={768}
+          height={480}
           loading="lazy"
           decoding="async"
-          className={cn("size-20 shrink-0 rounded-[16px] object-cover", accent.surface)}
+          className="aspect-[16/10] w-full object-cover"
         />
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="truncate font-display text-base font-extrabold text-ink">
-              {competition.title}
-            </h3>
-            <span
-              className={cn(
-                "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold",
-                accent.badge,
-              )}
-            >
-              {competition.category}
-            </span>
-          </div>
-          <p className="text-xs font-bold text-ink/55">
-            {formatNaira(competition.entryPrice)} / ticket · {progress}% sold
-          </p>
-          <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
-            <div
-              className={cn("h-full rounded-full", accent.fill)}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-ink/45">
-            <span>{progress}% sold</span>
-            <span className="inline-flex items-center gap-1">
-              <CalendarDays className="size-3" /> {competition.closes.split("·")[0]}
-            </span>
-          </div>
+      </div>
+      <div className="min-w-0 flex-1 space-y-1.5 pt-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="truncate font-display text-lg font-extrabold text-ink">
+            {competition.title}
+          </h3>
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold",
+              accent.badge,
+            )}
+          >
+            {competition.category}
+          </span>
+        </div>
+        <p className="font-display text-xl font-extrabold text-ink">
+          Enter for {formatNaira(competition.entryPrice)}
+        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-bold text-ink/60">
+          <span>{ticketsLeft.toLocaleString("en-NG")} entries remaining</span>
+          <span className="inline-flex items-center gap-1">
+            <CalendarDays className="size-3" /> Closes {closesShort}
+          </span>
+          <span className="inline-flex items-center gap-1 font-extrabold text-ink">
+            <BadgeCheck className="size-3.5 text-mint" /> Verified partner
+          </span>
         </div>
       </div>
       <div className="mt-3 flex flex-1 flex-col space-y-3 border-t border-ink/10 pt-3">
@@ -280,26 +279,25 @@ export function CompetitionCard({
             </p>
           </div>
         </div>
-        <div className="rounded-2xl bg-raf-lime/25 px-3 py-2 ring-1 ring-raf-lime/40">
-          <p className="break-words text-[11px] font-extrabold text-ink">
-            <Ticket className="mr-1 inline size-3.5 text-raf-green" />
-            {chanceDisplay}
+        <div className="rounded-2xl bg-cream px-3 py-2 ring-1 ring-ink/10">
+          <p className="break-words text-[11px] font-bold text-ink/70">
+            {ticketsLeft.toLocaleString("en-NG")} entries remaining � Closes {closesShort} � By {competition.partner}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="flex-1 min-w-0">
             <Link to="/competitions/$slug" params={{ slug: competition.slug }}>
-              View <ArrowUpRight className="ml-1 size-3.5" />
+              Details <ArrowUpRight className="ml-1 size-3.5" />
             </Link>
           </Button>
           <Button
             variant="primary"
             size="md"
-            className="flex-[1.5] min-w-0 shadow-[0_12px_28px_-12px_var(--coral)]"
+            className="min-h-12 flex-[1.5] min-w-0 text-base shadow-[0_12px_28px_-12px_var(--coral)]"
             onClick={() => onEnterDraw?.(qty)}
             disabled={!onEnterDraw || ticketsLeft === 0}
           >
-            <Ticket className="size-4 shrink-0" /> <span className="truncate">Enter draw</span>
+            <Ticket className="size-4 shrink-0" /> <span className="truncate">Enter for {formatNaira(competition.entryPrice)}</span>
           </Button>
         </div>
       </div>

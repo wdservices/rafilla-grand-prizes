@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   doc,
   setDoc,
+  updateDoc,
   deleteDoc,
   serverTimestamp,
   collection,
@@ -11,6 +12,7 @@ import {
   orderBy,
   query,
 } from "firebase/firestore";
+import { useNavigate } from "@tanstack/react-router";
 import {
   Search,
   Plus,
@@ -118,7 +120,8 @@ type CompStatus =
   | "DRAW_READY"
   | "DRAW_IN_PROGRESS"
   | "WINNER_SELECTED"
-  | "COMPLETED";
+  | "COMPLETED"
+  | "CANCELLED";
 
 interface MockComp {
   id: string;
@@ -140,6 +143,7 @@ interface MockComp {
   startDate?: string;
   liveDelay?: number;
   maxPerUser?: number;
+  entriesPaused?: boolean;
 }
 
 const IMAGES = [mercedesImage, techBundleImage, apartmentImage];
@@ -218,6 +222,7 @@ const statusTone: Record<CompStatus, string> = {
   DRAW_IN_PROGRESS: "bg-lilac/40 text-ink",
   WINNER_SELECTED: "bg-mint/50 text-ink",
   COMPLETED: "bg-coral/20 text-coral",
+  CANCELLED: "bg-ink/15 text-ink/60",
 };
 
 const STEP_LABELS = [
@@ -350,6 +355,24 @@ export function AdminCompetitionsPage() {
   const [deleting, setDeleting] = useState(false);
   const [deletedSlugs, setDeletedSlugs] = useState<Set<string>>(new Set());
 
+  // Cancel competition state
+  const [cancelTarget, setCancelTarget] = useState<MockComp | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+
+  // Analytics state (real Firestore-backed stats per competition)
+  const [analyticsFor, setAnalyticsFor] = useState<MockComp | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<{
+    entriesSold: number;
+    totalEntries: number;
+    revenueKobo: number;
+    eligibleTickets: number;
+    participants: number;
+    progressPct: number;
+  } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  const navigate = useNavigate();
+
   const refreshDrawState = async () => {
     try {
       // Auto-close past-close competitions (LIVE -> DRAW_READY) on every load.
@@ -399,6 +422,7 @@ export function AdminCompetitionsPage() {
         status: mapped,
         entriesSold: Number(data["entriesSold"] ?? c.entriesSold),
         totalEntries: Number(data["totalEntries"] ?? c.totalEntries),
+        entriesPaused: data["entriesPaused"] === true,
       };
     });
     // Firestore-only competitions (created via the form) appended live.
@@ -414,7 +438,7 @@ export function AdminCompetitionsPage() {
         state === "WINNER_SELECTED" ||
         state === "COMPLETED"
           ? state
-          : ["LIVE", "SCHEDULED", "DRAFT", "COMPLETED"].includes(raw)
+          : ["LIVE", "SCHEDULED", "DRAFT", "COMPLETED", "CANCELLED"].includes(raw)
             ? raw
             : "DRAFT"
       ) as MockComp["status"];
@@ -431,6 +455,7 @@ export function AdminCompetitionsPage() {
         image: String(data["image"] ?? images[0] ?? IMAGES[i % IMAGES.length]!),
         partner: String(data["partner"] ?? "Raffila"),
         drawDate: String(data["drawDate"] ?? ""),
+        entriesPaused: data["entriesPaused"] === true,
       });
     });
     return live.filter(Boolean) as MockComp[];
@@ -595,11 +620,24 @@ export function AdminCompetitionsPage() {
   async function submitDraft() {
     setSubmitting(true);
     try {
+      const { validateCompetitionDates } = await import("@/lib/competitions-feed");
+      const dateError = validateCompetitionDates({
+        closes: (form as any).closes ?? (form as any).endDate ?? (form as any).closeDate,
+        drawDate: form.drawDate,
+      });
+      // Note: admin form historically stores close in startDate/drawDate fields;
+      // enforce only when both parse, never block drafts on unparseable strings.
+      if (dateError) {
+        const { toast } = await import("sonner");
+        toast.error(dateError);
+        setSubmitting(false);
+        return;
+      }
       const compId =
         form.slug || form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || `comp-${Date.now()}`;
       const imageData = form.assets.length > 0 ? form.assets[0] : "";
 
-      await setDoc(doc(db, "competitions", compId), {
+      const payload = {
         slug: compId,
         title: form.name,
         category: form.category,
@@ -619,13 +657,23 @@ export function AdminCompetitionsPage() {
         featured: form.featured,
         publicResults: form.publicResults,
         status: form.status,
-        entriesSold: 0,
         partnerId: form.assignedPartnerId,
         partnerAssetId: form.partnerAssetId,
         partnerRevenueSharePct: form.partnerRevenueSharePct,
-        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      };
+      if (modalMode === "edit") {
+        // Edit must never reset sales counters or creation metadata.
+        await updateDoc(doc(db, "competitions", compId), payload);
+      } else {
+        await setDoc(doc(db, "competitions", compId), {
+          ...payload,
+          entriesSold: 0,
+          entriesClosed: false,
+          entriesPaused: false,
+          createdAt: serverTimestamp(),
+        });
+      }
 
       // Register competition in Partner Store for live partner revenue tracking
       try {
@@ -644,6 +692,7 @@ export function AdminCompetitionsPage() {
 
       setSubmitting(false);
       setSubmitted(true);
+      setDrawRefreshKey((k) => k + 1);
       toast.success(`${modalMode === "edit" ? "Competition updated" : "Competition created"}`, {
         description: `${form.assetName || form.name || "Untitled competition"} · saved as ${form.status} · ${compId}`,
       });
@@ -655,33 +704,162 @@ export function AdminCompetitionsPage() {
     }
   }
 
+  /** Create a real DRAFT copy of a competition in Firestore. */
+  async function duplicateCompetition(comp: MockComp) {
+    const base = `${comp.slug}-copy`;
+    let slug = base;
+    try {
+      const existing = await getDoc(doc(db, "competitions", slug));
+      if (existing.exists()) slug = `${base}-${Date.now().toString(36)}`;
+      const src = await getDoc(doc(db, "competitions", comp.slug));
+      const srcData = src.exists() ? (src.data() as Record<string, unknown>) : {};
+      const nowIso = new Date().toISOString();
+      await setDoc(doc(db, "competitions", slug), {
+        ...srcData,
+        slug,
+        title: `${String(srcData["title"] ?? comp.name)} (Copy)`,
+        status: "DRAFT",
+        entriesSold: 0,
+        entriesClosed: false,
+        entriesPaused: false,
+        winnerTicketNumber: null,
+        winnerUserId: null,
+        winnerName: null,
+        drawCompletedAt: null,
+        closedAt: null,
+        duplicatedFrom: comp.slug,
+        createdAt: serverTimestamp(),
+        updatedAt: nowIso,
+      });
+      await logActivity({
+        eventType: "COMPETITION_CREATE",
+        targetType: "competition",
+        targetId: slug,
+        summary: `Duplicated "${comp.name}" to draft (${slug})`,
+        details: { sourceSlug: comp.slug, newSlug: slug },
+      });
+      setDrawRefreshKey((k) => k + 1);
+      toast.success("Competition duplicated", {
+        description: `Copy of ${comp.name} created in DRAFT.`,
+      });
+    } catch (err) {
+      toast.error("Duplicate failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }
+
+  /** Pause or resume ticket sales without touching the draw lifecycle. */
+  async function togglePauseCompetition(comp: MockComp) {
+    const pausing = !comp.entriesPaused;
+    try {
+      await updateDoc(doc(db, "competitions", comp.slug), {
+        entriesPaused: pausing,
+        updatedAt: serverTimestamp(),
+      });
+      await logActivity({
+        eventType: "COMPETITION_UPDATE",
+        targetType: "competition",
+        targetId: comp.slug,
+        summary: pausing
+          ? `Paused entries for "${comp.name}"`
+          : `Resumed entries for "${comp.name}"`,
+        details: { slug: comp.slug, entriesPaused: pausing },
+      });
+      setDrawRefreshKey((k) => k + 1);
+      toast.success(pausing ? "Entries paused" : "Entries resumed", {
+        description: pausing
+          ? `${comp.name} is no longer accepting tickets.`
+          : `${comp.name} is accepting tickets again.`,
+      });
+    } catch (err) {
+      toast.error(pausing ? "Pause failed" : "Resume failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }
+
+  /** Load real performance stats and open the analytics dialog. */
+  async function openAnalytics(comp: MockComp) {
+    setAnalyticsFor(comp);
+    setAnalyticsData(null);
+    setAnalyticsLoading(true);
+    try {
+      const stats = await fetchDrawPoolStats(comp.slug).catch(() => ({
+        eligibleTickets: comp.entriesSold,
+        participants: 0,
+      }));
+      const progressPct =
+        comp.totalEntries > 0
+          ? Math.min(100, Math.round((comp.entriesSold / comp.totalEntries) * 100))
+          : 0;
+      setAnalyticsData({
+        entriesSold: comp.entriesSold,
+        totalEntries: comp.totalEntries,
+        revenueKobo: comp.entriesSold * comp.ticketPrice,
+        eligibleTickets: stats.eligibleTickets,
+        participants: stats.participants,
+        progressPct,
+      });
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }
+
+  /** Cancel a competition after confirmation (blocked once a winner exists). */
+  async function confirmCancel() {
+    if (!cancelTarget || cancelling) return;
+    const target = cancelTarget;
+    setCancelling(true);
+    try {
+      await updateDoc(doc(db, "competitions", target.slug), {
+        status: "CANCELLED",
+        entriesClosed: true,
+        updatedAt: serverTimestamp(),
+      });
+      await logActivity({
+        eventType: "COMPETITION_CANCEL",
+        targetType: "competition",
+        targetId: target.slug,
+        summary: `Cancelled competition "${target.name}" (no auto-refunds)`,
+        details: { slug: target.slug },
+      });
+      setCancelTarget(null);
+      setDrawRefreshKey((k) => k + 1);
+      toast.warning("Competition cancelled", {
+        description: `${target.name} moved to CANCELLED · no refunds auto-issued.`,
+      });
+    } catch (err) {
+      toast.error("Cancel failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   function performAction(comp: MockComp, action: string) {
     switch (action) {
       case "view":
-        toast.success("Opening competition page", { description: `${comp.name} on public site.` });
+        void navigate({
+          to: "/competitions/$slug",
+          params: { slug: comp.slug },
+        });
         break;
       case "edit":
         openEdit(comp);
         break;
       case "duplicate":
-        toast.success("Competition duplicated", {
-          description: `Copy of ${comp.name} created in DRAFT.`,
-        });
+        void duplicateCompetition(comp);
         break;
       case "pause":
-        toast.success(comp.status === "LIVE" ? "Competition paused" : "Competition resumed", {
-          description: `${comp.name} status toggled.`,
-        });
+        void togglePauseCompetition(comp);
         break;
       case "cancel":
-        toast.warning("Competition cancelled", {
-          description: `${comp.name} moved to CANCELLED · no refunds auto-issued.`,
-        });
+        setCancelTarget(comp);
         break;
       case "analytics":
-        toast.success("Analytics loading", {
-          description: `Performance snapshot for ${comp.name}.`,
-        });
+        void openAnalytics(comp);
         break;
       case "share":
         if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -894,6 +1072,10 @@ export function AdminCompetitionsPage() {
                 const hasWinner =
                   c.status === "WINNER_SELECTED" ||
                   (c.status === "COMPLETED" && rec?.winningTicketNumber);
+                const canPause =
+                  c.status === "LIVE" || c.status === "SCHEDULED" || !!c.entriesPaused;
+                const canCancel =
+                  !hasWinner && c.status !== "COMPLETED" && c.status !== "CANCELLED";
                 return (
                   <Card
                     key={c.id}
@@ -920,6 +1102,11 @@ export function AdminCompetitionsPage() {
                         <Badge className="rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-extrabold text-ink ring-0 backdrop-blur">
                           {c.category}
                         </Badge>
+                        {c.entriesPaused && (
+                          <Badge className="rounded-full bg-ink px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white ring-0">
+                            Paused
+                          </Badge>
+                        )}
                       </div>
                       <div className="absolute right-3 top-3">
                         <DropdownMenu>
@@ -969,17 +1156,19 @@ export function AdminCompetitionsPage() {
                               <Copy className="mr-2 size-4" />
                               Duplicate
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-cream focus:text-ink"
-                              onClick={() => performAction(c, "pause")}
-                            >
-                              {c.status === "LIVE" ? (
-                                <Pause className="mr-2 size-4" />
-                              ) : (
-                                <PlayCircle className="mr-2 size-4" />
-                              )}
-                              {c.status === "LIVE" ? "Pause entries" : "Resume entries"}
-                            </DropdownMenuItem>
+                            {canPause && (
+                              <DropdownMenuItem
+                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-cream focus:text-ink"
+                                onClick={() => performAction(c, "pause")}
+                              >
+                                {c.entriesPaused ? (
+                                  <PlayCircle className="mr-2 size-4" />
+                                ) : (
+                                  <Pause className="mr-2 size-4" />
+                                )}
+                                {c.entriesPaused ? "Resume entries" : "Pause entries"}
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-lilac/25 focus:text-ink"
                               onClick={() => performAction(c, "analytics")}
@@ -1013,13 +1202,15 @@ export function AdminCompetitionsPage() {
                               Copy public link
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-coral/15 focus:text-ink"
-                              onClick={() => performAction(c, "cancel")}
-                            >
-                              <AlertCircle className="mr-2 size-4" />
-                              Cancel draw
-                            </DropdownMenuItem>
+                            {canCancel && (
+                              <DropdownMenuItem
+                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-coral/15 focus:text-ink"
+                                onClick={() => performAction(c, "cancel")}
+                              >
+                                <AlertCircle className="mr-2 size-4" />
+                                Cancel competition
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15"
                               onClick={() => setDeleteTarget(c)}
@@ -1231,14 +1422,21 @@ export function AdminCompetitionsPage() {
                           {formatNaira(c.ticketPrice)}
                         </TableCell>
                         <TableCell className="py-3">
-                          <Badge
-                            className={cn(
-                              "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
-                              statusTone[c.status],
+                          <div className="flex items-center gap-1.5">
+                            <Badge
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                                statusTone[c.status],
+                              )}
+                            >
+                              {c.status}
+                            </Badge>
+                            {c.entriesPaused && (
+                              <Badge className="rounded-full bg-ink px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white ring-0">
+                                Paused
+                              </Badge>
                             )}
-                          >
-                            {c.status}
-                          </Badge>
+                          </div>
                         </TableCell>
                         <TableCell className="py-3 whitespace-nowrap text-xs font-bold text-ink/65">
                           {c.drawDate}
@@ -1590,6 +1788,142 @@ export function AdminCompetitionsPage() {
           <DialogFooter className="mt-5">
             <Button variant="outline" onClick={() => setResultFor(null)} className="w-full">
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---------------- Cancel competition confirmation ---------------- */}
+      <Dialog open={!!cancelTarget} onOpenChange={(v) => !v && !cancelling && setCancelTarget(null)}>
+        <DialogContent className="rounded-[28px] bg-white p-6 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
+              <span className="grid size-10 place-items-center rounded-2xl bg-coral/20">
+                <AlertCircle className="size-5 text-coral" />
+              </span>
+              Cancel competition
+            </DialogTitle>
+            <DialogDescription className="text-sm font-bold text-ink/60">
+              Entries close immediately and the competition leaves every sales tab.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 rounded-2xl bg-coral/10 p-4 ring-1 ring-coral/20">
+            <p className="text-sm font-extrabold text-ink">
+              {cancelTarget?.name}
+            </p>
+            <p className="mt-1 text-xs font-bold text-ink/60">
+              {cancelTarget?.slug} · {(cancelTarget?.entriesSold ?? 0).toLocaleString("en-NG")}{" "}
+              tickets sold
+            </p>
+          </div>
+          <p className="mt-3 text-xs font-bold leading-relaxed text-ink/60">
+            No refunds are issued automatically — handle payouts separately. This action is
+            logged for audit purposes. Cancelled competitions can no longer be drawn.
+          </p>
+          <DialogFooter className="mt-5 flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCancelTarget(null)}
+              disabled={cancelling}
+              className="flex-1"
+            >
+              Keep competition
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1 bg-coral hover:bg-coral/90"
+              disabled={cancelling}
+              onClick={() => void confirmCancel()}
+            >
+              {cancelling ? "Cancelling…" : "Cancel competition"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---------------- Competition analytics ---------------- */}
+      <Dialog open={!!analyticsFor} onOpenChange={(v) => !v && !analyticsLoading && setAnalyticsFor(null)}>
+        <DialogContent className="rounded-[28px] bg-white p-6 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
+              <span className="grid size-10 place-items-center rounded-2xl bg-lilac/25">
+                <TrendingUp className="size-5 text-ink" />
+              </span>
+              Analytics
+            </DialogTitle>
+            <DialogDescription className="text-sm font-bold text-ink/60">
+              {analyticsFor?.name} · live Firestore figures
+            </DialogDescription>
+          </DialogHeader>
+          {analyticsLoading || !analyticsData ? (
+            <p className="mt-4 rounded-2xl bg-cream/60 px-4 py-8 text-center text-sm font-bold text-ink/55 ring-1 ring-ink/10">
+              Loading performance snapshot…
+            </p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-cream/60 p-3.5 ring-1 ring-ink/10">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                    Entries sold
+                  </p>
+                  <p className="font-display text-2xl font-extrabold tabular-nums text-ink">
+                    {analyticsData.entriesSold.toLocaleString("en-NG")}
+                    <span className="text-sm text-ink/50">
+                      {" "}
+                      / {analyticsData.totalEntries.toLocaleString("en-NG")}
+                    </span>
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-cream/60 p-3.5 ring-1 ring-ink/10">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                    Revenue
+                  </p>
+                  <p className="font-display text-2xl font-extrabold tabular-nums text-ink">
+                    {formatNaira(analyticsData.revenueKobo)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-cream/60 p-3.5 ring-1 ring-ink/10">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                    Eligible tickets
+                  </p>
+                  <p className="font-display text-2xl font-extrabold tabular-nums text-ink">
+                    {analyticsData.eligibleTickets.toLocaleString("en-NG")}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-cream/60 p-3.5 ring-1 ring-ink/10">
+                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                    Participants
+                  </p>
+                  <p className="font-display text-2xl font-extrabold tabular-nums text-ink">
+                    {analyticsData.participants.toLocaleString("en-NG")}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <div className="mb-1.5 flex items-center justify-between text-[11px] font-extrabold text-ink/60">
+                  <span>Sales progress</span>
+                  <span>{analyticsData.progressPct}%</span>
+                </div>
+                <Progress value={analyticsData.progressPct} />
+              </div>
+              <p className="text-xs font-bold text-ink/55">
+                Status · {analyticsFor?.status} · {analyticsFor?.partner}
+              </p>
+            </div>
+          )}
+          <DialogFooter className="mt-5">
+            <Button variant="outline" onClick={() => setAnalyticsFor(null)} className="flex-1">
+              Close
+            </Button>
+            <Button
+              variant="primary"
+              className="flex-1"
+              onClick={() => {
+                if (analyticsFor) setEntriesFor(analyticsFor.id);
+                setAnalyticsFor(null);
+              }}
+            >
+              <Ticket className="size-4" /> Manage entries
             </Button>
           </DialogFooter>
         </DialogContent>

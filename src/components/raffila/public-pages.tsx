@@ -96,6 +96,7 @@ import {
   featuredCompetition,
   formatNaira,
   getProgress,
+  getEntriesRemaining,
   faqs,
   competitionFaqs,
   winnerCards,
@@ -103,6 +104,11 @@ import {
   applySort,
   type SortKey,
   REWARD_POOL,
+  BROWSE_BY_NEED,
+  TRUST_SIGNALS,
+  BUDGET_FILTERS,
+  matchesBudget,
+  trackEvent,
 } from "@/lib/raffila-data";
 import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
 import { HeroFeaturedCarousel } from "@/components/raffila/hero-carousel";
@@ -124,20 +130,31 @@ export function HomePage() {
             <BadgeCheck className="size-3.5 text-mint" /> Verifiable draw
           </Pill>
         </div>
-        <h1 className="raf-rise mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[0.92] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-          Big prizes.
+        <h1 className="raf-rise mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[0.95] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+          Big opportunities.
           <br />
-          <span className="text-coral">Fair chances.</span>
+          Affordable entries. <span className="text-coral">Transparent draws.</span>
         </h1>
         <div className="mt-5 flex max-w-2xl flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <p className="max-w-xl text-base leading-relaxed text-ink/65 sm:text-lg">
-            Pick a premium prize, secure your entries, and follow the journey to the draw.
+            What can you win? Can you afford to enter? Is Raffila trustworthy? Start with the
+            prize — no wallet needed to browse.
           </p>
-          <div className="flex shrink-0 items-center gap-2 text-xs font-extrabold text-ink/50">
-            <span className="grid size-8 place-items-center rounded-full bg-mint/40 text-ink">
-              ₦
-            </span>{" "}
-            Built for Africa
+          <div className="flex shrink-0 flex-col gap-3 sm:items-end">
+            <Button asChild variant="primary" size="lg" className="min-h-12 text-base">
+              <Link
+                to="/competitions"
+                onClick={() => trackEvent("competition_card_click", { source: "hero" })}
+              >
+                Explore Competitions <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <div className="flex shrink-0 items-center gap-2 text-xs font-extrabold text-ink/50">
+              <span className="grid size-8 place-items-center rounded-full bg-mint/40 text-ink">
+                ₦
+              </span>{" "}
+              Built for Africa
+            </div>
           </div>
         </div>
 
@@ -191,6 +208,10 @@ export function HomePage() {
         </div>
       </section>
 
+      <PopularUnder1000 competitions={competitions} />
+
+      <TrustStrip />
+
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <SectionHeading
           eyebrow="Curated for you"
@@ -198,6 +219,10 @@ export function HomePage() {
           linkLabel="See all competitions"
           linkTo="/competitions"
         />
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/60">
+          A mix of affordable everyday prizes and aspirational premium prizes. Entry price,
+          entries remaining, closing date and verified partner are always visible.
+        </p>
         <div className="mt-5 grid gap-4 lg:grid-cols-3">
           <CompetitionCard competition={competitions[1]!} />
           <CompetitionCard competition={competitions[2]!} />
@@ -206,6 +231,8 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      <BrowseByNeed competitions={competitions} />
 
       <HowItWorksPreview />
 
@@ -364,6 +391,7 @@ type StatusKey = "all" | "live" | "starting-soon" | "ending-soon" | "completed";
 export type CompetitionsFilterState = {
   query: string;
   category: string;
+  budget: string;
   sort: SortKey;
   status: StatusKey;
   priceMinKobo: number;
@@ -393,6 +421,7 @@ export function CompetitionsFilterBar({
     let n = 0;
     if (state.query.trim()) n++;
     if (state.category !== "All") n++;
+    if ((state as any).budget && (state as any).budget !== "all") n++;
     if (state.status !== "all") n++;
     if (state.partners.length > 0) n++;
     if (state.priceMinKobo !== priceMinBoundKobo || state.priceMaxKobo !== priceMaxBoundKobo) n++;
@@ -402,6 +431,7 @@ export function CompetitionsFilterBar({
     setState({
       query: "",
       category: "All",
+      budget: "all",
       sort: "ending-soon",
       status: "all",
       priceMinKobo: priceMinBoundKobo,
@@ -444,7 +474,10 @@ export function CompetitionsFilterBar({
                   <button
                     key={cat}
                     type="button"
-                    onClick={() => setState((s) => ({ ...s, category: cat, page: 1 }))}
+                    onClick={() => {
+                      trackEvent("category_click", { category: cat });
+                      setState((s) => ({ ...s, category: cat, page: 1 }));
+                    }}
                     className={cn(
                       "shrink-0 rounded-full px-4 py-2 text-xs font-extrabold transition-transform hover:-translate-y-px",
                       active
@@ -453,6 +486,46 @@ export function CompetitionsFilterBar({
                     )}
                   >
                     {cat}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex flex-col gap-2" aria-label="Budget filter">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              Budget — what can you afford?
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setState((s) => ({ ...s, budget: "all", page: 1 }))}
+                className={cn(
+                  "shrink-0 rounded-full px-4 py-2 text-xs font-extrabold ring-1 transition-colors",
+                  state.budget === "all"
+                    ? "bg-ink text-cream ring-ink"
+                    : "bg-cream text-ink ring-ink/10 hover:bg-lemon/40",
+                )}
+              >
+                All prices
+              </button>
+              {BUDGET_FILTERS.map((b) => {
+                const active = state.budget === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => {
+                      trackEvent("budget_filter_use", { budget: b.id });
+                      setState((s) => ({ ...s, budget: b.id, page: 1 }));
+                    }}
+                    className={cn(
+                      "shrink-0 rounded-full px-4 py-2 text-xs font-extrabold ring-1 transition-colors",
+                      active
+                        ? "bg-coral text-paper ring-coral shadow-[0_8px_20px_-8px_var(--coral)]"
+                        : "bg-cream text-ink ring-ink/10 hover:bg-lemon/40",
+                    )}
+                  >
+                    {b.label}
                   </button>
                 );
               })}
@@ -468,19 +541,19 @@ export function CompetitionsFilterBar({
               </SelectTrigger>
               <SelectContent className="rounded-2xl border-0 bg-paper p-1 font-body shadow-lg ring-1 ring-ink/10">
                 <SelectItem value="ending-soon" className="rounded-xl text-xs font-bold">
-                  Ending soon
+                  Closing soon
                 </SelectItem>
                 <SelectItem value="newest" className="rounded-xl text-xs font-bold">
-                  Newest
+                  New
                 </SelectItem>
                 <SelectItem value="price-asc" className="rounded-xl text-xs font-bold">
-                  Price: Low to high
+                  Price
                 </SelectItem>
                 <SelectItem value="price-desc" className="rounded-xl text-xs font-bold">
                   Price: High to low
                 </SelectItem>
                 <SelectItem value="most-entries" className="rounded-xl text-xs font-bold">
-                  Most entries
+                  Popular
                 </SelectItem>
                 <SelectItem value="featured-first" className="rounded-xl text-xs font-bold">
                   Featured first
@@ -643,6 +716,15 @@ export function CompetitionsFilterBar({
                   ✕ {state.category}
                 </button>
               )}
+              {state.budget !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => setState((s) => ({ ...s, budget: "all", page: 1 }))}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-coral/15 px-3 py-1 text-[11px] font-extrabold text-ink ring-1 ring-coral/25 hover:bg-coral/25"
+                >
+                  ✕ {BUDGET_FILTERS.find((b) => b.id === state.budget)?.label ?? state.budget}
+                </button>
+              )}
               {state.status !== "all" && (
                 <button
                   type="button"
@@ -702,6 +784,7 @@ export function CompetitionsPage() {
   const [state, setState] = useState<CompetitionsFilterState>({
     query: "",
     category: "All",
+    budget: "all",
     sort: "ending-soon",
     status: "all",
     priceMinKobo: priceMinBoundKobo,
@@ -716,6 +799,7 @@ export function CompetitionsPage() {
     const q = state.query.trim().toLowerCase();
     const list = competitions.filter((c) => {
       if (state.category !== "All" && c.category !== state.category) return false;
+      if (!matchesBudget(c.entryPrice, (state.budget as any) ?? "all")) return false;
       if (q) {
         const hay =
           `${c.title} ${c.description} ${c.partner} ${c.category} ${c.specs.join(" ")}`.toLowerCase();
@@ -778,6 +862,7 @@ export function CompetitionsPage() {
                     ...s,
                     query: "",
                     category: "All",
+                    budget: "all",
                     status: "all",
                     partners: [],
                     priceMinKobo: priceMinBoundKobo,
@@ -1226,19 +1311,76 @@ export function CompetitionDetailPage() {
               <Button
                 variant="primary"
                 size="lg"
-                className="w-full shadow-[0_12px_28px_-12px_var(--coral)]"
+                className="min-h-12 w-full text-base shadow-[0_12px_28px_-12px_var(--coral)]"
                 onClick={() => setModalOpen(true)}
                 disabled={ticketsLeft === 0}
               >
                 <Ticket className="size-4" />
-                {`Enter now · ${safeQty} ticket${safeQty === 1 ? "" : "s"}`}{" "}
+                {`Enter for ${formatNaira(totalKobo)} · ${safeQty} ticket${safeQty === 1 ? "" : "s"}`}{" "}
                 <ArrowRight className="size-4" />
               </Button>
+              <p className="text-center text-xs font-bold text-ink/60">
+                {ticketsLeft.toLocaleString("en-NG")} entries remaining · Closes {competition.closes} ·
+                Draw {competition.drawDate}
+              </p>
               <p className="text-center text-xs font-bold text-ink/45">
                 Tickets reserved for 5 minutes · Wallet &amp; Referrals only · Limit {maxQty}{" "}
-                tickets per draw
+                tickets per draw ·{" "}
+                <Link to="/faq" className="font-extrabold text-coral underline underline-offset-2">
+                  Get help with this entry
+                </Link>
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Trust at point of payment (PDF §5): summary + trust panels */}
+        <div className="mt-8 grid gap-3 lg:grid-cols-3">
+          <div className="rounded-[22px] bg-paper p-5 ring-1 ring-ink/5">
+            <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              <BadgeCheck className="size-4 text-mint" /> Prize verified
+            </p>
+            <p className="mt-2 text-sm font-bold leading-relaxed text-ink/70">
+              {competition.prizeCondition}. Partner {competition.partner} verified.{" "}
+              {competition.warranty ? `${competition.warranty}. ` : ""}Serial {competition.serialNo}.
+            </p>
+            <Link
+              to="/trust-safety"
+              className="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-coral hover:underline"
+            >
+              How we verify <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+          <div className="rounded-[22px] bg-paper p-5 ring-1 ring-ink/5">
+            <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              <ShieldCheck className="size-4 text-coral" /> How the draw works
+            </p>
+            <p className="mt-2 text-sm font-bold leading-relaxed text-ink/70">
+              Entries freeze at close. Winner picked by verifiable draw and published publicly.
+              Draw: {competition.drawDate}.
+            </p>
+            <Link
+              to="/draw-verification/$campaign"
+              params={{ campaign: competition.slug }}
+              className="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-coral hover:underline"
+            >
+              Verify a draw <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
+          <div className="rounded-[22px] bg-paper p-5 ring-1 ring-ink/5">
+            <p className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              <Award className="size-4 text-raf-gold" /> What happens if I win?
+            </p>
+            <p className="mt-2 text-sm font-bold leading-relaxed text-ink/70">
+              We contact you within 48 hours, verify your account, and arrange delivery or
+              collection. See prize condition, delivery and FAQs below.
+            </p>
+            <Link
+              to="/winners"
+              className="mt-2 inline-flex items-center gap-1 text-xs font-extrabold text-coral hover:underline"
+            >
+              See real winners <ArrowRight className="size-3.5" />
+            </Link>
           </div>
         </div>
 
@@ -2642,6 +2784,90 @@ export function AuthPreviewPage() {
   );
 }
 
+function PopularUnder1000({ competitions }: { competitions: Competition[] }) {
+  const affordable = competitions.filter((c) => c.entryPrice <= 1000 * 100).slice(0, 6);
+  useEffect(() => {
+    if (affordable.length > 0) trackEvent("popular_under_1000_view", { count: affordable.length });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  if (affordable.length === 0) return null;
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12" aria-label="Popular under 1000 naira">
+      <SectionHeading
+        eyebrow="Affordable discovery"
+        title="Popular Under ₦1,000"
+        linkLabel="See all competitions"
+        linkTo="/competitions"
+      />
+      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/60">
+        Lowest-cost opportunities, visible immediately. No wallet needed to browse.
+      </p>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {affordable.map((c) => (
+          <CompetitionCard key={c.slug} competition={c} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function TrustStrip() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Why trust Raffila">
+      <div className="grid grid-cols-2 gap-3 rounded-[28px] bg-paper p-4 ring-1 ring-ink/5 sm:p-6 lg:grid-cols-4">
+        {TRUST_SIGNALS.map((s) => (
+          <div key={s.id} className="flex items-center gap-2.5 rounded-2xl bg-cream/60 px-4 py-3 ring-1 ring-ink/5">
+            <BadgeCheck className="size-5 shrink-0 text-mint" aria-hidden />
+            <span className="text-xs font-extrabold text-ink sm:text-sm">{s.label}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BrowseByNeed({ competitions }: { competitions: Competition[] }) {
+  const countFor = (id: string): number => {
+    if (id === "under-1000") return competitions.filter((c) => c.entryPrice <= 1000 * 100).length;
+    if (id === "premium") return competitions.filter((c) => c.entryPrice > 5000 * 100).length;
+    const col = BROWSE_BY_NEED.find((b) => b.id === id);
+    const cat = (col?.filter as { category?: string })?.category;
+    if (!cat) return 0;
+    return competitions.filter((c) => c.category === cat).length;
+  };
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12" aria-label="Browse by need">
+      <SectionHeading
+        eyebrow="Start with your goal"
+        title="Browse by need"
+        linkLabel="See all competitions"
+        linkTo="/competitions"
+      />
+      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/60">
+        Formal categories filter the prize. Collections start from what you want to achieve.
+      </p>
+      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {BROWSE_BY_NEED.map((col) => (
+          <Link
+            key={col.id}
+            to="/competitions"
+            onClick={() => trackEvent("category_click", { collection: col.id })}
+            className="group rounded-[22px] bg-paper p-5 ring-1 ring-ink/5 transition-transform hover:-translate-y-0.5"
+          >
+            <p className="font-display text-base font-extrabold leading-tight text-ink sm:text-lg">
+              {col.title}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-ink/55">{col.text}</p>
+            <p className="mt-3 inline-flex items-center gap-1 text-xs font-extrabold text-coral">
+              {countFor(col.id)} available <ArrowRight className="size-3.5" />
+            </p>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function HowItWorksPreview() {
   return (
     <section className="bg-lilac/20">
@@ -2654,12 +2880,12 @@ function HowItWorksPreview() {
         />
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {[
-            { title: "Create your account", desc: "Sign up in seconds — email or Google, no paperwork." },
-            { title: "Fund your wallet", desc: "Top up with card or transfer via Paystack in one tap." },
-            { title: "Choose a prize", desc: "Browse premium gadgets, phones, and lifestyle products." },
-            { title: "Buy entries", desc: "Pick how many entries you want and confirm — you're in." },
-            { title: "Watch the draw", desc: "Every draw is live on camera — fully transparent, no tricks." },
-            { title: "Be the winner", desc: "Winners are notified instantly and prizes ship to your door." },
+            { title: "1. Choose a prize", desc: "Browse first — no money asked up front." },
+            { title: "2. Choose entries", desc: "Price and total shown clearly before payment." },
+            { title: "3. Create account", desc: "Phone/OTP prominently, email/Google also available." },
+            { title: "4. Pay securely", desc: "Direct payment and/or wallet, subject to provider review." },
+            { title: "5. Get confirmation", desc: "Entry numbers and draw date shown immediately." },
+            { title: "6. Follow result", desc: "Simple My Entries screen + verifiable draw result." },
           ].map((step, index) => (
             <div key={step.title} className="rounded-[20px] bg-paper p-4 ring-1 ring-ink/5">
               <span className="font-display text-2xl font-extrabold text-coral">{index + 1}</span>
@@ -2781,6 +3007,102 @@ function LegalSection({
       </div>
       <div className="mt-5 pl-12 sm:pl-14">{children}</div>
     </section>
+  );
+}
+
+export function TrustSafetyPage() {
+  return (
+    <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
+      <PageIntro
+        eyebrow="Trust & Safety"
+        title="How Raffila keeps prizes, payments and draws trustworthy"
+        text="Plain-English explanations plus the public verification record. Trust signals also appear beside every competition decision — not only on legal pages."
+      />
+      <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5 sm:p-8">
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-ink/45">
+            Prize verification
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
+            How Raffila checks prizes and partners
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-ink/65">
+            Every prize is inspected, documented with serial numbers and condition, and consigned
+            by a verified enterprise partner before entries open. Custody and escrow guarantees
+            apply where stated on the competition page.
+          </p>
+          <Button asChild variant="outline" size="md" className="mt-4 min-h-11">
+            <Link to="/become-a-partner">For asset owners — become a partner</Link>
+          </Button>
+        </div>
+        <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5 sm:p-8">
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-ink/45">
+            Payment security
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
+            How payments and records are handled
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-ink/65">
+            The Raffila Wallet is spend-only and non-withdrawable — designed for entries, not cash
+            storage. Referral earnings are separate and may be used for entries or requested as
+            payout subject to review. Card, bank transfer and USSD unlock only after
+            payment-provider review. Every transaction keeps a receipt in My Entries.
+          </p>
+          <Button asChild variant="outline" size="md" className="mt-4 min-h-11">
+            <Link to="/dashboard/entries">View My Entries</Link>
+          </Button>
+        </div>
+        <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5 sm:p-8">
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-ink/45">
+            Draw verification
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
+            Plain-English verifiable draws
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-ink/65">
+            When a competition closes, entries freeze. A secure, verifiable process picks the
+            winner and the full public record is published so anyone can check it — no hidden
+            steps.
+          </p>
+          <Button asChild variant="outline" size="md" className="mt-4 min-h-11">
+            <Link to="/draw-verification/$campaign" params={{ campaign: "example" }}>
+              Open draw verification
+            </Link>
+          </Button>
+        </div>
+        <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5 sm:p-8">
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-ink/45">
+            Winner fulfilment
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-extrabold text-ink">
+            How winners are contacted and prizes delivered
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-ink/65">
+            Winners are contacted within 48 hours on the account email and phone, complete
+            verification, then choose delivery or collection as stated in the prize details.
+          </p>
+          <Button asChild variant="outline" size="md" className="mt-4 min-h-11">
+            <Link to="/winners">See real winners</Link>
+          </Button>
+        </div>
+      </div>
+      <div className="mt-8 rounded-[28px] bg-lemon/40 p-6 ring-1 ring-ink/5 sm:p-8">
+        <h2 className="font-display text-xl font-extrabold text-ink">Responsible participation</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-ink/65">
+          Raffila shows factual entries remaining, closing date, total cost and clear status. We
+          avoid artificial scarcity, flashing urgency and repeated buy-more prompts. You can set a
+          voluntary weekly spending alert from your account.
+        </p>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="dark" size="md" className="min-h-11">
+            <Link to="/competition-rules">Read competition rules</Link>
+          </Button>
+          <Button asChild variant="outline" size="md" className="min-h-11">
+            <Link to="/faq">Get support</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

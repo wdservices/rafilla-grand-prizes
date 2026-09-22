@@ -74,6 +74,12 @@ export function SiteFooter() {
           <Link to="/competition-rules" className="hover:text-cream break-words">
             Competition rules
           </Link>
+          <Link to="/trust-safety" className="hover:text-cream break-words">
+            Trust & Safety
+          </Link>
+          <Link to="/dashboard/entries" className="hover:text-cream break-words">
+            My Entries
+          </Link>
         </div>
       </div>
       <div className="mt-5 flex flex-col gap-3 px-1 text-xs font-bold text-ink/45 sm:flex-row sm:items-center sm:justify-between">

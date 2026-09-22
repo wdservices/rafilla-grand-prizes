@@ -11,6 +11,8 @@ const links = [
   { label: "Competitions", to: "/competitions" as const },
   { label: "How it works", to: "/how-it-works" as const },
   { label: "Winners", to: "/winners" as const },
+  { label: "Trust & Safety", to: "/trust-safety" as const },
+  { label: "My Entries", to: "/dashboard/entries" as const },
   { label: "Become a partner", to: "/partner-signup" as const },
   { label: "About Raffila", to: "/about" as const },
   { label: "FAQ", to: "/faq" as const },

@@ -40,14 +40,154 @@ export type Competition = {
 export const categories = [
   "All",
   "Vehicles",
+  "Homes & Property",
   "Electronics",
-  "Homes",
-  "Fashion",
-  "Jewelry",
-  "Business grants",
+  "Furniture & Appliances",
+  "Education",
+  "Cash & Business",
+  "Travel & Experiences",
+  "Fashion & Luxury",
   "Lifestyle",
   "Collectibles",
 ];
+
+/** Legacy category names mapped to final taxonomy (for Firestore migration). */
+export const LEGACY_CATEGORY_MAP: Record<string, string> = {
+  Homes: "Homes & Property",
+  Fashion: "Fashion & Luxury",
+  Jewelry: "Fashion & Luxury",
+  "Business grants": "Cash & Business",
+};
+
+/** Budget navigation — separate from category (PDF §3). Amounts in kobo. */
+export const BUDGET_FILTERS = [
+  { id: "under-500", label: "Under ₦500", maxKobo: 500 * 100 },
+  { id: "under-1000", label: "Under ₦1,000", maxKobo: 1000 * 100 },
+  { id: "under-2500", label: "Under ₦2,500", maxKobo: 2500 * 100 },
+  { id: "under-5000", label: "Under ₦5,000", maxKobo: 5000 * 100 },
+  { id: "premium", label: "Premium", minKobo: 5000 * 100 },
+] as const;
+
+export type BudgetFilterId = (typeof BUDGET_FILTERS)[number]["id"];
+
+export function matchesBudget(entryPriceKobo: number, budget: BudgetFilterId | "all"): boolean {
+  if (budget === "all") return true;
+  const f = BUDGET_FILTERS.find((b) => b.id === budget);
+  if (!f) return true;
+  if (f.id === "premium") return entryPriceKobo > 5000 * 100;
+  return entryPriceKobo <= (f as { maxKobo: number }).maxKobo;
+}
+
+/** Homepage human collections — Browse by Need (PDF §10). */
+export const BROWSE_BY_NEED = [
+  {
+    id: "under-1000",
+    title: "Popular Under ₦1,000",
+    text: "Affordable entries anyone can try",
+    filter: { budget: "under-1000" as BudgetFilterId },
+  },
+  {
+    id: "education",
+    title: "Education Opportunities",
+    text: "School fees, certifications, study support",
+    filter: { category: "Education" },
+  },
+  {
+    id: "home",
+    title: "Upgrade My Home",
+    text: "Furniture, appliances, power solutions",
+    filter: { category: "Furniture & Appliances" },
+  },
+  {
+    id: "business",
+    title: "Start or Grow a Business",
+    text: "Equipment & support, subject to review",
+    filter: { category: "Cash & Business" },
+  },
+  { id: "cars", title: "Cars & Mobility", text: "Cars, motorcycles and mobility", filter: { category: "Vehicles" } },
+  {
+    id: "tech",
+    title: "Phones & Technology",
+    text: "Phones, laptops and electronics",
+    filter: { category: "Electronics" },
+  },
+  {
+    id: "travel",
+    title: "Travel & Experiences",
+    text: "Trips and experiences",
+    filter: { category: "Travel & Experiences" },
+  },
+  { id: "premium", title: "Premium Lifestyle", text: "Higher-value aspirational prizes", filter: { budget: "premium" as BudgetFilterId } },
+];
+
+/** Trust strip items (PDF §2 hero trust). */
+export const TRUST_SIGNALS = [
+  { id: "verified", label: "Verified prizes" },
+  { id: "secure", label: "Secure payments" },
+  { id: "transparent", label: "Transparent entries" },
+  { id: "verifiable", label: "Verifiable draws" },
+];
+
+/** Payment methods shown before commit (PDF §7). Direct methods gated by provider review. */
+export const PAYMENT_METHODS = [
+  { id: "wallet", label: "Raffila Wallet", note: "Spend-only. Not withdrawable.", available: true },
+  { id: "card", label: "Card", note: "Subject to payment provider review", available: false },
+  { id: "bank", label: "Bank transfer", note: "Subject to payment provider review", available: false },
+  { id: "ussd", label: "USSD", note: "Subject to payment provider review", available: false },
+  { id: "referral", label: "Referral earnings", note: "May be used for entries", available: true },
+];
+
+/** Analytics events to instrument (PDF §15). */
+export const ANALYTICS_EVENTS = [
+  "registration_start",
+  "registration_complete",
+  "otp_fail",
+  "category_click",
+  "budget_filter_use",
+  "popular_under_1000_view",
+  "popular_under_1000_click",
+  "competition_card_click",
+  "entry_qty_change",
+  "checkout_start",
+  "payment_success",
+  "payment_fail",
+  "support_open",
+  "my_entries_view",
+] as const;
+
+export function trackEvent(name: (typeof ANALYTICS_EVENTS)[number], details?: Record<string, unknown>) {
+  try {
+    if (typeof window !== "undefined") {
+      (window as any).__raffilaAnalytics = (window as any).__raffilaAnalytics || [];
+      (window as any).__raffilaAnalytics.push({ name, details, at: new Date().toISOString() });
+      import("./activity-log")
+        .then(({ logActivity }) =>
+          logActivity({
+            eventType: "CONFIG_CHANGE",
+            targetType: "analytics",
+            targetId: name,
+            summary: `Analytics: ${name}`,
+            details: details ?? {},
+          }),
+        )
+        .catch(() => {});
+    }
+  } catch {
+    // never break UX for analytics
+  }
+}
+
+/** Entries remaining helper (PDF §4 card facts). */
+export const getEntriesRemaining = (c: Competition) =>
+  Math.max(0, c.totalEntries - c.entriesSold);
+
+/** Chronology guard: draw must be after close (PDF §5 P0). */
+export function isDrawChronologyValid(closesRaw: string, drawRaw: string): boolean {
+  const c = new Date(closesRaw).getTime();
+  const d = new Date(drawRaw).getTime();
+  if (Number.isNaN(c) || Number.isNaN(d)) return true; // unparseable display strings pass through
+  return d > c;
+}
 
 export const partners = [
   "Lekki Luxury Autos",
@@ -100,7 +240,7 @@ export const competitions: Competition[] = [
       "Panoramic sunroof",
       "360° camera",
     ],
-    drawDate: "Fri 3 Oct 2026 · 6:00 PM WAT",
+    drawDate: "Tue 20 Oct 2026 · 6:00 PM WAT",
     prizeCondition: "Brand new",
     warranty: "1-yr manufacturer warranty",
     make: "Mercedes-Benz",
@@ -144,7 +284,7 @@ export const competitions: Competition[] = [
       "Tablet",
       "Wireless charger",
     ],
-    drawDate: "Mon 8 Sep 2026 · 4:00 PM WAT",
+    drawDate: "Wed 7 Oct 2026 · 4:00 PM WAT",
     prizeCondition: "Brand new, sealed",
     warranty: "1-yr manufacturer warranty",
     make: "Nova",
@@ -168,7 +308,7 @@ export const competitions: Competition[] = [
   {
     slug: "luxury-2-bed-apartment",
     title: "Luxury 2-Bed Apartment — Lekki",
-    category: "Homes",
+    category: "Homes & Property",
     partner: "Abeokuta Homes",
     description:
       "A bright contemporary apartment designed for calm city living, entertaining, and everyday comfort. Located in the heart of Lekki Phase 1 with stunning lagoon views, premium finishes, and world-class amenities.",
@@ -305,7 +445,7 @@ export const competitions: Competition[] = [
   {
     slug: "3-bed-duplex-ikeja",
     title: "3-Bed Duplex with BQ — Ikeja GRA",
-    category: "Homes",
+    category: "Homes & Property",
     partner: "Abeokuta Homes",
     description:
       "A magnificent detached duplex in the serene environment of Ikeja GRA. Featuring spacious rooms, a private compound, BQ, modern kitchen, and premium finishes throughout.",
@@ -327,7 +467,7 @@ export const competitions: Competition[] = [
       "CCTV wired",
       "Solar inverter backup",
     ],
-    drawDate: "Wed 21 Jan 2026 · 6:00 PM WAT",
+    drawDate: "Sun 17 Jan 2027 · 6:00 PM WAT",
     prizeCondition: "Brand new, fully fitted",
     warranty: "2-yr developer warranty",
     make: "Abeokuta Homes Ltd",
@@ -350,7 +490,7 @@ export const competitions: Competition[] = [
   {
     slug: "designer-wedding-gown",
     title: "Couture Wedding Gown Experience",
-    category: "Fashion",
+    category: "Fashion & Luxury",
     partner: "Abuja Fashion Hub",
     description:
       "A bespoke couture wedding gown experience with the top designer at Abuja Fashion Hub. Includes 5 fittings, premium lace and silk, and a complimentary reception dress.",
@@ -394,7 +534,7 @@ export const competitions: Competition[] = [
   {
     slug: "mens-designer-wardrobe",
     title: "Gentleman's Designer Wardrobe Refresh",
-    category: "Fashion",
+    category: "Fashion & Luxury",
     partner: "Abuja Fashion Hub",
     description:
       "A complete luxury wardrobe refresh featuring bespoke suits, handmade shoes, premium casual wear, and a personal styling session worth ₦500,000.",
@@ -438,7 +578,7 @@ export const competitions: Competition[] = [
   {
     slug: "diamond-set-necklace",
     title: "18K Gold Diamond Set Necklace",
-    category: "Jewelry",
+    category: "Fashion & Luxury",
     partner: "Lagos Jewels Co.",
     description:
       "A breathtaking 18K gold necklace set with 3.2 carats of VS-clarity natural diamonds. Comes with GIA certification and a complimentary jewelry appraisal for insurance.",
@@ -482,7 +622,7 @@ export const competitions: Competition[] = [
   {
     slug: "mens-luxury-watch",
     title: "Swiss Automatic Chronograph Watch",
-    category: "Jewelry",
+    category: "Fashion & Luxury",
     partner: "Lagos Jewels Co.",
     description:
       "An iconic Swiss-made automatic chronograph in stainless steel with exhibition caseback. Paired with an authentic leather travel roll and 5-year service voucher.",
@@ -503,7 +643,7 @@ export const competitions: Competition[] = [
       "Exhibition caseback",
       "200m water resistance",
     ],
-    drawDate: "Fri 19 Sep 2026 · 4:00 PM WAT",
+    drawDate: "Wed 14 Oct 2026 · 4:00 PM WAT",
     prizeCondition: "Brand new with tags",
     warranty: "5-yr international warranty",
     make: "Swiss Master Chronometers",
@@ -526,7 +666,7 @@ export const competitions: Competition[] = [
   {
     slug: "small-business-grant",
     title: "₦10 Million Small Business Grant",
-    category: "Business grants",
+    category: "Cash & Business",
     partner: "Lekki Luxury Autos",
     description:
       "A ₦10 million naira grant package designed for ambitious Nigerian entrepreneurs. Includes funding, 3 months of business consulting, and a 1-year SME software subscription bundle.",
@@ -570,7 +710,7 @@ export const competitions: Competition[] = [
   {
     slug: "tech-startup-seed",
     title: "Tech Founders Seed Package",
-    category: "Business grants",
+    category: "Cash & Business",
     partner: "Nova Electronics",
     description:
       "A comprehensive package for tech founders including ₦5M cash, AWS credits, mentorship, and free co-working space for 12 months at a premium Lagos hub.",
@@ -613,7 +753,7 @@ export const competitions: Competition[] = [
   {
     slug: "dubai-vacation-package",
     title: "7-Day Dubai Luxury Vacation for 2",
-    category: "Lifestyle",
+    category: "Travel & Experiences",
     partner: "Abuja Fashion Hub",
     description:
       "A dream 7-day 5-star trip to Dubai for 2 including Business Class flights, Burj Al Arab stay, desert safari, yacht cruise, and spending money.",
@@ -658,7 +798,7 @@ export const competitions: Competition[] = [
   {
     slug: "home-renovation-voucher",
     title: "Full Home Renovation Package",
-    category: "Lifestyle",
+    category: "Furniture & Appliances",
     partner: "Abeokuta Homes",
     description:
       "A complete interior design and renovation package covering a 3-bedroom apartment — kitchen, bathrooms, flooring, painting, and premium furniture.",
@@ -748,12 +888,12 @@ export const competitions: Competition[] = [
   {
     slug: "first-edition-novel-collection",
     title: "Nigerian Literary First Editions Set",
-    category: "Collectibles",
+    category: "Education",
     partner: "Abuja Fashion Hub",
     description:
       "A rare collection of 15 signed first-edition Nigerian literary classics including Achebe, Soyinka, Okri, Adichie, and more. Custom leather slipcase with certificate of authenticity.",
     prizeValueKobo: mk(2_200_000),
-    entryPrice: mk(2_200),
+    entryPrice: mk(500),
     totalEntries: 10_000,
     entriesSold: 3_700,
     closes: "5 Dec 2026 · 11:59 PM",
@@ -813,7 +953,7 @@ export const competitions: Competition[] = [
       "Sport suspension",
       "9-speaker JBL audio",
     ],
-    drawDate: "Tue 7 Oct 2026 · 5:00 PM WAT",
+    drawDate: "Sat 10 Oct 2026 · 5:00 PM WAT",
     prizeCondition: "Brand new",
     warranty: "3-yr warranty + free servicing",
     make: "Toyota",
@@ -971,7 +1111,7 @@ export const competitions: Competition[] = [
   {
     slug: "1-bedroom-terrace-abuja",
     title: "1-Bed Terrace Duplex — Wuye, Abuja",
-    category: "Homes",
+    category: "Homes & Property",
     partner: "Abeokuta Homes",
     description:
       "Modern 1-bed terrace duplex in the fast-developing Wuye district of Abuja. Features spacious rooms, dedicated parking, and is within walking distance to shops.",
@@ -992,7 +1132,7 @@ export const competitions: Competition[] = [
       "Private parking",
       "Tiled compound",
     ],
-    drawDate: "Sat 17 Jan 2026 · 5:00 PM WAT",
+    drawDate: "Thu 14 Jan 2027 · 5:00 PM WAT",
     prizeCondition: "Brand new",
     warranty: "1-yr workmanship",
     make: "Abeokuta Homes Ltd",
@@ -1015,7 +1155,7 @@ export const competitions: Competition[] = [
   {
     slug: "gucci-x-lv-bundle",
     title: "Luxury Handbag & Accessory Bundle",
-    category: "Fashion",
+    category: "Fashion & Luxury",
     partner: "Abuja Fashion Hub",
     description:
       "A curated collection of 4 iconic designer pieces: Gucci Marmont bag, Louis Vuitton Speedy, Louboutin heels, and a silk scarf set with storage.",
@@ -1058,7 +1198,7 @@ export const competitions: Competition[] = [
   {
     slug: "gold-bangle-collection",
     title: "22K Gold Bangle Set (6 pieces)",
-    category: "Jewelry",
+    category: "Fashion & Luxury",
     partner: "Lagos Jewels Co.",
     description:
       "A stunning traditional set of 6 hollow-work 22K gold bangles with intricate filigree work. 120 grams total weight with assay certification.",
@@ -1101,7 +1241,7 @@ export const competitions: Competition[] = [
   {
     slug: "nse-portfolio-grant",
     title: "₦5M NSE Stock Portfolio + Mentorship",
-    category: "Business grants",
+    category: "Cash & Business",
     partner: "Lagos Jewels Co.",
     description:
       "A ₦5 million Nigerian Stock Exchange portfolio invested in top-tier bluechip stocks, with 6 months of professional portfolio management and monthly reports.",
@@ -1122,7 +1262,7 @@ export const competitions: Competition[] = [
       "1-on-1 investing workshop",
       "CSCS account opened",
     ],
-    drawDate: "Fri 16 Jan 2026 · 5:00 PM WAT",
+    drawDate: "Tue 12 Jan 2027 · 5:00 PM WAT",
     prizeCondition: "Managed investment portfolio",
     warranty: "6 month management fee waived",
     make: "Raffila Capital Markets Program",
@@ -1145,7 +1285,7 @@ export const competitions: Competition[] = [
   {
     slug: "santorini-greek-island-holiday",
     title: "10-Day Greek Islands Sailing (Santorini + Mykonos)",
-    category: "Lifestyle",
+    category: "Travel & Experiences",
     partner: "Lagos Jewels Co.",
     description:
       "10 days in the Cyclades aboard a private sailing catamaran for 4 friends, stopping at Santorini, Mykonos, Paros, Ios, with a private chef on board.",
@@ -1166,7 +1306,7 @@ export const competitions: Competition[] = [
       "Private skipper + chef",
       "Watersports gear",
     ],
-    drawDate: "Wed 11 Feb 2026 · 6:00 PM WAT",
+    drawDate: "Sun 7 Feb 2027 · 6:00 PM WAT",
     prizeCondition: "Charter package",
     warranty: "Crewed charter insurance included",
     make: "Raffila Travel & Lifestyle",
@@ -1190,12 +1330,12 @@ export const competitions: Competition[] = [
   {
     slug: "wellness-spa-retreat",
     title: "7-Day Wellness & Spa Retreat (Lagos + Obudu)",
-    category: "Lifestyle",
+    category: "Travel & Experiences",
     partner: "Abuja Fashion Hub",
     description:
       "A total mind and body reset: 3 days at Lagos premier wellness spa + 4 days at the stunning Obudu Cattle Ranch Mountain Resort with helicopter transfer included.",
     prizeValueKobo: mk(2_100_000),
-    entryPrice: mk(2_500),
+    entryPrice: mk(1_000),
     totalEntries: 11_500,
     entriesSold: 6_900,
     closes: "1 Nov 2026 · 11:59 PM",
@@ -1256,7 +1396,7 @@ export const competitions: Competition[] = [
       "Gallery provenance",
       "Museum framing",
     ],
-    drawDate: "Thu 22 Jan 2026 · 6:00 PM WAT",
+    drawDate: "Mon 18 Jan 2027 · 6:00 PM WAT",
     prizeCondition: "Original works, excellent condition",
     warranty: "Certificate of authenticity",
     make: "Various — curated by Terra Kulture",
@@ -1284,7 +1424,7 @@ export const competitions: Competition[] = [
     description:
       "A handpicked collector's crate of 500 premium vinyl records spanning Highlife, Afrobeat, Juju, Funk, Soul, Jazz, Rock, Disco, and modern classics. Includes a free turntable.",
     prizeValueKobo: mk(1_600_000),
-    entryPrice: mk(2_000),
+    entryPrice: mk(1_000),
     totalEntries: 9_500,
     entriesSold: 4_200,
     closes: "20 Oct 2026 · 11:59 PM",
@@ -1344,7 +1484,7 @@ export const competitions: Competition[] = [
       "Ultra white premium interior",
       '22" Überturbine wheels',
     ],
-    drawDate: "Thu 15 Jan 2026 · 6:00 PM WAT",
+    drawDate: "Sun 10 Jan 2027 · 6:00 PM WAT",
     prizeCondition: "Brand new, direct import",
     warranty: "Tesla 4-yr / 80k km + battery 8-yr",
     make: "Tesla",
@@ -1371,7 +1511,7 @@ export const competitions: Competition[] = [
     description:
       "A fun-filled shopping experience at Ikeja City Mall with ₦1M loaded on a gift card, plus a personal stylist and lunch at a premium restaurant for you and 3 friends.",
     prizeValueKobo: mk(1_150_000),
-    entryPrice: mk(1_500),
+    entryPrice: mk(1_000),
     totalEntries: 16_000,
     entriesSold: 11_200,
     closes: "6 Oct 2026 · 11:59 PM",
@@ -1431,7 +1571,7 @@ export const competitions: Competition[] = [
       "Premium leather lounge",
       "Harman Kardon audio",
     ],
-    drawDate: "Mon 2 Feb 2026 · 5:00 PM WAT",
+    drawDate: "Thu 28 Jan 2027 · 5:00 PM WAT",
     prizeCondition: "Brand new",
     warranty: "3-yr / 100k km warranty",
     make: "MINI (BMW Group)",

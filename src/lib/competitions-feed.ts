@@ -2,7 +2,11 @@ import { collection, getDocs, limit, query } from "firebase/firestore";
 
 import { db } from "./firebase";
 import { formatCloses, formatDrawDate } from "./format";
-import { competitions as mockCompetitions, type Competition } from "./raffila-data";
+import {
+  competitions as mockCompetitions,
+  LEGACY_CATEGORY_MAP,
+  type Competition,
+} from "./raffila-data";
 
 const ACCENTS: Competition["accent"][] = ["coral", "sky", "lemon", "mint", "lilac"];
 
@@ -61,6 +65,9 @@ export function docToCompetition(
 
   const slug = String(data["slug"] ?? id);
   const title = String(data["title"] ?? data["assetName"] ?? slug);
+  const rawCategory = String(data["category"] ?? "General");
+  // Migrate legacy category names to final taxonomy (PDF §2).
+  const category = LEGACY_CATEGORY_MAP[rawCategory] ?? rawCategory;
   const entryPrice = Number(data["entryPrice"] ?? 0) || 0;
   const totalEntries = Number(data["totalEntries"] ?? 0) || 0;
   const entriesSold = Number(data["entriesSold"] ?? 0) || 0;
@@ -77,7 +84,7 @@ export function docToCompetition(
   return {
     slug,
     title,
-    category: String(data["category"] ?? "General"),
+    category,
     partner: String(data["partner"] ?? "Raffila"),
     description: String(data["description"] ?? ""),
     prizeValueKobo: marketValueKobo,
@@ -116,6 +123,38 @@ async function fetchDbCompetitions(includeDrafts: boolean): Promise<Competition[
     if (c) out.push(c);
   });
   return out;
+}
+
+/**
+ * Backend chronology guard (PDF §5 P0): a draw cannot be scheduled before
+ * a competition closes. Returns an error message or null when valid.
+ */
+export function validateCompetitionDates(input: {
+  closes?: unknown;
+  closesAt?: unknown;
+  drawDate?: unknown;
+  drawAt?: unknown;
+}): string | null {
+  const toMs = (v: unknown): number => {
+    try {
+      const x = v as any;
+      if (x && typeof x.toDate === "function") return (x.toDate() as Date).getTime();
+    } catch {
+      // ignore
+    }
+    if (typeof v === "string" && v) {
+      const t = new Date(v).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    }
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    return 0;
+  };
+  const closesMs = toMs(input.closesAt ?? input.closes);
+  const drawMs = toMs(input.drawAt ?? input.drawDate);
+  if (closesMs && drawMs && drawMs <= closesMs) {
+    return "Draw date must be after the competition closes.";
+  }
+  return null;
 }
 
 /**

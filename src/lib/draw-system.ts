@@ -1,4 +1,5 @@
 import {
+  addDoc,
   collection,
   doc,
   getDoc,
@@ -7,6 +8,7 @@ import {
   orderBy,
   query,
   runTransaction,
+  serverTimestamp,
   setDoc,
   startAfter,
   updateDoc,
@@ -63,6 +65,7 @@ export interface EligibleTicket {
   userId: string;
   userName: string;
   userHandle: string;
+  userEmail: string;
   purchasedAt: string;
   status: string;
 }
@@ -111,6 +114,36 @@ export const INELIGIBLE_TICKET_STATUSES = new Set([
 export function isTicketEligible(status: unknown): boolean {
   const s = String(status ?? "ACTIVE").toUpperCase();
   return !INELIGIBLE_TICKET_STATUSES.has(s);
+}
+
+/**
+ * Payment/transaction states that disqualify an otherwise ACTIVE ticket.
+ * A missing paymentStatus defaults to eligible (legacy tickets were written
+ * before the field existed and are paid by construction).
+ */
+const INELIGIBLE_PAYMENT_STATUSES = new Set([
+  "FAILED",
+  "PENDING",
+  "UNCONFIRMED",
+  "REFUNDED",
+  "REVERSED",
+  "CANCELLED",
+  "VOID",
+  "VOIDED",
+  "DISPUTED",
+  "FRAUD",
+  "FRAUDULENT",
+  "CHARGEBACK",
+]);
+
+export function isPaymentConfirmed(paymentStatus: unknown): boolean {
+  if (paymentStatus == null || paymentStatus === "") return true;
+  return !INELIGIBLE_PAYMENT_STATUSES.has(String(paymentStatus).toUpperCase());
+}
+
+/** Full ticket-doc eligibility: status AND payment confirmation. */
+export function isTicketDocEligible(data: Record<string, unknown>): boolean {
+  return isTicketEligible(data["status"]) && isPaymentConfirmed(data["paymentStatus"]);
 }
 
 /**
@@ -239,6 +272,7 @@ function ticketToEligible(id: string, data: DocumentData): EligibleTicket {
     userId: String(data["userId"] ?? ""),
     userName: String(data["userName"] ?? data["userDisplayName"] ?? ""),
     userHandle: String(data["userHandle"] ?? ""),
+    userEmail: String(data["userEmail"] ?? data["email"] ?? ""),
     purchasedAt: String(data["purchasedAt"] ?? data["createdAt"] ?? ""),
     status: String(data["status"] ?? "ACTIVE"),
   };
@@ -265,7 +299,7 @@ export async function fetchEligibleTickets(
     if (snap.empty) break;
     for (const d of snap.docs) {
       const data = d.data();
-      if (isTicketEligible(data["status"])) out.push(ticketToEligible(d.id, data));
+      if (isTicketDocEligible(data)) out.push(ticketToEligible(d.id, data));
     }
     if (snap.docs.length < pageSize) break;
     cursor = snap.docs[snap.docs.length - 1]!;
@@ -611,9 +645,11 @@ export async function executeDraw(competitionId: string): Promise<ExecuteDrawRes
   });
 
   // --- Step 5: winners showcase (non-critical, best-effort) ---
+  let competitionTitle = competitionId;
   try {
     const compSnap = await getDoc(compRef);
     const comp = compSnap.exists() ? compSnap.data() : {};
+    competitionTitle = String(comp["title"] ?? comp["assetName"] ?? competitionId);
     await setDoc(doc(db, "winners", `${competitionId}-${winner.ticketNumber}`), {
       id: `${competitionId}-${winner.ticketNumber}`,
       competitionSlug: competitionId,
@@ -635,6 +671,33 @@ export async function executeDraw(competitionId: string): Promise<ExecuteDrawRes
     });
   } catch (err) {
     console.warn("Winners showcase write failed (non-critical):", err);
+  }
+
+  // --- Step 6: winner notification (non-critical, best-effort) ---
+  // Queues into the outbound mail collection consumed by the Trigger Email
+  // extension / future Cloud Function. Never exposes private data publicly.
+  if (winner.userEmail) {
+    try {
+      const drawId = (claim as any).verificationReference ?? competitionId;
+      await addDoc(collection(db, "mail"), {
+        to: winner.userEmail,
+        createdAt: serverTimestamp(),
+        message: {
+          subject: `You won: ${competitionTitle} (ticket #${winner.ticketNumber})`,
+          text: `Congratulations ${winner.userName}!\n\nYour ticket #${winner.ticketNumber} won "${competitionTitle}".\n\nDraw ID: ${drawId}\nDraw date: ${completedAt}\n\nTo claim your prize, sign in to Raffila and open My Entries, then follow the prize-claim instructions. Our team may contact you to verify your details.\n\n— Team Raffila`,
+          html: `<p>Congratulations <strong>${winner.userName}</strong>!</p><p>Your ticket <strong>#${winner.ticketNumber}</strong> won "<strong>${competitionTitle}</strong>".</p><p>Draw ID: ${drawId}<br/>Draw date: ${completedAt}</p><p>To claim your prize, sign in to Raffila and open <strong>My Entries</strong>, then follow the prize-claim instructions. Our team may contact you to verify your details.</p><p>— Team Raffila</p>`,
+        },
+      });
+      void logActivity({
+        eventType: "NOTIFICATION_SEND",
+        targetType: "user",
+        targetId: winner.userId,
+        summary: `Winner notification queued for ${winner.userName} (#${winner.ticketNumber})`,
+        details: { competitionId, winningTicketNumber: winner.ticketNumber },
+      });
+    } catch (err) {
+      console.warn("Winner notification queue failed (non-critical):", err);
+    }
   }
 
   void logActivity({

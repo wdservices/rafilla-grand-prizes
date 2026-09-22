@@ -117,6 +117,86 @@ function strength(pw: string) {
   return { score: 4, label: "Excellent", color: "bg-mint" };
 }
 
+/** Voluntary weekly spending alert — responsible participation (PDF §14). */
+function SpendingLimitCard() {
+  const [limit, setLimit] = useState<string>(() => {
+    try {
+      return window.localStorage.getItem("raffila:spending_limit_weekly") ?? "";
+    } catch {
+      return "";
+    }
+  });
+  const [saved, setSaved] = useState(false);
+  return (
+    <div className="rounded-[24px] bg-lemon/25 p-6 ring-1 ring-ink/5 sm:p-8">
+      <div className="flex items-center gap-2">
+        <ShieldCheck className="size-5 text-ink" />
+        <h2 className="font-display text-xl font-extrabold text-ink">My Spending Limit</h2>
+      </div>
+      <p className="mt-1 max-w-2xl text-xs font-bold leading-relaxed text-ink/60">
+        Optional weekly alert. We show factual costs and never pressure you with artificial
+        scarcity or repeated buy-more prompts. Set a limit — we remind you when you pass it.
+      </p>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="flex min-h-12 flex-1 items-center gap-2 rounded-2xl bg-white px-4 ring-1 ring-ink/10">
+          <span className="text-sm font-extrabold text-ink/50">₦</span>
+          <input
+            value={limit}
+            onChange={(e) => {
+              setLimit(e.target.value.replace(/[^0-9]/g, ""));
+              setSaved(false);
+            }}
+            inputMode="numeric"
+            placeholder="e.g. 5000 per week"
+            className="w-full bg-transparent py-3 text-sm font-extrabold text-ink outline-none placeholder:text-ink/35"
+            aria-label="Weekly spending limit in naira"
+          />
+        </label>
+        <Button
+          variant="dark"
+          size="md"
+          className="min-h-12"
+          onClick={() => {
+            try {
+              if (limit) window.localStorage.setItem("raffila:spending_limit_weekly", limit);
+              else window.localStorage.removeItem("raffila:spending_limit_weekly");
+            } catch {
+              // ignore
+            }
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+          }}
+        >
+          {saved ? (
+            <>
+              <Check className="size-4" /> Saved
+            </>
+          ) : (
+            "Save limit"
+          )}
+        </Button>
+        {limit && (
+          <Button
+            variant="ghost"
+            size="md"
+            className="min-h-12"
+            onClick={() => {
+              try {
+                window.localStorage.removeItem("raffila:spending_limit_weekly");
+              } catch {
+                // ignore
+              }
+              setLimit("");
+            }}
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function DashboardSecurityPage() {
   const [cur, setCur] = useState("");
   const [nw, setNw] = useState("");
@@ -227,6 +307,8 @@ export function DashboardSecurityPage() {
         <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
           Password, two-factor, sessions, and sign-in activity — all in one place.
         </p>
+
+        <SpendingLimitCard />
 
         <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="flex items-center gap-2">

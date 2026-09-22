@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Search, Copy, Check, FileDown, Ticket, Eye, X, QrCode } from "lucide-react";
+import { useEffect } from "react";
 
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
-import { formatNaira } from "@/lib/raffila-data";
+import { formatNaira, trackEvent } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/useAuthSession";
 
@@ -22,12 +23,14 @@ type MockEntry = {
   status: EntryStatus;
 };
 
-const statuses: Array<"All" | EntryStatus> = ["All", "Entered", "Won", "Lost"];
+const statuses: Array<"All" | "Active" | "Completed"> = ["All", "Active", "Completed"];
 
-const statusBadge: Record<EntryStatus, string> = {
+const statusBadge: Record<string, string> = {
   Entered: "bg-mint/30 text-ink",
+  Active: "bg-mint/30 text-ink",
   Won: "bg-lemon/40 text-ink",
   Lost: "bg-ink/10 text-ink/70",
+  Completed: "bg-ink/10 text-ink/70",
 };
 
 const initials = (name: string) =>
@@ -51,10 +54,16 @@ export function DashboardEntriesPage() {
   const [toastId, setToastId] = useState<string | null>(null);
   const [ticketOpen, setTicketOpen] = useState<MockEntry | null>(null);
 
+  useEffect(() => {
+    trackEvent("my_entries_view", {});
+  }, []);
+
   const entries = genTickets();
 
   const filtered = entries.filter((e) => {
-    const matchesStatus = filter === "All" || e.status === filter;
+    const isActive = e.status === "Entered";
+    const matchesStatus =
+      filter === "All" || (filter === "Active" && isActive) || (filter === "Completed" && !isActive);
     const q = search.trim().toLowerCase();
     const matchesSearch =
       !q || e.id.toLowerCase().includes(q) || e.competitionTitle.toLowerCase().includes(q);
@@ -77,6 +86,45 @@ export function DashboardEntriesPage() {
       breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "My Entries" }]}
     >
       <div className="space-y-6">
+        <div className="grid gap-3 rounded-[24px] bg-paper p-4 ring-1 ring-ink/5 sm:p-5 lg:grid-cols-3">
+          <div className="rounded-2xl bg-cream/60 p-4 ring-1 ring-ink/5">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              What did I pay for?
+            </p>
+            <p className="mt-1 text-sm font-extrabold text-ink">Every prize + receipt in one place</p>
+          </div>
+          <div className="rounded-2xl bg-cream/60 p-4 ring-1 ring-ink/5">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              How many entries?
+            </p>
+            <p className="mt-1 text-sm font-extrabold text-ink">Ticket counts + numbers per draw</p>
+          </div>
+          <div className="rounded-2xl bg-cream/60 p-4 ring-1 ring-ink/5">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              When is the draw?
+            </p>
+            <p className="mt-1 text-sm font-extrabold text-ink">Draw dates + results, one tap away</p>
+          </div>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="rounded-[24px] bg-lemon/30 p-5 ring-1 ring-ink/5">
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              Payment history
+            </p>
+            <p className="mt-1 text-sm font-bold text-ink/65">
+              Simple receipts and status live with each entry. Export CSV anytime.
+            </p>
+          </div>
+          <div className="rounded-[24px] bg-paper p-5 ring-1 ring-ink/5">
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Support</p>
+            <p className="mt-1 text-sm font-bold text-ink/65">
+              Need help with an entry?{" "}
+              <Link to="/faq" className="font-extrabold text-coral underline underline-offset-2">
+                Get help with this entry
+              </Link>
+            </p>
+          </div>
+        </div>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <p className="max-w-2xl text-sm leading-relaxed text-ink/60 -mt-3">
             All your competition tickets, their status, and ticket numbers.

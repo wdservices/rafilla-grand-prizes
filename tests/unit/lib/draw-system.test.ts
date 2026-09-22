@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   deriveDrawState,
+  isPaymentConfirmed,
+  isTicketDocEligible,
   isTicketEligible,
   secureRandomInt,
 } from "@/lib/draw-system";
@@ -27,6 +29,45 @@ describe("isTicketEligible", () => {
     ]) {
       expect(isTicketEligible(s)).toBe(false);
     }
+  });
+});
+
+describe("isPaymentConfirmed", () => {
+  it("accepts confirmed/paid/missing payment states", () => {
+    expect(isPaymentConfirmed("CONFIRMED")).toBe(true);
+    expect(isPaymentConfirmed("PAID")).toBe(true);
+    expect(isPaymentConfirmed("SUCCESSFUL")).toBe(true);
+    expect(isPaymentConfirmed(undefined)).toBe(true);
+    expect(isPaymentConfirmed(null)).toBe(true);
+    expect(isPaymentConfirmed("")).toBe(true);
+  });
+
+  it("rejects failed/pending/refunded/disputed payments", () => {
+    for (const s of [
+      "FAILED",
+      "PENDING",
+      "UNCONFIRMED",
+      "REFUNDED",
+      "REVERSED",
+      "CANCELLED",
+      "DISPUTED",
+      "CHARGEBACK",
+      "FRAUD",
+    ]) {
+      expect(isPaymentConfirmed(s)).toBe(false);
+    }
+  });
+});
+
+describe("isTicketDocEligible", () => {
+  it("requires both status and payment to be clean", () => {
+    expect(isTicketDocEligible({ status: "ACTIVE", paymentStatus: "CONFIRMED" })).toBe(true);
+    expect(isTicketDocEligible({ status: "ACTIVE" })).toBe(true); // legacy: no payment field
+    expect(isTicketDocEligible({ status: "ACTIVE", paymentStatus: "FAILED" })).toBe(false);
+    expect(isTicketDocEligible({ status: "ACTIVE", paymentStatus: "PENDING" })).toBe(false);
+    expect(isTicketDocEligible({ status: "ACTIVE", paymentStatus: "REFUNDED" })).toBe(false);
+    expect(isTicketDocEligible({ status: "REFUNDED", paymentStatus: "CONFIRMED" })).toBe(false);
+    expect(isTicketDocEligible({ status: "FRAUD", paymentStatus: "CONFIRMED" })).toBe(false);
   });
 });
 
@@ -80,6 +121,32 @@ describe("deriveDrawState", () => {
 
   it("maps explicit DRAW_READY flag", () => {
     expect(deriveDrawState({ status: "DRAW_READY" }, null)).toBe("DRAW_READY");
+  });
+
+  it("maps in-progress draws", () => {
+    expect(deriveDrawState({ status: "DRAW_IN_PROGRESS" }, null)).toBe("DRAW_IN_PROGRESS");
+    expect(deriveDrawState({ status: "LIVE" }, { status: "IN_PROGRESS" })).toBe(
+      "DRAW_IN_PROGRESS",
+    );
+  });
+
+  it("recovers failed draws back to DRAW_READY", () => {
+    expect(deriveDrawState({ status: "DRAW_READY" }, { status: "FAILED" })).toBe("DRAW_READY");
+  });
+
+  it("maps completed competition + completed draw to COMPLETED", () => {
+    expect(
+      deriveDrawState(
+        { status: "COMPLETED" },
+        { status: "COMPLETED", winningTicketNumber: "576090" },
+      ),
+    ).toBe("COMPLETED");
+  });
+
+  it("never offers a draw on DRAFT/SUSPENDED/CANCELLED", () => {
+    expect(deriveDrawState({ status: "DRAFT" }, null)).toBe("DRAFT");
+    expect(deriveDrawState({ status: "SUSPENDED" }, null)).toBe("SUSPENDED");
+    expect(deriveDrawState({ status: "CANCELLED" }, null)).toBe("CANCELLED");
   });
 });
 

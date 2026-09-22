@@ -15,17 +15,38 @@ service cloud.firestore {
       );
     }
 
-    // Public catalog collections (readable by anyone, modifiable by authenticated staff/admin)
+    // A non-admin signed-in user may only bump the entriesSold purchase
+    // counter — never status, entriesClosed, winners, or lifecycle fields.
+    function entriesSoldOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["entriesSold"])
+        && request.resource.data.get("entriesSold", 0) >= resource.data.get("entriesSold", 0);
+    }
+
+    // Tickets may only be created while the parent competition is still
+    // accepting entries. This enforces the closed state in the backend —
+    // frontend timers alone are not trusted.
+    function competitionAcceptingEntries(competitionId) {
+      return exists(/databases/$(database)/documents/competitions/$(competitionId))
+        && get(/databases/$(database)/documents/competitions/$(competitionId)).data.get("entriesClosed", false) == false
+        && get(/databases/$(database)/documents/competitions/$(competitionId)).data.get("entriesPaused", false) == false
+        && !(get(/databases/$(database)/documents/competitions/$(competitionId)).data.get("status", "LIVE") in ["DRAW_READY", "DRAW-READY", "DRAW_IN_PROGRESS", "WINNER_SELECTED", "COMPLETED", "CLOSED", "CANCELLED", "SUSPENDED", "REFUND_REQUIRED"]);
+    }
+
+    // Public catalog collections (readable by anyone; writes gated below)
     match /competitions/{competitionId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (request.auth != null && entriesSoldOnly());
+      allow delete: if isAdmin();
 
       // Individual raffle tickets — one doc per ticket number.
-      // Created at purchase (authenticated), immutable afterwards except
-      // admin draw commit (WINNER marking).
+      // Created at purchase (authenticated, parent still open), immutable
+      // afterwards except the admin draw commit (WINNER marking).
+      // Reads are restricted: ticket docs carry owner contact details,
+      // so only admins and the ticket owner may read them.
       match /tickets/{ticketId} {
-        allow read: if true;
-        allow create: if request.auth != null;
+        allow read: if request.auth != null && (isAdmin() || resource.data.get("userId", "") == request.auth.uid);
+        allow create: if request.auth != null && competitionAcceptingEntries(competitionId);
         allow update: if isAdmin();
         allow delete: if false;
       }
@@ -36,10 +57,12 @@ service cloud.firestore {
       }
     }
 
-    // Raffle draw records — public read (verification), admin-only writes.
-    // Winner selection is committed via transaction; clients can never
-    // supply their own winner through these rules (no winner fields on create
-    // except through the admin flow).
+    // Raffle draw records — public read (verification page), admin-only
+    // writes. Winner selection is committed via transaction; clients can
+    // never supply their own winner through these rules.
+    // NOTE: a previous duplicate match block granted any authenticated user
+    // write access here (last match wins) and would have allowed forged
+    // winners — it has been removed.
     match /draws/{drawId} {
       allow read: if true;
       allow create: if isAdmin();
@@ -47,16 +70,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Raffle draws & cryptographic verification logs
-    match /draws/{drawId} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-
-    // Public winners showcase
+    // Public winners showcase — public read, admin-only writes.
     match /winners/{winnerId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if false;
     }
 
     // Community pool stats & global settings
@@ -101,12 +120,30 @@ service cloud.firestore {
     }
 
     // User accounts & private subcollections
+    //
+    // walletBalanceKobo is NEVER writable directly from any client (owner or
+    // admin). Admins must not adjust wallet balances by hand — balances only
+    // change through verified server-side flows (payments, entry purchases,
+    // refunds), which use the Admin SDK and bypass these rules.
+    function walletUnchanged() {
+      return request.resource.data.get("walletBalanceKobo", null)
+        == resource.data.get("walletBalanceKobo", null);
+    }
+
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow create: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow update: if request.auth != null
+        && (request.auth.uid == userId || isAdmin())
+        && walletUnchanged();
+      allow delete: if request.auth != null && (request.auth.uid == userId || isAdmin());
 
+      // Wallet ledger is append-only from the server (Admin SDK bypasses
+      // rules). Clients may read their own ledger but can never fabricate
+      // credit/debit entries — this closes the manual-adjustment path.
       match /walletTransactions/{txId} {
-        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+        allow write: if false;
       }
 
       match /entries/{entryId} {

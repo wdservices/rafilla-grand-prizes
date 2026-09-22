@@ -308,9 +308,21 @@ export function RegisterForm() {
           Create your account
         </h1>
         <p className="mt-2 text-sm text-ink/55">
-          Join Raffila and start playing for life-changing prizes.
+          Phone/OTP first — most familiar on mobile. Email or Google also available. Extra KYC
+          only when required, and we explain why.
         </p>
       </header>
+
+      <div className="rounded-2xl bg-mint/20 p-4 ring-1 ring-mint/30">
+        <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/50">
+          Fastest on mobile
+        </p>
+        <Button asChild variant="primary" size="md" className="mt-2 min-h-11 w-full">
+          <Link to="/auth" search={{ mode: "otp" }}>
+            Continue with phone / OTP
+          </Link>
+        </Button>
+      </div>
 
       {errors.global && (
         <div className="rounded-xl border border-coral/20 bg-coral/5 px-4 py-3 text-sm font-bold text-coral">

@@ -23,6 +23,7 @@ import { Route as PartnerSignupRouteImport } from './routes/partner-signup'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as RobotsRouteImport } from './routes/robots'
 import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
+import { Route as TrustSafetyRouteImport } from './routes/trust-safety'
 import { Route as WinnersRouteImport } from './routes/winners'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAuditLogsRouteImport } from './routes/admin.audit-logs'
@@ -125,6 +126,11 @@ const RobotsRoute = RobotsRouteImport.update({
 const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
   id: '/terms-and-conditions',
   path: '/terms-and-conditions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrustSafetyRoute = TrustSafetyRouteImport.update({
+  id: '/trust-safety',
+  path: '/trust-safety',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WinnersRoute = WinnersRouteImport.update({
@@ -310,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/trust-safety': typeof TrustSafetyRoute
   '/winners': typeof WinnersRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/competitions': typeof AdminCompetitionsRoute
@@ -358,6 +365,7 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/trust-safety': typeof TrustSafetyRoute
   '/winners': typeof WinnersRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/competitions': typeof AdminCompetitionsRoute
@@ -408,6 +416,7 @@ export interface FileRoutesById {
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/trust-safety': typeof TrustSafetyRoute
   '/winners': typeof WinnersRoute
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/competitions': typeof AdminCompetitionsRoute
@@ -459,6 +468,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/robots'
     | '/terms-and-conditions'
+    | '/trust-safety'
     | '/winners'
     | '/admin/audit-logs'
     | '/admin/competitions'
@@ -507,6 +517,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/robots'
     | '/terms-and-conditions'
+    | '/trust-safety'
     | '/winners'
     | '/admin/audit-logs'
     | '/admin/competitions'
@@ -556,6 +567,7 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/robots'
     | '/terms-and-conditions'
+    | '/trust-safety'
     | '/winners'
     | '/admin/audit-logs'
     | '/admin/competitions'
@@ -606,6 +618,7 @@ export interface RootRouteChildren {
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   RobotsRoute: typeof RobotsRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
+  TrustSafetyRoute: typeof TrustSafetyRoute
   WinnersRoute: typeof WinnersRoute
   AdminAuditLogsRoute: typeof AdminAuditLogsRoute
   AdminCompetitionsRoute: typeof AdminCompetitionsRoute
@@ -736,6 +749,13 @@ declare module '@tanstack/react-router' {
       path: '/terms-and-conditions'
       fullPath: '/terms-and-conditions'
       preLoaderRoute: typeof TermsAndConditionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trust-safety': {
+      id: '/trust-safety'
+      path: '/trust-safety'
+      fullPath: '/trust-safety'
+      preLoaderRoute: typeof TrustSafetyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/winners': {
@@ -1012,6 +1032,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   RobotsRoute: RobotsRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
+  TrustSafetyRoute: TrustSafetyRoute,
   WinnersRoute: WinnersRoute,
   AdminAuditLogsRoute: AdminAuditLogsRoute,
   AdminCompetitionsRoute: AdminCompetitionsRoute,

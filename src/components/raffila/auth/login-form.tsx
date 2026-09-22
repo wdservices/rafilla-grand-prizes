@@ -126,8 +126,29 @@ export function LoginForm() {
         <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
           Welcome back
         </h1>
-        <p className="mt-2 text-sm text-ink/55">Sign in to your Raffila account.</p>
+        <p className="mt-2 text-sm text-ink/55">
+          Phone/OTP is fastest on mobile. Email or Google also works.
+        </p>
       </header>
+
+      <div className="rounded-2xl bg-lemon/30 p-4 ring-1 ring-ink/10">
+        <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/50">
+          Prefer phone?
+        </p>
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="primary" size="md" className="min-h-11 flex-1">
+            <Link to="/auth" search={{ mode: "otp" }}>
+              Continue with phone / OTP
+            </Link>
+          </Button>
+          <Link
+            to="/faq"
+            className="inline-flex min-h-11 items-center justify-center rounded-full px-4 text-xs font-extrabold text-coral underline underline-offset-2 ring-1 ring-ink/10"
+          >
+            Get support
+          </Link>
+        </div>
+      </div>
 
       {errors.global && (
         <div className="rounded-xl border border-coral/20 bg-coral/5 px-4 py-3 text-sm font-bold text-coral">

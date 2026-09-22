@@ -10,7 +10,7 @@ export const Route = createFileRoute("/admin/users")({
     const canonical = `${canonicalBase}${pathname}`;
     const title = "Users — Admin · Raffila";
     const description =
-      "Private admin users module: search all Raffila users, apply filters, adjust wallet balances, suspend/unsuspend accounts, view KYC and user details. Noindex. raffila.com";
+      "Private admin users module: search all Raffila users, apply filters, suspend/unsuspend accounts, view KYC and user details. Noindex. raffila.com";
     return {
       meta: [
         { title },

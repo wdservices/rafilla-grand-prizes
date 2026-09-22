@@ -7,7 +7,6 @@ import {
   query,
   serverTimestamp,
   updateDoc,
-  addDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -18,15 +17,10 @@ import {
   UserCog,
   UserX,
   UserCheck,
-  WalletCards,
   Mail,
   Phone,
   ShieldCheck,
   Ban,
-  X,
-  Check,
-  PlusCircle,
-  Minus,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,7 +35,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
@@ -181,13 +174,15 @@ export function AdminUsersPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [suspendUser, setSuspendUser] = useState<AdminUser | null>(null);
-  const [walletUser, setWalletUser] = useState<AdminUser | null>(null);
-  const [walletType, setWalletType] = useState<"credit" | "debit">("credit");
-  const [walletAmount, setWalletAmount] = useState("");
-  const [walletReason, setWalletReason] = useState("");
-  const [walletEmail, setWalletEmail] = useState(false);
-  const [walletSaving, setWalletSaving] = useState(false);
+  const [viewUser, setViewUser] = useState<AdminUser | null>(null);
+  const [editUser, setEditUser] = useState<AdminUser | null>(null);
+  const [editFirst, setEditFirst] = useState("");
+  const [editLast, setEditLast] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editRole, setEditRole] = useState<Role>("USER");
+  const [editSaving, setEditSaving] = useState(false);
   const [suspendReason, setSuspendReason] = useState("");
+
   const [suspendSaving, setSuspendSaving] = useState(false);
   const [logoutSessions, setLogoutSessions] = useState(true);
   const [search, setSearch] = useState("");
@@ -196,6 +191,15 @@ export function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  function openEditDialog(u: AdminUser) {
+    const parts = u.name.split(" ");
+    setEditFirst(parts[0] ?? "");
+    setEditLast(parts.slice(1).join(" "));
+    setEditPhone(u.phone);
+    setEditRole(u.role);
+    setEditUser(u);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -270,7 +274,7 @@ export function AdminUsersPage() {
           Users
         </h1>
         <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
-          Manage all Raffila accounts — view, verify, adjust wallet, suspend, and impersonate.{" "}
+          Manage all Raffila accounts — view, edit, suspend, and reactivate.{" "}
           <span className="text-emerald-700">Live from Firestore ({users.length}).</span>
         </p>
       </header>
@@ -501,17 +505,17 @@ export function AdminUsersPage() {
                             {u.name}
                           </DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink">
+                          <DropdownMenuItem
+                            className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink"
+                            onClick={() => setViewUser(u)}
+                          >
                             <Eye className="mr-2 size-4" /> View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink">
-                            <UserCog className="mr-2 size-4" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink"
-                            onClick={() => setWalletUser(u)}
+                            onClick={() => openEditDialog(u)}
                           >
-                            <PlusCircle className="mr-2 size-4" /> Adjust wallet
+                            <UserCog className="mr-2 size-4" /> Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {u.status === "ACTIVE" ? (
@@ -667,164 +671,248 @@ export function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!walletUser} onOpenChange={(v) => !v && setWalletUser(null)}>
+      <Dialog open={!!viewUser} onOpenChange={(v) => !v && setViewUser(null)}>
         <DialogContent className="rounded-[28px] bg-paper p-0 shadow-none sm:max-w-lg">
           <DialogHeader className="border-b border-ink/10 px-6 py-5">
             <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
-              <span className="grid size-10 place-items-center rounded-2xl bg-lemon/40">
-                <WalletCards className="size-4.5 text-ink" />
+              <span className="grid size-10 place-items-center rounded-2xl bg-lilac/35">
+                <Eye className="size-4.5 text-ink" />
               </span>
-              Adjust wallet balance
+              User details
             </DialogTitle>
-            {walletUser && (
+            {viewUser && (
               <DialogDescription className="mt-1 text-sm font-bold text-ink/55">
-                <span className="font-extrabold text-ink">{walletUser.name}</span> · current balance{" "}
-                {formatNaira(walletUser.wallet)}
+                Read-only profile for{" "}
+                <span className="font-extrabold text-ink">{viewUser.name}</span>.
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {viewUser && (
+            <div className="space-y-4 px-6 py-5">
+              <div className="flex items-center gap-3">
+                <Avatar className={cn("size-12 ring-2 ring-paper", tintBg[viewUser.tint])}>
+                  {viewUser.avatarUrl ? (
+                    <img src={viewUser.avatarUrl} alt="" className="size-full object-cover" />
+                  ) : (
+                    <AvatarFallback className={cn("text-sm font-extrabold", tintBg[viewUser.tint])}>
+                      {viewUser.initials}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate text-lg font-extrabold text-ink">{viewUser.name}</p>
+                  <p className="truncate text-sm font-bold text-ink/55">{viewUser.email}</p>
+                </div>
+                <Badge
+                  className={cn(
+                    "ml-auto rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                    statusPill[viewUser.status],
+                  )}
+                >
+                  {viewUser.status}
+                </Badge>
+              </div>
+              <dl className="grid grid-cols-2 gap-3 text-sm">
+                {(
+                  [
+                    ["Username", viewUser.username || "—"],
+                    ["Phone", viewUser.phone || "—"],
+                    ["Role", viewUser.role],
+                    ["Joined", viewUser.created || "—"],
+                    ["Entries", viewUser.entries.toLocaleString("en-NG")],
+                    ["Wallet", formatNaira(viewUser.wallet)],
+                    ["Email verified", viewUser.verifiedEmail ? "Yes" : "No"],
+                    ["Phone verified", viewUser.verifiedPhone ? "Yes" : "No"],
+                  ] as const
+                ).map(([label, value]) => (
+                  <div key={label} className="rounded-2xl bg-cream px-4 py-3">
+                    <dt className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                      {label}
+                    </dt>
+                    <dd className="mt-0.5 truncate font-extrabold text-ink">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="text-xs font-bold text-ink/50">
+                Wallet balance is read-only here. Admins cannot adjust wallet balances — balances
+                only change through verified payments, entry purchases, and refunds.
+              </p>
+            </div>
+          )}
+          <DialogFooter className="border-t border-ink/10 px-6 py-4">
+            {viewUser && viewUser.status === "ACTIVE" ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setViewUser(null);
+                  setSuspendUser(viewUser);
+                }}
+              >
+                <Ban className="size-4" /> Suspend instead
+              </Button>
+            ) : null}
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (viewUser) openEditDialog(viewUser);
+                setViewUser(null);
+              }}
+            >
+              <UserCog className="size-4" /> Edit
+            </Button>
+            <Button variant="primary" onClick={() => setViewUser(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editUser} onOpenChange={(v) => !v && setEditUser(null)}>
+        <DialogContent className="rounded-[28px] bg-paper p-0 shadow-none sm:max-w-lg">
+          <DialogHeader className="border-b border-ink/10 px-6 py-5">
+            <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
+              <span className="grid size-10 place-items-center rounded-2xl bg-sky/30">
+                <UserCog className="size-4.5 text-ink" />
+              </span>
+              Edit user
+            </DialogTitle>
+            {editUser && (
+              <DialogDescription className="mt-1 text-sm font-bold text-ink/55">
+                Update profile fields for{" "}
+                <span className="font-extrabold text-ink">{editUser.name}</span>. Email and wallet
+                balance cannot be changed here.
               </DialogDescription>
             )}
           </DialogHeader>
           <div className="space-y-4 px-6 py-5">
-            <div className="space-y-2">
-              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                Adjustment type
-              </Label>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant={walletType === "credit" ? "primary" : "outline"}
-                  onClick={() => setWalletType("credit")}
-                  className="rounded-2xl h-12 text-sm font-extrabold"
-                >
-                  <PlusCircle className="size-4 mr-1.5" /> Credit (add funds)
-                </Button>
-                <Button
-                  variant={walletType === "debit" ? "primary" : "outline"}
-                  onClick={() => setWalletType("debit")}
-                  className="rounded-2xl h-12 text-sm font-extrabold"
-                >
-                  <Minus className="size-4 mr-1.5" /> Debit (remove funds)
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                Amount (₦)
-              </Label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-extrabold text-ink/55">
-                  ₦
-                </span>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                  First name
+                </Label>
                 <Input
-                  type="number"
-                  value={walletAmount}
-                  onChange={(e) => setWalletAmount(e.target.value)}
-                  placeholder="50,000"
-                  className="h-12 rounded-2xl border-0 bg-cream pl-8 pr-4 text-base font-extrabold text-ink placeholder:text-ink/40 focus-visible:ring-coral"
+                  value={editFirst}
+                  onChange={(e) => setEditFirst(e.target.value)}
+                  placeholder="James"
+                  className="h-12 rounded-2xl border-0 bg-cream px-4 text-sm font-extrabold text-ink placeholder:text-ink/40 focus-visible:ring-coral"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                  Last name
+                </Label>
+                <Input
+                  value={editLast}
+                  onChange={(e) => setEditLast(e.target.value)}
+                  placeholder="Oko"
+                  className="h-12 rounded-2xl border-0 bg-cream px-4 text-sm font-extrabold text-ink placeholder:text-ink/40 focus-visible:ring-coral"
                 />
               </div>
             </div>
             <div className="space-y-2">
               <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                Reason / note
+                Phone
               </Label>
-              <Textarea
-                value={walletReason}
-                onChange={(e) => setWalletReason(e.target.value)}
-                placeholder="Customer support goodwill, refund, comp entry, admin review…"
-                className="min-h-[90px] rounded-2xl border-0 bg-cream p-4 text-sm font-bold text-ink placeholder:text-ink/40 focus-visible:ring-coral"
+              <Input
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                placeholder="+234 …"
+                className="h-12 rounded-2xl border-0 bg-cream px-4 text-sm font-extrabold text-ink placeholder:text-ink/40 focus-visible:ring-coral"
               />
             </div>
-            <div className="flex items-center gap-3 rounded-2xl bg-cream px-4 py-3">
-              <Checkbox
-                id="email-user"
-                checked={walletEmail}
-                onCheckedChange={(v) => setWalletEmail(!!v)}
-              />
-              <Label
-                htmlFor="email-user"
-                className="flex-1 cursor-pointer text-sm font-bold text-ink/75"
-              >
-                Email user a transaction confirmation
+            <div className="space-y-2">
+              <Label className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                Role
               </Label>
+              <Select value={editRole} onValueChange={(v) => setEditRole(v as Role)}>
+                <SelectTrigger className="h-12 rounded-2xl border-0 bg-cream px-4 text-sm font-extrabold text-ink shadow-none focus:ring-coral">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-[22px] bg-paper p-1">
+                  <SelectItem value="USER" className="rounded-xl font-bold">
+                    User
+                  </SelectItem>
+                  <SelectItem value="PARTNER" className="rounded-xl font-bold">
+                    Partner
+                  </SelectItem>
+                  <SelectItem value="ADMIN" className="rounded-xl font-bold">
+                    Admin
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter className="border-t border-ink/10 px-6 py-4">
-            <Button variant="outline" onClick={() => setWalletUser(null)}>
+            <Button variant="outline" onClick={() => setEditUser(null)}>
               Cancel
             </Button>
             <Button
               variant="primary"
-              disabled={walletSaving}
+              disabled={editSaving}
               onClick={() => {
-                if (!walletUser || walletSaving) return;
-                const target = walletUser;
-                const amt = parseInt(walletAmount || "0", 10);
-                if (!amt || amt <= 0) {
-                  toast.error("Invalid amount", { description: "Enter an amount above zero." });
-                  return;
-                }
-                const delta = (walletType === "credit" ? 1 : -1) * amt * 100;
-                const nextBalance = target.wallet + delta;
-                if (nextBalance < 0) {
-                  toast.error("Insufficient balance", {
-                    description: `${target.name} holds ${formatNaira(target.wallet)}.`,
+                if (!editUser || editSaving) return;
+                const target = editUser;
+                const first = editFirst.trim();
+                const last = editLast.trim();
+                const phone = editPhone.trim();
+                if (!first) {
+                  toast.error("First name required", {
+                    description: "Enter the user's first name.",
                   });
                   return;
                 }
-                setWalletSaving(true);
+                const displayName = `${first} ${last}`.trim();
+                setEditSaving(true);
                 updateDoc(doc(db, "users", target.id), {
-                  walletBalanceKobo: nextBalance,
+                  firstName: first,
+                  lastName: last,
+                  displayName,
+                  phone,
+                  role: editRole.toLowerCase(),
                   updatedAt: serverTimestamp(),
                 })
-                  .then(() =>
-                    addDoc(collection(db, "users", target.id, "walletTransactions"), {
-                      type: walletType === "credit" ? "Wallet credit" : "Wallet debit",
-                      amountKobo: amt * 100,
-                      balanceAfterKobo: nextBalance,
-                      reason: walletReason || "Admin adjustment",
-                      emailReceipt: walletEmail,
-                      createdAt: serverTimestamp(),
-                    }),
-                  )
                   .then(() => {
                     setUsers((prev) =>
-                      prev.map((x) => (x.id === target.id ? { ...x, wallet: nextBalance } : x)),
+                      prev.map((x) =>
+                        x.id === target.id
+                          ? {
+                              ...x,
+                              name: displayName,
+                              initials: (first.slice(0, 1) + last.slice(0, 1))
+                                .toUpperCase()
+                                .slice(0, 2),
+                              phone,
+                              role: editRole,
+                            }
+                          : x,
+                      ),
                     );
                     return import("@/lib/activity-log");
                   })
                   .then(({ logActivity }) =>
                     logActivity({
-                      eventType: "WALLET_ADJUST",
+                      eventType: "USER_UPDATE",
                       targetType: "user",
                       targetId: target.id,
-                      summary: `${walletType === "credit" ? "Credited" : "Debited"} ${formatNaira(amt * 100)} ${walletType === "credit" ? "to" : "from"} ${target.name}`,
-                      details: {
-                        direction: walletType,
-                        amountKobo: amt * 100,
-                        balanceAfterKobo: nextBalance,
-                        reason: walletReason || "No reason given",
-                        emailReceipt: walletEmail,
-                      },
-                      oldValue: { walletBalanceKobo: target.wallet },
-                      newValue: { walletBalanceKobo: nextBalance },
+                      summary: `Updated profile for ${displayName}`,
+                      details: { firstName: first, lastName: last, phone, role: editRole },
+                      oldValue: { name: target.name, phone: target.phone, role: target.role },
+                      newValue: { name: displayName, phone, role: editRole },
                     }),
                   )
                   .then(() => {
-                    toast.success("Wallet adjusted", {
-                      description: `${walletType.toUpperCase()} ${formatNaira(amt * 100)} for ${target.name}.`,
-                    });
-                    setWalletUser(null);
-                    setWalletAmount("");
-                    setWalletReason("");
+                    toast.success("User updated", { description: displayName });
+                    setEditUser(null);
                   })
                   .catch((err: any) =>
-                    toast.error("Wallet adjust failed", {
+                    toast.error("Update failed", {
                       description: err?.message || String(err),
                     }),
                   )
-                  .finally(() => setWalletSaving(false));
+                  .finally(() => setEditSaving(false));
               }}
             >
-              <Check className="size-4" /> {walletSaving ? "Saving…" : `Confirm ${walletType}`}
+              <UserCog className="size-4" /> {editSaving ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
