@@ -66,8 +66,13 @@ export function docToCompetition(
   const slug = String(data["slug"] ?? id);
   const title = String(data["title"] ?? data["assetName"] ?? slug);
   const rawCategory = String(data["category"] ?? "General");
-  // Migrate legacy category names to final taxonomy (PDF §2).
-  const category = LEGACY_CATEGORY_MAP[rawCategory] ?? rawCategory;
+  // Migrate legacy / free-text category names to final taxonomy (PDF §2).
+  // Firestore docs created via admin free-text (e.g. "auto") are normalized
+  // case-insensitively so carousels/filters never show raw variants.
+  const categoryMap: Record<string, string> = {};
+  for (const [k, v] of Object.entries(LEGACY_CATEGORY_MAP)) categoryMap[k.toLowerCase()] = v;
+  categoryMap["auto"] = "Vehicles";
+  const category = categoryMap[rawCategory.trim().toLowerCase()] ?? rawCategory;
   const entryPrice = Number(data["entryPrice"] ?? 0) || 0;
   const totalEntries = Number(data["totalEntries"] ?? 0) || 0;
   const entriesSold = Number(data["entriesSold"] ?? 0) || 0;

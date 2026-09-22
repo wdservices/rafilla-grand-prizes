@@ -1,6 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Pause, Play, ShieldAlert } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  ChevronDown,
+  Pause,
+  Play,
+  ShieldAlert,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -116,9 +124,9 @@ function FeaturedSlide({ competition }: { competition: Competition }) {
           </div>
           <ProgressDetails competition={competition} progress={progress} />
           <div className="flex items-center gap-2">
-            <Button asChild variant="primary" size="lg" className="flex-1">
+            <Button asChild variant="primary" size="lg" className="min-h-12 flex-1 text-base">
               <Link to="/competitions/$slug" params={{ slug: competition.slug }}>
-                Explore competition
+                Enter for {formatNaira(competition.entryPrice)}
               </Link>
             </Button>
             <Button asChild variant="outline" size="icon" aria-label="See how Raffila works">
@@ -136,7 +144,11 @@ function FeaturedSlide({ competition }: { competition: Competition }) {
   );
 }
 
-export function HeroFeaturedCarousel() {
+/**
+ * Shared carousel state so the slide dots can render anywhere on the page
+ * (e.g. under the reward-pool card) while controlling the same carousel.
+ */
+export function useFeaturedCarousel() {
   const [mounted, setMounted] = useState(false);
   const [api, setApi] = useState<CarouselApi | null>(null);
   const [current, setCurrent] = useState(0);
@@ -146,6 +158,17 @@ export function HeroFeaturedCarousel() {
   const hoveredRef = useRef(false);
   const progressRafRef = useRef<number | null>(null);
   const lastTickRef = useRef<number>(performance.now());
+
+  const { competitions: liveCompetitions } = useCompetitions();
+  const slides = useMemo(
+    () =>
+      liveCompetitions.length > 0
+        ? [...liveCompetitions].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
+        : mockFeatured.length > 0
+          ? mockFeatured
+          : [],
+    [liveCompetitions],
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -197,13 +220,114 @@ export function HeroFeaturedCarousel() {
     };
   }, [api, current, count, userPaused]);
 
-  const { competitions: liveCompetitions } = useCompetitions();
-  const slides =
-    liveCompetitions.length > 0
-      ? [...liveCompetitions].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
-      : mockFeatured.length > 0
-        ? mockFeatured
-        : [];
+  const resetTimer = () => {
+    lastTickRef.current = performance.now();
+    setProgressPct(0);
+  };
+
+  return {
+    mounted,
+    api,
+    setApi,
+    current,
+    count,
+    userPaused,
+    setUserPaused,
+    progressPct,
+    slides,
+    resetTimer,
+    hoveredRef,
+    lastTickRef,
+  };
+}
+
+export type FeaturedCarouselController = ReturnType<typeof useFeaturedCarousel>;
+
+/**
+ * Category dots — one pill per slide. Collapsed to the first row with a
+ * reveal button so 30+ slides don't flood the page.
+ */
+export function FeaturedCategoryDots({
+  controller,
+}: {
+  controller: FeaturedCarouselController;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const { slides, current, api, resetTimer } = controller;
+  if (slides.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-1.5",
+          !expanded && "max-h-8 overflow-hidden",
+        )}
+      >
+        {slides.map((c, i) => (
+          <button
+            key={c.slug}
+            type="button"
+            onClick={() => {
+              resetTimer();
+              api?.scrollTo(i);
+            }}
+            className={cn(
+              "group flex min-h-8 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-extrabold ring-1 transition",
+              i === current
+                ? "bg-ink text-cream ring-ink"
+                : "bg-paper text-ink/60 ring-ink/10 hover:text-ink hover:ring-coral/30",
+            )}
+            aria-label={`Go to slide ${i + 1}: ${c.title}`}
+            aria-current={i === current ? "true" : undefined}
+          >
+            <span
+              className={cn(
+                "size-1.5 shrink-0 rounded-full transition",
+                i === current ? "bg-coral" : "bg-ink/30 group-hover:bg-coral/60",
+              )}
+            />
+            <span className="hidden sm:inline">{c.category}</span>
+          </button>
+        ))}
+      </div>
+      {slides.length > 6 && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="inline-flex min-h-9 items-center gap-1 rounded-full bg-cream px-3.5 py-1.5 text-xs font-extrabold text-ink ring-1 ring-ink/10 transition-colors hover:bg-lemon/40 hover:text-ink"
+        >
+          {expanded ? "Show less" : `Show all ${slides.length}`}
+          <ChevronDown
+            className={cn("size-3.5 transition-transform duration-200", expanded && "rotate-180")}
+          />
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function HeroFeaturedCarousel({
+  controller,
+  showDots = true,
+}: {
+  controller: FeaturedCarouselController;
+  showDots?: boolean;
+}) {
+  const {
+    mounted,
+    api,
+    setApi,
+    current,
+    count,
+    userPaused,
+    setUserPaused,
+    progressPct,
+    slides,
+    resetTimer,
+    hoveredRef,
+    lastTickRef,
+  } = controller;
 
   if (!mounted) {
     const c = slides[0]!;
@@ -285,8 +409,7 @@ export function HeroFeaturedCarousel() {
                 size="icon"
                 className="h-8 w-8 rounded-full"
                 onClick={() => {
-                  lastTickRef.current = performance.now();
-                  setProgressPct(0);
+                  resetTimer();
                   api?.scrollPrev();
                 }}
                 aria-label="Previous featured prize"
@@ -299,8 +422,7 @@ export function HeroFeaturedCarousel() {
                 size="icon"
                 className="h-8 w-8 rounded-full"
                 onClick={() => {
-                  lastTickRef.current = performance.now();
-                  setProgressPct(0);
+                  resetTimer();
                   api?.scrollNext();
                 }}
                 aria-label="Next featured prize"
@@ -336,36 +458,9 @@ export function HeroFeaturedCarousel() {
             style={{ width: `${progressPct}%` }}
           />
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {slides.map((c, i) => (
-              <button
-                key={c.slug}
-                type="button"
-                onClick={() => {
-                  lastTickRef.current = performance.now();
-                  setProgressPct(0);
-                  api?.scrollTo(i);
-                }}
-                className={cn(
-                  "group flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-extrabold ring-1 transition",
-                  i === current
-                    ? "bg-ink text-cream ring-ink"
-                    : "bg-paper text-ink/60 ring-ink/10 hover:text-ink hover:ring-coral/30",
-                )}
-                aria-label={`Go to slide ${i + 1}: ${c.title}`}
-                aria-current={i === current ? "true" : undefined}
-              >
-                <span
-                  className={cn(
-                    "size-1.5 rounded-full transition",
-                    i === current ? "bg-coral" : "bg-ink/30 group-hover:bg-coral/60",
-                  )}
-                />
-                <span className="hidden sm:inline">{c.category}</span>
-              </button>
-            ))}
-          </div>
+        {showDots ? (
+          <FeaturedCategoryDots controller={controller} />
+        ) : (
           <div className="flex items-center gap-1.5 md:hidden">
             <Button
               type="button"
@@ -373,8 +468,7 @@ export function HeroFeaturedCarousel() {
               size="icon"
               className="h-8 w-8 rounded-full"
               onClick={() => {
-                lastTickRef.current = performance.now();
-                setProgressPct(0);
+                resetTimer();
                 api?.scrollPrev();
               }}
               aria-label="Previous featured prize"
@@ -387,8 +481,7 @@ export function HeroFeaturedCarousel() {
               size="icon"
               className="h-8 w-8 rounded-full"
               onClick={() => {
-                lastTickRef.current = performance.now();
-                setProgressPct(0);
+                resetTimer();
                 api?.scrollNext();
               }}
               aria-label="Next featured prize"
@@ -396,7 +489,7 @@ export function HeroFeaturedCarousel() {
               <ArrowRight className="size-4" />
             </Button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

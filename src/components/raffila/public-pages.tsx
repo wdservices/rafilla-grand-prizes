@@ -111,7 +111,7 @@ import {
   trackEvent,
 } from "@/lib/raffila-data";
 import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
-import { HeroFeaturedCarousel } from "@/components/raffila/hero-carousel";
+import { HeroFeaturedCarousel, FeaturedCategoryDots, useFeaturedCarousel } from "@/components/raffila/hero-carousel";
 import { cn, formatNaira as formatNairaKobo } from "@/lib/utils";
 import { useCountdownDays } from "@/hooks/useCountdown";
 import { Label } from "@/components/ui/label";
@@ -119,6 +119,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export function HomePage() {
   const { competitions } = useCompetitions();
+  const carousel = useFeaturedCarousel();
   return (
     <div>
       <section className="mx-auto max-w-7xl px-4 pb-8 pt-8 sm:px-6 sm:pt-12 lg:px-8 lg:pb-12">
@@ -130,17 +131,17 @@ export function HomePage() {
             <BadgeCheck className="size-3.5 text-mint" /> Verifiable draw
           </Pill>
         </div>
-        <h1 className="raf-rise mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[0.95] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+        <h1 className="raf-rise mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[1.04] tracking-tight text-ink sm:text-5xl lg:text-6xl">
           Big opportunities.
           <br />
           Affordable entries. <span className="text-coral">Transparent draws.</span>
         </h1>
-        <div className="mt-5 flex max-w-2xl flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <p className="max-w-xl text-base leading-relaxed text-ink/65 sm:text-lg">
+        <div className="mt-5 max-w-xl">
+          <p className="text-base leading-relaxed text-ink/65 sm:text-lg">
             What can you win? Can you afford to enter? Is Raffila trustworthy? Start with the
             prize — no wallet needed to browse.
           </p>
-          <div className="flex shrink-0 flex-col gap-3 sm:items-end">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <Button asChild variant="primary" size="lg" className="min-h-12 text-base">
               <Link
                 to="/competitions"
@@ -149,17 +150,22 @@ export function HomePage() {
                 Explore Competitions <ArrowRight className="size-4" />
               </Link>
             </Button>
-            <div className="flex shrink-0 items-center gap-2 text-xs font-extrabold text-ink/50">
+            <span className="inline-flex items-center gap-2 text-xs font-extrabold text-ink/50">
               <span className="grid size-8 place-items-center rounded-full bg-mint/40 text-ink">
                 ₦
               </span>{" "}
               Built for Africa
-            </div>
+            </span>
           </div>
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] lg:items-start">
-          <HeroFeaturedCarousel />
+          <div className="min-w-0">
+            <HeroFeaturedCarousel controller={carousel} showDots={false} />
+            <div className="mt-4 lg:hidden">
+              <FeaturedCategoryDots controller={carousel} />
+            </div>
+          </div>
           <div className="hidden space-y-4 lg:block">
             <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5">
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
@@ -203,6 +209,14 @@ export function HomePage() {
               <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-mint/40 px-2.5 py-1 text-[11px] font-extrabold text-ink">
                 <span className="size-1.5 rounded-full bg-mint" /> Live
               </span>
+            </div>
+            <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5">
+              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                Categories
+              </p>
+              <div className="mt-3">
+                <FeaturedCategoryDots controller={carousel} />
+              </div>
             </div>
           </div>
         </div>
