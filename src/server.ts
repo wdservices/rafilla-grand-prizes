@@ -3,19 +3,30 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
-type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
-};
+type FetchHandler = (request: Request, ...args: Array<unknown>) => Promise<Response> | Response;
 
-let serverEntryPromise: Promise<ServerEntry> | undefined;
+let fetchHandlerPromise: Promise<FetchHandler> | undefined;
 
-async function getServerEntry(): Promise<ServerEntry> {
-  if (!serverEntryPromise) {
-    serverEntryPromise = import("@tanstack/react-start/server-entry").then(
-      (m) => (m.default ?? m) as ServerEntry,
-    );
+async function getFetchHandler(): Promise<FetchHandler> {
+  if (!fetchHandlerPromise) {
+    fetchHandlerPromise = import("@tanstack/react-start/server-entry").then((m: any) => {
+      // The server-entry export shape varies by bundler/preset (Vite SSR,
+      // Nitro presets, preview): default {fetch}, named fetch export, bare
+      // function, or nested default interop. Accept any of them instead of
+      // assuming one shape (a wrong assumption 500s every prerender fetch).
+      const candidates: Array<unknown> = [m?.default, m, m?.default?.default, m?.handler];
+      for (const c of candidates) {
+        if (typeof c === "function") return c as FetchHandler;
+        const f = (c as Record<string, unknown> | null | undefined)?.["fetch"];
+        if (typeof f === "function") return (f as FetchHandler).bind(c);
+      }
+      if (typeof m?.fetch === "function") return m.fetch as FetchHandler;
+      throw new Error(
+        `Unable to resolve a fetch handler from server entry (exports: ${Object.keys(m ?? {}).join(",") || "none"})`,
+      );
+    });
   }
-  return serverEntryPromise;
+  return fetchHandlerPromise;
 }
 
 // h3 swallows in-handler throws into a normal 500 Response with body
@@ -47,8 +58,8 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      const handle = await getFetchHandler();
+      const response = await handle(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error(error);

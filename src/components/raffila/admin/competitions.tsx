@@ -35,6 +35,7 @@ import {
   Clock,
   Pencil,
   PlayCircle,
+  RotateCcw,
   Copy,
   Pause,
   Share2,
@@ -144,6 +145,7 @@ interface MockComp {
   liveDelay?: number;
   maxPerUser?: number;
   entriesPaused?: boolean;
+  entriesClosed?: boolean;
 }
 
 const IMAGES = [mercedesImage, techBundleImage, apartmentImage];
@@ -423,6 +425,7 @@ export function AdminCompetitionsPage() {
         entriesSold: Number(data["entriesSold"] ?? c.entriesSold),
         totalEntries: Number(data["totalEntries"] ?? c.totalEntries),
         entriesPaused: data["entriesPaused"] === true,
+        entriesClosed: data["entriesClosed"] === true,
       };
     });
     // Firestore-only competitions (created via the form) appended live.
@@ -456,6 +459,7 @@ export function AdminCompetitionsPage() {
         partner: String(data["partner"] ?? "Raffila"),
         drawDate: String(data["drawDate"] ?? ""),
         entriesPaused: data["entriesPaused"] === true,
+        entriesClosed: data["entriesClosed"] === true,
       });
     });
     return live.filter(Boolean) as MockComp[];
@@ -664,7 +668,10 @@ export function AdminCompetitionsPage() {
       };
       if (modalMode === "edit") {
         // Edit must never reset sales counters or creation metadata.
-        await updateDoc(doc(db, "competitions", compId), payload);
+        // setDoc+merge (not updateDoc): mock-only rows like "jos-land-plot"
+        // have no Firestore doc yet, and updateDoc throws
+        // "No document to update" for those. Merge preserves existing fields.
+        await setDoc(doc(db, "competitions", compId), payload, { merge: true });
       } else {
         await setDoc(doc(db, "competitions", compId), {
           ...payload,
@@ -744,6 +751,35 @@ export function AdminCompetitionsPage() {
       });
     } catch (err) {
       toast.error("Duplicate failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }
+
+  /** Reopen a closed (winnerless) competition so it accepts tickets again.
+   * Used for draw simulations: reopen → seed/buy tickets → set close time → draw. */
+  async function reopenCompetition(comp: MockComp) {
+    try {
+      await updateDoc(doc(db, "competitions", comp.slug), {
+        status: "LIVE",
+        entriesClosed: false,
+        entriesPaused: false,
+        closedAt: null,
+        updatedAt: serverTimestamp(),
+      });
+      await logActivity({
+        eventType: "COMPETITION_UPDATE",
+        targetType: "competition",
+        targetId: comp.slug,
+        summary: `Reopened entries for "${comp.name}" (DRAW SIMULATION)`,
+        details: { slug: comp.slug },
+      });
+      setDrawRefreshKey((k) => k + 1);
+      toast.success("Entries reopened", {
+        description: `${comp.name} is LIVE and accepting tickets again.`,
+      });
+    } catch (err) {
+      toast.error("Reopen failed", {
         description: err instanceof Error ? err.message : "Unknown error",
       });
     }
@@ -854,6 +890,9 @@ export function AdminCompetitionsPage() {
         break;
       case "pause":
         void togglePauseCompetition(comp);
+        break;
+      case "reopen":
+        void reopenCompetition(comp);
         break;
       case "cancel":
         setCancelTarget(comp);
@@ -1074,6 +1113,11 @@ export function AdminCompetitionsPage() {
                   (c.status === "COMPLETED" && rec?.winningTicketNumber);
                 const canPause =
                   c.status === "LIVE" || c.status === "SCHEDULED" || !!c.entriesPaused;
+                const canReopen =
+                  !hasWinner &&
+                  c.status !== "DRAW_IN_PROGRESS" &&
+                  c.status !== "CANCELLED" &&
+                  (c.status === "DRAW_READY" || !!c.entriesClosed);
                 const canCancel =
                   !hasWinner && c.status !== "COMPLETED" && c.status !== "CANCELLED";
                 return (
@@ -1156,6 +1200,15 @@ export function AdminCompetitionsPage() {
                               <Copy className="mr-2 size-4" />
                               Duplicate
                             </DropdownMenuItem>
+                            {canReopen && (
+                              <DropdownMenuItem
+                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-mint/25 focus:text-ink"
+                                onClick={() => performAction(c, "reopen")}
+                              >
+                                <RotateCcw className="mr-2 size-4" />
+                                Reopen entries
+                              </DropdownMenuItem>
+                            )}
                             {canPause && (
                               <DropdownMenuItem
                                 className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-cream focus:text-ink"
