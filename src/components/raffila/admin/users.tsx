@@ -137,7 +137,8 @@ function docToAdminUser(id: string, data: Record<string, unknown>, entries: numb
   const name = display || (data["handle"] as string) || (data["email"] as string) || id.slice(0, 8);
   const monogram =
     (data["avatarMonogram"] as string) ||
-    ((first.slice(0, 1) + last.slice(0, 1)).toUpperCase() || "U");
+    (first.slice(0, 1) + last.slice(0, 1)).toUpperCase() ||
+    "U";
   const rawRole = String(data["role"] ?? "user").toLowerCase();
   const role: Role = rawRole === "admin" ? "ADMIN" : rawRole === "partner" ? "PARTNER" : "USER";
   const verified = data["verified"] === true;
@@ -370,7 +371,10 @@ export function AdminUsersPage() {
               <TableBody className="[&_tr]:border-ink/10">
                 {loading && (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center text-sm font-bold text-ink/55">
+                    <TableCell
+                      colSpan={10}
+                      className="py-12 text-center text-sm font-bold text-ink/55"
+                    >
                       Loading users from Firestore…
                     </TableCell>
                   </TableRow>
@@ -392,7 +396,10 @@ export function AdminUsersPage() {
                 )}
                 {!loading && !loadError && filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} className="py-12 text-center text-sm font-bold text-ink/55">
+                    <TableCell
+                      colSpan={10}
+                      className="py-12 text-center text-sm font-bold text-ink/55"
+                    >
                       No users found. Adjust search or filters.
                     </TableCell>
                   </TableRow>
@@ -401,168 +408,172 @@ export function AdminUsersPage() {
                   !loadError &&
                   filtered.map((u) => (
                     <TableRow key={u.id} className="hover:bg-lilac/10">
-                    <TableCell className="py-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar className={cn("size-9 ring-2 ring-paper", tintBg[u.tint])}>
-                          {u.avatarUrl ? (
-                            <img src={u.avatarUrl} alt="" className="size-full object-cover" />
-                          ) : (
-                            <AvatarFallback className={cn("text-xs font-extrabold", tintBg[u.tint])}>
-                              {u.initials}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div className="min-w-0 max-w-[200px]">
-                          <p className="truncate text-sm font-extrabold text-ink">{u.name}</p>
-                          <p className="truncate text-xs font-bold text-ink/55">{u.email}</p>
+                      <TableCell className="py-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className={cn("size-9 ring-2 ring-paper", tintBg[u.tint])}>
+                            {u.avatarUrl ? (
+                              <img src={u.avatarUrl} alt="" className="size-full object-cover" />
+                            ) : (
+                              <AvatarFallback
+                                className={cn("text-xs font-extrabold", tintBg[u.tint])}
+                              >
+                                {u.initials}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <div className="min-w-0 max-w-[200px]">
+                            <p className="truncate text-sm font-extrabold text-ink">{u.name}</p>
+                            <p className="truncate text-xs font-bold text-ink/55">{u.email}</p>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3 text-xs font-bold text-ink/65">
-                      {u.username}
-                    </TableCell>
-                    <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">
-                      {u.phone}
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <Badge
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
-                          rolePill[u.role],
-                        )}
-                      >
-                        {u.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <div className="flex items-center gap-1">
+                      </TableCell>
+                      <TableCell className="py-3 text-xs font-bold text-ink/65">
+                        {u.username}
+                      </TableCell>
+                      <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">
+                        {u.phone}
+                      </TableCell>
+                      <TableCell className="py-3">
                         <Badge
                           className={cn(
-                            "rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0",
-                            u.verifiedEmail
-                              ? "bg-mint/35 text-ink"
-                              : "bg-ink/10 text-ink/50 line-through",
+                            "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                            rolePill[u.role],
                           )}
                         >
-                          <Mail className="mr-0.5 size-2.5" />
-                          Email
+                          {u.role}
                         </Badge>
-                        <Badge
-                          className={cn(
-                            "rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0",
-                            u.verifiedPhone
-                              ? "bg-mint/35 text-ink"
-                              : "bg-ink/10 text-ink/50 line-through",
-                          )}
-                        >
-                          <Phone className="mr-0.5 size-2.5" />
-                          Phone
-                        </Badge>
-                        <Badge
-                          className={cn(
-                            "rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0",
-                            u.verifiedKyc
-                              ? "bg-mint/35 text-ink"
-                              : "bg-ink/10 text-ink/50 line-through",
-                          )}
-                        >
-                          <ShieldCheck className="mr-0.5 size-2.5" />
-                          KYC
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3 text-right text-xs font-bold text-ink/70">
-                      {u.entries.toLocaleString("en-NG")}
-                    </TableCell>
-                    <TableCell className="py-3 text-right text-xs font-extrabold text-ink whitespace-nowrap">
-                      {formatNaira(u.wallet)}
-                    </TableCell>
-                    <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">
-                      {u.created}
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <Badge
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
-                          statusPill[u.status],
-                        )}
-                      >
-                        {u.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-3 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8">
-                            <MoreHorizontal className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="w-44 rounded-[22px] bg-paper p-1.5"
-                        >
-                          <DropdownMenuLabel className="rounded-xl px-3 py-2 text-[11px] font-extrabold uppercase tracking-wider text-ink/45">
-                            {u.name}
-                          </DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink"
-                            onClick={() => setViewUser(u)}
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <div className="flex items-center gap-1">
+                          <Badge
+                            className={cn(
+                              "rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0",
+                              u.verifiedEmail
+                                ? "bg-mint/35 text-ink"
+                                : "bg-ink/10 text-ink/50 line-through",
+                            )}
                           >
-                            <Eye className="mr-2 size-4" /> View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink"
-                            onClick={() => openEditDialog(u)}
+                            <Mail className="mr-0.5 size-2.5" />
+                            Email
+                          </Badge>
+                          <Badge
+                            className={cn(
+                              "rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0",
+                              u.verifiedPhone
+                                ? "bg-mint/35 text-ink"
+                                : "bg-ink/10 text-ink/50 line-through",
+                            )}
                           >
-                            <UserCog className="mr-2 size-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {u.status === "ACTIVE" ? (
+                            <Phone className="mr-0.5 size-2.5" />
+                            Phone
+                          </Badge>
+                          <Badge
+                            className={cn(
+                              "rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ring-0",
+                              u.verifiedKyc
+                                ? "bg-mint/35 text-ink"
+                                : "bg-ink/10 text-ink/50 line-through",
+                            )}
+                          >
+                            <ShieldCheck className="mr-0.5 size-2.5" />
+                            KYC
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3 text-right text-xs font-bold text-ink/70">
+                        {u.entries.toLocaleString("en-NG")}
+                      </TableCell>
+                      <TableCell className="py-3 text-right text-xs font-extrabold text-ink whitespace-nowrap">
+                        {formatNaira(u.wallet)}
+                      </TableCell>
+                      <TableCell className="py-3 text-xs font-bold text-ink/65 whitespace-nowrap">
+                        {u.created}
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <Badge
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ring-0",
+                            statusPill[u.status],
+                          )}
+                        >
+                          {u.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-3 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8">
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-44 rounded-[22px] bg-paper p-1.5"
+                          >
+                            <DropdownMenuLabel className="rounded-xl px-3 py-2 text-[11px] font-extrabold uppercase tracking-wider text-ink/45">
+                              {u.name}
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15"
-                              onClick={() => setSuspendUser(u)}
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink"
+                              onClick={() => setViewUser(u)}
                             >
-                              <UserX className="mr-2 size-4" /> Suspend
+                              <Eye className="mr-2 size-4" /> View
                             </DropdownMenuItem>
-                          ) : (
                             <DropdownMenuItem
-                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-mint-700 focus:bg-mint/20"
-                              onClick={() => {
-                                updateDoc(doc(db, "users", u.id), {
-                                  status: "active",
-                                  updatedAt: serverTimestamp(),
-                                })
-                                  .then(() => {
-                                    setUsers((prev) =>
-                                      prev.map((x) => (x.id === u.id ? { ...x, status: "ACTIVE" as const } : x)),
-                                    );
-                                    return import("@/lib/activity-log");
+                              className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/75 focus:bg-lilac/20 focus:text-ink"
+                              onClick={() => openEditDialog(u)}
+                            >
+                              <UserCog className="mr-2 size-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {u.status === "ACTIVE" ? (
+                              <DropdownMenuItem
+                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-coral focus:bg-coral/15"
+                                onClick={() => setSuspendUser(u)}
+                              >
+                                <UserX className="mr-2 size-4" /> Suspend
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-mint-700 focus:bg-mint/20"
+                                onClick={() => {
+                                  updateDoc(doc(db, "users", u.id), {
+                                    status: "active",
+                                    updatedAt: serverTimestamp(),
                                   })
-                                  .then(({ logActivity }) =>
-                                    logActivity({
-                                      eventType: "USER_ACTIVATE",
-                                      targetType: "user",
-                                      targetId: u.id,
-                                      summary: `Reactivated ${u.name}`,
-                                      oldValue: { status: "suspended" },
-                                      newValue: { status: "active" },
-                                    }),
-                                  )
-                                  .then(() => toast.success(`${u.name} reactivated`))
-                                  .catch((err: any) =>
-                                    toast.error("Reactivate failed", {
-                                      description: err?.message || String(err),
-                                    }),
-                                  );
-                              }}
-                            >
-                              <UserCheck className="mr-2 size-4" /> Activate
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                                    .then(() => {
+                                      setUsers((prev) =>
+                                        prev.map((x) =>
+                                          x.id === u.id ? { ...x, status: "ACTIVE" as const } : x,
+                                        ),
+                                      );
+                                      return import("@/lib/activity-log");
+                                    })
+                                    .then(({ logActivity }) =>
+                                      logActivity({
+                                        eventType: "USER_ACTIVATE",
+                                        targetType: "user",
+                                        targetId: u.id,
+                                        summary: `Reactivated ${u.name}`,
+                                        oldValue: { status: "suspended" },
+                                        newValue: { status: "active" },
+                                      }),
+                                    )
+                                    .then(() => toast.success(`${u.name} reactivated`))
+                                    .catch((err: any) =>
+                                      toast.error("Reactivate failed", {
+                                        description: err?.message || String(err),
+                                      }),
+                                    );
+                                }}
+                              >
+                                <UserCheck className="mr-2 size-4" /> Activate
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
                   ))}
               </TableBody>
@@ -632,7 +643,9 @@ export function AdminUsersPage() {
                 })
                   .then(() => {
                     setUsers((prev) =>
-                      prev.map((x) => (x.id === target.id ? { ...x, status: "SUSPENDED" as const } : x)),
+                      prev.map((x) =>
+                        x.id === target.id ? { ...x, status: "SUSPENDED" as const } : x,
+                      ),
                     );
                     return import("@/lib/activity-log");
                   })

@@ -247,11 +247,7 @@ export type FeaturedCarouselController = ReturnType<typeof useFeaturedCarousel>;
  * Category dots — one pill per slide. Collapsed to the first row with a
  * reveal button so 30+ slides don't flood the page.
  */
-export function FeaturedCategoryDots({
-  controller,
-}: {
-  controller: FeaturedCarouselController;
-}) {
+export function FeaturedCategoryDots({ controller }: { controller: FeaturedCarouselController }) {
   const [expanded, setExpanded] = useState(false);
   const { slides, current, api, resetTimer } = controller;
   if (slides.length === 0) return null;

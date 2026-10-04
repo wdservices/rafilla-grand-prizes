@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, doc, getDocs, limit, query as fsQuery, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  limit,
+  query as fsQuery,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { AdminShell } from "./admin-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -359,7 +369,9 @@ export function AdminFraudQueuePage() {
           usersSnap.docs.map(async (d) => {
             let entries = 0;
             try {
-              const es = await getDocs(fsQuery(collection(db, "users", d.id, "entries"), limit(500)));
+              const es = await getDocs(
+                fsQuery(collection(db, "users", d.id, "entries"), limit(500)),
+              );
               entries = es.size;
             } catch {
               entries = 0;
@@ -382,8 +394,10 @@ export function AdminFraudQueuePage() {
         for (const u of raws) {
           const first = String(u.v["firstName"] ?? "");
           const last = String(u.v["lastName"] ?? "");
-          const name =
-            (String(u.v["displayName"] ?? "") || `${first} ${last}`.trim() || u.v["handle"] || u.id.slice(0, 8)) as string;
+          const name = (String(u.v["displayName"] ?? "") ||
+            `${first} ${last}`.trim() ||
+            u.v["handle"] ||
+            u.id.slice(0, 8)) as string;
           const email = String(u.v["email"] ?? "");
           const phone = String(u.v["phone"] ?? "");
           const createdMs = toMs(u.v["createdAt"]);
@@ -417,9 +431,18 @@ export function AdminFraudQueuePage() {
             );
           }
           if (u.entries >= STUFFING_THRESHOLD) {
-            push("ticket_stuffing", `${u.entries} entries held across competitions`, 25, lastPurchase);
+            push(
+              "ticket_stuffing",
+              `${u.entries} entries held across competitions`,
+              25,
+              lastPurchase,
+            );
           }
-          if (createdMs && now - createdMs < NEW_ACCOUNT_DAYS * 86400000 && totalSpend > NEW_ACCOUNT_SPEND_KOBO) {
+          if (
+            createdMs &&
+            now - createdMs < NEW_ACCOUNT_DAYS * 86400000 &&
+            totalSpend > NEW_ACCOUNT_SPEND_KOBO
+          ) {
             const ageDays = Math.max(1, Math.round((now - createdMs) / 86400000));
             push(
               "new_account_spend",
@@ -555,7 +578,20 @@ export function AdminFraudQueuePage() {
 
   const exportCases = () => {
     const rows = [
-      ["case", "user", "email", "phone", "score", "severity", "status", "signals", "tickets", "value_kobo", "first_seen", "last_seen"],
+      [
+        "case",
+        "user",
+        "email",
+        "phone",
+        "score",
+        "severity",
+        "status",
+        "signals",
+        "tickets",
+        "value_kobo",
+        "first_seen",
+        "last_seen",
+      ],
       ...filtered.map((c) => [
         c.id,
         c.userName,
@@ -804,7 +840,10 @@ export function AdminFraudQueuePage() {
                 <TableBody>
                   {loading && (
                     <TableRow>
-                      <TableCell colSpan={8} className="py-12 text-center font-body text-sm font-bold text-ink/55">
+                      <TableCell
+                        colSpan={8}
+                        className="py-12 text-center font-body text-sm font-bold text-ink/55"
+                      >
                         Scanning Firestore activity for risk signals…
                       </TableCell>
                     </TableRow>
@@ -913,12 +952,11 @@ export function AdminFraudQueuePage() {
                       </TableCell>
                       <TableCell>
                         <div className="font-body text-xs text-ink whitespace-nowrap">
-                           {lagosDateShort(c.firstSeen)}
+                          {lagosDateShort(c.firstSeen)}
                         </div>
                         <div className="text-[10px] text-ink/40 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          Last{" "}
-                           {lagosDateShort(c.lastSeen)}
+                          Last {lagosDateShort(c.lastSeen)}
                         </div>
                       </TableCell>
                       <TableCell>{severityBadge(c.severity)}</TableCell>
@@ -1046,7 +1084,7 @@ export function AdminFraudQueuePage() {
                               +{sg.scoreContribution} pts
                             </Badge>
                             <span className="text-[11px] text-ink/40 font-mono ml-auto">
-                               {lagosDateTime(sg.timestamp)}
+                              {lagosDateTime(sg.timestamp)}
                             </span>
                           </div>
                           <p className="text-sm font-body text-ink/80">{sg.detail}</p>
@@ -1242,7 +1280,11 @@ export function AdminFraudQueuePage() {
                       onClick={() => {
                         const c = reviewCase;
                         if (!c) return;
-                        persistCaseStatus(c, "reviewing", resolutionNote || "Funds held pending investigation")
+                        persistCaseStatus(
+                          c,
+                          "reviewing",
+                          resolutionNote || "Funds held pending investigation",
+                        )
                           .then(() =>
                             import("@/lib/activity-log").then(({ logActivity }) =>
                               logActivity({

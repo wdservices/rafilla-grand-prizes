@@ -196,7 +196,7 @@ export async function sendAdminInvite(
     inviter,
     origin,
   });
-  let emailed = emailState === "sent";
+  const emailed = emailState === "sent";
 
   // Backup path: mail queue for the Trigger Email extension / a future
   // Cloud Function. Only used when EmailJS is configured but failed.

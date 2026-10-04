@@ -77,7 +77,7 @@ function isAdult(dob: string): boolean {
   return age >= 18;
 }
 
-export function RegisterForm() {
+export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin?: () => void } = {}) {
   const [step, setStep] = useState<1 | 2>(1);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -308,8 +308,8 @@ export function RegisterForm() {
           Create your account
         </h1>
         <p className="mt-2 text-sm text-ink/55">
-          Phone/OTP first — most familiar on mobile. Email or Google also available. Extra KYC
-          only when required, and we explain why.
+          Phone/OTP first — most familiar on mobile. Email or Google also available. Extra KYC only
+          when required, and we explain why.
         </p>
       </header>
 
@@ -700,7 +700,13 @@ export function RegisterForm() {
         Already have an account?{" "}
         <Link
           to="/auth"
-          search={{ mode: undefined }}
+          search={{ tab: "login", mode: undefined } as any}
+          onClick={(e) => {
+            if (onSwitchToLogin) {
+              e.preventDefault();
+              onSwitchToLogin();
+            }
+          }}
           className="font-extrabold text-coral hover:underline hover:underline-offset-2"
         >
           Sign in

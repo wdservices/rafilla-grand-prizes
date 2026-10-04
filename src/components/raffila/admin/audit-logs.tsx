@@ -104,12 +104,7 @@ interface AuditLog {
   riskLevel: RiskLevel;
 }
 
-import {
-  lagosDayKey,
-  lagosDateShort,
-  lagosTime,
-  lagosDateTime,
-} from "@/lib/format";
+import { lagosDayKey, lagosDateShort, lagosTime, lagosDateTime } from "@/lib/format";
 
 function toIso(value: unknown, fallback?: unknown): string {
   try {
@@ -125,11 +120,11 @@ function toIso(value: unknown, fallback?: unknown): string {
 }
 
 function docToLog(id: string, data: Record<string, unknown>): AuditLog {
-  const eventType = (
-    typeof data["eventType"] === "string" && (EVENT_TYPES as readonly string[]).includes(data["eventType"] as string)
+  const eventType =
+    typeof data["eventType"] === "string" &&
+    (EVENT_TYPES as readonly string[]).includes(data["eventType"] as string)
       ? (data["eventType"] as EventType)
-      : "USER_UPDATE"
-  );
+      : "USER_UPDATE";
   return {
     id,
     timestamp: toIso(data["createdAt"], data["clientAt"]),
@@ -326,7 +321,19 @@ export function AdminAuditLogsPage() {
 
   const exportCsv = () => {
     const rows = [
-      ["id", "timestamp", "actor", "actor_email", "actor_id", "role", "event", "target", "target_id", "risk", "summary"],
+      [
+        "id",
+        "timestamp",
+        "actor",
+        "actor_email",
+        "actor_id",
+        "role",
+        "event",
+        "target",
+        "target_id",
+        "risk",
+        "summary",
+      ],
       ...filtered.map((l) => [
         l.id,
         l.timestamp,
@@ -462,8 +469,8 @@ export function AdminAuditLogsPage() {
           <div>
             <h1 className="font-display text-3xl text-ink">Audit Logs</h1>
             <p className="font-body text-ink/60 text-sm mt-1">
-            Immutable event log streamed from Firestore — every user and admin action.
-          </p>
+              Immutable event log streamed from Firestore — every user and admin action.
+            </p>
           </div>
           <div className="flex gap-2 flex-wrap items-center">
             <Badge
@@ -698,7 +705,9 @@ export function AdminAuditLogsPage() {
                       <TableCell colSpan={7} className="py-12 text-center">
                         <div className="flex flex-col items-center gap-2 text-ink/50">
                           <Shield className="w-6 h-6" />
-                          <p className="font-body text-sm font-semibold text-ink">No activity yet</p>
+                          <p className="font-body text-sm font-semibold text-ink">
+                            No activity yet
+                          </p>
                           <p className="font-body text-xs">
                             Actions across the app will appear here as users and admins use Raffila.
                           </p>
@@ -707,75 +716,19 @@ export function AdminAuditLogsPage() {
                     </TableRow>
                   ) : (
                     pageLogs.map((l) => (
-                    <TableRow key={l.id}>
-                      <TableCell className="font-body text-sm whitespace-nowrap">
-                        <div className="text-ink">
-                          {lagosDateShort(l.timestamp)}, {lagosTime(l.timestamp)}{" "}
-                          <span className="text-[10px] font-bold text-ink/40">GMT+1</span>
-                        </div>
-                        <div className="text-ink/40 text-[11px]">{l.id}</div>
-                      </TableCell>
-                      <TableCell>
-                        <button
-                          type="button"
-                          className="text-left group"
-                          title="View full history for this user"
-                          onClick={() =>
-                            setHistoryActor({
-                              actorId: l.actorId,
-                              actorName: l.actorName,
-                              actorEmail: l.actorEmail,
-                            })
-                          }
-                        >
-                          <div className="font-body text-sm text-ink underline-offset-2 group-hover:underline group-hover:text-coral">
-                            {l.actorName}
+                      <TableRow key={l.id}>
+                        <TableCell className="font-body text-sm whitespace-nowrap">
+                          <div className="text-ink">
+                            {lagosDateShort(l.timestamp)}, {lagosTime(l.timestamp)}{" "}
+                            <span className="text-[10px] font-bold text-ink/40">GMT+1</span>
                           </div>
-                          <div className="text-[11px] text-ink/40 font-mono truncate max-w-[220px]">
-                            {l.actorEmail || l.actorId}
-                          </div>
-                        </button>
-                      </TableCell>
-                      <TableCell>{eventBadge(l.eventType)}</TableCell>
-                      <TableCell>
-                        <div className="text-xs font-body text-ink/70">{l.targetType}</div>
-                        <div className="font-mono text-[11px] text-ink">{l.targetId}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5 text-[11px]">
-                          {l.oldValue ? (
-                            <>
-                              <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-mono">
-                                -old
-                              </span>
-                              <ChevronRight className="w-3 h-3 text-ink/30" />
-                              <span className="px-1.5 py-0.5 rounded bg-mint/30 text-ink font-mono">
-                                +new
-                              </span>
-                            </>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded bg-ink/5 text-ink/50 font-mono">
-                              CREATE
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{riskBadge(l.riskLevel)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-full"
-                            onClick={() => setDiffLog(l)}
-                          >
-                            <Eye className="w-3.5 h-3.5 mr-1" /> Diff
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-full"
-                            title="Full history for this user"
+                          <div className="text-ink/40 text-[11px]">{l.id}</div>
+                        </TableCell>
+                        <TableCell>
+                          <button
+                            type="button"
+                            className="text-left group"
+                            title="View full history for this user"
                             onClick={() =>
                               setHistoryActor({
                                 actorId: l.actorId,
@@ -784,11 +737,67 @@ export function AdminAuditLogsPage() {
                               })
                             }
                           >
-                            <History className="w-3.5 h-3.5 mr-1" /> History
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                            <div className="font-body text-sm text-ink underline-offset-2 group-hover:underline group-hover:text-coral">
+                              {l.actorName}
+                            </div>
+                            <div className="text-[11px] text-ink/40 font-mono truncate max-w-[220px]">
+                              {l.actorEmail || l.actorId}
+                            </div>
+                          </button>
+                        </TableCell>
+                        <TableCell>{eventBadge(l.eventType)}</TableCell>
+                        <TableCell>
+                          <div className="text-xs font-body text-ink/70">{l.targetType}</div>
+                          <div className="font-mono text-[11px] text-ink">{l.targetId}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5 text-[11px]">
+                            {l.oldValue ? (
+                              <>
+                                <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-mono">
+                                  -old
+                                </span>
+                                <ChevronRight className="w-3 h-3 text-ink/30" />
+                                <span className="px-1.5 py-0.5 rounded bg-mint/30 text-ink font-mono">
+                                  +new
+                                </span>
+                              </>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded bg-ink/5 text-ink/50 font-mono">
+                                CREATE
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{riskBadge(l.riskLevel)}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-full"
+                              onClick={() => setDiffLog(l)}
+                            >
+                              <Eye className="w-3.5 h-3.5 mr-1" /> Diff
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-full"
+                              title="Full history for this user"
+                              onClick={() =>
+                                setHistoryActor({
+                                  actorId: l.actorId,
+                                  actorName: l.actorName,
+                                  actorEmail: l.actorEmail,
+                                })
+                              }
+                            >
+                              <History className="w-3.5 h-3.5 mr-1" /> History
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
                     ))
                   )}
                 </TableBody>
@@ -876,7 +885,9 @@ export function AdminAuditLogsPage() {
                 <div className="p-3 rounded-xl bg-cream/60">
                   <p className="text-ink/50 uppercase tracking-wider mb-1">Target</p>
                   <p className="text-ink font-mono">{diffLog.targetType || "—"}</p>
-                  <p className="text-ink font-mono font-semibold break-all">{diffLog.targetId || "—"}</p>
+                  <p className="text-ink font-mono font-semibold break-all">
+                    {diffLog.targetId || "—"}
+                  </p>
                   <div className="mt-1">{riskBadge(diffLog.riskLevel)}</div>
                 </div>
               </div>
@@ -941,8 +952,8 @@ export function AdminAuditLogsPage() {
             </DialogTitle>
             <DialogDescription className="font-body">
               Every recorded activity for{" "}
-              <span className="font-mono text-ink">{historyActor?.actorEmail}</span> · newest
-              first · {historyLogs.length} event{historyLogs.length === 1 ? "" : "s"}
+              <span className="font-mono text-ink">{historyActor?.actorEmail}</span> · newest first
+              · {historyLogs.length} event{historyLogs.length === 1 ? "" : "s"}
             </DialogDescription>
           </DialogHeader>
           {historyLoading ? (
@@ -967,8 +978,7 @@ export function AdminAuditLogsPage() {
                         className="flex flex-wrap items-center gap-2 rounded-2xl bg-cream/50 px-3.5 py-2.5 ring-1 ring-ink/5"
                       >
                         <span className="font-mono text-[11px] font-bold text-ink/55 whitespace-nowrap">
-                          {lagosTime(l.timestamp)}{" "}
-                          <span className="text-ink/40">GMT+1</span>
+                          {lagosTime(l.timestamp)} <span className="text-ink/40">GMT+1</span>
                         </span>
                         {eventBadge(l.eventType)}
                         <span className="min-w-0 flex-1 text-xs font-bold text-ink/75">
@@ -983,7 +993,11 @@ export function AdminAuditLogsPage() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" className="rounded-full" onClick={() => setHistoryActor(null)}>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => setHistoryActor(null)}
+            >
               Close
             </Button>
             <Button

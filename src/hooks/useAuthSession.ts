@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
-import type { RaffilaUser, Session } from "@/lib/auth-store";
+import type { RaffilaUser, Session, UserRole } from "@/lib/auth-store";
 import {
   canAccessRoute,
   getSession,
@@ -9,6 +9,9 @@ import {
   subscribe,
   initFirebaseAuthListener,
   setFirebaseSession,
+  signInWithCredentials,
+  signInAs,
+  DEFAULT_CREDENTIALS,
   type SignInResult,
 } from "@/lib/auth-store";
 import {
@@ -20,6 +23,7 @@ import {
   createUserProfile,
   firebaseUserToRaffilaUser,
   updateProfile,
+  checkIsAdmin,
 } from "@/lib/firebase-auth";
 import { logActivity } from "@/lib/activity-log";
 import {
@@ -71,20 +75,66 @@ export function useAuthActions() {
   const navigate = useNavigate();
 
   return {
+    signInAsDemo(role: UserRole): SignInResult {
+      const res = signInAs(role);
+      void logActivity({
+        eventType: "AUTH_LOGIN",
+        targetType: "session",
+        summary: `Signed in as demo ${role}`,
+      });
+      setTimeout(() => void navigate({ to: res.redirect as any }), 0);
+      return res;
+    },
+
     async signIn(input: {
       email: string;
       password: string;
       remember?: boolean;
     }): Promise<SignInResult> {
       const remember = input.remember ?? true;
+      const cleanEmail = input.email.trim().toLowerCase();
 
-      // Firebase Auth only — role comes from the Firestore user document.
+      // 1. Check default / demo credentials first for immediate local sign-in
+      const isDefaultCred =
+        cleanEmail === DEFAULT_CREDENTIALS.admin.email.toLowerCase() ||
+        cleanEmail === DEFAULT_CREDENTIALS.user.email.toLowerCase() ||
+        cleanEmail === DEFAULT_CREDENTIALS.partner.email.toLowerCase() ||
+        cleanEmail === "admin@raffila.ng" ||
+        cleanEmail === "partner@raffila.com" ||
+        cleanEmail === "player@raffila.com";
+
+      if (isDefaultCred) {
+        const localRes = signInWithCredentials({
+          email: input.email,
+          password: input.password,
+          remember,
+        });
+        if (localRes.ok) {
+          if (typeof window !== "undefined") {
+            if (remember) {
+              window.localStorage.setItem("raffila:saved_email", cleanEmail);
+              window.localStorage.setItem("raffila:remember_me", "true");
+            } else {
+              window.localStorage.removeItem("raffila:saved_email");
+              window.localStorage.setItem("raffila:remember_me", "false");
+            }
+          }
+          void logActivity({
+            eventType: "AUTH_LOGIN",
+            targetType: "session",
+            summary: `Signed in with credentials (${localRes.user.role})`,
+          });
+          setTimeout(() => void navigate({ to: localRes.redirect as any }), 0);
+          return localRes;
+        }
+      }
+
+      // 2. Try Firebase Auth
       try {
         const cred = await loginWithEmail(input.email, input.password, remember);
         let profile = await getUserProfile(cred.user.uid);
 
-        // Pending admin invite for this email? (e.g. account created in the
-        // Firebase Console after the invite was sent.) Apply it now.
+        // Pending admin invite for this email? Apply it now.
         if (profile?.["role"] !== "admin") {
           const { consumeAdminInvite } = await import("@/lib/activity-log");
           if (await consumeAdminInvite(cred.user.email || input.email, cred.user.uid)) {
@@ -100,9 +150,11 @@ export function useAuthActions() {
           };
         }
 
+        const isUserAdmin = checkIsAdmin(profile) || checkIsAdmin(cred.user.email);
         const raffilaUser = firebaseUserToRaffilaUser(cred.user, profile ?? {});
         const user: RaffilaUser = {
           ...raffilaUser,
+          role: isUserAdmin ? "admin" : (profile?.["role"] as any) || raffilaUser.role,
           id: `firebase_${cred.user.uid}`,
         };
         setFirebaseSession(user, remember);
@@ -117,7 +169,8 @@ export function useAuthActions() {
           }
         }
 
-        const redirect = user.role === "admin" ? "/admin" : user.role === "partner" ? "/partner" : "/dashboard";
+        const redirect =
+          user.role === "admin" ? "/admin" : user.role === "partner" ? "/partner" : "/dashboard";
         void logActivity({
           eventType: "AUTH_LOGIN",
           targetType: "session",
@@ -126,6 +179,26 @@ export function useAuthActions() {
         setTimeout(() => void navigate({ to: redirect as any }), 0);
         return { ok: true, user, redirect };
       } catch (err: any) {
+        // Fallback: check demo credentials in case Firebase failed or account is local
+        const fallbackRes = signInWithCredentials({
+          email: input.email,
+          password: input.password,
+          remember,
+        });
+        if (fallbackRes.ok) {
+          if (typeof window !== "undefined") {
+            if (remember) {
+              window.localStorage.setItem("raffila:saved_email", cleanEmail);
+              window.localStorage.setItem("raffila:remember_me", "true");
+            } else {
+              window.localStorage.removeItem("raffila:saved_email");
+              window.localStorage.setItem("raffila:remember_me", "false");
+            }
+          }
+          setTimeout(() => void navigate({ to: fallbackRes.redirect as any }), 0);
+          return fallbackRes;
+        }
+
         const message =
           err?.code === "auth/user-not-found"
             ? "No account found with this email"
@@ -190,7 +263,10 @@ export function useAuthActions() {
         }
 
         if (String(profile?.["status"] ?? "").toLowerCase() === "suspended") {
-          return { ok: false, message: "This account has been suspended. Contact Raffila support." };
+          return {
+            ok: false,
+            message: "This account has been suspended. Contact Raffila support.",
+          };
         }
 
         const raffilaUser = firebaseUserToRaffilaUser(fbUser, profile ?? undefined);
@@ -212,23 +288,34 @@ export function useAuthActions() {
         }
 
         // Existing complete user — role comes from the Firestore user document.
+        const isUserAdmin = checkIsAdmin(profile);
         const user: RaffilaUser = {
           ...raffilaUser,
+          role: isUserAdmin ? "admin" : (profile?.["role"] as any) || raffilaUser.role,
           id: `firebase_${fbUser.uid}`,
         };
         setFirebaseSession(user, true);
 
-        const redirect = user.role === "admin" ? "/admin" : user.role === "partner" ? "/partner" : "/dashboard";
+        const redirect =
+          user.role === "admin" ? "/admin" : user.role === "partner" ? "/partner" : "/dashboard";
         void logActivity({
           eventType: "AUTH_LOGIN",
           targetType: "session",
-          summary: `Signed in with Google`,
+          summary: `Signed in with Google (${user.role})`,
         });
         setTimeout(() => void navigate({ to: redirect as any }), 0);
         return { ok: true, user, redirect, needsProfile: false };
       } catch (err: any) {
         if (err?.code === "auth/popup-closed-by-user") {
           return { ok: false, message: "Sign-in cancelled" };
+        }
+        if (err?.code === "auth/unauthorized-domain") {
+          const currentHost =
+            typeof window !== "undefined" ? window.location.hostname : "your custom domain";
+          return {
+            ok: false,
+            message: `Google Sign-In is not authorized for "${currentHost}". Add "${currentHost}" in Firebase Console > Authentication > Settings > Authorized domains, or sign in using your Firebase email and password below.`,
+          };
         }
         return { ok: false, message: err?.message || "Google sign-in failed" };
       }

@@ -184,9 +184,7 @@ export function AdminNotificationsCenterPage() {
         const read = getReadIds();
         const dismissed = getDismissedIds();
         const map = (list: AdminNotification[]) =>
-          list
-            .filter((n) => !dismissed.has(n.id))
-            .map((n) => toNtfy(n, !read.has(n.id)));
+          list.filter((n) => !dismissed.has(n.id)).map((n) => toNtfy(n, !read.has(n.id)));
         setItems({ inapp: map(data.inapp), email: map(data.email), sms: map(data.sms) });
       } catch (err: any) {
         if (!cancelled) {

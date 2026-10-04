@@ -15,7 +15,7 @@ function authInputBase(error?: string) {
   );
 }
 
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm({ onBackToLogin }: { onBackToLogin?: () => void } = {}) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -48,7 +48,13 @@ export function ForgotPasswordForm() {
     <div className="space-y-6">
       <Link
         to="/auth"
-        search={{ mode: undefined }}
+        search={{ tab: "login", mode: undefined } as any}
+        onClick={(e) => {
+          if (onBackToLogin) {
+            e.preventDefault();
+            onBackToLogin();
+          }
+        }}
         className="inline-flex items-center gap-1.5 text-xs font-extrabold text-ink/55 hover:text-ink"
       >
         <ArrowLeft className="size-4" /> Back to Log in
@@ -67,7 +73,16 @@ export function ForgotPasswordForm() {
           </p>
           <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Button asChild variant="dark" size="md">
-              <Link to="/auth" search={{ mode: undefined }}>
+              <Link
+                to="/auth"
+                search={{ tab: "login", mode: undefined } as any}
+                onClick={(e) => {
+                  if (onBackToLogin) {
+                    e.preventDefault();
+                    onBackToLogin();
+                  }
+                }}
+              >
                 Back to Log in
               </Link>
             </Button>
@@ -117,7 +132,13 @@ export function ForgotPasswordForm() {
             Remembered it?{" "}
             <Link
               to="/auth"
-              search={{ mode: undefined }}
+              search={{ tab: "login", mode: undefined } as any}
+              onClick={(e) => {
+                if (onBackToLogin) {
+                  e.preventDefault();
+                  onBackToLogin();
+                }
+              }}
               className="text-coral hover:underline hover:underline-offset-2"
             >
               Log in

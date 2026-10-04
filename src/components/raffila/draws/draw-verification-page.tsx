@@ -66,7 +66,8 @@ function makeDrawRecord(
   forceStatus?: DrawStatus,
   liveList?: Competition[],
 ): DrawRecord {
-  const competition = (liveList ? findCompetition(liveList, slug) : undefined) ?? getCompetition(slug);
+  const competition =
+    (liveList ? findCompetition(liveList, slug) : undefined) ?? getCompetition(slug);
   const winner = winnerCards[0];
   const status: DrawStatus = forceStatus ?? "VERIFIED";
   return {

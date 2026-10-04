@@ -355,7 +355,9 @@ export function AdminPlatformConfigPage() {
     const { label, slice } = sliceFor(group);
     try {
       await persistConfigSlice(slice, label);
-      toast.success(`${label} saved`, { description: "Stored in Firestore · logged to audit trail." });
+      toast.success(`${label} saved`, {
+        description: "Stored in Firestore · logged to audit trail.",
+      });
     } catch (err: any) {
       toast.error(`Failed to save ${label}`, { description: err?.message || String(err) });
     }
@@ -365,8 +367,16 @@ export function AdminPlatformConfigPage() {
     setSaving(true);
     try {
       const merged: Record<string, any> = {};
-      let labels: string[] = [];
-      for (const g of ["referrals", "pool", "thresholds", "draws", "notifications", "status", "partners"]) {
+      const labels: string[] = [];
+      for (const g of [
+        "referrals",
+        "pool",
+        "thresholds",
+        "draws",
+        "notifications",
+        "status",
+        "partners",
+      ]) {
         const { label, slice } = sliceFor(g);
         Object.assign(merged, slice);
         labels.push(label);
@@ -443,9 +453,7 @@ export function AdminPlatformConfigPage() {
           <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
             Global Raffila platform settings — referral rates, reward pool, thresholds, draws,
             notifications, partners, admin security, and operational status.{" "}
-            {configLoaded && (
-              <span className="text-emerald-700">Synced from Firestore.</span>
-            )}
+            {configLoaded && <span className="text-emerald-700">Synced from Firestore.</span>}
           </p>
         </div>
         <div className="flex items-center gap-2">

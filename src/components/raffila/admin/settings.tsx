@@ -34,11 +34,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { db } from "@/lib/firebase";
 import { logActivity, sendAdminInvite, cancelAdminInvite } from "@/lib/activity-log";
-import {
-  FEATURE_META,
-  DEFAULT_FEATURES,
-  PLATFORM_CONFIG_DOC_ID,
-} from "@/lib/platform-config";
+import { FEATURE_META, DEFAULT_FEATURES, PLATFORM_CONFIG_DOC_ID } from "@/lib/platform-config";
 import { getEmailDocKey, normalizeEmail } from "@/lib/user-validation";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { cn } from "@/lib/utils";
@@ -83,7 +79,9 @@ function Section({
 
 export function AdminSettingsPage() {
   const { user } = useAuthSession();
-  const selfUid = user?.id?.startsWith("firebase_") ? user.id.slice("firebase_".length) : user?.id ?? "";
+  const selfUid = user?.id?.startsWith("firebase_")
+    ? user.id.slice("firebase_".length)
+    : (user?.id ?? "");
 
   // ---- Administrators ----
   const [admins, setAdmins] = useState<AdminRow[]>([]);
@@ -95,7 +93,9 @@ export function AdminSettingsPage() {
   const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
   const [inviteCandidate, setInviteCandidate] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
-  const [invites, setInvites] = useState<Array<{ email: string; invitedBy: string; createdAt: string }>>([]);
+  const [invites, setInvites] = useState<
+    Array<{ email: string; invitedBy: string; createdAt: string }>
+  >([]);
   const [cancellingInvite, setCancellingInvite] = useState<string | null>(null);
 
   const fetchAdmins = useCallback(async () => {
@@ -113,7 +113,8 @@ export function AdminSettingsPage() {
         let created = "";
         try {
           const c: any = v["createdAt"];
-          created = typeof c?.toDate === "function" ? (c.toDate() as Date).toISOString() : String(c ?? "");
+          created =
+            typeof c?.toDate === "function" ? (c.toDate() as Date).toISOString() : String(c ?? "");
         } catch {
           created = "";
         }
@@ -213,7 +214,9 @@ export function AdminSettingsPage() {
   }, [confirmRevokeId]);
 
   /** Find a user doc by email: registry first (case-insensitive), then direct query. */
-  async function findUserByEmail(email: string): Promise<{ id: string; data: Record<string, unknown> } | null> {
+  async function findUserByEmail(
+    email: string,
+  ): Promise<{ id: string; data: Record<string, unknown> } | null> {
     const clean = normalizeEmail(email);
     try {
       const regSnap = await getDoc(doc(db, "registeredEmails", getEmailDocKey(clean)));
@@ -324,7 +327,9 @@ export function AdminSettingsPage() {
     setRevoking(true);
     try {
       const snap = await getDoc(doc(db, "users", row.id));
-      const prev = snap.exists() ? ((snap.data() as Record<string, unknown>)["role"] ?? "admin") : "admin";
+      const prev = snap.exists()
+        ? ((snap.data() as Record<string, unknown>)["role"] ?? "admin")
+        : "admin";
       await updateDoc(doc(db, "users", row.id), {
         role: "user",
         isAdmin: false,
@@ -359,7 +364,8 @@ export function AdminSettingsPage() {
       try {
         const snap = await getDoc(doc(db, "platformSettings", PLATFORM_CONFIG_DOC_ID));
         if (!cancelled && snap.exists()) {
-          const stored = ((snap.data() as Record<string, unknown>)["features"] as Record<string, unknown>) ?? {};
+          const stored =
+            ((snap.data() as Record<string, unknown>)["features"] as Record<string, unknown>) ?? {};
           setFeatures((prev) => {
             const next = { ...prev };
             for (const { key } of FEATURE_META) {
@@ -468,8 +474,8 @@ export function AdminSettingsPage() {
             Settings
           </h1>
           <p className="mt-2 max-w-2xl text-base font-bold text-ink/60">
-            Who can administer Raffila and which platform modules are available — all stored live
-            in Firestore, every change written to the audit trail.
+            Who can administer Raffila and which platform modules are available — all stored live in
+            Firestore, every change written to the audit trail.
           </p>
         </header>
 
@@ -513,8 +519,8 @@ export function AdminSettingsPage() {
               <p className="text-xs font-bold leading-relaxed text-ink/75">
                 No Raffila account uses{" "}
                 <span className="font-mono font-extrabold text-ink">{inviteCandidate}</span> yet.
-                Send an admin invite — they get an email and automatically become administrator
-                when they sign in with that address.
+                Send an admin invite — they get an email and automatically become administrator when
+                they sign in with that address.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -562,10 +568,7 @@ export function AdminSettingsPage() {
                   const isSelf = a.id === selfUid;
                   const arming = confirmRevokeId === a.id;
                   return (
-                    <li
-                      key={a.id}
-                      className="flex flex-wrap items-center gap-3 px-4 py-3.5"
-                    >
+                    <li key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-3.5">
                       <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-coral/15 font-display text-sm font-extrabold text-coral">
                         {(a.name.slice(0, 1) || "A").toUpperCase()}
                       </div>
@@ -624,7 +627,8 @@ export function AdminSettingsPage() {
                           {inv.email}
                         </p>
                         <p className="text-[11px] font-bold text-ink/50">
-                          Invited{inv.invitedBy ? ` by ${inv.invitedBy}` : ""} · applies on first sign-in
+                          Invited{inv.invitedBy ? ` by ${inv.invitedBy}` : ""} · applies on first
+                          sign-in
                         </p>
                       </div>
                       <Button
@@ -674,9 +678,7 @@ export function AdminSettingsPage() {
                   </div>
                   <Switch
                     checked={features[f.key] !== false}
-                    onCheckedChange={(v) =>
-                      setFeatures((prev) => ({ ...prev, [f.key]: !!v }))
-                    }
+                    onCheckedChange={(v) => setFeatures((prev) => ({ ...prev, [f.key]: !!v }))}
                   />
                 </div>
               ))}
@@ -722,8 +724,7 @@ export function AdminSettingsPage() {
                       : "bg-coral/10 text-coral ring-coral/25",
                   )}
                 >
-                  {apiStatus.message ??
-                    (apiStatus.ok ? "API running successfully" : "API error")}
+                  {apiStatus.message ?? (apiStatus.ok ? "API running successfully" : "API error")}
                 </div>
                 <StatusRow good={true} label="Node server" value="Running" />
                 <StatusRow
@@ -798,11 +799,19 @@ export function AdminSettingsPage() {
           description="Single source of truth, no hardcoded credentials."
         >
           <ul className="space-y-2 text-xs font-bold leading-relaxed text-ink/65">
-            <li>· Admin access = <code className="font-mono">role: "admin"</code> on the <code className="font-mono">users/{"{uid}"}</code> Firestore document.</li>
+            <li>
+              · Admin access = <code className="font-mono">role: "admin"</code> on the{" "}
+              <code className="font-mono">users/{"{uid}"}</code> Firestore document.
+            </li>
             <li>· No account yet? Send an invite — rights apply automatically on first sign-in.</li>
             <li>· New registrations always start as regular users.</li>
-            <li>· Every grant, revoke, invite and settings change is written to the audit trail.</li>
-            <li>· Platform values (rates, thresholds, partners) live under Config; feature visibility lives here.</li>
+            <li>
+              · Every grant, revoke, invite and settings change is written to the audit trail.
+            </li>
+            <li>
+              · Platform values (rates, thresholds, partners) live under Config; feature visibility
+              lives here.
+            </li>
           </ul>
         </Section>
       </div>

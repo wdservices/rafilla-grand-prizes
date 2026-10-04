@@ -194,12 +194,14 @@ export function AdminPartnersPage() {
       country: newPartnerForm.country,
       companyEmail: newPartnerForm.companyEmail,
       companyPhone: newPartnerForm.companyPhone || "+234 800 000 0000",
-      description: newPartnerForm.description || `${newPartnerForm.businessName} - Registered Partner`,
+      description:
+        newPartnerForm.description || `${newPartnerForm.businessName} - Registered Partner`,
       authorizedRepresentative: {
         fullName: newPartnerForm.contactPersonFullName || "Primary Contact",
         position: newPartnerForm.contactPersonPosition,
         email: newPartnerForm.contactPersonEmail || newPartnerForm.companyEmail,
-        phone: newPartnerForm.contactPersonPhone || newPartnerForm.companyPhone || "+234 800 000 0000",
+        phone:
+          newPartnerForm.contactPersonPhone || newPartnerForm.companyPhone || "+234 800 000 0000",
       },
       documents: {},
     });
@@ -411,8 +413,12 @@ export function AdminPartnersPage() {
 
                             {/* Contact Person */}
                             <td className="py-4 px-4">
-                              <p className="font-bold text-ink">{p.authorizedRepresentative.fullName}</p>
-                              <p className="text-[10px] text-ink/50">{p.authorizedRepresentative.position}</p>
+                              <p className="font-bold text-ink">
+                                {p.authorizedRepresentative.fullName}
+                              </p>
+                              <p className="text-[10px] text-ink/50">
+                                {p.authorizedRepresentative.position}
+                              </p>
                             </td>
 
                             {/* Email & Phone */}
@@ -469,7 +475,7 @@ export function AdminPartnersPage() {
                                 variant="outline"
                                 onClick={() => {
                                   setSplitPartner(p);
-                                   setNewSplitPercentage(p.defaultRevenueSplitPercent || 80);
+                                  setNewSplitPercentage(p.defaultRevenueSplitPercent || 80);
                                   setIsSplitModalOpen(true);
                                 }}
                                 className="rounded-full text-[10px] font-bold h-7 px-2.5 border-ink/20 text-coral hover:bg-coral/10"
@@ -560,7 +566,9 @@ export function AdminPartnersPage() {
                             </td>
 
                             <td className="py-4 px-4 text-ink/65 font-medium">
-                              {asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : "-"}
+                              {asset.createdAt
+                                ? new Date(asset.createdAt).toLocaleDateString()
+                                : "-"}
                             </td>
 
                             <td className="py-4 px-4">
@@ -637,7 +645,8 @@ export function AdminPartnersPage() {
                     {selectedPartner.businessName}
                   </DialogTitle>
                   <DialogDescription className="text-xs text-ink/60">
-                    Trading Name: {selectedPartner.businessName} · Registered in {selectedPartner.country}
+                    Trading Name: {selectedPartner.businessName} · Registered in{" "}
+                    {selectedPartner.country}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -662,11 +671,15 @@ export function AdminPartnersPage() {
                   </p>
                   <div className="flex justify-between">
                     <span className="text-ink/60">Full Name</span>
-                    <span className="font-bold text-ink">{selectedPartner.authorizedRepresentative.fullName}</span>
+                    <span className="font-bold text-ink">
+                      {selectedPartner.authorizedRepresentative.fullName}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/60">Role</span>
-                    <span className="font-bold text-ink">{selectedPartner.authorizedRepresentative.position}</span>
+                    <span className="font-bold text-ink">
+                      {selectedPartner.authorizedRepresentative.position}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/60">Email</span>
@@ -678,7 +691,9 @@ export function AdminPartnersPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-ink/60">Physical Address</span>
-                    <span className="font-bold text-ink">{selectedPartner.address}, {selectedPartner.city}, {selectedPartner.state}</span>
+                    <span className="font-bold text-ink">
+                      {selectedPartner.address}, {selectedPartner.city}, {selectedPartner.state}
+                    </span>
                   </div>
                 </div>
 
@@ -950,9 +965,7 @@ export function AdminPartnersPage() {
                   <Input
                     placeholder="Physical address"
                     value={newPartnerForm.address}
-                    onChange={(e) =>
-                      setNewPartnerForm((f) => ({ ...f, address: e.target.value }))
-                    }
+                    onChange={(e) => setNewPartnerForm((f) => ({ ...f, address: e.target.value }))}
                     className="h-11 rounded-xl text-xs font-bold"
                   />
                 </div>

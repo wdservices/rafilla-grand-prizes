@@ -162,7 +162,8 @@ export function PartnerAnalyticsPage() {
               <BarChart3 className="w-7 h-7 text-coral" /> Analytics
             </h1>
             <p className="font-body text-ink/60 text-sm mt-1">
-              Performance metrics for {partner?.businessName || "your business"} · Raffila Partner Program.
+              Performance metrics for {partner?.businessName || "your business"} · Raffila Partner
+              Program.
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -266,7 +267,7 @@ export function PartnerAnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-               <EntriesChart data={chartData} />
+              <EntriesChart data={chartData} />
               <Separator className="my-4 bg-ink/10" />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 {[
@@ -277,7 +278,11 @@ export function PartnerAnalyticsPage() {
                   },
                   {
                     k: "Avg / day",
-                    v: chartData.length ? Math.round(chartData.reduce((a, b) => a + b, 0) / chartData.length).toLocaleString() : "0",
+                    v: chartData.length
+                      ? Math.round(
+                          chartData.reduce((a, b) => a + b, 0) / chartData.length,
+                        ).toLocaleString()
+                      : "0",
                     t: "text-ink",
                   },
                   {
@@ -314,50 +319,54 @@ export function PartnerAnalyticsPage() {
             </CardHeader>
             <CardContent className="pt-0 space-y-4">
               {topListings.length === 0 ? (
-                <p className="text-sm text-ink/50 py-4 text-center">No competitions yet. Your listings will appear here.</p>
-              ) : topListings.map((l, i) => {
-                const w = Math.round((l.entries / (topListings[0]?.entries || 1)) * 100);
-                return (
-                  <div key={l.name} className="space-y-1.5">
-                    <div className="flex items-center gap-3">
-                      <Badge
-                        variant="outline"
-                        className={`rounded-full w-7 h-7 p-0 justify-center shrink-0 ${
-                          i === 0
-                            ? "bg-coral text-white border-coral font-bold"
-                            : i === 1
-                              ? "bg-lemon/40 border-lemon font-bold"
-                              : i === 2
-                                ? "bg-mint/30 border-mint font-bold"
-                                : "bg-cream border-ink/20 text-ink/60"
-                        }`}
-                      >
-                        {i + 1}
-                      </Badge>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-body text-sm text-ink font-semibold truncate">
-                            {l.name}
-                          </p>
-                          <p className="font-display text-sm text-coral font-bold whitespace-nowrap">
-                            {l.entries.toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-between text-[11px] text-ink/50 mt-0.5">
-                          <span>{formatNaira(l.valueKobo)}</span>
-                          <span className="font-semibold text-ink/60">{l.pct}% filled</span>
+                <p className="text-sm text-ink/50 py-4 text-center">
+                  No competitions yet. Your listings will appear here.
+                </p>
+              ) : (
+                topListings.map((l, i) => {
+                  const w = Math.round((l.entries / (topListings[0]?.entries || 1)) * 100);
+                  return (
+                    <div key={l.name} className="space-y-1.5">
+                      <div className="flex items-center gap-3">
+                        <Badge
+                          variant="outline"
+                          className={`rounded-full w-7 h-7 p-0 justify-center shrink-0 ${
+                            i === 0
+                              ? "bg-coral text-white border-coral font-bold"
+                              : i === 1
+                                ? "bg-lemon/40 border-lemon font-bold"
+                                : i === 2
+                                  ? "bg-mint/30 border-mint font-bold"
+                                  : "bg-cream border-ink/20 text-ink/60"
+                          }`}
+                        >
+                          {i + 1}
+                        </Badge>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-body text-sm text-ink font-semibold truncate">
+                              {l.name}
+                            </p>
+                            <p className="font-display text-sm text-coral font-bold whitespace-nowrap">
+                              {l.entries.toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] text-ink/50 mt-0.5">
+                            <span>{formatNaira(l.valueKobo)}</span>
+                            <span className="font-semibold text-ink/60">{l.pct}% filled</span>
+                          </div>
                         </div>
                       </div>
+                      <div className="h-2 w-full bg-ink/5 rounded-full overflow-hidden ms-10">
+                        <div
+                          className={`h-full rounded-full ${l.tint} transition-all`}
+                          style={{ width: `${w}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-2 w-full bg-ink/5 rounded-full overflow-hidden ms-10">
-                      <div
-                        className={`h-full rounded-full ${l.tint} transition-all`}
-                        style={{ width: `${w}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </CardContent>
           </Card>
         </div>

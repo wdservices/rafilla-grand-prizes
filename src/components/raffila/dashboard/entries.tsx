@@ -63,7 +63,9 @@ export function DashboardEntriesPage() {
   const filtered = entries.filter((e) => {
     const isActive = e.status === "Entered";
     const matchesStatus =
-      filter === "All" || (filter === "Active" && isActive) || (filter === "Completed" && !isActive);
+      filter === "All" ||
+      (filter === "Active" && isActive) ||
+      (filter === "Completed" && !isActive);
     const q = search.trim().toLowerCase();
     const matchesSearch =
       !q || e.id.toLowerCase().includes(q) || e.competitionTitle.toLowerCase().includes(q);
@@ -91,7 +93,9 @@ export function DashboardEntriesPage() {
             <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
               What did I pay for?
             </p>
-            <p className="mt-1 text-sm font-extrabold text-ink">Every prize + receipt in one place</p>
+            <p className="mt-1 text-sm font-extrabold text-ink">
+              Every prize + receipt in one place
+            </p>
           </div>
           <div className="rounded-2xl bg-cream/60 p-4 ring-1 ring-ink/5">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
@@ -103,7 +107,9 @@ export function DashboardEntriesPage() {
             <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
               When is the draw?
             </p>
-            <p className="mt-1 text-sm font-extrabold text-ink">Draw dates + results, one tap away</p>
+            <p className="mt-1 text-sm font-extrabold text-ink">
+              Draw dates + results, one tap away
+            </p>
           </div>
         </div>
         <div className="grid gap-3 lg:grid-cols-2">
@@ -116,7 +122,9 @@ export function DashboardEntriesPage() {
             </p>
           </div>
           <div className="rounded-[24px] bg-paper p-5 ring-1 ring-ink/5">
-            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">Support</p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+              Support
+            </p>
             <p className="mt-1 text-sm font-bold text-ink/65">
               Need help with an entry?{" "}
               <Link to="/faq" className="font-extrabold text-coral underline underline-offset-2">

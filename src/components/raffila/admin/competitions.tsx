@@ -480,23 +480,24 @@ export function AdminCompetitionsPage() {
   };
 
   const filtered = useMemo(() => {
-    const list = tab === "completed"
-      ? mergedComps.filter((c) => c.status === "COMPLETED" || c.status === "WINNER_SELECTED")
-      : mergedComps;
+    const list =
+      tab === "completed"
+        ? mergedComps.filter((c) => c.status === "COMPLETED" || c.status === "WINNER_SELECTED")
+        : mergedComps;
     return list.filter((c) => {
-        const s = search.toLowerCase();
-        if (
-          s &&
-          !c.name.toLowerCase().includes(s) &&
-          !c.slug.includes(s) &&
-          !c.partner.toLowerCase().includes(s)
-        )
-          return false;
-        const st = statusMap[tab];
-        if (st === "all") return true;
-        return c.status === st;
-      });
-    }, [tab, search, mergedComps]);
+      const s = search.toLowerCase();
+      if (
+        s &&
+        !c.name.toLowerCase().includes(s) &&
+        !c.slug.includes(s) &&
+        !c.partner.toLowerCase().includes(s)
+      )
+        return false;
+      const st = statusMap[tab];
+      if (st === "all") return true;
+      return c.status === st;
+    });
+  }, [tab, search, mergedComps]);
 
   const [liveTicketRows, setLiveTicketRows] = useState<any[]>([]);
   const [liveTicketsLoading, setLiveTicketsLoading] = useState(false);
@@ -538,18 +539,28 @@ export function AdminCompetitionsPage() {
             const name = String(first["userName"] || "Raffila Member");
             const status = tickets.some((t: any) => String(t.status).toUpperCase() === "WINNER")
               ? "Won"
-              : tickets.some((t: any) => !["ACTIVE", "CONFIRMED", "PAID"].includes(String(t.status).toUpperCase()))
+              : tickets.some(
+                    (t: any) =>
+                      !["ACTIVE", "CONFIRMED", "PAID"].includes(String(t.status).toUpperCase()),
+                  )
                 ? "Pending"
                 : "Paid";
             return {
               id: entryId,
               name,
               handle: String(first["userHandle"] || ""),
-              monogram: name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase(),
+              monogram: name
+                .split(" ")
+                .map((w: string) => w[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase(),
               tickets: tickets.length,
               ticketNumbers: tickets.map((t: any) => String(t.ticketNumber)),
               amount: tickets.length * comp.ticketPrice,
-              entered: String(first["purchasedAt"] || "").slice(0, 16).replace("T", " "),
+              entered: String(first["purchasedAt"] || "")
+                .slice(0, 16)
+                .replace("T", " "),
               status,
             };
           }),
@@ -996,8 +1007,7 @@ export function AdminCompetitionsPage() {
 
   async function openDrawResult(comp: MockComp) {
     try {
-      const rec =
-        drawRecords[comp.slug] ?? (await getDrawRecord(comp.slug));
+      const rec = drawRecords[comp.slug] ?? (await getDrawRecord(comp.slug));
       if (!rec || !rec.winningTicketNumber) {
         toast.error("No draw result yet", {
           description: `${comp.name} has no completed draw record.`,
@@ -1292,7 +1302,9 @@ export function AdminCompetitionsPage() {
                                   Eligible tickets
                                 </p>
                                 <p className="font-display text-xl font-extrabold tabular-nums text-ink">
-                                  {(rec?.eligibleTicketCount || c.entriesSold).toLocaleString("en-NG")}
+                                  {(rec?.eligibleTicketCount || c.entriesSold).toLocaleString(
+                                    "en-NG",
+                                  )}
                                 </p>
                               </div>
                               <div>
@@ -1306,7 +1318,11 @@ export function AdminCompetitionsPage() {
                             </div>
                           </div>
                           <div className="flex flex-wrap items-center gap-2 pt-1">
-                            <Button variant="primary" size="sm" onClick={() => void openDrawConfirm(c)}>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => void openDrawConfirm(c)}
+                            >
                               <Target className="size-3.5" />
                               Start Draw
                             </Button>
@@ -1576,11 +1592,7 @@ export function AdminCompetitionsPage() {
                 </p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setDrawRefreshKey((k) => k + 1)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setDrawRefreshKey((k) => k + 1)}>
               Refresh
             </Button>
           </div>
@@ -1643,11 +1655,7 @@ export function AdminCompetitionsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="py-3 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setResultFor(r)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => setResultFor(r)}>
                           <Eye className="size-3.5" /> View
                         </Button>
                       </TableCell>
@@ -1661,7 +1669,10 @@ export function AdminCompetitionsPage() {
       </Card>
 
       {/* ---------------- Pre-draw confirmation ---------------- */}
-      <Dialog open={drawPhase === "confirm" && !!drawTarget} onOpenChange={(v) => !v && closeDrawFlow()}>
+      <Dialog
+        open={drawPhase === "confirm" && !!drawTarget}
+        onOpenChange={(v) => !v && closeDrawFlow()}
+      >
         <DialogContent className="rounded-[28px] bg-white p-6 sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
@@ -1693,9 +1704,9 @@ export function AdminCompetitionsPage() {
             </div>
           </div>
           <div className="mt-3 rounded-2xl bg-sky/15 p-4 text-xs font-bold leading-relaxed text-ink/70 ring-1 ring-sky/20">
-            Every eligible ticket number participates individually — a member with 10 tickets
-            has 10 independent chances. The winner is selected by a secure random process and
-            the result is frozen once committed.
+            Every eligible ticket number participates individually — a member with 10 tickets has 10
+            independent chances. The winner is selected by a secure random process and the result is
+            frozen once committed.
           </div>
           {drawStats && drawStats.eligibleTickets === 0 && !drawStatsLoading && (
             <p className="mt-3 rounded-2xl bg-coral/15 p-3 text-xs font-extrabold text-coral ring-1 ring-coral/30">
@@ -1729,13 +1740,11 @@ export function AdminCompetitionsPage() {
           <div className="mx-auto grid size-20 place-items-center rounded-full bg-lilac/25">
             <Dices className="size-10 animate-spin text-ink [animation-duration:2.5s]" />
           </div>
-          <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">
-            Drawing…
-          </h3>
+          <h3 className="mt-5 font-display text-2xl font-extrabold text-ink">Drawing…</h3>
           <p className="mt-2 text-sm font-bold text-ink/60">
             {drawTarget?.name} · selecting from{" "}
-            {(drawStats?.eligibleTickets ?? 0).toLocaleString("en-NG")} eligible tickets.
-            The result is being committed securely.
+            {(drawStats?.eligibleTickets ?? 0).toLocaleString("en-NG")} eligible tickets. The result
+            is being committed securely.
           </p>
         </DialogContent>
       </Dialog>
@@ -1808,18 +1817,17 @@ export function AdminCompetitionsPage() {
               {[
                 ["Draw ID", resultFor.verificationReference || resultFor.id],
                 ["Status", resultFor.status],
-                [
-                  "Eligible tickets",
-                  resultFor.eligibleTicketCount.toLocaleString("en-NG"),
-                ],
-                [
-                  "Participants",
-                  resultFor.eligibleParticipantCount.toLocaleString("en-NG"),
-                ],
+                ["Eligible tickets", resultFor.eligibleTicketCount.toLocaleString("en-NG")],
+                ["Participants", resultFor.eligibleParticipantCount.toLocaleString("en-NG")],
                 ["Winning ticket", `#${resultFor.winningTicketNumber ?? "—"}`],
                 ["Winner", resultFor.winnerDisplayName ?? "—"],
                 ["Initiated by", resultFor.initiatedBy || "—"],
-                ["Completed", resultFor.completedAt ? new Date(resultFor.completedAt).toLocaleString("en-NG") : "—"],
+                [
+                  "Completed",
+                  resultFor.completedAt
+                    ? new Date(resultFor.completedAt).toLocaleString("en-NG")
+                    : "—",
+                ],
               ].map(([k, v]) => (
                 <div key={k} className="rounded-2xl bg-cream/60 p-3.5 ring-1 ring-ink/10">
                   <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
@@ -1847,7 +1855,10 @@ export function AdminCompetitionsPage() {
       </Dialog>
 
       {/* ---------------- Cancel competition confirmation ---------------- */}
-      <Dialog open={!!cancelTarget} onOpenChange={(v) => !v && !cancelling && setCancelTarget(null)}>
+      <Dialog
+        open={!!cancelTarget}
+        onOpenChange={(v) => !v && !cancelling && setCancelTarget(null)}
+      >
         <DialogContent className="rounded-[28px] bg-white p-6 sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
@@ -1861,17 +1872,15 @@ export function AdminCompetitionsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 rounded-2xl bg-coral/10 p-4 ring-1 ring-coral/20">
-            <p className="text-sm font-extrabold text-ink">
-              {cancelTarget?.name}
-            </p>
+            <p className="text-sm font-extrabold text-ink">{cancelTarget?.name}</p>
             <p className="mt-1 text-xs font-bold text-ink/60">
               {cancelTarget?.slug} · {(cancelTarget?.entriesSold ?? 0).toLocaleString("en-NG")}{" "}
               tickets sold
             </p>
           </div>
           <p className="mt-3 text-xs font-bold leading-relaxed text-ink/60">
-            No refunds are issued automatically — handle payouts separately. This action is
-            logged for audit purposes. Cancelled competitions can no longer be drawn.
+            No refunds are issued automatically — handle payouts separately. This action is logged
+            for audit purposes. Cancelled competitions can no longer be drawn.
           </p>
           <DialogFooter className="mt-5 flex gap-2">
             <Button
@@ -1895,7 +1904,10 @@ export function AdminCompetitionsPage() {
       </Dialog>
 
       {/* ---------------- Competition analytics ---------------- */}
-      <Dialog open={!!analyticsFor} onOpenChange={(v) => !v && !analyticsLoading && setAnalyticsFor(null)}>
+      <Dialog
+        open={!!analyticsFor}
+        onOpenChange={(v) => !v && !analyticsLoading && setAnalyticsFor(null)}
+      >
         <DialogContent className="rounded-[28px] bg-white p-6 sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
@@ -1997,17 +2009,15 @@ export function AdminCompetitionsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 rounded-2xl bg-coral/10 p-4 ring-1 ring-coral/20">
-            <p className="text-sm font-extrabold text-ink">
-              {deleteTarget?.name}
-            </p>
+            <p className="text-sm font-extrabold text-ink">{deleteTarget?.name}</p>
             <p className="mt-1 text-xs font-bold text-ink/60">
               {deleteTarget?.slug} · {deleteTarget?.status} · {deleteTarget?.partner}
             </p>
           </div>
           <p className="mt-3 text-xs font-bold leading-relaxed text-ink/60">
             The competition document will be permanently removed from Firestore. Any associated
-            ticket records under this competition will become orphaned. This action is logged
-            for audit purposes.
+            ticket records under this competition will become orphaned. This action is logged for
+            audit purposes.
           </p>
           <DialogFooter className="mt-5 flex gap-2">
             <Button
@@ -2336,9 +2346,7 @@ export function AdminCompetitionsPage() {
                                   ...form,
                                   partnerAssetId: val,
                                   assetName: asset.name,
-                                  marketValue: String(
-                                    Math.round(asset.declaredValueKobo / 100),
-                                  ),
+                                  marketValue: String(Math.round(asset.declaredValueKobo / 100)),
                                   condition: asset.condition || "new",
                                 });
                               } else {

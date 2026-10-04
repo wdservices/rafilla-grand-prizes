@@ -1,7 +1,4 @@
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, increment, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../src/lib/firebase";
 
@@ -22,8 +19,7 @@ import { auth, db } from "../src/lib/firebase";
 // admins, so this script appends. Reopening the competition or resetting a
 // previous draw must be done from the Admin UI / Firebase console.
 
-const COMPETITION_ID =
-  process.env.DRAW_TEST_COMPETITION?.trim() || "mercedes-benz-c-class-2025";
+const COMPETITION_ID = process.env.DRAW_TEST_COMPETITION?.trim() || "mercedes-benz-c-class-2025";
 
 const SPLIT = (process.env.DRAW_TEST_SPLIT?.trim() || "10,1,5,6,3")
   .split(",")
@@ -33,11 +29,41 @@ const SPLIT = (process.env.DRAW_TEST_SPLIT?.trim() || "10,1,5,6,3")
 const TEST_PASSWORD = process.env.DRAW_TEST_PASSWORD ?? "DrawTest2026!";
 
 const TEST_USERS = [
-  { email: "drawtest1@raffila.com", displayName: "Draw Test Ada", firstName: "Ada", lastName: "Test", handle: "drawtest_ada" },
-  { email: "drawtest2@raffila.com", displayName: "Draw Test Bola", firstName: "Bola", lastName: "Test", handle: "drawtest_bola" },
-  { email: "drawtest3@raffila.com", displayName: "Draw Test Chidi", firstName: "Chidi", lastName: "Test", handle: "drawtest_chidi" },
-  { email: "drawtest4@raffila.com", displayName: "Draw Test Ngozi", firstName: "Ngozi", lastName: "Test", handle: "drawtest_ngozi" },
-  { email: "drawtest5@raffila.com", displayName: "Draw Test Tunde", firstName: "Tunde", lastName: "Test", handle: "drawtest_tunde" },
+  {
+    email: "drawtest1@raffila.com",
+    displayName: "Draw Test Ada",
+    firstName: "Ada",
+    lastName: "Test",
+    handle: "drawtest_ada",
+  },
+  {
+    email: "drawtest2@raffila.com",
+    displayName: "Draw Test Bola",
+    firstName: "Bola",
+    lastName: "Test",
+    handle: "drawtest_bola",
+  },
+  {
+    email: "drawtest3@raffila.com",
+    displayName: "Draw Test Chidi",
+    firstName: "Chidi",
+    lastName: "Test",
+    handle: "drawtest_chidi",
+  },
+  {
+    email: "drawtest4@raffila.com",
+    displayName: "Draw Test Ngozi",
+    firstName: "Ngozi",
+    lastName: "Test",
+    handle: "drawtest_ngozi",
+  },
+  {
+    email: "drawtest5@raffila.com",
+    displayName: "Draw Test Tunde",
+    firstName: "Tunde",
+    lastName: "Test",
+    handle: "drawtest_tunde",
+  },
 ];
 
 const CLOSED_STATUSES = new Set([
@@ -79,7 +105,9 @@ async function main() {
   const status = String(compData["status"] ?? "LIVE").toUpperCase();
   const entriesClosed = compData["entriesClosed"] === true;
   const entriesPaused = compData["entriesPaused"] === true;
-  console.log(`[COMP] title="${String(compData["title"] ?? "")}" status=${status} entriesSold=${String(compData["entriesSold"] ?? 0)} entriesClosed=${entriesClosed} entriesPaused=${entriesPaused}`);
+  console.log(
+    `[COMP] title="${String(compData["title"] ?? "")}" status=${status} entriesSold=${String(compData["entriesSold"] ?? 0)} entriesClosed=${entriesClosed} entriesPaused=${entriesPaused}`,
+  );
   if (entriesClosed || entriesPaused || CLOSED_STATUSES.has(status)) {
     console.error(
       `[FAIL] Competition is not accepting entries (status=${status}). ` +

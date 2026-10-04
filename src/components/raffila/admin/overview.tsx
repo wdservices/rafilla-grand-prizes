@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import { lagosChartLabels, lagosDateShort } from "@/lib/format";
-import {
-  collection,
-  getDocs,
-  limit,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import {
   Users,
   Trophy,
@@ -252,7 +246,15 @@ function initialsOfName(name: string): string {
 
 function mapCompStatus(raw: unknown): CompStatus {
   const s = String(raw ?? "").toUpperCase();
-  const known: CompStatus[] = ["DRAFT", "SCHEDULED", "LIVE", "DRAWING", "RESULTED", "CLOSED", "COMPLETED"];
+  const known: CompStatus[] = [
+    "DRAFT",
+    "SCHEDULED",
+    "LIVE",
+    "DRAWING",
+    "RESULTED",
+    "CLOSED",
+    "COMPLETED",
+  ];
   if ((known as string[]).includes(s)) return s as CompStatus;
   if (s === "ENDED") return "CLOSED";
   return "SCHEDULED";
@@ -355,7 +357,10 @@ export function AdminOverview() {
           const first = (u.v["firstName"] as string) || "";
           const last = (u.v["lastName"] as string) || "";
           const display =
-            (u.v["displayName"] as string) || `${first} ${last}`.trim() || u.v["handle"] || u.id.slice(0, 8);
+            (u.v["displayName"] as string) ||
+            `${first} ${last}`.trim() ||
+            u.v["handle"] ||
+            u.id.slice(0, 8);
           regs.push({
             ms,
             row: {
@@ -382,9 +387,14 @@ export function AdminOverview() {
         setRegistrations(regs.slice(0, 6).map((r) => r.row));
 
         // Competitions
-        const comps = compsSnap.docs.map((d) => ({ id: d.id, v: d.data() as Record<string, unknown> }));
+        const comps = compsSnap.docs.map((d) => ({
+          id: d.id,
+          v: d.data() as Record<string, unknown>,
+        }));
         setTotalComps(comps.length);
-        setActiveComps(comps.filter((c) => String(c.v["status"] ?? "").toUpperCase() === "LIVE").length);
+        setActiveComps(
+          comps.filter((c) => String(c.v["status"] ?? "").toUpperCase() === "LIVE").length,
+        );
         setLifecycle(
           comps.slice(0, 8).map((c) => {
             const total = Number(c.v["totalEntries"] ?? 0) || 0;
@@ -593,14 +603,20 @@ export function AdminOverview() {
                 <TableBody className="[&_tr]:border-ink/10">
                   {loading && (
                     <TableRow>
-                      <TableCell colSpan={4} className="py-8 text-center text-sm font-bold text-ink/55">
+                      <TableCell
+                        colSpan={4}
+                        className="py-8 text-center text-sm font-bold text-ink/55"
+                      >
                         Loading…
                       </TableCell>
                     </TableRow>
                   )}
                   {!loading && registrations.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="py-8 text-center text-sm font-bold text-ink/55">
+                      <TableCell
+                        colSpan={4}
+                        className="py-8 text-center text-sm font-bold text-ink/55"
+                      >
                         No registrations yet.
                       </TableCell>
                     </TableRow>
@@ -731,14 +747,20 @@ export function AdminOverview() {
                 <TableBody className="[&_tr]:border-ink/10">
                   {loading && (
                     <TableRow>
-                      <TableCell colSpan={4} className="py-8 text-center text-sm font-bold text-ink/55">
+                      <TableCell
+                        colSpan={4}
+                        className="py-8 text-center text-sm font-bold text-ink/55"
+                      >
                         Loading…
                       </TableCell>
                     </TableRow>
                   )}
                   {!loading && lifecycle.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="py-8 text-center text-sm font-bold text-ink/55">
+                      <TableCell
+                        colSpan={4}
+                        className="py-8 text-center text-sm font-bold text-ink/55"
+                      >
                         No competitions yet.
                       </TableCell>
                     </TableRow>

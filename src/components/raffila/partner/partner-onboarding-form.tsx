@@ -59,290 +59,907 @@ const ASSET_CATEGORIES = [
 ];
 
 const AFRICAN_COUNTRIES: Record<string, string[]> = {
-  "Algeria": [
-    "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra",
-    "Béchar", "Blida", "Bouira", "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret",
-    "Tizi Ouzou", "Alger", "Djelfa", "Jijel", "Sétif", "Saïda", "Skikda",
-    "Sidi Bel Abbès", "Annaba", "Guelma", "Constantine", "Médéa", "Mostaganem",
-    "M'Sila", "Mascara", "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arréridj",
-    "Boumerdès", "El Tarf", "Tindouf", "Tissemsilt", "El Oued", "Khenchela",
-    "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma", "Aïn Témouchent",
-    "Ghardaïa", "Relizane", "El M'Ghair", "El Meniaa", "Ouled Djellal",
-    "Bordj Badji Mokhtar", "Béni Abbès", "Timimoun", "Touggourt", "Djanet",
-    "In Salah", "In Guezzam",
+  Algeria: [
+    "Adrar",
+    "Chlef",
+    "Laghouat",
+    "Oum El Bouaghi",
+    "Batna",
+    "Béjaïa",
+    "Biskra",
+    "Béchar",
+    "Blida",
+    "Bouira",
+    "Tamanrasset",
+    "Tébessa",
+    "Tlemcen",
+    "Tiaret",
+    "Tizi Ouzou",
+    "Alger",
+    "Djelfa",
+    "Jijel",
+    "Sétif",
+    "Saïda",
+    "Skikda",
+    "Sidi Bel Abbès",
+    "Annaba",
+    "Guelma",
+    "Constantine",
+    "Médéa",
+    "Mostaganem",
+    "M'Sila",
+    "Mascara",
+    "Ouargla",
+    "Oran",
+    "El Bayadh",
+    "Illizi",
+    "Bordj Bou Arréridj",
+    "Boumerdès",
+    "El Tarf",
+    "Tindouf",
+    "Tissemsilt",
+    "El Oued",
+    "Khenchela",
+    "Souk Ahras",
+    "Tipaza",
+    "Mila",
+    "Aïn Defla",
+    "Naâma",
+    "Aïn Témouchent",
+    "Ghardaïa",
+    "Relizane",
+    "El M'Ghair",
+    "El Meniaa",
+    "Ouled Djellal",
+    "Bordj Badji Mokhtar",
+    "Béni Abbès",
+    "Timimoun",
+    "Touggourt",
+    "Djanet",
+    "In Salah",
+    "In Guezzam",
   ],
-  "Angola": [
-    "Bengo", "Benguela", "Bié", "Cabinda", "Cuando-Cubango", "Cuanza Norte",
-    "Cuanza Sul", "Cunene", "Huambo", "Huíla", "Icolo e Bengo", "Luanda",
-    "Lunda Norte", "Lunda Sul", "Malanje", "Moxico", "Namibe", "Uíge", "Zaire",
+  Angola: [
+    "Bengo",
+    "Benguela",
+    "Bié",
+    "Cabinda",
+    "Cuando-Cubango",
+    "Cuanza Norte",
+    "Cuanza Sul",
+    "Cunene",
+    "Huambo",
+    "Huíla",
+    "Icolo e Bengo",
+    "Luanda",
+    "Lunda Norte",
+    "Lunda Sul",
+    "Malanje",
+    "Moxico",
+    "Namibe",
+    "Uíge",
+    "Zaire",
   ],
-  "Benin": [
-    "Alibori", "Atakora", "Atlantique", "Borgou", "Collines", "Couffo",
-    "Donga", "Littoral", "Mono", "Ouémé", "Plateau", "Zou",
+  Benin: [
+    "Alibori",
+    "Atakora",
+    "Atlantique",
+    "Borgou",
+    "Collines",
+    "Couffo",
+    "Donga",
+    "Littoral",
+    "Mono",
+    "Ouémé",
+    "Plateau",
+    "Zou",
   ],
-  "Botswana": [
-    "Central", "Ghanzi", "Kgalagadi", "Kgatleng", "Kweneng", "North-East",
-    "North-West", "South-East", "Southern",
-  ],
-  "Burkina Faso": [
-    "Boucle du Mouhoun", "Cascades", "Centre", "Centre-Est", "Centre-Nord",
-    "Centre-Ouest", "Centre-Sud", "Est", "Hauts-Bassins", "Nord", "Plateau-Central",
-    "Sahel", "Sud-Ouest",
-  ],
-  "Burundi": [
-    "Bujumbura Mairie", "Bujumbura Rural", "Bururi", "Cankuzo", "Cibitoke",
-    "Gitega", "Karuzi", "Kayanza", "Kirundo", "Makamba", "Muramvya",
-    "Muyinga", "Mwaro", "Ngozi", "Rumonge", "Rutana", "Ruyigi",
-  ],
-  "Cabo Verde": [
-    "Boa Vista", "Brava", "Fogo", "Maio", "Sal", "Santiago",
-    "Santo Antão", "São Nicolau", "São Vicente",
-  ],
-  "Cameroon": [
-    "Adamaoua", "Centre", "East", "Far North", "Littoral", "North",
-    "North-West", "South", "South-West", "West",
-  ],
-  "Central African Republic": [
-    "Bamingui-Bangoran", "Bangui", "Basse-Kotto", "Haut-Kotto", "Haut-Mbomou",
-    "Kémo", "Lobaye", "Mambéré-Kadéï", "Mbomou", "Nana-Grébizi",
-    "Nana-Mambéré", "Ombella-M'Poko", "Ouham", "Ouham-Pendé", "Sangha-Mbaéré",
-    "Vakaga",
-  ],
-  "Chad": [
-    "Bahr el Gazel", "Batha", "Borkou", "Chari-Baguirmi", "Ennedi-Est",
-    "Ennedi-Ouest", "Guéra", "Hadjer-Lamis", "Kanem", "Lac", "Logone-Occidental",
-    "Logone-Oriental", "Mandoul", "Mayo-Kebbi-Est", "Mayo-Kebbi-Ouest",
-    "Moyen-Chari", "N'Djamena", "Ouaddaï", "Tandjilé", "Tibesti", "Wadi Fira",
-  ],
-  "Comoros": [
-    "Grande Comore (Ngazidja)", "Anjouan (Ndzuwani)", "Mohéli (Mwali)",
-  ],
-  "Congo (Republic)": [
-    "Brazzaville", "Pointe-Noire", "Pool", "Plateaux", "Cuvette",
-    "Cuvette-Ouest", "Kouilou", "Likouala", "Lékoumou", "Niari", "Sangha",
-  ],
-  "Democratic Republic of the Congo": [
-    "Kinshasa", "Kongo-Central", "Kwango", "Kwilu", "Kasaï", "Kasaï-Central",
-    "Kasaï-Oriental", "Lomami", "Sankuru", "Maniema", "Haut-Uélé", "Tshopo",
-    "Bas-Uélé", "Nord-Uélé", "Ituri", "Nord-Kivu", "Sud-Kivu", "Maniema",
-    "Tanganyika", "Haut-Lomami", "Lualaba", "Haut-Katanga",
-  ],
-  "Djibouti": [
-    "Djibouti", "Ali Sabieh", "Dikhil", "Obock", "Tadjourah",
-  ],
-  "Egypt": [
-    "Alexandria", "Aswan", "Asyut", "Beheira", "Beni Suef", "Cairo",
-    "Dakahlia", "Damietta", "Fayoum", "Gharbia", "Giza", "Ismailia",
-    "Kafr El Sheikh", "Luxor", "Matruh", "Minya", "Monufia", "New Valley",
-    "North Sinai", "Port Said", "Qalyubia", "Qena", "Red Sea", "Sharqia",
-    "Sohag", "South Sinai", "Suez",
-  ],
-  "Equatorial Guinea": [
-    "Annobón", "Bioko Norte", "Bioko Sur", "Centro Sur", "Kie-Ntem",
-    "Litoral", "Wele-Nzas",
-  ],
-  "Eritrea": [
-    "Anseba", "Central", "Southern Red Sea", "Gash-Barka", "Northern Red Sea",
+  Botswana: [
+    "Central",
+    "Ghanzi",
+    "Kgalagadi",
+    "Kgatleng",
+    "Kweneng",
+    "North-East",
+    "North-West",
+    "South-East",
     "Southern",
   ],
-  "Eswatini": [
-    "Hhohho", "Lubombo", "Manzini", "Shiselweni",
+  "Burkina Faso": [
+    "Boucle du Mouhoun",
+    "Cascades",
+    "Centre",
+    "Centre-Est",
+    "Centre-Nord",
+    "Centre-Ouest",
+    "Centre-Sud",
+    "Est",
+    "Hauts-Bassins",
+    "Nord",
+    "Plateau-Central",
+    "Sahel",
+    "Sud-Ouest",
   ],
-  "Ethiopia": [
-    "Addis Ababa", "Afar", "Amhara", "Benishangul-Gumuz", "Dire Dawa",
-    "Gambela", "Harari", "Oromia", "Sidama", "SNNPR", "Somali",
-    "South West Ethiopia Peoples'", "Tigray",
+  Burundi: [
+    "Bujumbura Mairie",
+    "Bujumbura Rural",
+    "Bururi",
+    "Cankuzo",
+    "Cibitoke",
+    "Gitega",
+    "Karuzi",
+    "Kayanza",
+    "Kirundo",
+    "Makamba",
+    "Muramvya",
+    "Muyinga",
+    "Mwaro",
+    "Ngozi",
+    "Rumonge",
+    "Rutana",
+    "Ruyigi",
   ],
-  "Gabon": [
-    "Estuaire", "Haut-Ogooué", "Moyen-Ogooué", "Ngounié", "Nyanga",
-    "Ogooué-Ivindo", "Ogooué-Lolo", "Ogooué-Maritime", "Woleu-Ntem",
+  "Cabo Verde": [
+    "Boa Vista",
+    "Brava",
+    "Fogo",
+    "Maio",
+    "Sal",
+    "Santiago",
+    "Santo Antão",
+    "São Nicolau",
+    "São Vicente",
   ],
-  "Gambia": [
-    "Banjul", "Central River", "Lower River", "North Bank", "Upper River", "West Coast",
+  Cameroon: [
+    "Adamaoua",
+    "Centre",
+    "East",
+    "Far North",
+    "Littoral",
+    "North",
+    "North-West",
+    "South",
+    "South-West",
+    "West",
   ],
-  "Ghana": [
-    "Ahafo", "Ashanti", "Bono", "Bono East", "Central", "Eastern",
-    "Greater Accra", "North East", "Northern", "Oti", "Savannah",
-    "Upper East", "Upper West", "Volta", "Western", "Western North",
+  "Central African Republic": [
+    "Bamingui-Bangoran",
+    "Bangui",
+    "Basse-Kotto",
+    "Haut-Kotto",
+    "Haut-Mbomou",
+    "Kémo",
+    "Lobaye",
+    "Mambéré-Kadéï",
+    "Mbomou",
+    "Nana-Grébizi",
+    "Nana-Mambéré",
+    "Ombella-M'Poko",
+    "Ouham",
+    "Ouham-Pendé",
+    "Sangha-Mbaéré",
+    "Vakaga",
   ],
-  "Guinea": [
-    "Boké", "Conakry", "Faranah", "Kankan", "Kindia", "Labé", "Mamou", "Nzérékoré",
+  Chad: [
+    "Bahr el Gazel",
+    "Batha",
+    "Borkou",
+    "Chari-Baguirmi",
+    "Ennedi-Est",
+    "Ennedi-Ouest",
+    "Guéra",
+    "Hadjer-Lamis",
+    "Kanem",
+    "Lac",
+    "Logone-Occidental",
+    "Logone-Oriental",
+    "Mandoul",
+    "Mayo-Kebbi-Est",
+    "Mayo-Kebbi-Ouest",
+    "Moyen-Chari",
+    "N'Djamena",
+    "Ouaddaï",
+    "Tandjilé",
+    "Tibesti",
+    "Wadi Fira",
   ],
+  Comoros: ["Grande Comore (Ngazidja)", "Anjouan (Ndzuwani)", "Mohéli (Mwali)"],
+  "Congo (Republic)": [
+    "Brazzaville",
+    "Pointe-Noire",
+    "Pool",
+    "Plateaux",
+    "Cuvette",
+    "Cuvette-Ouest",
+    "Kouilou",
+    "Likouala",
+    "Lékoumou",
+    "Niari",
+    "Sangha",
+  ],
+  "Democratic Republic of the Congo": [
+    "Kinshasa",
+    "Kongo-Central",
+    "Kwango",
+    "Kwilu",
+    "Kasaï",
+    "Kasaï-Central",
+    "Kasaï-Oriental",
+    "Lomami",
+    "Sankuru",
+    "Maniema",
+    "Haut-Uélé",
+    "Tshopo",
+    "Bas-Uélé",
+    "Nord-Uélé",
+    "Ituri",
+    "Nord-Kivu",
+    "Sud-Kivu",
+    "Maniema",
+    "Tanganyika",
+    "Haut-Lomami",
+    "Lualaba",
+    "Haut-Katanga",
+  ],
+  Djibouti: ["Djibouti", "Ali Sabieh", "Dikhil", "Obock", "Tadjourah"],
+  Egypt: [
+    "Alexandria",
+    "Aswan",
+    "Asyut",
+    "Beheira",
+    "Beni Suef",
+    "Cairo",
+    "Dakahlia",
+    "Damietta",
+    "Fayoum",
+    "Gharbia",
+    "Giza",
+    "Ismailia",
+    "Kafr El Sheikh",
+    "Luxor",
+    "Matruh",
+    "Minya",
+    "Monufia",
+    "New Valley",
+    "North Sinai",
+    "Port Said",
+    "Qalyubia",
+    "Qena",
+    "Red Sea",
+    "Sharqia",
+    "Sohag",
+    "South Sinai",
+    "Suez",
+  ],
+  "Equatorial Guinea": [
+    "Annobón",
+    "Bioko Norte",
+    "Bioko Sur",
+    "Centro Sur",
+    "Kie-Ntem",
+    "Litoral",
+    "Wele-Nzas",
+  ],
+  Eritrea: ["Anseba", "Central", "Southern Red Sea", "Gash-Barka", "Northern Red Sea", "Southern"],
+  Eswatini: ["Hhohho", "Lubombo", "Manzini", "Shiselweni"],
+  Ethiopia: [
+    "Addis Ababa",
+    "Afar",
+    "Amhara",
+    "Benishangul-Gumuz",
+    "Dire Dawa",
+    "Gambela",
+    "Harari",
+    "Oromia",
+    "Sidama",
+    "SNNPR",
+    "Somali",
+    "South West Ethiopia Peoples'",
+    "Tigray",
+  ],
+  Gabon: [
+    "Estuaire",
+    "Haut-Ogooué",
+    "Moyen-Ogooué",
+    "Ngounié",
+    "Nyanga",
+    "Ogooué-Ivindo",
+    "Ogooué-Lolo",
+    "Ogooué-Maritime",
+    "Woleu-Ntem",
+  ],
+  Gambia: ["Banjul", "Central River", "Lower River", "North Bank", "Upper River", "West Coast"],
+  Ghana: [
+    "Ahafo",
+    "Ashanti",
+    "Bono",
+    "Bono East",
+    "Central",
+    "Eastern",
+    "Greater Accra",
+    "North East",
+    "Northern",
+    "Oti",
+    "Savannah",
+    "Upper East",
+    "Upper West",
+    "Volta",
+    "Western",
+    "Western North",
+  ],
+  Guinea: ["Boké", "Conakry", "Faranah", "Kankan", "Kindia", "Labé", "Mamou", "Nzérékoré"],
   "Guinea-Bissau": [
-    "Bafatá", "Biombo", "Bissau", "Bolama", "Cacheu", "Gabú",
-    "Oio", "Quinara", "Tombali",
+    "Bafatá",
+    "Biombo",
+    "Bissau",
+    "Bolama",
+    "Cacheu",
+    "Gabú",
+    "Oio",
+    "Quinara",
+    "Tombali",
   ],
   "Ivory Coast": [
-    "Abidjan", "Bas-Sassandra", "Comoé", "Denguélé", "Gôh-Djiboua",
-    "Lacs", "Lagunes", "Montagnes", "Sassandra-Marahoué", "Savanes",
-    "Vallée du Bandama", "Woroba", "Yamoussoukro", "Zanzan",
+    "Abidjan",
+    "Bas-Sassandra",
+    "Comoé",
+    "Denguélé",
+    "Gôh-Djiboua",
+    "Lacs",
+    "Lagunes",
+    "Montagnes",
+    "Sassandra-Marahoué",
+    "Savanes",
+    "Vallée du Bandama",
+    "Woroba",
+    "Yamoussoukro",
+    "Zanzan",
   ],
-  "Kenya": [
-    "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo-Marakwet", "Embu",
-    "Garissa", "Homa Bay", "Isiolo", "Kajiado", "Kakamega", "Kericho",
-    "Kiambu", "Kilifi", "Kirinyaga", "Kisii", "Kisumu", "Kitui",
-    "Kwale", "Laikipia", "Lamu", "Machakos", "Makueni", "Mandera",
-    "Marsabit", "Meru", "Migori", "Murang'a", "Nairobi", "Nakuru",
-    "Nandi", "Narok", "Nyamira", "Nyandarua", "Nyeri", "Samburu",
-    "Siaya", "Taita-Taveta", "Tana River", "Tharaka-Nithi", "Trans-Nzoia",
-    "Turkana", "Uasin Gishu", "Vihiga", "Wajir", "West Pokot",
+  Kenya: [
+    "Baringo",
+    "Bomet",
+    "Bungoma",
+    "Busia",
+    "Elgeyo-Marakwet",
+    "Embu",
+    "Garissa",
+    "Homa Bay",
+    "Isiolo",
+    "Kajiado",
+    "Kakamega",
+    "Kericho",
+    "Kiambu",
+    "Kilifi",
+    "Kirinyaga",
+    "Kisii",
+    "Kisumu",
+    "Kitui",
+    "Kwale",
+    "Laikipia",
+    "Lamu",
+    "Machakos",
+    "Makueni",
+    "Mandera",
+    "Marsabit",
+    "Meru",
+    "Migori",
+    "Murang'a",
+    "Nairobi",
+    "Nakuru",
+    "Nandi",
+    "Narok",
+    "Nyamira",
+    "Nyandarua",
+    "Nyeri",
+    "Samburu",
+    "Siaya",
+    "Taita-Taveta",
+    "Tana River",
+    "Tharaka-Nithi",
+    "Trans-Nzoia",
+    "Turkana",
+    "Uasin Gishu",
+    "Vihiga",
+    "Wajir",
+    "West Pokot",
   ],
-  "Lesotho": [
-    "Berea", "Butha-Buthe", "Leribe", "Mafeteng", "Maseru",
-    "Mohale's Hoek", "Mokhotlong", "Qacha's Nek", "Quthing", "Thaba-Tseka",
+  Lesotho: [
+    "Berea",
+    "Butha-Buthe",
+    "Leribe",
+    "Mafeteng",
+    "Maseru",
+    "Mohale's Hoek",
+    "Mokhotlong",
+    "Qacha's Nek",
+    "Quthing",
+    "Thaba-Tseka",
   ],
-  "Liberia": [
-    "Bomi", "Bong", "Gbarpolu", "Grand Bassa", "Grand Cape Mount",
-    "Grand Gedeh", "Grand Kru", "Lofa", "Margibi", "Maryland",
-    "Montserrado", "Nimba", "River Cess", "River Gee", "Sinoe",
+  Liberia: [
+    "Bomi",
+    "Bong",
+    "Gbarpolu",
+    "Grand Bassa",
+    "Grand Cape Mount",
+    "Grand Gedeh",
+    "Grand Kru",
+    "Lofa",
+    "Margibi",
+    "Maryland",
+    "Montserrado",
+    "Nimba",
+    "River Cess",
+    "River Gee",
+    "Sinoe",
   ],
-  "Libya": [
-    "Al Butnan", "Al Jabal al Akhdar", "Al Jabal al Gharbi", "Al Kufrah",
-    "Al Marj", "Al Marqab", "Al Wahat", "Benghazi", "Derna", "Ghat",
-    "Jafara", "Jufra", "Kufra", "Murqub", "Murzuq", "Nalut",
-    "Sabha", "Sirte", "Tripoli", "Wadi Al Hayaa", "Wadi Al Shati",
+  Libya: [
+    "Al Butnan",
+    "Al Jabal al Akhdar",
+    "Al Jabal al Gharbi",
+    "Al Kufrah",
+    "Al Marj",
+    "Al Marqab",
+    "Al Wahat",
+    "Benghazi",
+    "Derna",
+    "Ghat",
+    "Jafara",
+    "Jufra",
+    "Kufra",
+    "Murqub",
+    "Murzuq",
+    "Nalut",
+    "Sabha",
+    "Sirte",
+    "Tripoli",
+    "Wadi Al Hayaa",
+    "Wadi Al Shati",
     "Zawiya",
   ],
-  "Madagascar": [
-    "Antananarivo", "Antsiranana", "Fianarantsoa", "Mahajanga",
-    "Toamasina", "Toliara",
+  Madagascar: ["Antananarivo", "Antsiranana", "Fianarantsoa", "Mahajanga", "Toamasina", "Toliara"],
+  Malawi: [
+    "Balaka",
+    "Blantyre",
+    "Chikwawa",
+    "Chitipa",
+    "Dedza",
+    "Dowa",
+    "Karonga",
+    "Kasungu",
+    "Likoma",
+    "Lilongwe",
+    "Machinga",
+    "Mangochi",
+    "Mchinji",
+    "Mulanje",
+    "Mwanza",
+    "Mzimba",
+    "Neno",
+    "Ntcheu",
+    "Nkhata Bay",
+    "Nkhotakota",
+    "Nsanje",
+    "Ntchisi",
+    "Phalombe",
+    "Rumphi",
+    "Salima",
+    "Thyolo",
+    "Zomba",
   ],
-  "Malawi": [
-    "Balaka", "Blantyre", "Chikwawa", "Chitipa", "Dedza", "Dowa",
-    "Karonga", "Kasungu", "Likoma", "Lilongwe", "Machinga", "Mangochi",
-    "Mchinji", "Mulanje", "Mwanza", "Mzimba", "Neno", "Ntcheu",
-    "Nkhata Bay", "Nkhotakota", "Nsanje", "Ntchisi", "Phalombe",
-    "Rumphi", "Salima", "Thyolo", "Zomba",
+  Mali: ["Bamako", "Gao", "Kayes", "Kidal", "Koulikoro", "Mopti", "Ségou", "Sikasso", "Tombouctou"],
+  Mauritania: [
+    "Adrar",
+    "Assaba",
+    "Brakna",
+    "Dakhlet Nouadhibou",
+    "Gorgol",
+    "Guidimaka",
+    "Inchiri",
+    "Nouakchott-Nord",
+    "Nouakchott-Ouest",
+    "Nouakchott-Sud",
+    "Tagant",
+    "Tiris Zemmour",
+    "Trarza",
   ],
-  "Mali": [
-    "Bamako", "Gao", "Kayes", "Kidal", "Koulikoro", "Mopti",
-    "Ségou", "Sikasso", "Tombouctou",
+  Mauritius: [
+    "Agalega Islands",
+    "Black River",
+    "Flacq",
+    "Grand Port",
+    "Moka",
+    "Pamplemousses",
+    "Plaines Wilhems",
+    "Port Louis",
+    "Rivière Noire",
+    "Rodrigues",
+    "Savanne",
   ],
-  "Mauritania": [
-    "Adrar", "Assaba", "Brakna", "Dakhlet Nouadhibou", "Gorgol",
-    "Guidimaka", "Inchiri", "Nouakchott-Nord", "Nouakchott-Ouest",
-    "Nouakchott-Sud", "Tagant", "Tiris Zemmour", "Trarza",
+  Morocco: [
+    "Beni Mellal-Khenifra",
+    "Casablanca-Settat",
+    "Dakhla-Oued Ed-Dahab",
+    "Drâa-Tafilalet",
+    "Fès-Meknès",
+    "Guelmim-Oued Noun",
+    "Laâyoune-Sakia El Hamra",
+    "Marrakech-Safi",
+    "Oriental",
+    "Rabat-Salé-Kénitra",
+    "Souss-Massa",
+    "Tanger-Tétouan-Al Hoceïma",
   ],
-  "Mauritius": [
-    "Agalega Islands", "Black River", "Flacq", "Grand Port",
-    "Moka", "Pamplemousses", "Plaines Wilhems", "Port Louis",
-    "Rivière Noire", "Rodrigues", "Savanne",
+  Mozambique: [
+    "Cabo Delgado",
+    "Gaza",
+    "Inhambane",
+    "Manica",
+    "Maputo",
+    "Maputo City",
+    "Nampula",
+    "Niassa",
+    "Sofala",
+    "Tete",
+    "Zambézia",
   ],
-  "Morocco": [
-    "Beni Mellal-Khenifra", "Casablanca-Settat", "Dakhla-Oued Ed-Dahab",
-    "Drâa-Tafilalet", "Fès-Meknès", "Guelmim-Oued Noun",
-    "Laâyoune-Sakia El Hamra", "Marrakech-Safi", "Oriental",
-    "Rabat-Salé-Kénitra", "Souss-Massa", "Tanger-Tétouan-Al Hoceïma",
+  Namibia: [
+    "Erongo",
+    "Hardap",
+    "Karas",
+    "Kavango East",
+    "Kavango West",
+    "Khomas",
+    "Kunene",
+    "Ohangwena",
+    "Omaheke",
+    "Omusati",
+    "Oshana",
+    "Oshikoto",
+    "Otjozondjupa",
+    "Zambezi",
   ],
-  "Mozambique": [
-    "Cabo Delgado", "Gaza", "Inhambane", "Manica", "Maputo",
-    "Maputo City", "Nampula", "Niassa", "Sofala", "Tete", "Zambézia",
+  Niger: ["Agadez", "Diffa", "Dosso", "Maradi", "Niamey", "Tahoua", "Tillabéri", "Zinder"],
+  Nigeria: [
+    "Abia",
+    "Adamawa",
+    "Akwa Ibom",
+    "Anambra",
+    "Bauchi",
+    "Bayelsa",
+    "Benue",
+    "Borno",
+    "Cross River",
+    "Delta",
+    "Ebonyi",
+    "Edo",
+    "Ekiti",
+    "Enugu",
+    "FCT",
+    "Gombe",
+    "Imo",
+    "Jigawa",
+    "Kaduna",
+    "Kano",
+    "Katsina",
+    "Kebbi",
+    "Kogi",
+    "Kwara",
+    "Lagos",
+    "Nasarawa",
+    "Niger",
+    "Ogun",
+    "Ondo",
+    "Osun",
+    "Oyo",
+    "Plateau",
+    "Rivers",
+    "Sokoto",
+    "Taraba",
+    "Yobe",
+    "Zamfara",
   ],
-  "Namibia": [
-    "Erongo", "Hardap", "Karas", "Kavango East", "Kavango West",
-    "Khomas", "Kunene", "Ohangwena", "Omaheke", "Omusati",
-    "Oshana", "Oshikoto", "Otjozondjupa", "Zambezi",
+  Rwanda: [
+    "Eastern Province",
+    "Kigali",
+    "Northern Province",
+    "Southern Province",
+    "Western Province",
   ],
-  "Niger": [
-    "Agadez", "Diffa", "Dosso", "Maradi", "Niamey", "Tahoua", "Tillabéri", "Zinder",
+  "São Tomé and Príncipe": ["Água Grande", "Cantagalo", "Lembá", "Lembá", "Príncipe", "São Tomé"],
+  Senegal: [
+    "Dakar",
+    "Diourbel",
+    "Fatick",
+    "Kaffrine",
+    "Kaolack",
+    "Kédougou",
+    "Kolda",
+    "Louga",
+    "Matam",
+    "Saint-Louis",
+    "Sédhiou",
+    "Tambacounda",
+    "Thiès",
+    "Ziguinchor",
   ],
-  "Nigeria": [
-    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue",
-    "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT",
-    "Gombe", "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi",
-    "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo",
-    "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
-  ],
-  "Rwanda": [
-    "Eastern Province", "Kigali", "Northern Province", "Southern Province", "Western Province",
-  ],
-  "São Tomé and Príncipe": [
-    "Água Grande", "Cantagalo", "Lembá", "Lembá", "Príncipe", "São Tomé",
-  ],
-  "Senegal": [
-    "Dakar", "Diourbel", "Fatick", "Kaffrine", "Kaolack", "Kédougou",
-    "Kolda", "Louga", "Matam", "Saint-Louis", "Sédhiou", "Tambacounda",
-    "Thiès", "Ziguinchor",
-  ],
-  "Seychelles": [
-    "Anse Boileau", "Anse Royale", "Beau Vallon", "Bel Ombre",
-    "Cascade", "English River", "Glacis", "Grand Anse Mahe",
-    "Grand Anse Praslin", "La Digue", "La Rivière Anglaise",
-    "Les Mamelles", "Mont Buxton", "Mont Fleuri", "Plaisance",
-    "Pointe La Rue", "Port Glaud", "Takamaka",
+  Seychelles: [
+    "Anse Boileau",
+    "Anse Royale",
+    "Beau Vallon",
+    "Bel Ombre",
+    "Cascade",
+    "English River",
+    "Glacis",
+    "Grand Anse Mahe",
+    "Grand Anse Praslin",
+    "La Digue",
+    "La Rivière Anglaise",
+    "Les Mamelles",
+    "Mont Buxton",
+    "Mont Fleuri",
+    "Plaisance",
+    "Pointe La Rue",
+    "Port Glaud",
+    "Takamaka",
   ],
   "Sierra Leone": [
-    "Eastern Province", "North Western Province", "Northern Province",
-    "Southern Province", "Western Area",
+    "Eastern Province",
+    "North Western Province",
+    "Northern Province",
+    "Southern Province",
+    "Western Area",
   ],
-  "Somalia": [
-    "Awdal", "Bakool", "Banaadir", "Bari", "Bay", "Galguduud",
-    "Gedo", "Hiraan", "Lower Juba", "Lower Shabelle",
-    "Middle Juba", "Middle Shabelle", "Mudug", "Nugaal",
-    "Sanaag", "Sool", "Togdheer", "Woqooyi Galbeed",
+  Somalia: [
+    "Awdal",
+    "Bakool",
+    "Banaadir",
+    "Bari",
+    "Bay",
+    "Galguduud",
+    "Gedo",
+    "Hiraan",
+    "Lower Juba",
+    "Lower Shabelle",
+    "Middle Juba",
+    "Middle Shabelle",
+    "Mudug",
+    "Nugaal",
+    "Sanaag",
+    "Sool",
+    "Togdheer",
+    "Woqooyi Galbeed",
   ],
   "South Africa": [
-    "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal",
-    "Limpopo", "Mpumalanga", "North West", "Northern Cape", "Western Cape",
+    "Eastern Cape",
+    "Free State",
+    "Gauteng",
+    "KwaZulu-Natal",
+    "Limpopo",
+    "Mpumalanga",
+    "North West",
+    "Northern Cape",
+    "Western Cape",
   ],
   "South Sudan": [
-    "Central Equatoria", "Eastern Equatoria", "Jonglei", "Lakes",
-    "Northern Bahr el Ghazal", "Unity", "Upper Nile", "Warrap",
-    "Western Bahr el Ghazal", "Western Equatoria",
+    "Central Equatoria",
+    "Eastern Equatoria",
+    "Jonglei",
+    "Lakes",
+    "Northern Bahr el Ghazal",
+    "Unity",
+    "Upper Nile",
+    "Warrap",
+    "Western Bahr el Ghazal",
+    "Western Equatoria",
   ],
-  "Sudan": [
-    "Al Jazirah", "Al Qadarif", "Blue Nile", "Central Darfur",
-    "East Darfur", "Gedaref", "Gezira", "Kassala",
-    "Khartoum", "North Darfur", "North Kordofan", "Northern",
-    "Red Sea", "River Nile", "Sennar", "South Darfur",
-    "South Kordofan", "West Darfur", "West Kordofan", "White Nile",
+  Sudan: [
+    "Al Jazirah",
+    "Al Qadarif",
+    "Blue Nile",
+    "Central Darfur",
+    "East Darfur",
+    "Gedaref",
+    "Gezira",
+    "Kassala",
+    "Khartoum",
+    "North Darfur",
+    "North Kordofan",
+    "Northern",
+    "Red Sea",
+    "River Nile",
+    "Sennar",
+    "South Darfur",
+    "South Kordofan",
+    "West Darfur",
+    "West Kordofan",
+    "White Nile",
   ],
-  "Tanzania": [
-    "Arusha", "Dar es Salaam", "Dodoma", "Geita", "Iringa", "Kagera",
-    "Katavi", "Kigoma", "Kilimanjaro", "Lindi", "Manyara", "Mara",
-    "Mbeya", "Morogoro", "Mtwara", "Mwanza", "Njombe", "Pemba North",
-    "Pemba South", "Rukwa", "Ruvuma", "Shinyanga", "Simiyu", "Singida",
-    "Songwe", "Tabora", "Tanga", "Zanzibar North", "Zanzibar South",
+  Tanzania: [
+    "Arusha",
+    "Dar es Salaam",
+    "Dodoma",
+    "Geita",
+    "Iringa",
+    "Kagera",
+    "Katavi",
+    "Kigoma",
+    "Kilimanjaro",
+    "Lindi",
+    "Manyara",
+    "Mara",
+    "Mbeya",
+    "Morogoro",
+    "Mtwara",
+    "Mwanza",
+    "Njombe",
+    "Pemba North",
+    "Pemba South",
+    "Rukwa",
+    "Ruvuma",
+    "Shinyanga",
+    "Simiyu",
+    "Singida",
+    "Songwe",
+    "Tabora",
+    "Tanga",
+    "Zanzibar North",
+    "Zanzibar South",
     "Zanzibar Urban West",
   ],
-  "Togo": [
-    "Centrale", "Kara", "Maritime", "Plateaux", "Savanes",
+  Togo: ["Centrale", "Kara", "Maritime", "Plateaux", "Savanes"],
+  Tunisia: [
+    "Ariana",
+    "Béja",
+    "Ben Arous",
+    "Bizerte",
+    "Gabès",
+    "Gafsa",
+    "Jendouba",
+    "Kairouan",
+    "Kasserine",
+    "Kebili",
+    "Kef",
+    "Mahdia",
+    "Manouba",
+    "Médénine",
+    "Monastir",
+    "Nabeul",
+    "Sfax",
+    "Sidi Bouzid",
+    "Siliana",
+    "Sousse",
+    "Tataouine",
+    "Tozeur",
+    "Tunis",
+    "Zaghouan",
   ],
-  "Tunisia": [
-    "Ariana", "Béja", "Ben Arous", "Bizerte", "Gabès", "Gafsa",
-    "Jendouba", "Kairouan", "Kasserine", "Kebili", "Kef",
-    "Mahdia", "Manouba", "Médénine", "Monastir", "Nabeul",
-    "Sfax", "Sidi Bouzid", "Siliana", "Sousse", "Tataouine",
-    "Tozeur", "Tunis", "Zaghouan",
+  Uganda: [
+    "Abim",
+    "Adjumani",
+    "Amolatar",
+    "Amudat",
+    "Amuria",
+    "Amuru",
+    "Apac",
+    "Arua",
+    "Budaka",
+    "Bugiri",
+    "Buhweju",
+    "Buikwe",
+    "Bukedea",
+    "Bukomansimbi",
+    "Bulambuli",
+    "Bundibugyo",
+    "Bushenyi",
+    "Busiki",
+    "Busia",
+    "Butaleja",
+    "Butambala",
+    "Buvuma",
+    "Buyende",
+    "Dokolo",
+    "Gomba",
+    "Gulu",
+    "Hoima",
+    "Ibanda",
+    "Iganga",
+    "Isingiro",
+    "Jinja",
+    "Kaabong",
+    "Kabale",
+    "Kabarole",
+    "Kaberamaido",
+    "Kalangala",
+    "Kaliro",
+    "Kampala",
+    "Kamuli",
+    "Kamwenge",
+    "Kanungu",
+    "Kapchorwa",
+    "Kasese",
+    "Katakwi",
+    "Kayunga",
+    "Kazo",
+    "Kibale",
+    "Kiboga",
+    "Kyejojo",
+    "Kiruhura",
+    "Kiryandongo",
+    "Kisoro",
+    "Kitgum",
+    "Koboko",
+    "Kotido",
+    "Kumi",
+    "Kween",
+    "Kyankwanzi",
+    "Kyotera",
+    "Lira",
+    "Luuka",
+    "Luwero",
+    "Lwengo",
+    "Lyantonde",
+    "Manafwa",
+    "Maracha",
+    "Masaka",
+    "Masindi",
+    "Mayuge",
+    "Mbale",
+    "Mbarara",
+    "Mitooma",
+    "Mityana",
+    "Moroto",
+    "Moyo",
+    "Mpigi",
+    "Mubende",
+    "Mukono",
+    "Nakapiripirit",
+    "Nakaseke",
+    "Nakasongola",
+    "Namayingo",
+    "Namutumba",
+    "Napak",
+    "Nebbi",
+    "Ntungamo",
+    "Nwoya",
+    "Otuke",
+    "Oyam",
+    "Pader",
+    "Pallisa",
+    "Rakai",
+    "Rubirizi",
+    "Rukungiri",
+    "Sembabule",
+    "Serere",
+    "Sheema",
+    "Sironko",
+    "Soroti",
+    "Tororo",
+    "Wakiso",
+    "Yumbe",
   ],
-  "Uganda": [
-    "Abim", "Adjumani", "Amolatar", "Amudat", "Amuria", "Amuru",
-    "Apac", "Arua", "Budaka", "Bugiri", "Buhweju", "Buikwe",
-    "Bukedea", "Bukomansimbi", "Bulambuli", "Bundibugyo", "Bushenyi",
-    "Busiki", "Busia", "Butaleja", "Butambala", "Buvuma", "Buyende",
-    "Dokolo", "Gomba", "Gulu", "Hoima", "Ibanda", "Iganga",
-    "Isingiro", "Jinja", "Kaabong", "Kabale", "Kabarole", "Kaberamaido",
-    "Kalangala", "Kaliro", "Kampala", "Kamuli", "Kamwenge", "Kanungu",
-    "Kapchorwa", "Kasese", "Katakwi", "Kayunga", "Kazo", "Kibale",
-    "Kiboga", "Kyejojo", "Kiruhura", "Kiryandongo", "Kisoro", "Kitgum",
-    "Koboko", "Kotido", "Kumi", "Kween", "Kyankwanzi", "Kyotera",
-    "Lira", "Luuka", "Luwero", "Lwengo", "Lyantonde", "Manafwa",
-    "Maracha", "Masaka", "Masindi", "Mayuge", "Mbale", "Mbarara",
-    "Mitooma", "Mityana", "Moroto", "Moyo", "Mpigi", "Mubende",
-    "Mukono", "Nakapiripirit", "Nakaseke", "Nakasongola", "Namayingo",
-    "Namutumba", "Napak", "Nebbi", "Ntungamo", "Nwoya", "Otuke",
-    "Oyam", "Pader", "Pallisa", "Rakai", "Rubirizi", "Rukungiri",
-    "Sembabule", "Serere", "Sheema", "Sironko", "Soroti", "Tororo",
-    "Wakiso", "Yumbe",
+  Zambia: [
+    "Central",
+    "Copperbelt",
+    "Eastern",
+    "Luapula",
+    "Lusaka",
+    "Muchinga",
+    "Northern",
+    "North-Western",
+    "Southern",
+    "Western",
   ],
-  "Zambia": [
-    "Central", "Copperbelt", "Eastern", "Luapula", "Lusaka",
-    "Muchinga", "Northern", "North-Western", "Southern", "Western",
-  ],
-  "Zimbabwe": [
-    "Bulawayo", "Harare", "Manicaland", "Mashonaland Central",
-    "Mashonaland East", "Mashonaland West", "Masvingo",
-    "Matabeleland North", "Matabeleland South", "Midlands",
+  Zimbabwe: [
+    "Bulawayo",
+    "Harare",
+    "Manicaland",
+    "Mashonaland Central",
+    "Mashonaland East",
+    "Mashonaland West",
+    "Masvingo",
+    "Matabeleland North",
+    "Matabeleland South",
+    "Midlands",
   ],
 };
 
@@ -609,7 +1226,12 @@ export function PartnerOnboardingForm() {
             performance, and handle settlements.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
-            <Button asChild variant="primary" size="lg" className="rounded-full px-8 h-12 text-sm font-bold">
+            <Button
+              asChild
+              variant="primary"
+              size="lg"
+              className="rounded-full px-8 h-12 text-sm font-bold"
+            >
               <Link to="/partner">
                 Go to Partner Dashboard <ArrowRight className="size-4 ml-1" />
               </Link>
@@ -645,12 +1267,22 @@ export function PartnerOnboardingForm() {
             review. You can access your partner dashboard now.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
-            <Button asChild variant="primary" size="lg" className="rounded-full px-8 h-12 text-sm font-bold">
+            <Button
+              asChild
+              variant="primary"
+              size="lg"
+              className="rounded-full px-8 h-12 text-sm font-bold"
+            >
               <Link to="/partner">
                 Go to Partner Dashboard <ArrowRight className="size-4 ml-1" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="rounded-full px-6 h-12 text-sm font-bold border-ink/15">
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="rounded-full px-6 h-12 text-sm font-bold border-ink/15"
+            >
               <Link to="/">Back to Homepage</Link>
             </Button>
           </div>
@@ -671,7 +1303,8 @@ export function PartnerOnboardingForm() {
           Become a Prize Partner
         </h1>
         <p className="mt-2 text-sm text-ink/60">
-          List your luxury vehicles, real estate, electronics, or fine goods on Africa&apos;s premier prize marketplace.
+          List your luxury vehicles, real estate, electronics, or fine goods on Africa&apos;s
+          premier prize marketplace.
         </p>
       </div>
 
@@ -707,7 +1340,11 @@ export function PartnerOnboardingForm() {
                         : "bg-ink/10 text-ink/40",
                   )}
                 >
-                  {isCompleted ? <Check className="size-3.5 stroke-[3]" /> : <Icon className="size-3.5" />}
+                  {isCompleted ? (
+                    <Check className="size-3.5 stroke-[3]" />
+                  ) : (
+                    <Icon className="size-3.5" />
+                  )}
                 </div>
                 <span className="hidden sm:inline">{s.title}</span>
               </button>
@@ -722,12 +1359,13 @@ export function PartnerOnboardingForm() {
       {/* Form Card */}
       <Card className="mt-6 rounded-[28px] border-0 bg-white ring-1 ring-ink/10 shadow-lg overflow-hidden">
         <CardContent className="p-6 sm:p-8">
-
           {/* STEP 1: Business Information */}
           {currentStep === 1 && (
             <div className="space-y-5">
               <div>
-                <h2 className="font-display text-xl font-extrabold text-ink">Business Information</h2>
+                <h2 className="font-display text-xl font-extrabold text-ink">
+                  Business Information
+                </h2>
                 <p className="text-sm text-ink/55 mt-1">
                   Registered legal entity details for CAC verification.
                 </p>
@@ -744,7 +1382,9 @@ export function PartnerOnboardingForm() {
                       errors.businessName && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.businessName && <p className="mt-1 text-xs text-coral font-bold">{errors.businessName}</p>}
+                  {errors.businessName && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.businessName}</p>
+                  )}
                 </div>
 
                 <div>
@@ -754,7 +1394,9 @@ export function PartnerOnboardingForm() {
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
                       {BUSINESS_TYPES.map((bt) => (
-                        <SelectItem key={bt} value={bt} className="font-bold text-sm py-2">{bt}</SelectItem>
+                        <SelectItem key={bt} value={bt} className="font-bold text-sm py-2">
+                          {bt}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -770,7 +1412,9 @@ export function PartnerOnboardingForm() {
                       errors.cacNumber && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.cacNumber && <p className="mt-1 text-xs text-coral font-bold">{errors.cacNumber}</p>}
+                  {errors.cacNumber && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.cacNumber}</p>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">
@@ -783,18 +1427,30 @@ export function PartnerOnboardingForm() {
                       errors.address && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.address && <p className="mt-1 text-xs text-coral font-bold">{errors.address}</p>}
+                  {errors.address && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.address}</p>
+                  )}
                 </div>
 
                 <div>
-                  <Select value={country} onValueChange={(v) => { setCountry(v); setState(""); }}>
+                  <Select
+                    value={country}
+                    onValueChange={(v) => {
+                      setCountry(v);
+                      setState("");
+                    }}
+                  >
                     <SelectTrigger className="h-11 rounded-xl border-ink/15 font-bold text-sm">
                       <SelectValue placeholder="Country *" />
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl max-h-64 overflow-y-auto">
-                      {Object.keys(AFRICAN_COUNTRIES).sort().map((c) => (
-                        <SelectItem key={c} value={c} className="font-bold text-sm py-2">{c}</SelectItem>
-                      ))}
+                      {Object.keys(AFRICAN_COUNTRIES)
+                        .sort()
+                        .map((c) => (
+                          <SelectItem key={c} value={c} className="font-bold text-sm py-2">
+                            {c}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -807,7 +1463,9 @@ export function PartnerOnboardingForm() {
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl max-h-64 overflow-y-auto">
                         {getStatesForCountry(country).map((s) => (
-                          <SelectItem key={s} value={s} className="font-bold text-sm py-2">{s}</SelectItem>
+                          <SelectItem key={s} value={s} className="font-bold text-sm py-2">
+                            {s}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -832,7 +1490,9 @@ export function PartnerOnboardingForm() {
                       errors.companyEmail && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.companyEmail && <p className="mt-1 text-xs text-coral font-bold">{errors.companyEmail}</p>}
+                  {errors.companyEmail && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.companyEmail}</p>
+                  )}
                 </div>
 
                 <div>
@@ -845,7 +1505,9 @@ export function PartnerOnboardingForm() {
                       errors.companyPhone && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.companyPhone && <p className="mt-1 text-xs text-coral font-bold">{errors.companyPhone}</p>}
+                  {errors.companyPhone && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.companyPhone}</p>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">
@@ -868,7 +1530,9 @@ export function PartnerOnboardingForm() {
                       errors.description && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.description && <p className="mt-1 text-xs text-coral font-bold">{errors.description}</p>}
+                  {errors.description && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.description}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -878,7 +1542,9 @@ export function PartnerOnboardingForm() {
           {currentStep === 2 && (
             <div className="space-y-6">
               <div>
-                <h2 className="font-display text-xl font-extrabold text-ink">Representative & Documents</h2>
+                <h2 className="font-display text-xl font-extrabold text-ink">
+                  Representative & Documents
+                </h2>
                 <p className="text-sm text-ink/55 mt-1">
                   Authorized signatory details and compliance documents.
                 </p>
@@ -896,7 +1562,9 @@ export function PartnerOnboardingForm() {
                       errors.repName && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.repName && <p className="mt-1 text-xs text-coral font-bold">{errors.repName}</p>}
+                  {errors.repName && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.repName}</p>
+                  )}
                 </div>
 
                 <div>
@@ -909,7 +1577,9 @@ export function PartnerOnboardingForm() {
                       errors.repPosition && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.repPosition && <p className="mt-1 text-xs text-coral font-bold">{errors.repPosition}</p>}
+                  {errors.repPosition && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.repPosition}</p>
+                  )}
                 </div>
 
                 <div>
@@ -923,7 +1593,9 @@ export function PartnerOnboardingForm() {
                       errors.repEmail && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.repEmail && <p className="mt-1 text-xs text-coral font-bold">{errors.repEmail}</p>}
+                  {errors.repEmail && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.repEmail}</p>
+                  )}
                 </div>
 
                 <div>
@@ -936,13 +1608,17 @@ export function PartnerOnboardingForm() {
                       errors.repPhone && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.repPhone && <p className="mt-1 text-xs text-coral font-bold">{errors.repPhone}</p>}
+                  {errors.repPhone && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.repPhone}</p>
+                  )}
                 </div>
               </div>
 
               {/* Documents */}
               <div className="space-y-3 pt-2">
-                <p className="text-xs font-extrabold uppercase tracking-wider text-ink/45">Required Documents</p>
+                <p className="text-xs font-extrabold uppercase tracking-wider text-ink/45">
+                  Required Documents
+                </p>
 
                 <div className="rounded-2xl border border-ink/10 p-4 flex items-center justify-between gap-4 bg-paper/40">
                   <div className="flex items-center gap-3">
@@ -959,7 +1635,13 @@ export function PartnerOnboardingForm() {
                       <Check className="size-3 mr-1 text-mint-700" /> Attached
                     </Badge>
                   ) : (
-                    <Button type="button" size="sm" variant="outline" className="rounded-full text-xs font-bold border-coral text-coral" onClick={() => setCacDocUploaded(true)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full text-xs font-bold border-coral text-coral"
+                      onClick={() => setCacDocUploaded(true)}
+                    >
                       <Upload className="size-3.5 mr-1" /> Upload
                     </Button>
                   )}
@@ -973,7 +1655,9 @@ export function PartnerOnboardingForm() {
                     </div>
                     <div>
                       <p className="text-sm font-extrabold text-ink">Proof of Address *</p>
-                      <p className="text-xs text-ink/50">Utility bill or bank statement (within 3 months)</p>
+                      <p className="text-xs text-ink/50">
+                        Utility bill or bank statement (within 3 months)
+                      </p>
                     </div>
                   </div>
                   {addressDocUploaded ? (
@@ -981,12 +1665,20 @@ export function PartnerOnboardingForm() {
                       <Check className="size-3 mr-1 text-mint-700" /> Attached
                     </Badge>
                   ) : (
-                    <Button type="button" size="sm" variant="outline" className="rounded-full text-xs font-bold border-coral text-coral" onClick={() => setAddressDocUploaded(true)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full text-xs font-bold border-coral text-coral"
+                      onClick={() => setAddressDocUploaded(true)}
+                    >
                       <Upload className="size-3.5 mr-1" /> Upload
                     </Button>
                   )}
                 </div>
-                {errors.addressDoc && <p className="text-xs text-coral font-bold">{errors.addressDoc}</p>}
+                {errors.addressDoc && (
+                  <p className="text-xs text-coral font-bold">{errors.addressDoc}</p>
+                )}
 
                 <div className="rounded-2xl border border-ink/10 p-4 flex items-center justify-between gap-4 bg-paper/40">
                   <div className="flex items-center gap-3">
@@ -994,8 +1686,12 @@ export function PartnerOnboardingForm() {
                       <ShieldCheck className="size-4.5" />
                     </div>
                     <div>
-                      <p className="text-sm font-extrabold text-ink">Trade License / Authorization</p>
-                      <p className="text-xs text-ink/50">Optional — supplier letter or trade authorization</p>
+                      <p className="text-sm font-extrabold text-ink">
+                        Trade License / Authorization
+                      </p>
+                      <p className="text-xs text-ink/50">
+                        Optional — supplier letter or trade authorization
+                      </p>
                     </div>
                   </div>
                   {dealershipDocUploaded ? (
@@ -1003,7 +1699,13 @@ export function PartnerOnboardingForm() {
                       <Check className="size-3 mr-1 text-mint-700" /> Attached
                     </Badge>
                   ) : (
-                    <Button type="button" size="sm" variant="outline" className="rounded-full text-xs font-bold border-ink/20" onClick={() => setDealershipDocUploaded(true)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full text-xs font-bold border-ink/20"
+                      onClick={() => setDealershipDocUploaded(true)}
+                    >
                       <Upload className="size-3.5 mr-1" /> Attach
                     </Button>
                   )}
@@ -1013,7 +1715,8 @@ export function PartnerOnboardingForm() {
               <div className="rounded-2xl bg-lilac/15 p-3 flex items-start gap-2.5 text-xs text-ink/65">
                 <Info className="size-3.5 text-coral shrink-0 mt-0.5" />
                 <p>
-                  <span className="font-bold text-ink">Data Security:</span> All documents are encrypted and only accessible by accredited compliance officers.
+                  <span className="font-bold text-ink">Data Security:</span> All documents are
+                  encrypted and only accessible by accredited compliance officers.
                 </p>
               </div>
             </div>
@@ -1023,7 +1726,9 @@ export function PartnerOnboardingForm() {
           {currentStep === 3 && (
             <div className="space-y-5">
               <div>
-                <h2 className="font-display text-xl font-extrabold text-ink">Initial Prize Asset</h2>
+                <h2 className="font-display text-xl font-extrabold text-ink">
+                  Initial Prize Asset
+                </h2>
                 <p className="text-sm text-ink/55 mt-1">
                   Propose your first asset to list once your partner account is approved.
                 </p>
@@ -1040,7 +1745,9 @@ export function PartnerOnboardingForm() {
                       errors.assetName && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.assetName && <p className="mt-1 text-xs text-coral font-bold">{errors.assetName}</p>}
+                  {errors.assetName && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.assetName}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1050,7 +1757,9 @@ export function PartnerOnboardingForm() {
                     </SelectTrigger>
                     <SelectContent className="rounded-2xl">
                       {ASSET_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat} className="font-bold text-sm py-2">{cat}</SelectItem>
+                        <SelectItem key={cat} value={cat} className="font-bold text-sm py-2">
+                          {cat}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1084,7 +1793,9 @@ export function PartnerOnboardingForm() {
                       errors.assetLocation && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.assetLocation && <p className="mt-1 text-xs text-coral font-bold">{errors.assetLocation}</p>}
+                  {errors.assetLocation && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.assetLocation}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1117,7 +1828,9 @@ export function PartnerOnboardingForm() {
                     rows={2}
                     className="rounded-xl border-ink/15 font-bold text-sm"
                   />
-                  {errors.assetDescription && <p className="mt-1 text-xs text-coral font-bold">{errors.assetDescription}</p>}
+                  {errors.assetDescription && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.assetDescription}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -1127,7 +1840,9 @@ export function PartnerOnboardingForm() {
           {currentStep === 4 && (
             <div className="space-y-6">
               <div>
-                <h2 className="font-display text-xl font-extrabold text-ink">Create Your Account</h2>
+                <h2 className="font-display text-xl font-extrabold text-ink">
+                  Create Your Account
+                </h2>
                 <p className="text-sm text-ink/55 mt-1">
                   Set up login credentials and review your application.
                 </p>
@@ -1163,7 +1878,9 @@ export function PartnerOnboardingForm() {
                       {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
-                  {errors.password && <p className="mt-1 text-xs text-coral font-bold">{errors.password}</p>}
+                  {errors.password && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.password}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1177,31 +1894,53 @@ export function PartnerOnboardingForm() {
                       errors.confirmPassword && "border-coral ring-1 ring-coral",
                     )}
                   />
-                  {errors.confirmPassword && <p className="mt-1 text-xs text-coral font-bold">{errors.confirmPassword}</p>}
+                  {errors.confirmPassword && (
+                    <p className="mt-1 text-xs text-coral font-bold">{errors.confirmPassword}</p>
+                  )}
                 </div>
               </div>
 
               {/* Review Summary */}
               <div className="space-y-3 pt-2">
-                <p className="text-xs font-extrabold uppercase tracking-wider text-ink/45">Application Summary</p>
+                <p className="text-xs font-extrabold uppercase tracking-wider text-ink/45">
+                  Application Summary
+                </p>
 
                 <div className="rounded-2xl border border-ink/10 p-4 bg-paper/40 space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-extrabold uppercase tracking-wider text-ink/40">Business</p>
-                    <button type="button" onClick={() => setCurrentStep(1)} className="text-xs font-bold text-coral hover:underline">Edit</button>
+                    <p className="text-xs font-extrabold uppercase tracking-wider text-ink/40">
+                      Business
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(1)}
+                      className="text-xs font-bold text-coral hover:underline"
+                    >
+                      Edit
+                    </button>
                   </div>
                   <p className="text-sm font-extrabold text-ink">{businessName}</p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink/60">
                     <span>{cacNumber}</span>
                     <span>{businessType}</span>
-                    <span>{state}, {country}</span>
+                    <span>
+                      {state}, {country}
+                    </span>
                   </div>
                 </div>
 
                 <div className="rounded-2xl border border-ink/10 p-4 bg-paper/40 space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-extrabold uppercase tracking-wider text-ink/40">Representative</p>
-                    <button type="button" onClick={() => setCurrentStep(2)} className="text-xs font-bold text-coral hover:underline">Edit</button>
+                    <p className="text-xs font-extrabold uppercase tracking-wider text-ink/40">
+                      Representative
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(2)}
+                      className="text-xs font-bold text-coral hover:underline"
+                    >
+                      Edit
+                    </button>
                   </div>
                   <p className="text-sm font-extrabold text-ink">
                     {repName} <span className="text-xs font-bold text-ink/50">({repPosition})</span>
@@ -1214,15 +1953,27 @@ export function PartnerOnboardingForm() {
 
                 <div className="rounded-2xl border border-ink/10 p-4 bg-paper/40 space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-extrabold uppercase tracking-wider text-ink/40">First Asset</p>
-                    <button type="button" onClick={() => setCurrentStep(3)} className="text-xs font-bold text-coral hover:underline">Edit</button>
+                    <p className="text-xs font-extrabold uppercase tracking-wider text-ink/40">
+                      First Asset
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(3)}
+                      className="text-xs font-bold text-coral hover:underline"
+                    >
+                      Edit
+                    </button>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-extrabold text-ink">{assetName}</p>
-                      <p className="text-xs text-ink/55">{assetCategory} · {assetCondition}</p>
+                      <p className="text-xs text-ink/55">
+                        {assetCategory} · {assetCondition}
+                      </p>
                     </div>
-                    <p className="text-sm font-extrabold text-coral">{formatNaira(Number(declaredValueNaira || 0) * 100)}</p>
+                    <p className="text-sm font-extrabold text-coral">
+                      {formatNaira(Number(declaredValueNaira || 0) * 100)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1236,17 +1987,26 @@ export function PartnerOnboardingForm() {
                     onCheckedChange={(c) => setAgreeTerms(Boolean(c))}
                     className="mt-0.5 size-4 rounded-md"
                   />
-                  <label htmlFor="terms" className="text-xs text-ink/70 leading-relaxed cursor-pointer">
+                  <label
+                    htmlFor="terms"
+                    className="text-xs text-ink/70 leading-relaxed cursor-pointer"
+                  >
                     I confirm I am authorized to submit this on behalf of{" "}
                     <span className="font-bold text-ink">{businessName || "the business"}</span>,
                     and agree to the{" "}
-                    <Link to="/terms-and-conditions" className="font-bold text-coral underline">Partner Terms</Link>{" "}
+                    <Link to="/terms-and-conditions" className="font-bold text-coral underline">
+                      Partner Terms
+                    </Link>{" "}
                     and{" "}
-                    <Link to="/privacy-policy" className="font-bold text-coral underline">Privacy Policy</Link>.
-                    Assets require admin approval before going live.
+                    <Link to="/privacy-policy" className="font-bold text-coral underline">
+                      Privacy Policy
+                    </Link>
+                    . Assets require admin approval before going live.
                   </label>
                 </div>
-                {errors.agreeTerms && <p className="mt-2 text-xs text-coral font-bold">{errors.agreeTerms}</p>}
+                {errors.agreeTerms && (
+                  <p className="mt-2 text-xs text-coral font-bold">{errors.agreeTerms}</p>
+                )}
               </div>
             </div>
           )}

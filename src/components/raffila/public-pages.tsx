@@ -336,7 +336,7 @@ export function HomePage() {
                 size="lg"
                 className="bg-coral text-paper hover:bg-coral/90 shadow-[0_8px_20px_-8px_var(--coral)]"
               >
-                <Link to="/auth">
+                <Link to="/auth" search={{ tab: "register" } as any}>
                   CREATE ACCOUNT <ArrowRight className="size-4" />
                 </Link>
               </Button>
@@ -356,7 +356,9 @@ export function HomePage() {
                 size="lg"
                 className="bg-transparent text-cream hover:bg-cream/10 hover:text-cream border border-cream/20"
               >
-                <Link to="/auth">Log in</Link>
+                <Link to="/auth" search={{ tab: "login" } as any}>
+                  Log in
+                </Link>
               </Button>
             </div>
             <p className="mt-4 text-xs font-bold text-cream/50">

@@ -95,10 +95,14 @@ export function SiteHeader() {
           ) : (
             <div className="flex items-center gap-2">
               <Button asChild variant="outline" size="sm">
-                <Link to="/auth">Log in</Link>
+                <Link to="/auth" search={{ tab: "login" } as any}>
+                  Log in
+                </Link>
               </Button>
               <Button asChild variant="dark" size="sm">
-                <Link to="/auth">Create account</Link>
+                <Link to="/auth" search={{ tab: "register" } as any}>
+                  Create account
+                </Link>
               </Button>
             </div>
           )}
@@ -116,10 +120,14 @@ export function SiteHeader() {
           ) : (
             <div className="flex items-center gap-2">
               <Button asChild variant="outline" size="sm">
-                <Link to="/auth">Log in</Link>
+                <Link to="/auth" search={{ tab: "login" } as any}>
+                  Log in
+                </Link>
               </Button>
               <Button asChild variant="dark" size="sm">
-                <Link to="/auth">Create account</Link>
+                <Link to="/auth" search={{ tab: "register" } as any}>
+                  Create account
+                </Link>
               </Button>
             </div>
           )}
@@ -180,6 +188,7 @@ export function SiteHeader() {
             <div className="mt-3 grid grid-cols-2 gap-2">
               <Link
                 to="/auth"
+                search={{ tab: "login" } as any}
                 onClick={() => setOpen(false)}
                 className="block rounded-2xl border border-ink/10 bg-white px-4 py-3 text-center text-sm font-extrabold text-ink"
               >
@@ -187,6 +196,7 @@ export function SiteHeader() {
               </Link>
               <Link
                 to="/auth"
+                search={{ tab: "register" } as any}
                 onClick={() => setOpen(false)}
                 className="block rounded-2xl bg-coral px-4 py-3 text-center text-sm font-extrabold text-paper"
               >

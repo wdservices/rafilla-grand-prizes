@@ -3,7 +3,12 @@ import { ArrowUpRight, BadgeCheck, CalendarDays, Minus, Plus, Ticket } from "luc
 import { Link } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
-import { formatNaira, getEntriesRemaining, getProgress, type Competition } from "@/lib/raffila-data";
+import {
+  formatNaira,
+  getEntriesRemaining,
+  getProgress,
+  type Competition,
+} from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
 
 const accentStyles = {
@@ -163,8 +168,12 @@ export function CompetitionCard({
                 </p>
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">Entries remaining</p>
-                <p className="font-bold text-ink text-xs sm:text-sm">{ticketsLeft.toLocaleString("en-NG")}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
+                  Entries remaining
+                </p>
+                <p className="font-bold text-ink text-xs sm:text-sm">
+                  {ticketsLeft.toLocaleString("en-NG")}
+                </p>
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">Closes</p>
@@ -187,7 +196,10 @@ export function CompetitionCard({
                   />
                 </div>
                 <p className="mt-2 break-words rounded-2xl bg-cream px-3 py-1.5 text-[11px] font-bold text-ink/70 ring-1 ring-ink/10">
-                  {ticketsLeft.toLocaleString("en-NG")} entries remaining � Closes {closesShort} � <span className="inline-flex items-center gap-1 font-extrabold text-ink"><BadgeCheck className="size-3.5 text-mint" /> Verified partner</span>
+                  {ticketsLeft.toLocaleString("en-NG")} entries remaining � Closes {closesShort} �{" "}
+                  <span className="inline-flex items-center gap-1 font-extrabold text-ink">
+                    <BadgeCheck className="size-3.5 text-mint" /> Verified partner
+                  </span>
                 </p>
               </div>
               <div className="flex items-center justify-between gap-2 sm:col-span-2 md:col-span-3 lg:contents">
@@ -281,7 +293,8 @@ export function CompetitionCard({
         </div>
         <div className="rounded-2xl bg-cream px-3 py-2 ring-1 ring-ink/10">
           <p className="break-words text-[11px] font-bold text-ink/70">
-            {ticketsLeft.toLocaleString("en-NG")} entries remaining � Closes {closesShort} � By {competition.partner}
+            {ticketsLeft.toLocaleString("en-NG")} entries remaining � Closes {closesShort} � By{" "}
+            {competition.partner}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -297,7 +310,8 @@ export function CompetitionCard({
             onClick={() => onEnterDraw?.(qty)}
             disabled={!onEnterDraw || ticketsLeft === 0}
           >
-            <Ticket className="size-4 shrink-0" /> <span className="truncate">Enter for {formatNaira(competition.entryPrice)}</span>
+            <Ticket className="size-4 shrink-0" />{" "}
+            <span className="truncate">Enter for {formatNaira(competition.entryPrice)}</span>
           </Button>
         </div>
       </div>

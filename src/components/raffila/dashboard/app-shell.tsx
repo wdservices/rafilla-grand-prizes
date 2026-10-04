@@ -483,7 +483,9 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
       >
         <div
           className="grid px-1.5 pb-1.5 pt-2"
-          style={{ gridTemplateColumns: `repeat(${Math.max(visibleBottomItems.length, 1)}, minmax(0, 1fr))` }}
+          style={{
+            gridTemplateColumns: `repeat(${Math.max(visibleBottomItems.length, 1)}, minmax(0, 1fr))`,
+          }}
         >
           {visibleBottomItems.map((item) => {
             const isA = activeBottom(item.to);

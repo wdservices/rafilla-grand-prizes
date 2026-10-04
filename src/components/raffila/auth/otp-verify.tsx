@@ -28,7 +28,7 @@ function otpSlotBase(active: boolean, hasError?: boolean, filled?: boolean) {
   );
 }
 
-export function OTPVerifyForm() {
+export function OTPVerifyForm({ onBackToLogin }: { onBackToLogin?: () => void } = {}) {
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(COUNTDOWN_SECONDS);
   const [resendCooldown, setResendCooldown] = useState(RESEND_COOLDOWN);
@@ -107,10 +107,16 @@ export function OTPVerifyForm() {
     <div className="space-y-6">
       <Link
         to="/auth"
-        search={{ mode: undefined }}
+        search={{ tab: "login", mode: undefined } as any}
+        onClick={(e) => {
+          if (onBackToLogin) {
+            e.preventDefault();
+            onBackToLogin();
+          }
+        }}
         className="inline-flex items-center gap-1.5 text-xs font-extrabold text-ink/55 hover:text-ink"
       >
-        <ArrowLeft className="size-4" /> Back
+        <ArrowLeft className="size-4" /> Back to Log in
       </Link>
 
       {success ? (

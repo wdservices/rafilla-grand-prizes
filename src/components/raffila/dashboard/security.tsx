@@ -134,8 +134,8 @@ function SpendingLimitCard() {
         <h2 className="font-display text-xl font-extrabold text-ink">My Spending Limit</h2>
       </div>
       <p className="mt-1 max-w-2xl text-xs font-bold leading-relaxed text-ink/60">
-        Optional weekly alert. We show factual costs and never pressure you with artificial
-        scarcity or repeated buy-more prompts. Set a limit — we remind you when you pass it.
+        Optional weekly alert. We show factual costs and never pressure you with artificial scarcity
+        or repeated buy-more prompts. Set a limit — we remind you when you pass it.
       </p>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
         <label className="flex min-h-12 flex-1 items-center gap-2 rounded-2xl bg-white px-4 ring-1 ring-ink/10">
@@ -656,82 +656,82 @@ export function DashboardSecurityPage() {
         </div>
       )}
 
-        <div className="rounded-[24px] bg-white p-6 ring-1 ring-coral/25 sm:p-8">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="size-5 text-coral" />
-            <h2 className="font-display text-xl font-extrabold text-ink">Danger zone</h2>
-          </div>
-          <p className="mt-1 text-xs font-bold text-ink/45">
-            Permanently delete your Raffila account, profile data and auth login. This cannot be
-            undone and is recorded in the audit trail.
-          </p>
-          {!delOpen ? (
-            <Button
-              variant="outline"
-              size="lg"
-              className="mt-5 rounded-full border-coral/40 text-coral hover:bg-coral hover:text-white"
-              onClick={() => {
-                setDelOpen(true);
-                setDelError("");
-              }}
-            >
-              Delete my account
-            </Button>
-          ) : (
-            <div className="mt-5 space-y-4 rounded-2xl bg-coral/5 p-4 ring-1 ring-coral/20">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <PwField
-                  label="Account password (email accounts)"
-                  value={delPw}
-                  onChange={setDelPw}
-                  show={false}
-                  onToggle={() => {}}
-                />
-                <div>
-                  <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                    Type DELETE to confirm
-                  </label>
-                  <div className="flex min-h-11 items-center rounded-2xl bg-cream px-4 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral/20 transition-all">
-                    <input
-                      value={delConfirm}
-                      onChange={(e) => setDelConfirm(e.target.value)}
-                      placeholder="DELETE"
-                      className="w-full bg-transparent text-sm font-bold text-ink outline-none placeholder:text-ink/30"
-                    />
-                  </div>
+      <div className="rounded-[24px] bg-white p-6 ring-1 ring-coral/25 sm:p-8">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="size-5 text-coral" />
+          <h2 className="font-display text-xl font-extrabold text-ink">Danger zone</h2>
+        </div>
+        <p className="mt-1 text-xs font-bold text-ink/45">
+          Permanently delete your Raffila account, profile data and auth login. This cannot be
+          undone and is recorded in the audit trail.
+        </p>
+        {!delOpen ? (
+          <Button
+            variant="outline"
+            size="lg"
+            className="mt-5 rounded-full border-coral/40 text-coral hover:bg-coral hover:text-white"
+            onClick={() => {
+              setDelOpen(true);
+              setDelError("");
+            }}
+          >
+            Delete my account
+          </Button>
+        ) : (
+          <div className="mt-5 space-y-4 rounded-2xl bg-coral/5 p-4 ring-1 ring-coral/20">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <PwField
+                label="Account password (email accounts)"
+                value={delPw}
+                onChange={setDelPw}
+                show={false}
+                onToggle={() => {}}
+              />
+              <div>
+                <label className="mb-1.5 block text-xs font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                  Type DELETE to confirm
+                </label>
+                <div className="flex min-h-11 items-center rounded-2xl bg-cream px-4 ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral/20 transition-all">
+                  <input
+                    value={delConfirm}
+                    onChange={(e) => setDelConfirm(e.target.value)}
+                    placeholder="DELETE"
+                    className="w-full bg-transparent text-sm font-bold text-ink outline-none placeholder:text-ink/30"
+                  />
                 </div>
               </div>
-              <p className="text-[11px] font-bold text-ink/50">
-                Google accounts: leave the password blank — you'll confirm with a Google prompt
-                instead.
-              </p>
-              {delError && <p className="text-xs font-bold text-rose">{delError}</p>}
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setDelOpen(false);
-                    setDelPw("");
-                    setDelConfirm("");
-                    setDelError("");
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  className="bg-coral hover:bg-coral/90"
-                  disabled={delConfirm !== "DELETE" || delSaving}
-                  onClick={() => {
-                    void deleteAccount();
-                  }}
-                >
-                  {delSaving ? "Deleting…" : "Permanently delete account"}
-                </Button>
-              </div>
             </div>
-          )}
-        </div>
+            <p className="text-[11px] font-bold text-ink/50">
+              Google accounts: leave the password blank — you'll confirm with a Google prompt
+              instead.
+            </p>
+            {delError && <p className="text-xs font-bold text-rose">{delError}</p>}
+            <div className="flex flex-wrap gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDelOpen(false);
+                  setDelPw("");
+                  setDelConfirm("");
+                  setDelError("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                className="bg-coral hover:bg-coral/90"
+                disabled={delConfirm !== "DELETE" || delSaving}
+                onClick={() => {
+                  void deleteAccount();
+                }}
+              >
+                {delSaving ? "Deleting…" : "Permanently delete account"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </DashboardAppShell>
   );
 }

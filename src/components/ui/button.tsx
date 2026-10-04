@@ -5,15 +5,15 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-body font-extrabold transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-body font-extrabold transition-all duration-150 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] active:translate-y-px",
   {
     variants: {
       variant: {
         primary:
-          "bg-coral text-paper shadow-[0_8px_20px_-8px_var(--coral)] hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-8px_var(--coral)]",
-        dark: "bg-ink text-cream shadow-[0_14px_30px_-10px_var(--ink)] hover:-translate-y-0.5",
-        outline: "border border-ink/15 bg-paper text-ink hover:bg-lilac/15",
-        ghost: "text-ink/65 hover:bg-paper hover:text-ink",
+          "bg-coral text-paper shadow-[0_8px_20px_-8px_var(--coral)] hover:bg-coral/95 hover:brightness-105 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-8px_var(--coral)] active:translate-y-0 active:scale-[0.98]",
+        dark: "bg-ink text-cream shadow-[0_14px_30px_-10px_var(--ink)] hover:bg-ink/90 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]",
+        outline: "border border-ink/15 bg-paper text-ink hover:bg-lilac/20 hover:border-ink/30 hover:brightness-105 active:scale-[0.98]",
+        ghost: "text-ink/65 hover:bg-paper hover:text-ink active:scale-[0.98]",
       },
       size: {
         sm: "h-9 rounded-full px-3.5 text-xs",

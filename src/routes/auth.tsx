@@ -1,5 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 import {
   AuthShell,
@@ -20,23 +20,41 @@ const ogImageDefault = "https://raffila.com/og-default.png";
 
 function AuthPage() {
   const search = Route.useSearch() as Record<string, unknown>;
+  const navigate = useNavigate();
   const rawMode = search["mode"];
   const mode =
     rawMode === "forgot" || rawMode === "otp" || rawMode === "complete"
       ? (rawMode as AuthMode)
       : undefined;
 
-  const [tab, setTab] = useState<AuthTab>("login");
+  const rawTab = search["tab"];
+  const urlTab: AuthTab = rawTab === "register" ? "register" : "login";
+  const [tab, setTab] = useState<AuthTab>(urlTab);
+
+  useEffect(() => {
+    if (rawTab === "register" || rawTab === "login") {
+      setTab(rawTab);
+    }
+  }, [rawTab]);
+
+  const handleTabChange = (nextTab: AuthTab) => {
+    setTab(nextTab);
+    void navigate({
+      to: "/auth",
+      search: (prev: any) => ({ ...(prev ?? {}), tab: nextTab, mode: undefined }),
+      replace: true,
+    });
+  };
 
   let variant: "login" | "register" | "forgot" | "otp" | "complete" = "login";
   let body;
 
   if (mode === "forgot") {
     variant = "forgot";
-    body = <ForgotPasswordForm />;
+    body = <ForgotPasswordForm onBackToLogin={() => handleTabChange("login")} />;
   } else if (mode === "otp") {
     variant = "otp";
-    body = <OTPVerifyForm />;
+    body = <OTPVerifyForm onBackToLogin={() => handleTabChange("login")} />;
   } else if (mode === "complete") {
     variant = "complete";
     body = <CompleteProfileForm />;
@@ -44,7 +62,7 @@ function AuthPage() {
     variant = tab;
     body = (
       <div className="space-y-6">
-        <AuthTabs activeTab={tab} onTabChange={setTab} defaultTab="login" />
+        <AuthTabs activeTab={tab} onTabChange={handleTabChange} defaultTab="login" />
         <div
           role="tabpanel"
           id={`auth-panel-${tab}`}
@@ -52,7 +70,11 @@ function AuthPage() {
           className="raf-rise"
           key={tab}
         >
-          {tab === "login" ? <LoginForm /> : <RegisterForm />}
+          {tab === "login" ? (
+            <LoginForm onSwitchToRegister={() => handleTabChange("register")} />
+          ) : (
+            <RegisterForm onSwitchToLogin={() => handleTabChange("login")} />
+          )}
         </div>
       </div>
     );

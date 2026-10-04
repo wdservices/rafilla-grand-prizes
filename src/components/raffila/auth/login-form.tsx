@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, ShieldCheck, User, Store, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { type UserRole } from "@/lib/auth-store";
+import { DEFAULT_CREDENTIALS, type UserRole } from "@/lib/auth-store";
 import { useAuthActions } from "@/hooks/useAuthSession";
 import { cn } from "@/lib/utils";
 
@@ -42,17 +43,22 @@ function authInputBase(error?: string) {
 
 type AuthErrors = { email?: string; password?: string; global?: string };
 
-export function LoginForm() {
+interface LoginFormProps {
+  onSwitchToRegister?: () => void;
+}
+
+export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<UserRole | null>(null);
   const [success, setSuccess] = useState(false);
   const [successRole, setSuccessRole] = useState<UserRole | null>(null);
   const [errors, setErrors] = useState<AuthErrors>({});
 
-  const { signIn, signInWithGoogle } = useAuthActions();
+  const { signIn, signInWithGoogle, signInAsDemo } = useAuthActions();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,10 +78,17 @@ export function LoginForm() {
 
   function validate() {
     const next: AuthErrors = {};
-    if (!email) next.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = "Enter a valid email address";
+    if (!email.trim()) next.email = "Email is required";
+    else if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) &&
+      email.trim() !== "admin" &&
+      email.trim() !== "user" &&
+      email.trim() !== "partner"
+    ) {
+      next.email = "Enter a valid email address";
+    }
     if (!password) next.password = "Password is required";
-    else if (password.length < 6) next.password = "Password must be at least 6 characters";
+    else if (password.length < 4) next.password = "Password must be at least 4 characters";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -85,13 +98,49 @@ export function LoginForm() {
     if (!validate()) return;
     setLoading(true);
     setErrors({});
-    const res = await signIn({ email, password, remember });
+    const res = await signIn({ email: email.trim(), password, remember });
     setLoading(false);
     if (!res.ok) {
       setErrors({ global: res.message });
+      toast.error("Sign in failed", { description: res.message });
     } else {
+      toast.success("Welcome back!", {
+        description:
+          res.user.role === "admin"
+            ? "Opening Admin Console..."
+            : res.user.role === "partner"
+              ? "Opening Partner Portal..."
+              : "Opening your Dashboard...",
+      });
       setSuccessRole(res.user.role);
       setSuccess(true);
+    }
+  }
+
+  async function handleDemoSignIn(role: UserRole) {
+    setDemoLoading(role);
+    setErrors({});
+    try {
+      const cred = DEFAULT_CREDENTIALS[role];
+      setEmail(cred.email);
+      setPassword(cred.password);
+      const res = signInAsDemo(role);
+      if (res.ok) {
+        toast.success(`Signed in as ${role}!`, {
+          description:
+            role === "admin"
+              ? "Opening Admin Dashboard..."
+              : role === "partner"
+                ? "Opening Partner Portal..."
+                : "Opening Player Dashboard...",
+        });
+        setSuccessRole(role);
+        setSuccess(true);
+      } else {
+        toast.error("Demo login failed", { description: res.message });
+      }
+    } finally {
+      setDemoLoading(null);
     }
   }
 
@@ -102,173 +151,241 @@ export function LoginForm() {
     setLoading(false);
     if (!res.ok) {
       setErrors({ global: res.message });
+      toast.error("Google sign in failed", { description: res.message });
       return;
     }
     if (res.needsProfile) {
       window.location.href = "/auth?mode=complete";
       return;
     }
+    toast.success("Signed in with Google!");
     setSuccessRole(res.user.role);
     setSuccess(true);
   }
 
   useEffect(() => {
     if (!success) return;
-    const redirect = (successRole ?? "user") === "admin" ? "/admin" : "/dashboard";
-    navigate({ to: redirect });
+    const redirect =
+      (successRole ?? "user") === "admin"
+        ? "/admin"
+        : (successRole ?? "user") === "partner"
+          ? "/partner"
+          : "/dashboard";
+    void navigate({ to: redirect as any });
   }, [success, successRole, navigate]);
 
-  if (success) return <Loader2 className="size-6 animate-spin mx-auto mt-12" />;
+  if (success) {
+    return (
+      <div className="py-12 text-center space-y-3">
+        <Loader2 className="size-8 animate-spin mx-auto text-coral" />
+        <p className="text-sm font-bold text-ink/65">Redirecting to your dashboard...</p>
+      </div>
+    );
+  }
 
   return (
-    <form noValidate onSubmit={onSubmit} className="space-y-5">
-      <header>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-          Welcome back
-        </h1>
-        <p className="mt-2 text-sm text-ink/55">
-          Phone/OTP is fastest on mobile. Email or Google also works.
-        </p>
-      </header>
+    <div className="space-y-6">
+      <form noValidate onSubmit={onSubmit} className="space-y-5">
+        <header>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+            Welcome back
+          </h1>
+          <p className="mt-2 text-sm text-ink/55">Sign in to your Raffila account.</p>
+        </header>
 
-      <div className="rounded-2xl bg-lemon/30 p-4 ring-1 ring-ink/10">
-        <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-ink/50">
-          Prefer phone?
-        </p>
-        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-          <Button asChild variant="primary" size="md" className="min-h-11 flex-1">
-            <Link to="/auth" search={{ mode: "otp" }}>
-              Continue with phone / OTP
-            </Link>
-          </Button>
-          <Link
-            to="/faq"
-            className="inline-flex min-h-11 items-center justify-center rounded-full px-4 text-xs font-extrabold text-coral underline underline-offset-2 ring-1 ring-ink/10"
-          >
-            Get support
-          </Link>
-        </div>
-      </div>
+        {errors.global && (
+          <div className="rounded-xl border border-coral/20 bg-coral/5 px-4 py-3 text-sm font-bold text-coral">
+            {errors.global}
+          </div>
+        )}
 
-      {errors.global && (
-        <div className="rounded-xl border border-coral/20 bg-coral/5 px-4 py-3 text-sm font-bold text-coral">
-          {errors.global}
-        </div>
-      )}
-
-      <div className="space-y-1.5">
-        <label htmlFor="email" className="text-xs font-extrabold text-ink/60">
-          Email address
-        </label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className={cn(authInputBase(errors.email), "w-full")}
-          autoFocus
-        />
-        {errors.email ? <p className="px-1 text-xs font-bold text-coral">{errors.email}</p> : null}
-      </div>
-
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <label htmlFor="password" className="text-xs font-extrabold text-ink/60">
-            Password
+        <div className="space-y-1.5">
+          <label htmlFor="email" className="text-xs font-extrabold text-ink/60">
+            Email address
           </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={cn(authInputBase(errors.email), "w-full")}
+            autoFocus
+          />
+          {errors.email ? (
+            <p className="px-1 text-xs font-bold text-coral">{errors.email}</p>
+          ) : null}
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="text-xs font-extrabold text-ink/60">
+              Password
+            </label>
+            <Link
+              to="/auth"
+              search={{ mode: "forgot" } as any}
+              className="text-xs font-extrabold text-coral hover:underline hover:underline-offset-2"
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={cn(authInputBase(errors.password), "w-full pr-12")}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute inset-y-0 right-3 grid place-items-center pr-1 text-ink/30 hover:text-ink/60"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="size-4.5" /> : <Eye className="size-4.5" />}
+            </button>
+          </div>
+          {errors.password ? (
+            <p className="px-1 text-xs font-bold text-coral">{errors.password}</p>
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Checkbox
+            id="remember"
+            checked={remember}
+            onCheckedChange={(v) => setRemember(Boolean(v))}
+            className="size-4 rounded-md"
+          />
+          <label
+            htmlFor="remember"
+            className="text-xs font-bold text-ink/55 cursor-pointer select-none"
+          >
+            Remember me for 30 days
+          </label>
+        </div>
+
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          className="w-full h-12 rounded-xl text-base shadow-sm cursor-pointer hover:brightness-105 active:scale-[0.98] transition-all"
+          disabled={loading || demoLoading !== null}
+        >
+          {loading ? <Loader2 className="size-4.5 animate-spin" /> : null}
+          {loading ? "Signing in..." : "Sign in"}
+        </Button>
+
+        <div className="relative py-1">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-ink/10" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-white px-3 font-extrabold uppercase tracking-[0.12em] text-ink/30">
+              or
+            </span>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full h-12 rounded-xl border-ink/15 hover:border-ink/25 hover:bg-cream/30 cursor-pointer active:scale-[0.98] transition-all"
+          disabled={loading || demoLoading !== null}
+          onClick={onGoogleSignIn}
+        >
+          <GoogleIcon className="size-4.5" />
+          Continue with Google
+        </Button>
+
+        <p className="pt-1 text-center text-sm text-ink/55">
+          Don&apos;t have an account?{" "}
           <Link
             to="/auth"
-            search={{ mode: "forgot" }}
-            className="text-xs font-extrabold text-coral hover:underline hover:underline-offset-2"
+            search={{ tab: "register" } as any}
+            onClick={(e) => {
+              if (onSwitchToRegister) {
+                e.preventDefault();
+                onSwitchToRegister();
+              }
+            }}
+            className="font-extrabold text-coral hover:underline hover:underline-offset-2"
           >
-            Forgot password?
+            Create one
           </Link>
-        </div>
-        <div className="relative">
-          <input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            autoComplete="current-password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={cn(authInputBase(errors.password), "w-full pr-12")}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((s) => !s)}
-            className="absolute inset-y-0 right-3 grid place-items-center pr-1 text-ink/30 hover:text-ink/60"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword ? <EyeOff className="size-4.5" /> : <Eye className="size-4.5" />}
-          </button>
-        </div>
-        {errors.password ? (
-          <p className="px-1 text-xs font-bold text-coral">{errors.password}</p>
-        ) : null}
-      </div>
+        </p>
+      </form>
 
-      <div className="flex items-center gap-2.5">
-        <Checkbox
-          id="remember"
-          checked={remember}
-          onCheckedChange={(v) => setRemember(Boolean(v))}
-          className="size-4 rounded-md"
-        />
-        <label
-          htmlFor="remember"
-          className="text-xs font-bold text-ink/55 cursor-pointer select-none"
-        >
-          Remember me for 30 days
-        </label>
-      </div>
-
-      <Button
-        type="submit"
-        variant="primary"
-        size="lg"
-        className="w-full h-12 rounded-xl"
-        disabled={loading}
-      >
-        {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-        {loading ? "Signing in..." : "Sign in"}
-      </Button>
-
-      <div className="relative py-1">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-ink/10" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-white px-3 font-extrabold uppercase tracking-[0.12em] text-ink/30">
-            or
+      {/* Quick Demo Sign-In Box */}
+      <div className="rounded-2xl border border-ink/10 bg-cream/30 p-4">
+        <div className="flex items-center gap-1.5 mb-2.5">
+          <Sparkles className="size-3.5 text-coral" />
+          <span className="text-xs font-extrabold uppercase tracking-wider text-ink/65">
+            1-Click Demo Accounts
           </span>
         </div>
+        <p className="text-[11px] text-ink/50 mb-3">
+          Explore Raffila instantly with preconfigured accounts:
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            disabled={loading || demoLoading !== null}
+            onClick={() => handleDemoSignIn("user")}
+            className="group flex flex-col items-center justify-center rounded-xl border border-ink/10 bg-white p-2.5 text-center transition-all duration-150 hover:border-coral hover:bg-coral/5 hover:shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
+          >
+            <div className="mb-1 rounded-lg bg-sky/10 p-1.5 text-sky group-hover:bg-coral/10 group-hover:text-coral transition-colors">
+              {demoLoading === "user" ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <User className="size-3.5" />
+              )}
+            </div>
+            <span className="text-xs font-extrabold text-ink">Player</span>
+            <span className="text-[10px] text-ink/40">Demo user</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={loading || demoLoading !== null}
+            onClick={() => handleDemoSignIn("partner")}
+            className="group flex flex-col items-center justify-center rounded-xl border border-ink/10 bg-white p-2.5 text-center transition-all duration-150 hover:border-coral hover:bg-coral/5 hover:shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
+          >
+            <div className="mb-1 rounded-lg bg-mint/20 p-1.5 text-mint group-hover:bg-coral/10 group-hover:text-coral transition-colors">
+              {demoLoading === "partner" ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Store className="size-3.5" />
+              )}
+            </div>
+            <span className="text-xs font-extrabold text-ink">Partner</span>
+            <span className="text-[10px] text-ink/40">ABC Motors</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={loading || demoLoading !== null}
+            onClick={() => handleDemoSignIn("admin")}
+            className="group flex flex-col items-center justify-center rounded-xl border border-coral/30 bg-coral/5 p-2.5 text-center transition-all duration-150 hover:border-coral hover:bg-coral/10 hover:shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
+          >
+            <div className="mb-1 rounded-lg bg-coral/15 p-1.5 text-coral group-hover:scale-110 transition-transform">
+              {demoLoading === "admin" ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <ShieldCheck className="size-3.5" />
+              )}
+            </div>
+            <span className="text-xs font-extrabold text-ink">Admin</span>
+            <span className="text-[10px] text-ink/40">Superadmin</span>
+          </button>
+        </div>
       </div>
-
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        className="w-full h-12 rounded-xl border-ink/15 hover:border-ink/25 hover:bg-cream/30"
-        disabled={loading}
-        onClick={onGoogleSignIn}
-      >
-        <GoogleIcon className="size-4.5" />
-        Continue with Google
-      </Button>
-
-      <p className="pt-1 text-center text-sm text-ink/55">
-        Don&apos;t have an account?{" "}
-        <Link
-          to="/auth"
-          search={{ mode: undefined }}
-          className="font-extrabold text-coral hover:underline hover:underline-offset-2"
-        >
-          Create one
-        </Link>
-      </p>
-    </form>
+    </div>
   );
 }
