@@ -120,8 +120,22 @@ DirectoryIndex index.html
 '@
 Set-Content -LiteralPath (Join-Path $WebDir ".htaccess") -Value $htaccess -Encoding Ascii
 
-# 6. (Setup guide is maintained in chat / BUILD-AND-DEPLOY.md - this folder ships
-#    only the two zips, nothing else.)
+# 6. Matching build stamp: identical build-info.json in BOTH zips so a
+#    frontend/backend version mismatch is detectable. Compare
+#    https://your-domain/build-info.json with /api/health's "buildId" —
+#    equal values prove both sides came from the same build.
+$buildSha = ""
+try { $buildSha = (git rev-parse --short HEAD 2>$null).Trim() } catch {}
+if (-not $buildSha) { $buildSha = "nogit" }
+$buildId = "$buildSha-$((Get-Date).ToUniversalTime().ToString('yyyyMMdd-HHmm'))"
+$buildInfo = (@{
+  buildId = $buildId
+  builtAt = (Get-Date).ToUniversalTime().ToString("o")
+  preset  = "node-server"
+} | ConvertTo-Json)
+Set-Content -LiteralPath (Join-Path $AppDir "build-info.json") -Value $buildInfo -Encoding Ascii
+Set-Content -LiteralPath (Join-Path $WebDir "build-info.json") -Value $buildInfo -Encoding Ascii
+Write-Host "Build ID: $buildId (stamped into both zips)"
 
 # 7. Zips for cPanel File Manager upload+extract.
 Compress-Archive -LiteralPath $AppDir -DestinationPath (Join-Path $Deploy "backend.zip") -Force

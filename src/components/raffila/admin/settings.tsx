@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   Mail,
   Crown,
+  Activity,
 } from "lucide-react";
 
 import { AdminShell } from "@/components/raffila/admin/admin-shell";
@@ -403,6 +404,59 @@ export function AdminSettingsPage() {
     }
   };
 
+  // ---- Payments & API status ----
+  interface HealthReport {
+    ok: boolean;
+    message?: string;
+    time?: string;
+    paystack?: { secretKeySet?: boolean; mode?: string };
+    firebaseAdmin?: {
+      credentialsSet?: boolean;
+      projectId?: string | null;
+      firestore?: string;
+    };
+    walletFunding?: { ready?: boolean };
+  }
+  const [apiStatus, setApiStatus] = useState<HealthReport | null>(null);
+  const [apiChecking, setApiChecking] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  const checkApiStatus = useCallback(async () => {
+    setApiChecking(true);
+    setApiError(null);
+    try {
+      const res = await fetch("/api/health", { cache: "no-store" });
+      const data = (await res.json()) as HealthReport;
+      setApiStatus(data);
+    } catch (err: any) {
+      setApiStatus(null);
+      setApiError(err?.message || "Could not reach /api/health — is the Node server running?");
+    } finally {
+      setApiChecking(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void checkApiStatus();
+  }, [checkApiStatus]);
+
+  function StatusRow({ good, label, value }: { good: boolean; label: string; value: string }) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-2xl bg-cream/50 px-4 py-3 ring-1 ring-ink/8">
+        <p className="text-sm font-extrabold text-ink">{label}</p>
+        <p className="flex shrink-0 items-center gap-1.5 text-xs font-extrabold">
+          <span
+            className={cn(
+              "inline-block size-2.5 rounded-full",
+              good ? "bg-emerald-500" : "bg-coral",
+            )}
+          />
+          <span className={good ? "text-emerald-700" : "text-coral"}>{value}</span>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <AdminShell activeNav="settings" title="Settings">
       <div className="space-y-6">
@@ -641,6 +695,100 @@ export function AdminSettingsPage() {
               </Button>
             </div>
           )}
+        </Section>
+
+        <Section
+          icon={Activity}
+          tone="bg-coral/15"
+          title="Payments & API status"
+          description="Live check that the Node server, Paystack key and Firebase Admin credential are working. Same report is available anytime at /api/health."
+        >
+          <div className="space-y-2.5">
+            {apiChecking && !apiStatus && !apiError ? (
+              <div className="flex items-center gap-2 rounded-2xl bg-cream/60 p-4 text-sm font-bold text-ink/55">
+                <RefreshCw className="size-4 animate-spin" /> Checking server status…
+              </div>
+            ) : apiError ? (
+              <div className="flex items-center gap-2 rounded-2xl bg-coral/10 p-4 text-sm font-bold text-coral">
+                <AlertTriangle className="size-4 shrink-0" /> {apiError}
+              </div>
+            ) : apiStatus ? (
+              <>
+                <div
+                  className={cn(
+                    "rounded-2xl p-4 text-sm font-extrabold ring-1",
+                    apiStatus.ok
+                      ? "bg-mint/25 text-ink ring-mint/40"
+                      : "bg-coral/10 text-coral ring-coral/25",
+                  )}
+                >
+                  {apiStatus.message ??
+                    (apiStatus.ok ? "API running successfully" : "API error")}
+                </div>
+                <StatusRow good={true} label="Node server" value="Running" />
+                <StatusRow
+                  good={apiStatus.paystack?.secretKeySet === true}
+                  label="Paystack secret key"
+                  value={
+                    apiStatus.paystack?.secretKeySet
+                      ? `Set (${apiStatus.paystack.mode === "live" ? "LIVE" : "TEST"})`
+                      : "Missing"
+                  }
+                />
+                <StatusRow
+                  good={apiStatus.firebaseAdmin?.credentialsSet === true}
+                  label="Firebase Admin credential"
+                  value={
+                    apiStatus.firebaseAdmin?.credentialsSet
+                      ? `Set${apiStatus.firebaseAdmin.projectId ? ` · ${apiStatus.firebaseAdmin.projectId}` : ""}`
+                      : "Missing"
+                  }
+                />
+                <StatusRow
+                  good={apiStatus.firebaseAdmin?.firestore === "reachable"}
+                  label="Firestore (admin read)"
+                  value={
+                    apiStatus.firebaseAdmin?.firestore === "reachable"
+                      ? "Reachable"
+                      : (apiStatus.firebaseAdmin?.firestore ?? "Unknown")
+                  }
+                />
+                <StatusRow
+                  good={apiStatus.walletFunding?.ready === true}
+                  label="Wallet funding"
+                  value={apiStatus.walletFunding?.ready ? "Ready" : "Not ready"}
+                />
+              </>
+            ) : null}
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => void checkApiStatus()}
+              disabled={apiChecking}
+              className="h-10 rounded-full px-5 text-xs font-bold"
+            >
+              {apiChecking ? (
+                <RefreshCw className="mr-1.5 size-3.5 animate-spin" />
+              ) : (
+                <Activity className="mr-1.5 size-3.5" />
+              )}
+              {apiChecking ? "Checking…" : "Check status"}
+            </Button>
+            <a
+              href="/api/health"
+              target="_blank"
+              rel="noreferrer"
+              className="font-mono text-[11px] font-bold text-coral hover:underline"
+            >
+              /api/health
+            </a>
+            {apiStatus?.time && (
+              <span className="text-[11px] font-bold text-ink/45">
+                · checked {new Date(apiStatus.time).toLocaleString("en-NG")}
+              </span>
+            )}
+          </div>
         </Section>
 
         <Section

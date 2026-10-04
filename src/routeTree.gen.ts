@@ -21,7 +21,6 @@ import { Route as FaqRouteImport } from './routes/faq'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as PartnerSignupRouteImport } from './routes/partner-signup'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
-import { Route as RobotsRouteImport } from './routes/robots'
 import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
 import { Route as TrustSafetyRouteImport } from './routes/trust-safety'
 import { Route as WinnersRouteImport } from './routes/winners'
@@ -36,6 +35,7 @@ import { Route as AdminPayoutsRouteImport } from './routes/admin.payouts'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as ApiHealthRouteImport } from './routes/api.health'
 import { Route as CompetitionsIndexRouteImport } from './routes/competitions/index'
 import { Route as CompetitionsSlugRouteImport } from './routes/competitions.$slug'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
@@ -118,11 +118,6 @@ const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
   path: '/privacy-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RobotsRoute = RobotsRouteImport.update({
-  id: '/robots',
-  path: '/robots',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
   id: '/terms-and-conditions',
   path: '/terms-and-conditions',
@@ -191,6 +186,11 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompetitionsIndexRoute = CompetitionsIndexRouteImport.update({
@@ -314,7 +314,6 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/partner-signup': typeof PartnerSignupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
-  '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/trust-safety': typeof TrustSafetyRoute
   '/winners': typeof WinnersRoute
@@ -328,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/entries': typeof DashboardEntriesRoute
@@ -363,7 +363,6 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/partner-signup': typeof PartnerSignupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
-  '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/trust-safety': typeof TrustSafetyRoute
   '/winners': typeof WinnersRoute
@@ -377,6 +376,7 @@ export interface FileRoutesByTo {
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/entries': typeof DashboardEntriesRoute
@@ -414,7 +414,6 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/partner-signup': typeof PartnerSignupRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
-  '/robots': typeof RobotsRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/trust-safety': typeof TrustSafetyRoute
   '/winners': typeof WinnersRoute
@@ -428,6 +427,7 @@ export interface FileRoutesById {
   '/admin/reports': typeof AdminReportsRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
   '/competitions/$slug': typeof CompetitionsSlugRoute
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/entries': typeof DashboardEntriesRoute
@@ -466,7 +466,6 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/partner-signup'
     | '/privacy-policy'
-    | '/robots'
     | '/terms-and-conditions'
     | '/trust-safety'
     | '/winners'
@@ -480,6 +479,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/users'
+    | '/api/health'
     | '/competitions/$slug'
     | '/dashboard/competitions'
     | '/dashboard/entries'
@@ -515,7 +515,6 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/partner-signup'
     | '/privacy-policy'
-    | '/robots'
     | '/terms-and-conditions'
     | '/trust-safety'
     | '/winners'
@@ -529,6 +528,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/users'
+    | '/api/health'
     | '/competitions/$slug'
     | '/dashboard/competitions'
     | '/dashboard/entries'
@@ -565,7 +565,6 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/partner-signup'
     | '/privacy-policy'
-    | '/robots'
     | '/terms-and-conditions'
     | '/trust-safety'
     | '/winners'
@@ -579,6 +578,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/settings'
     | '/admin/users'
+    | '/api/health'
     | '/competitions/$slug'
     | '/dashboard/competitions'
     | '/dashboard/entries'
@@ -616,7 +616,6 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   PartnerSignupRoute: typeof PartnerSignupRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
-  RobotsRoute: typeof RobotsRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
   TrustSafetyRoute: typeof TrustSafetyRoute
   WinnersRoute: typeof WinnersRoute
@@ -630,6 +629,7 @@ export interface RootRouteChildren {
   AdminReportsRoute: typeof AdminReportsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   DashboardCompetitionsRoute: typeof DashboardCompetitionsRoute
   DashboardEntriesRoute: typeof DashboardEntriesRoute
   DashboardProfileRoute: typeof DashboardProfileRoute
@@ -737,13 +737,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/robots': {
-      id: '/robots'
-      path: '/robots'
-      fullPath: '/robots'
-      preLoaderRoute: typeof RobotsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/terms-and-conditions': {
       id: '/terms-and-conditions'
       path: '/terms-and-conditions'
@@ -840,6 +833,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/competitions/': {
@@ -1030,7 +1030,6 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   PartnerSignupRoute: PartnerSignupRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
-  RobotsRoute: RobotsRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
   TrustSafetyRoute: TrustSafetyRoute,
   WinnersRoute: WinnersRoute,
@@ -1044,6 +1043,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminReportsRoute: AdminReportsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminUsersRoute: AdminUsersRoute,
+  ApiHealthRoute: ApiHealthRoute,
   DashboardCompetitionsRoute: DashboardCompetitionsRoute,
   DashboardEntriesRoute: DashboardEntriesRoute,
   DashboardProfileRoute: DashboardProfileRoute,

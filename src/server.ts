@@ -58,6 +58,15 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      // Crawlers request /sitemap.xml, but file-based routing maps dots to
+      // slashes (/sitemap/xml). Rewrite internally so the canonical path serves
+      // the real content (no extra redirect hop). (/robots.txt is a static
+      // file in public/ and needs no rewrite.)
+      const url = new URL(request.url);
+      if (url.pathname === "/sitemap.xml") {
+        url.pathname = "/sitemap/xml";
+        request = new Request(url, request);
+      }
       const handle = await getFetchHandler();
       const response = await handle(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

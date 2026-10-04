@@ -197,28 +197,25 @@ Key file: `vercel.json` at project root contains:
 - Long-term immutable caching for `/assets/*`
 - Universal rewrite to `/server/index.mjs` (SSR entry)
 
-### 6.2 Shared cPanel / traditional Node host
+### 6.2 Shared cPanel / traditional Node host (Namecheap)
 
-1. Run `npm run build` locally.
-2. ZIP `.output/public/` → upload + extract to the target host's `public_html` (or equivalent web root).
-3. Upload `.output/server/` folder **outside** web root (e.g., `~/rafilla-server/`).
-4. Create a Node app entry in cPanel → set Application Startup File to `~/rafilla-server/index.mjs` and Application URL to the domain.
-5. Provision a Passenger/Phusion or plain `systemd` service:
-   ```ini
-   # /etc/systemd/system/rafilla.service
-   [Unit]
-   After=network.target
-   [Service]
-   User=cpaneluser
-   WorkingDirectory=/home/cpaneluser/rafilla-server
-   ExecStart=/usr/bin/node /home/cpaneluser/rafilla-server/index.mjs
-   Environment=PORT=3000 NODE_ENV=production
-   Restart=always
-   [Install]
-   WantedBy=multi-user.target
-   ```
-6. Reverse-proxy cPanel Apache/LiteSpeed → `localhost:3000` via `.htaccess` or WHM Include Editor.
-7. Re-run on each code push by repeating the upload.
+1. Run `npm run build` locally with `$env:NITRO_PRESET="node-server"`, then
+   `powershell -ExecutionPolicy Bypass -File scripts/package-namecheap.ps1`.
+2. Extract `frontend.zip` contents into `public_html`. Extract `backend.zip` so
+   that `server/`, `nitro.json`, `package.json` land DIRECTLY in `~/backend`
+   (not `~/backend/backend/` — delete the nested copy if it appears).
+3. cPanel → Setup Node.js App: Node 20+, Application root `backend`,
+   Application startup file `server/index.mjs`, **Application URL = the domain
+   root (leave the path empty — NOT `/api`)**, or `/api/health` becomes
+   `/api/api/health` and page routes break.
+4. Environment variables on the Node app (server secrets only — never `VITE_*`):
+   `PAYSTACK_SECRET_KEY` + `FIREBASE_SERVICE_ACCOUNT_JSON` (or the 3-field
+   split `FIREBASE_ADMIN_PROJECT_ID` / `FIREBASE_ADMIN_CLIENT_EMAIL` /
+   `FIREBASE_ADMIN_PRIVATE_KEY` — all three, not just project id).
+5. No `npm install` on the server — the bundle is self-contained. Save, Restart,
+   then open `https://your-domain/api/health` (expect 200 + "API running
+   successfully") and Admin → Settings → Payments & API status.
+6. If the app won't start, read `~/backend/stderr.log` first — it holds the crash reason.
 
 ### 6.3 Cloudflare Workers (Nitro default preset)
 

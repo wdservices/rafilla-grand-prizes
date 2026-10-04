@@ -17,6 +17,10 @@ deploy/
 .nitro
 *.local
 .env
+# Firebase service-account keys must NEVER be committed (full DB access).
+*-firebase-adminsdk-*.json
+*service-account*.json
+serviceAccount*.json
 
 # Wrangler / Cloudflare
 .wrangler/
