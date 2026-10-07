@@ -199,23 +199,76 @@ Key file: `vercel.json` at project root contains:
 
 ### 6.2 Shared cPanel / traditional Node host (Namecheap)
 
-1. Run `npm run build` locally with `$env:NITRO_PRESET="node-server"`, then
-   `powershell -ExecutionPolicy Bypass -File scripts/package-namecheap.ps1`.
-2. Extract `frontend.zip` contents into `public_html`. Extract `backend.zip` so
-   that `server/`, `nitro.json`, `package.json` land DIRECTLY in `~/backend`
-   (not `~/backend/backend/` — delete the nested copy if it appears).
-3. cPanel → Setup Node.js App: Node 20+, Application root `backend`,
-   Application startup file `server/index.mjs`, **Application URL = the domain
-   root (leave the path empty — NOT `/api`)**, or `/api/health` becomes
-   `/api/api/health` and page routes break.
-4. Environment variables on the Node app (server secrets only — never `VITE_*`):
-   `PAYSTACK_SECRET_KEY` + `FIREBASE_SERVICE_ACCOUNT_JSON` (or the 3-field
-   split `FIREBASE_ADMIN_PROJECT_ID` / `FIREBASE_ADMIN_CLIENT_EMAIL` /
-   `FIREBASE_ADMIN_PRIVATE_KEY` — all three, not just project id).
-5. No `npm install` on the server — the bundle is self-contained. Save, Restart,
-   then open `https://your-domain/api/health` (expect 200 + "API running
-   successfully") and Admin → Settings → Payments & API status.
-6. If the app won't start, read `~/backend/stderr.log` first — it holds the crash reason.
+Split layout — static frontend in `public_html` (served by Apache), Node
+backend in `~/backend` (mounted at `/api`), same build ID on both sides:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build-namecheap.ps1
+# → deploy/namecheap/backend.zip + deploy/namecheap/frontend.zip
+# (build ID shared: VITE_BUILD_ID baked into the HTML, build-info.json
+#  surfaced by /api/health — the site banners instead of silently breaking
+#  if the two sides ever drift apart)
+```
+
+Manual equivalent (only if the wrapper cannot run):
+
+1. `powershell -ExecutionPolicy Bypass -File scripts/build-namecheap.ps1`
+   (stamps, builds, prerenders 12 public pages against the fresh server,
+   then packages — the script fails loudly if prerendered HTML references
+   missing assets or the build stamp is absent).
+2. **Frontend** — cPanel File Manager: open `public_html`. Upload
+   `frontend.zip` INTO `public_html` and Extract here, so files land as
+   `public_html/index.html`, `public_html/assets/...`,
+   `public_html/.htaccess` (no extra subfolder level). If
+   `public_html/.htaccess` ALREADY exists (cPanel rules, redirects): do NOT
+   overwrite it — merge the "Raffila storefront" rewrite block into the
+   existing file instead. (File Manager hides dotfiles unless "Show Hidden
+   Files" is enabled in its Settings.) Leave any `public_html/api` folder
+   cPanel created for the Node app mount alone.
+3. **Backend** — File Manager: create `~/backend` (home dir, OUTSIDE
+   `public_html`). Upload `backend.zip` INTO `~/backend` and Extract here,
+   so files land as `~/backend/server/index.mjs` (no extra subfolder level).
+4. **Secrets** — pre-installed: `backend.zip` ships a `~/backend/.env` FILE
+   (inside `~/backend/`, next to `server/` — no new folder) baked from the
+   release machine. Verify/rotate any time by editing it in File Manager
+   ("Show Hidden Files" on), or override keys in the Node app's
+   "Environment variables" section (real env vars always win). Restart the
+   app after changing secrets. Needed: `PAYSTACK_SECRET_KEY` plus
+   `FIREBASE_SERVICE_ACCOUNT_JSON` (or all three
+   `FIREBASE_ADMIN_PROJECT_ID` / `_CLIENT_EMAIL` / `_PRIVATE_KEY`). Never
+   `VITE_*` here. The zip contains live secrets — never share it.
+5. cPanel → Setup Node.js App → Create Application: Node 20+, Production,
+   Application root `backend`, **Application URL = the domain with path
+   `api`** (e.g. `https://raffila.com/api`), Application startup file
+   `server/index.mjs`. Click "Run NPM Install" (verifies/reconciles the
+   shipped `backend/node_modules`: firebase-admin pinned exact + lockfile —
+   ~1 minute), then Start (no compiler needed, pure-JS tree).
+6. Save, Start (or Restart), wait 60-90 seconds (cold boot loads the Admin
+   SDK — first requests during boot can fail transiently), then verify it
+   is ONE matching build: `https://raffila.com/api` must return the JSON
+   success document (`"ok": true, "message": "API running"` — served for
+   the mount root in both Passenger modes), and
+   `https://raffila.com/api/health` must say "API running successfully"
+   with the build ID from step 1. View Source on `https://raffila.com/` →
+   `<meta name="build-id">` must equal it. Also open
+   `https://raffila.com/auth` directly (SSR via the backend) and check
+   Admin → Settings → Payments & API status.
+7. If the app won't start, read `~/backend/stderr.log` first — it holds the
+   crash reason. If pages 404 but `/api/health` works, the `public_html`
+   rewrite block (`.htaccess`) is missing or unmerged. If a page ever shows
+   unstyled content or dead buttons after an upload, hard-refresh
+   (`Ctrl+Shift+R`): the browser is replaying a cached older version. If it
+   persists on fresh browsers, the two sides are from different builds —
+   re-upload BOTH zips from one run.
+
+How it fits together: Apache serves prerendered pages/assets straight from
+`public_html`; the `.htaccess` forwards everything else (SSR pages, server
+functions `/_serverFn/*`, `/sitemap.xml`) to the Node app at `/api`. The
+server (`src/server.ts`) accepts backend paths both with and without the
+`/api` mount prefix, so it works however Passenger maps the mount — no
+per-host tuning needed. New `/api/*` routes must be added to
+`BACKEND_API_ROUTES` in `src/lib/backend-mount.ts` or they will be
+misrouted to pages.
 
 ### 6.3 Cloudflare Workers (Nitro default preset)
 
@@ -267,8 +320,8 @@ UI-based (Vercel dashboard):
 ## 9. Quick checklist per release
 
 1. `npx tsc --noEmit` — no _new_ errors vs baseline.
-2. `npm test` — 36/36 passing.
+2. `npm test` — 87/87 passing.
 3. `npm run build` — exit 0.
-4. (If E2E) `npm run dev` + `npm run e2e` — 4/4 smoke tests green.
+4. (If E2E) `npm run dev` + `npm run e2e` — 7/7 smoke tests green.
 5. Push → Vercel auto-deploy → manually open `/` + `/competitions` + `Enter draw` modal once.
 6. Notify ops via the deploy checklist in Slack/Notion.

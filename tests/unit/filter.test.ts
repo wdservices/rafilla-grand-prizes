@@ -1,43 +1,74 @@
 import { describe, it, expect } from "vitest";
-import { applySort, competitions, type Competition, type SortKey } from "@/lib/raffila-data";
+import { applySort, type Competition, type SortKey } from "@/lib/raffila-data";
+
+// Local fixtures: raffila-data no longer ships any competition catalogue.
+const makeComp = (over: Partial<Competition>): Competition => ({
+  slug: "x",
+  title: "X",
+  category: "Auto",
+  partner: "Raffila",
+  description: "",
+  prizeValueKobo: 0,
+  entryPrice: 0,
+  totalEntries: 1000,
+  entriesSold: 0,
+  closes: "",
+  daysUntilClose: 30,
+  status: "LIVE",
+  featured: false,
+  image: "",
+  imageAlt: "",
+  accent: "coral",
+  specs: [],
+  drawDate: "",
+  prizeCondition: "New",
+  warranty: "",
+  make: "",
+  model: "",
+  year: "",
+  serialNo: "",
+  dimensions: "",
+  color: "",
+  inclusions: [],
+  exclusions: [],
+  maxTicketsPerUser: 50,
+  marketValueKobo: 0,
+  ...over,
+});
 
 const sample: Competition[] = [
-  {
-    ...competitions[0]!,
+  makeComp({
     slug: "a",
     title: "A",
     daysUntilClose: 30,
     entryPrice: 100000,
     entriesSold: 500,
     featured: false,
-  },
-  {
-    ...competitions[1]!,
+  }),
+  makeComp({
     slug: "b",
     title: "B",
     daysUntilClose: 3,
     entryPrice: 50000,
     entriesSold: 9870,
     featured: false,
-  },
-  {
-    ...competitions[2]!,
+  }),
+  makeComp({
     slug: "c",
     title: "C",
     daysUntilClose: 56,
     entryPrice: 500000,
     entriesSold: 2000,
     featured: true,
-  },
-  {
-    ...competitions[3]!,
+  }),
+  makeComp({
     slug: "d",
     title: "D",
     daysUntilClose: 7,
     entryPrice: 25000,
     entriesSold: 150,
     featured: false,
-  },
+  }),
 ];
 
 describe("applySort helper (rafilla-data.ts)", () => {

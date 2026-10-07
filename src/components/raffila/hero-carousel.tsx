@@ -18,12 +18,7 @@ import {
   CarouselItem,
   type CarouselApi,
 } from "@/components/ui/carousel";
-import {
-  featuredCompetitions as mockFeatured,
-  formatNaira,
-  getProgress,
-  type Competition,
-} from "@/lib/raffila-data";
+import { formatNaira, getProgress, type Competition } from "@/lib/raffila-data";
 import { useCompetitions } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 
@@ -159,14 +154,10 @@ export function useFeaturedCarousel() {
   const progressRafRef = useRef<number | null>(null);
   const lastTickRef = useRef<number>(performance.now());
 
+  // Firestore only — no catalogue fallback, so a deleted competition stays gone.
   const { competitions: liveCompetitions } = useCompetitions();
   const slides = useMemo(
-    () =>
-      liveCompetitions.length > 0
-        ? [...liveCompetitions].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
-        : mockFeatured.length > 0
-          ? mockFeatured
-          : [],
+    () => [...liveCompetitions].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)),
     [liveCompetitions],
   );
 
@@ -325,7 +316,8 @@ export function HeroFeaturedCarousel({
     lastTickRef,
   } = controller;
 
-  if (!mounted) {
+  if (!mounted || slides.length === 0) {
+    if (slides.length === 0) return null;
     const c = slides[0]!;
     return (
       <div className="relative">

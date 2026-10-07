@@ -187,13 +187,16 @@
     letter-spacing: -0.02em;
   }
 
-  /* Touch targets & universal button reactivity */
-  button,
-  a {
+  /* Touch targets & universal button reactivity.
+     [role="switch"] is excluded: a switch is a fixed 36x20 state control, not
+     a pill button, so the min-height rules below would stretch it into a
+     vertical pill. */
+  button:not([role="switch"]),
+  a:not([role="switch"]) {
     min-height: 24px;
   }
 
-  button,
+  button:not([role="switch"]),
   [role="button"],
   input[type="button"],
   input[type="submit"],
@@ -210,14 +213,14 @@
     transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), filter 0.15s ease, opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
 
-  button:not(:disabled):not([aria-disabled="true"]):hover,
+  button:not([role="switch"]):not(:disabled):not([aria-disabled="true"]):hover,
   [role="button"]:not([aria-disabled="true"]):hover,
   input[type="button"]:not(:disabled):hover,
   input[type="submit"]:not(:disabled):hover {
     filter: brightness(1.05);
   }
 
-  button:not(:disabled):not([aria-disabled="true"]):active,
+  button:not([role="switch"]):not(:disabled):not([aria-disabled="true"]):active,
   [role="button"]:not([aria-disabled="true"]):active,
   input[type="button"]:not(:disabled):active,
   input[type="submit"]:not(:disabled):active {
@@ -225,7 +228,7 @@
     filter: brightness(0.95);
   }
 
-  button:disabled,
+  button:not([role="switch"]):disabled,
   [role="button"][aria-disabled="true"],
   input[type="button"]:disabled,
   input[type="submit"]:disabled {
@@ -233,8 +236,12 @@
     opacity: 0.55;
   }
 
-  button[class*="rounded-full"],
-  a[class*="rounded-full"] {
+  /* 44px touch target for pill buttons that don't declare their own box size.
+     Controls that set an explicit size or height utility (icon toggles,
+     compact chips, switches) are excluded, otherwise min-height overrides
+     their height and stretches them out of proportion. */
+  button[class*="rounded-full"]:not([class*="size-"]):not([class*="h-"]):not([role="switch"]),
+  a[class*="rounded-full"]:not([class*="size-"]):not([class*="h-"]):not([role="switch"]) {
     min-height: 44px;
   }
 

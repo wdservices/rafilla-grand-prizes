@@ -1,5 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 
+/**
+ * Structural types for the pieces of the Admin SDK used below. Declared
+ * locally on purpose: importing types from "firebase-admin/*" here would put
+ * a Node-only package into the browser module graph (this file IS imported by
+ * client components), which breaks the Vite client build.
+ */
+type AdminDocSnapshot = { exists: boolean; get(field: string): unknown };
+type AdminDocRef = {
+  get(): Promise<AdminDocSnapshot>;
+  collection(name: string): AdminDocRef;
+  set(data: Record<string, unknown>, options?: { merge?: boolean }): void;
+};
+type AdminCollectionRef = { doc(id: string): AdminDocRef };
+type AdminFirestore = {
+  collection(name: string): AdminCollectionRef;
+  runTransaction<T>(fn: (tx: unknown) => Promise<T>): Promise<T>;
+};
+
 const PAYSTACK_API_BASE = "https://api.paystack.co";
 
 function getSecretKey(): string {
@@ -100,6 +118,439 @@ export type VerifyResult = {
   email: string | null;
   gatewayResponse: string | null;
 };
+
+export type TicketOrderLine = {
+  competitionSlug: string;
+  quantity: number;
+};
+
+export type IssuedTicketLine = {
+  competitionSlug: string;
+  competitionTitle: string;
+  competitionImage: string;
+  quantity: number;
+  entryId: string;
+  ticketNumbers: string[];
+};
+
+export type TicketConfirmResult =
+  | {
+      ok: true;
+      items: IssuedTicketLine[];
+      amountKobo: number;
+      reference: string;
+      alreadyConfirmed: boolean;
+      paidAt: string | null;
+    }
+  | {
+      ok: false;
+      status: string;
+      gatewayResponse: string | null;
+    };
+
+export const CART_MAX_ORDER_LINES = 20;
+export const CART_MAX_QTY_PER_LINE = 50;
+
+/**
+ * Normalize order lines from Paystack metadata or client input. Accepts
+ * `{ items: [...] }` (cart checkout) or a legacy single
+ * `{ competitionSlug, quantity }` object. Merges duplicate slugs.
+ */
+export function normalizeOrderLines(input: unknown): TicketOrderLine[] {
+  const container = input as { items?: unknown } | null;
+  const raw = Array.isArray(container?.items) ? container.items : [input];
+  const lines: TicketOrderLine[] = [];
+  for (const it of raw) {
+    const rec = it as Record<string, unknown>;
+    const slug = String(rec?.["competitionSlug"] ?? "").trim();
+    const qty = Math.floor(Number(rec?.["quantity"] ?? 0));
+    if (!slug || !Number.isInteger(qty) || qty < 1 || qty > CART_MAX_QTY_PER_LINE) {
+      throw new Error("Each order line needs a competition and 1–50 tickets");
+    }
+    const dupe = lines.find((l) => l.competitionSlug === slug);
+    if (dupe) {
+      dupe.quantity = Math.min(CART_MAX_QTY_PER_LINE, dupe.quantity + qty);
+    } else {
+      if (lines.length >= CART_MAX_ORDER_LINES) {
+        throw new Error("Too many competitions in one order (max 20)");
+      }
+      lines.push({ competitionSlug: slug, quantity: qty });
+    }
+  }
+  if (lines.length === 0) throw new Error("Your cart is empty");
+  return lines;
+}
+
+const CLOSED_COMPETITION_STATUSES = new Set([
+  "DRAW_READY",
+  "DRAW-READY",
+  "DRAW_IN_PROGRESS",
+  "WINNER_SELECTED",
+  "COMPLETED",
+  "CLOSED",
+  "CANCELLED",
+  "SUSPENDED",
+  "REFUND_REQUIRED",
+]);
+
+function randomTicketNumber(): string {
+  return String(Math.floor(Math.random() * 900000) + 100000);
+}
+
+function generateEntryId(): string {
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, "0").slice(0, 4);
+  const rand2 = Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, "0").slice(0, 4);
+  return `RF-2026-${rand}${rand2}`;
+}
+
+type ValidatedOrderLine = {
+  slug: string;
+  quantity: number;
+  entryPriceKobo: number;
+  title: string;
+  image: string;
+  competitionRef: AdminDocRef;
+};
+
+type IssueOrderArgs = {
+  lines: TicketOrderLine[];
+  uid: string;
+  email: string;
+  userName: string;
+  userHandle: string;
+  reference: string;
+  kind: "paystack" | "referral";
+  /** Verified Paystack amount. Ignored for referral (server prices rule). */
+  paidKobo: number;
+  paidAt: string | null;
+};
+
+/**
+ * Shared issuance core: validates every line against live Firestore state
+ * (open? priced? in stock?), allocates unique ticket numbers, then writes
+ * tickets + user entries + counters + idempotency record in ONE transaction.
+ * For referral orders it also debits referralEarningsKobo atomically, so a
+ * balance can never be double-spent by double submission. The wallet is
+ * never touched by any path here.
+ */
+async function issueOrderTickets(
+  adminDb: AdminFirestore,
+  args: IssueOrderArgs,
+): Promise<{ items: IssuedTicketLine[]; expectedTotalKobo: number; alreadyConfirmed: boolean }> {
+  // Server-only: dynamic import keeps firebase-admin out of the client bundle.
+  const { FieldValue } = await import("./firebase-admin");
+  const { lines, uid, email, userName, userHandle, reference, kind, paidKobo, paidAt } = args;
+  const processedRef = adminDb.collection("processedPayments").doc(reference);
+
+  const validated: ValidatedOrderLine[] = [];
+  let expectedTotalKobo = 0;
+  for (const line of lines) {
+    const competitionRef = adminDb.collection("competitions").doc(line.competitionSlug);
+    const snap = await competitionRef.get();
+    if (!snap.exists) throw new Error(`Competition no longer exists (${line.competitionSlug})`);
+    const comp = snap.data() ?? {};
+    const compStatus = String(comp["status"] ?? "LIVE").toUpperCase();
+    const closed =
+      comp["entriesClosed"] === true ||
+      comp["entriesPaused"] === true ||
+      CLOSED_COMPETITION_STATUSES.has(compStatus);
+    const title = String(comp["title"] ?? comp["assetName"] ?? line.competitionSlug);
+    if (closed) throw new Error(`Entries are closed for ${title} — no charge was kept`);
+    const entryPriceKobo = Number(comp["entryPrice"] ?? 0) || 0;
+    if (entryPriceKobo <= 0) throw new Error(`${title} has no valid ticket price`);
+    const soldSoFar = Number(comp["entriesSold"] ?? 0) || 0;
+    const totalEntries = Number(comp["totalEntries"] ?? 0) || 0;
+    if (totalEntries > 0 && soldSoFar + line.quantity > totalEntries) {
+      throw new Error(`Not enough tickets remaining for ${title}`);
+    }
+    const images = Array.isArray(comp["images"]) ? (comp["images"] as unknown[]) : [];
+    validated.push({
+      slug: line.competitionSlug,
+      quantity: line.quantity,
+      entryPriceKobo,
+      title,
+      image: String(comp["image"] ?? images[0] ?? ""),
+      competitionRef,
+    });
+    expectedTotalKobo += entryPriceKobo * line.quantity;
+  }
+
+  if (kind === "paystack" && paidKobo < expectedTotalKobo) {
+    throw new Error(
+      `Underpaid ticket order: received ${paidKobo} kobo, expected ${expectedTotalKobo} kobo`,
+    );
+  }
+  const chargeKobo = kind === "paystack" ? paidKobo : expectedTotalKobo;
+
+  // Unique ticket numbers per competition (doc id IS TKT-{number}).
+  const allocations = new Map<string, string[]>();
+  for (const line of validated) {
+    const nums: string[] = [];
+    const seen = new Set<string>();
+    for (
+      let attempt = 0;
+      nums.length < line.quantity && attempt < line.quantity * 25 + 25;
+      attempt++
+    ) {
+      const num = randomTicketNumber();
+      if (seen.has(num)) continue;
+      seen.add(num);
+      const exists = await line.competitionRef.collection("tickets").doc(`TKT-${num}`).get();
+      if (!exists.exists) nums.push(num);
+    }
+    if (nums.length < line.quantity) {
+      throw new Error("Could not allocate unique ticket numbers — please retry");
+    }
+    allocations.set(line.slug, nums);
+  }
+
+  const now = FieldValue.serverTimestamp();
+  let items: IssuedTicketLine[] = [];
+  let alreadyConfirmed = false;
+
+  await adminDb.runTransaction(async (tx) => {
+    const recheck = await tx.get(processedRef);
+    if (recheck.exists) {
+      const prev = recheck.data() ?? {};
+      items = (prev["items"] as IssuedTicketLine[]) ?? [];
+      alreadyConfirmed = true;
+      return;
+    }
+    if (kind === "referral") {
+      const userRef = adminDb.collection("users").doc(uid);
+      const userSnap = await tx.get(userRef);
+      const balance = Number(userSnap.get("referralEarningsKobo") ?? 0) || 0;
+      if (balance < expectedTotalKobo) {
+        throw new Error("Insufficient referral earnings for this order");
+      }
+      tx.set(
+        userRef,
+        { referralEarningsKobo: balance - expectedTotalKobo, updatedAt: now },
+        { merge: true },
+      );
+    }
+    const built: IssuedTicketLine[] = [];
+    for (const line of validated) {
+      const entryId = generateEntryId();
+      const ticketNumbers = allocations.get(line.slug) ?? [];
+      for (const num of ticketNumbers) {
+        tx.set(line.competitionRef.collection("tickets").doc(`TKT-${num}`), {
+          ticketNumber: num,
+          ticketCode: `TKT-${num}`,
+          competitionSlug: line.slug,
+          competitionId: line.slug,
+          entryId,
+          userId: uid,
+          userName,
+          userHandle,
+          userEmail: email,
+          purchasedAt: now,
+          createdAt: now,
+          status: "ACTIVE",
+          paymentStatus: "CONFIRMED",
+          paystackReference: kind === "paystack" ? reference : null,
+          referralReference: kind === "referral" ? reference : null,
+        });
+      }
+      tx.set(
+        adminDb.collection("users").doc(uid).collection("entries").doc(entryId),
+        {
+          entryId,
+          competitionSlug: line.slug,
+          competitionTitle: line.title,
+          competitionImage: line.image,
+          quantity: line.quantity,
+          ticketNumbers,
+          amountKobo: line.entryPriceKobo * line.quantity,
+          paystackReference: kind === "paystack" ? reference : null,
+          referralReference: kind === "referral" ? reference : null,
+          status: "CONFIRMED",
+          createdAt: now,
+        },
+        { merge: true },
+      );
+      tx.set(
+        line.competitionRef,
+        { entriesSold: FieldValue.increment(line.quantity), updatedAt: now },
+        { merge: true },
+      );
+      built.push({
+        competitionSlug: line.slug,
+        competitionTitle: line.title,
+        competitionImage: line.image,
+        quantity: line.quantity,
+        entryId,
+        ticketNumbers,
+      });
+    }
+    tx.set(processedRef, {
+      kind: kind === "paystack" ? "ticket_purchase" : "referral_purchase",
+      uid,
+      items: built,
+      amountKobo: chargeKobo,
+      email,
+      paidAt,
+      createdAt: now,
+    });
+    items = built;
+  });
+
+  try {
+    const via = kind === "paystack" ? "Paystack" : "referral earnings";
+    await adminDb.collection("activityLogs").add({
+      eventType: "TICKET_PURCHASE",
+      actorId: uid,
+      actorEmail: email,
+      targetType: "cart_order",
+      targetId: reference,
+      summary: `Purchased ${items.reduce((n, i) => n + i.quantity, 0)} ticket(s) across ${items.length} competition(s) via ${via}`,
+      details: { items, reference },
+      createdAt: now,
+    });
+  } catch {
+    // Audit logging is best-effort; tickets are already secured above.
+  }
+
+  return { items, expectedTotalKobo, alreadyConfirmed };
+}
+
+/**
+ * Verify a direct (cart or single) ticket payment and issue draw tickets in
+ * one atomic, idempotent step. Money moves card/bank/USSD → Paystack
+ * settlement; tickets move server → draw pool. The wallet is never touched.
+ *
+ * Expects initialize metadata: { items: [{competitionSlug, quantity}], uid }
+ * (legacy single `{ competitionSlug, quantity, uid }` also accepted).
+ */
+export const confirmTicketPurchase = createServerFn({ method: "POST" })
+  .validator((input: { reference: string }) => input)
+  .handler(async ({ data }): Promise<TicketConfirmResult> => {
+    const reference = (data.reference || "").trim();
+    if (!reference) throw new Error("Transaction reference is required");
+
+    const txn = await paystackRequest<{
+      status: string;
+      reference: string;
+      amount: number;
+      paid_at: string | null;
+      gateway_response: string | null;
+      customer?: { email?: string } | null;
+      metadata?: Record<string, unknown> | null;
+    }>(`/transaction/verify/${encodeURIComponent(reference)}`);
+
+    if (txn.status !== "success") {
+      return { ok: false, status: txn.status, gatewayResponse: txn.gateway_response ?? null };
+    }
+
+    const meta = txn.metadata ?? {};
+    const lines = normalizeOrderLines(
+      Array.isArray(meta["items"]) ? { items: meta["items"] } : meta,
+    );
+    const uid = String(meta["uid"] ?? "").trim();
+    if (!uid) throw new Error("Payment is missing its buyer reference");
+
+    const paidKobo = Math.round(txn.amount);
+    if (!Number.isFinite(paidKobo) || paidKobo <= 0) {
+      throw new Error("Paystack returned an invalid amount");
+    }
+
+    const { getAdminDb } = await import("./firebase-admin");
+    const adminDb = getAdminDb();
+    const processedRef = adminDb.collection("processedPayments").doc(reference);
+
+    // Fast idempotency path before touching competition docs.
+    const existing = await processedRef.get().catch(() => null);
+    if (existing?.exists) {
+      const prev = existing.data() ?? {};
+      return {
+        ok: true,
+        items: (prev["items"] as IssuedTicketLine[]) ?? [],
+        amountKobo: Number(prev["amountKobo"] ?? paidKobo) || paidKobo,
+        reference,
+        alreadyConfirmed: true,
+        paidAt: txn.paid_at ?? null,
+      };
+    }
+
+    const email = txn.customer?.email ?? String(meta["email"] ?? "");
+    const userName = String(meta["userName"] ?? "Raffila Member");
+    const userHandle = String(meta["userHandle"] ?? "");
+    const { items, alreadyConfirmed } = await issueOrderTickets(adminDb, {
+      lines,
+      uid,
+      email,
+      userName,
+      userHandle,
+      reference,
+      kind: "paystack",
+      paidKobo,
+      paidAt: txn.paid_at ?? null,
+    });
+
+    return {
+      ok: true,
+      items,
+      amountKobo: paidKobo,
+      reference,
+      alreadyConfirmed,
+      paidAt: txn.paid_at ?? null,
+    };
+  });
+
+/**
+ * Pay for an order with referral earnings: verifies the server-side balance,
+ * debits it and issues tickets atomically. No Paystack, no wallet.
+ */
+export const confirmReferralPurchase = createServerFn({ method: "POST" })
+  .validator((input: { items: TicketOrderLine[]; uid: string; reference: string }) => input)
+  .handler(async ({ data }): Promise<TicketConfirmResult> => {
+    const uid = (data.uid || "").trim();
+    const reference = (data.reference || "").trim();
+    if (!uid) throw new Error("Sign in to complete your purchase");
+    if (!reference) throw new Error("Order reference is required");
+    const lines = normalizeOrderLines({ items: data.items });
+
+    const { getAdminDb } = await import("./firebase-admin");
+    const adminDb = getAdminDb();
+
+    const existing = await adminDb
+      .collection("processedPayments")
+      .doc(reference)
+      .get()
+      .catch(() => null);
+    if (existing?.exists) {
+      const prev = existing.data() ?? {};
+      return {
+        ok: true,
+        items: (prev["items"] as IssuedTicketLine[]) ?? [],
+        amountKobo: Number(prev["amountKobo"] ?? 0) || 0,
+        reference,
+        alreadyConfirmed: true,
+        paidAt: null,
+      };
+    }
+
+    const { items, expectedTotalKobo, alreadyConfirmed } = await issueOrderTickets(adminDb, {
+      lines,
+      uid,
+      email: "",
+      userName: "Raffila Member",
+      userHandle: "",
+      reference,
+      kind: "referral",
+      paidKobo: 0,
+      paidAt: null,
+    });
+
+    return {
+      ok: true,
+      items,
+      amountKobo: expectedTotalKobo,
+      reference,
+      alreadyConfirmed,
+      paidAt: null,
+    };
+  });
 
 export type ConfirmInput = {
   reference: string;

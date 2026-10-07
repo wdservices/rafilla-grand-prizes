@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Wallet, Users, Ticket, Trophy, Copy, Check, Clock } from "lucide-react";
 
@@ -9,6 +9,7 @@ import { lagosGreeting } from "@/lib/format";
 import { useCompetitions } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { fetchFeatureFlags } from "@/lib/platform-config";
 
 type KpiProps = {
   label: string;
@@ -57,6 +58,20 @@ const statusStyles: Record<(typeof recentEntries)[number]["status"], string> = {
 export function DashboardOverviewPage() {
   const { user } = useAuthSession();
   const { competitions } = useCompetitions();
+  const [walletEnabled, setWalletEnabled] = useState(true);
+
+  // Wallet kill-switch: Admin → Settings → Feature availability.
+  useEffect(() => {
+    let cancelled = false;
+    fetchFeatureFlags()
+      .then((f) => {
+        if (!cancelled) setWalletEnabled(f["wallet"] !== false);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const firstName = user?.firstName || "there";
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -91,14 +106,16 @@ export function DashboardOverviewPage() {
               </p>
             </div>
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:w-auto">
-              <div className="flex-1 rounded-2xl bg-cream px-4 py-3.5 ring-1 ring-ink/5 sm:min-w-[140px] sm:flex-none">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
-                  Wallet balance
-                </p>
-                <p className="mt-1 break-words font-display text-lg font-extrabold text-ink sm:text-xl lg:text-2xl">
-                  {formatNaira(0)}
-                </p>
-              </div>
+              {walletEnabled && (
+                <div className="flex-1 rounded-2xl bg-cream px-4 py-3.5 ring-1 ring-ink/5 sm:min-w-[140px] sm:flex-none">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
+                    Wallet balance
+                  </p>
+                  <p className="mt-1 break-words font-display text-lg font-extrabold text-ink sm:text-xl lg:text-2xl">
+                    {formatNaira(0)}
+                  </p>
+                </div>
+              )}
               <div className="flex-1 rounded-2xl bg-cream px-4 py-3.5 ring-1 ring-ink/5 sm:min-w-[140px] sm:flex-none">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/45">
                   Referral earnings

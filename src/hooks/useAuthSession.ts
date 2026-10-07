@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 
-import type { RaffilaUser, Session, UserRole } from "@/lib/auth-store";
+import type { RaffilaUser, Session } from "@/lib/auth-store";
 import {
   canAccessRoute,
   getSession,
@@ -9,9 +9,6 @@ import {
   subscribe,
   initFirebaseAuthListener,
   setFirebaseSession,
-  signInWithCredentials,
-  signInAs,
-  DEFAULT_CREDENTIALS,
   type SignInResult,
 } from "@/lib/auth-store";
 import {
@@ -75,61 +72,15 @@ export function useAuthActions() {
   const navigate = useNavigate();
 
   return {
-    signInAsDemo(role: UserRole): SignInResult {
-      const res = signInAs(role);
-      void logActivity({
-        eventType: "AUTH_LOGIN",
-        targetType: "session",
-        summary: `Signed in as demo ${role}`,
-      });
-      setTimeout(() => void navigate({ to: res.redirect as any }), 0);
-      return res;
-    },
-
     async signIn(input: {
       email: string;
       password: string;
       remember?: boolean;
     }): Promise<SignInResult> {
       const remember = input.remember ?? true;
-      const cleanEmail = input.email.trim().toLowerCase();
 
-      // 1. Check default / demo credentials first for immediate local sign-in
-      const isDefaultCred =
-        cleanEmail === DEFAULT_CREDENTIALS.admin.email.toLowerCase() ||
-        cleanEmail === DEFAULT_CREDENTIALS.user.email.toLowerCase() ||
-        cleanEmail === DEFAULT_CREDENTIALS.partner.email.toLowerCase() ||
-        cleanEmail === "admin@raffila.ng" ||
-        cleanEmail === "partner@raffila.com" ||
-        cleanEmail === "player@raffila.com";
-
-      if (isDefaultCred) {
-        const localRes = signInWithCredentials({
-          email: input.email,
-          password: input.password,
-          remember,
-        });
-        if (localRes.ok) {
-          if (typeof window !== "undefined") {
-            if (remember) {
-              window.localStorage.setItem("raffila:saved_email", cleanEmail);
-              window.localStorage.setItem("raffila:remember_me", "true");
-            } else {
-              window.localStorage.removeItem("raffila:saved_email");
-              window.localStorage.setItem("raffila:remember_me", "false");
-            }
-          }
-          void logActivity({
-            eventType: "AUTH_LOGIN",
-            targetType: "session",
-            summary: `Signed in with credentials (${localRes.user.role})`,
-          });
-          setTimeout(() => void navigate({ to: localRes.redirect as any }), 0);
-          return localRes;
-        }
-      }
-
-      // 2. Try Firebase Auth
+      // Firebase Auth only — every account lives in Firebase, roles come
+      // from the Firestore user document. No local credentials exist.
       try {
         const cred = await loginWithEmail(input.email, input.password, remember);
         let profile = await getUserProfile(cred.user.uid);
@@ -179,26 +130,6 @@ export function useAuthActions() {
         setTimeout(() => void navigate({ to: redirect as any }), 0);
         return { ok: true, user, redirect };
       } catch (err: any) {
-        // Fallback: check demo credentials in case Firebase failed or account is local
-        const fallbackRes = signInWithCredentials({
-          email: input.email,
-          password: input.password,
-          remember,
-        });
-        if (fallbackRes.ok) {
-          if (typeof window !== "undefined") {
-            if (remember) {
-              window.localStorage.setItem("raffila:saved_email", cleanEmail);
-              window.localStorage.setItem("raffila:remember_me", "true");
-            } else {
-              window.localStorage.removeItem("raffila:saved_email");
-              window.localStorage.setItem("raffila:remember_me", "false");
-            }
-          }
-          setTimeout(() => void navigate({ to: fallbackRes.redirect as any }), 0);
-          return fallbackRes;
-        }
-
         const message =
           err?.code === "auth/user-not-found"
             ? "No account found with this email"

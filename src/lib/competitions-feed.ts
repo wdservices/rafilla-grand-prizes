@@ -2,11 +2,7 @@ import { collection, getDocs, limit, query } from "firebase/firestore";
 
 import { db } from "./firebase";
 import { formatCloses, formatDrawDate } from "./format";
-import {
-  competitions as mockCompetitions,
-  LEGACY_CATEGORY_MAP,
-  type Competition,
-} from "./raffila-data";
+import { LEGACY_CATEGORY_MAP, type Competition } from "./raffila-data";
 
 const ACCENTS: Competition["accent"][] = ["coral", "sky", "lemon", "mint", "lilac"];
 
@@ -80,9 +76,7 @@ export function docToCompetition(
   const drawDateRaw = String(data["drawDate"] ?? data["closes"] ?? "");
   const closesRaw = String(data["closes"] ?? drawDateRaw);
   const closesMs = toMs(data["closes"] ?? data["drawDate"]);
-  const daysUntilClose = closesMs
-    ? Math.max(0, Math.ceil((closesMs - Date.now()) / 86400000))
-    : 30;
+  const daysUntilClose = closesMs ? Math.max(0, Math.ceil((closesMs - Date.now()) / 86400000)) : 30;
   const images = Array.isArray(data["images"]) ? (data["images"] as string[]) : [];
   const image = String(data["image"] ?? images[0] ?? "");
 
@@ -163,23 +157,20 @@ export function validateCompetitionDates(input: {
 }
 
 /**
- * Live competitions: Firestore documents first, mock catalogue filling any
- * gaps by slug. Falls back to mock-only when Firestore is unreachable.
+ * Live competitions: Firestore is the ONLY source of truth. There is no
+ * hardcoded catalogue to fall back to, so a read failure resolves to an empty
+ * list rather than inventing competitions the operator deleted. `live` reports
+ * whether the read actually succeeded, which lets UI show a connection error
+ * instead of silently rendering stale or fictional data.
  */
 export async function getLiveCompetitions(includeDrafts = false): Promise<{
   competitions: Competition[];
   live: boolean;
 }> {
   try {
-    const dbComps = await fetchDbCompetitions(includeDrafts);
-    if (dbComps.length === 0) return { competitions: mockCompetitions, live: false };
-    const seen = new Set(dbComps.map((c) => c.slug));
-    return {
-      competitions: [...dbComps, ...mockCompetitions.filter((c) => !seen.has(c.slug))],
-      live: true,
-    };
+    return { competitions: await fetchDbCompetitions(includeDrafts), live: true };
   } catch (err) {
-    console.warn("Competitions feed falling back to catalogue:", err);
-    return { competitions: mockCompetitions, live: false };
+    console.error("Competitions feed failed to read Firestore:", err);
+    return { competitions: [], live: false };
   }
 }

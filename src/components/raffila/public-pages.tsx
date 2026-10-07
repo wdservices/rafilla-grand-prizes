@@ -93,7 +93,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   categories,
   partners,
-  featuredCompetition,
   formatNaira,
   getProgress,
   getEntriesRemaining,
@@ -111,11 +110,50 @@ import {
   trackEvent,
 } from "@/lib/raffila-data";
 import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
-import { HeroFeaturedCarousel, FeaturedCategoryDots, useFeaturedCarousel } from "@/components/raffila/hero-carousel";
+import {
+  HeroFeaturedCarousel,
+  FeaturedCategoryDots,
+  useFeaturedCarousel,
+} from "@/components/raffila/hero-carousel";
 import { cn, formatNaira as formatNairaKobo } from "@/lib/utils";
 import { useCountdownDays } from "@/hooks/useCountdown";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
+/**
+ * Homepage "Live competitions" shelf. Renders at most three cards from
+ * whatever the DB currently holds (indexes are never assumed present — with
+ * fewer than three competitions the shelf shrinks, and with none it hides
+ * instead of crashing on an undefined entry).
+ */
+function LiveCompetitionsSection({ competitions }: { competitions: Competition[] }) {
+  if (competitions.length === 0) return null;
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <SectionHeading
+        eyebrow="Curated for you"
+        title="Live competitions"
+        linkLabel="See all competitions"
+        linkTo="/competitions"
+      />
+      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/60">
+        A mix of affordable everyday prizes and aspirational premium prizes. Entry price, entries
+        remaining, closing date and verified partner are always visible.
+      </p>
+      <div className="mt-5 grid gap-4 lg:grid-cols-3">
+        {competitions.slice(0, 3).map((c, i) =>
+          i === 2 ? (
+            <div key={c.slug} className="hidden lg:block">
+              <CompetitionCard competition={c} />
+            </div>
+          ) : (
+            <CompetitionCard key={c.slug} competition={c} />
+          ),
+        )}
+      </div>
+    </section>
+  );
+}
 
 export function HomePage() {
   const { competitions } = useCompetitions();
@@ -138,8 +176,8 @@ export function HomePage() {
         </h1>
         <div className="mt-5 max-w-xl">
           <p className="text-base leading-relaxed text-ink/65 sm:text-lg">
-            What can you win? Can you afford to enter? Is Raffila trustworthy? Start with the
-            prize — no wallet needed to browse.
+            What can you win? Can you afford to enter? Is Raffila trustworthy? Start with the prize
+            — no wallet needed to browse.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Button asChild variant="primary" size="lg" className="min-h-12 text-base">
@@ -226,25 +264,7 @@ export function HomePage() {
 
       <TrustStrip />
 
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <SectionHeading
-          eyebrow="Curated for you"
-          title="Live competitions"
-          linkLabel="See all competitions"
-          linkTo="/competitions"
-        />
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/60">
-          A mix of affordable everyday prizes and aspirational premium prizes. Entry price,
-          entries remaining, closing date and verified partner are always visible.
-        </p>
-        <div className="mt-5 grid gap-4 lg:grid-cols-3">
-          <CompetitionCard competition={competitions[1]!} />
-          <CompetitionCard competition={competitions[2]!} />
-          <div className="hidden lg:block">
-            <CompetitionCard competition={competitions[0]!} />
-          </div>
-        </div>
-      </section>
+      <LiveCompetitionsSection competitions={competitions} />
 
       <BrowseByNeed competitions={competitions} />
 
@@ -421,6 +441,31 @@ const priceMinBoundKobo = 100 * 100;
 const priceMaxBoundKobo = 100_000 * 100;
 const pageSize = 8;
 
+/** Small uppercase caption used to title each filter group consistently. */
+function FilterGroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-ink/45">{children}</p>
+  );
+}
+
+/** A labelled block of filter controls. */
+function FilterGroup({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={cn("min-w-0 space-y-2.5", className)}>
+      <FilterGroupLabel>{label}</FilterGroupLabel>
+      {children}
+    </div>
+  );
+}
+
 export function CompetitionsFilterBar({
   state,
   setState,
@@ -458,32 +503,34 @@ export function CompetitionsFilterBar({
     });
   return (
     <div className="mt-8 space-y-5 rounded-[28px] bg-paper p-4 ring-1 ring-ink/5 sm:p-6">
-      <div className="flex flex-col gap-3">
-        <label className="flex min-h-12 items-center gap-3 rounded-full bg-cream px-4 shadow-sm ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral/60">
-          <Search className="size-4 shrink-0 text-ink/40" />
-          <span className="sr-only">Search competitions</span>
-          <input
-            value={state.query}
-            onChange={(event) => setState((s) => ({ ...s, query: event.target.value, page: 1 }))}
-            placeholder="Search competitions, prizes, partners…"
-            className="w-full bg-transparent py-3 text-sm font-bold text-ink outline-none placeholder:text-ink/40"
-          />
-          {state.query && (
-            <button
-              type="button"
-              aria-label="Clear search"
-              onClick={() => setState((s) => ({ ...s, query: "", page: 1 }))}
-              className="grid size-6 place-items-center rounded-full bg-ink/10 text-ink/50 hover:bg-ink/20"
-            >
-              <X className="size-3.5" />
-            </button>
-          )}
-        </label>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="relative -mx-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
+      <label className="flex min-h-12 items-center gap-3 rounded-full bg-cream px-4 shadow-sm ring-1 ring-ink/5 focus-within:ring-2 focus-within:ring-coral/60">
+        <Search className="size-4 shrink-0 text-ink/40" />
+        <span className="sr-only">Search competitions</span>
+        <input
+          value={state.query}
+          onChange={(event) => setState((s) => ({ ...s, query: event.target.value, page: 1 }))}
+          placeholder="Search competitions, prizes, partners…"
+          className="w-full bg-transparent py-3 text-sm font-bold text-ink outline-none placeholder:text-ink/40"
+        />
+        {state.query && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => setState((s) => ({ ...s, query: "", page: 1 }))}
+            className="grid size-6 place-items-center rounded-full bg-ink/10 text-ink/50 hover:bg-ink/20"
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
+      </label>
+
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-6">
+        <FilterGroup label="Category" className="flex-1">
+          {/* Scrolls on narrow screens, wraps on desktop so no chip is ever cut off. */}
+          <div className="relative -mx-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:overflow-visible lg:px-0">
             <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-paper to-transparent lg:hidden" />
             <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-paper to-transparent lg:hidden" />
-            <div className="flex shrink-0 items-center gap-2 py-1">
+            <div className="flex shrink-0 items-center gap-2 py-1 lg:flex-wrap">
               {categories.map((cat) => {
                 const active = state.category === cat;
                 return (
@@ -497,7 +544,7 @@ export function CompetitionsFilterBar({
                     className={cn(
                       "shrink-0 rounded-full px-4 py-2 text-xs font-extrabold transition-transform hover:-translate-y-px",
                       active
-                        ? "bg-coral text-paper shadow-[0_8px_20px_-8px_var(--coral)]"
+                        ? "bg-ink text-cream"
                         : "bg-paper text-ink ring-1 ring-ink/10 hover:bg-lilac/15",
                     )}
                   >
@@ -507,52 +554,15 @@ export function CompetitionsFilterBar({
               })}
             </div>
           </div>
-          <div className="flex flex-col gap-2" aria-label="Budget filter">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
-              Budget — what can you afford?
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setState((s) => ({ ...s, budget: "all", page: 1 }))}
-                className={cn(
-                  "shrink-0 rounded-full px-4 py-2 text-xs font-extrabold ring-1 transition-colors",
-                  state.budget === "all"
-                    ? "bg-ink text-cream ring-ink"
-                    : "bg-cream text-ink ring-ink/10 hover:bg-lemon/40",
-                )}
-              >
-                All prices
-              </button>
-              {BUDGET_FILTERS.map((b) => {
-                const active = state.budget === b.id;
-                return (
-                  <button
-                    key={b.id}
-                    type="button"
-                    onClick={() => {
-                      trackEvent("budget_filter_use", { budget: b.id });
-                      setState((s) => ({ ...s, budget: b.id, page: 1 }));
-                    }}
-                    className={cn(
-                      "shrink-0 rounded-full px-4 py-2 text-xs font-extrabold ring-1 transition-colors",
-                      active
-                        ? "bg-coral text-paper ring-coral shadow-[0_8px_20px_-8px_var(--coral)]"
-                        : "bg-cream text-ink ring-ink/10 hover:bg-lemon/40",
-                    )}
-                  >
-                    {b.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+        </FilterGroup>
+
+        <div className="grid shrink-0 gap-5 sm:grid-cols-2 lg:gap-4">
+          <FilterGroup label="Sort by">
             <Select
               value={state.sort}
               onValueChange={(v) => setState((s) => ({ ...s, sort: v as SortKey, page: 1 }))}
             >
-              <SelectTrigger className="h-11 w-full rounded-full border-0 bg-lilac/20 px-4 text-xs font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral/60 sm:w-[160px] lg:w-[180px]">
+              <SelectTrigger className="h-11 w-full rounded-full border-0 bg-lilac/20 px-4 text-xs font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral/60 sm:w-[170px]">
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent className="rounded-2xl border-0 bg-paper p-1 font-body shadow-lg ring-1 ring-ink/10">
@@ -576,11 +586,14 @@ export function CompetitionsFilterBar({
                 </SelectItem>
               </SelectContent>
             </Select>
+          </FilterGroup>
+
+          <FilterGroup label="Status">
             <Select
               value={state.status}
               onValueChange={(v) => setState((s) => ({ ...s, status: v as StatusKey, page: 1 }))}
             >
-              <SelectTrigger className="h-11 w-full rounded-full border-0 bg-mint/25 px-4 text-xs font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral/60 sm:w-[160px] lg:w-[180px]">
+              <SelectTrigger className="h-11 w-full rounded-full border-0 bg-mint/25 px-4 text-xs font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral/60 sm:w-[170px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent className="rounded-2xl border-0 bg-paper p-1 font-body shadow-lg ring-1 ring-ink/10">
@@ -601,15 +614,57 @@ export function CompetitionsFilterBar({
                 </SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </FilterGroup>
         </div>
       </div>
+
+      <Separator className="bg-ink/10" />
+
+      <FilterGroup label="Budget — what can you afford?">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setState((s) => ({ ...s, budget: "all", page: 1 }))}
+            className={cn(
+              "shrink-0 rounded-full px-4 py-2 text-xs font-extrabold ring-1 transition-colors",
+              state.budget === "all"
+                ? "bg-ink text-cream ring-ink"
+                : "bg-cream text-ink ring-ink/10 hover:bg-lemon/40",
+            )}
+          >
+            All prices
+          </button>
+          {BUDGET_FILTERS.map((b) => {
+            const active = state.budget === b.id;
+            return (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => {
+                  trackEvent("budget_filter_use", { budget: b.id });
+                  setState((s) => ({ ...s, budget: b.id, page: 1 }));
+                }}
+                className={cn(
+                  "shrink-0 rounded-full px-4 py-2 text-xs font-extrabold ring-1 transition-colors",
+                  active
+                    ? "bg-coral text-paper ring-coral shadow-[0_8px_20px_-8px_var(--coral)]"
+                    : "bg-cream text-ink ring-ink/10 hover:bg-lemon/40",
+                )}
+              >
+                {b.label}
+              </button>
+            );
+          })}
+        </div>
+      </FilterGroup>
+
       <Separator className="bg-ink/10" />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
           onClick={() => setShowAdvanced((v) => !v)}
-          className="inline-flex items-center gap-2 text-xs font-extrabold text-ink/65 hover:text-ink"
+          aria-expanded={showAdvanced}
+          className="inline-flex items-center gap-2 self-start rounded-full bg-cream px-4 py-2.5 text-xs font-extrabold text-ink/70 ring-1 ring-ink/10 transition-colors hover:bg-lilac/20 hover:text-ink"
         >
           <Filter className="size-4 text-coral" />
           {showAdvanced ? "Hide advanced filters" : "Show advanced filters"}
@@ -1003,7 +1058,15 @@ export function CompetitionsPage() {
   );
 }
 
-function CountdownUnit({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
+function CountdownUnit({
+  value,
+  label,
+  accent,
+}: {
+  value: number;
+  label: string;
+  accent?: boolean;
+}) {
   const str = value.toString().padStart(2, "0");
   return (
     <div className="grid place-items-center">
@@ -1238,8 +1301,7 @@ export function CompetitionDetailPage() {
                 <Handshake className="size-3.5 text-coral" />
                 In Partnership with{" "}
                 <span className="text-coral font-black">
-                  {assignedPartner?.businessName ||
-                    competition.partner}
+                  {assignedPartner?.businessName || competition.partner}
                 </span>
                 <BadgeCheck className="size-3.5 text-mint-700" />
               </span>
@@ -1336,8 +1398,8 @@ export function CompetitionDetailPage() {
                 <ArrowRight className="size-4" />
               </Button>
               <p className="text-center text-xs font-bold text-ink/60">
-                {ticketsLeft.toLocaleString("en-NG")} entries remaining · Closes {competition.closes} ·
-                Draw {competition.drawDate}
+                {ticketsLeft.toLocaleString("en-NG")} entries remaining · Closes{" "}
+                {competition.closes} · Draw {competition.drawDate}
               </p>
               <p className="text-center text-xs font-bold text-ink/45">
                 Tickets reserved for 5 minutes · Wallet &amp; Referrals only · Limit {maxQty}{" "}
@@ -1358,7 +1420,8 @@ export function CompetitionDetailPage() {
             </p>
             <p className="mt-2 text-sm font-bold leading-relaxed text-ink/70">
               {competition.prizeCondition}. Partner {competition.partner} verified.{" "}
-              {competition.warranty ? `${competition.warranty}. ` : ""}Serial {competition.serialNo}.
+              {competition.warranty ? `${competition.warranty}. ` : ""}Serial {competition.serialNo}
+              .
             </p>
             <Link
               to="/trust-safety"
@@ -2808,7 +2871,10 @@ function PopularUnder1000({ competitions }: { competitions: Competition[] }) {
   }, []);
   if (affordable.length === 0) return null;
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12" aria-label="Popular under 1000 naira">
+    <section
+      className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12"
+      aria-label="Popular under 1000 naira"
+    >
       <SectionHeading
         eyebrow="Affordable discovery"
         title="Popular Under ₦1,000"
@@ -2832,7 +2898,10 @@ function TrustStrip() {
     <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Why trust Raffila">
       <div className="grid grid-cols-2 gap-3 rounded-[28px] bg-paper p-4 ring-1 ring-ink/5 sm:p-6 lg:grid-cols-4">
         {TRUST_SIGNALS.map((s) => (
-          <div key={s.id} className="flex items-center gap-2.5 rounded-2xl bg-cream/60 px-4 py-3 ring-1 ring-ink/5">
+          <div
+            key={s.id}
+            className="flex items-center gap-2.5 rounded-2xl bg-cream/60 px-4 py-3 ring-1 ring-ink/5"
+          >
             <BadgeCheck className="size-5 shrink-0 text-mint" aria-hidden />
             <span className="text-xs font-extrabold text-ink sm:text-sm">{s.label}</span>
           </div>
@@ -2852,7 +2921,10 @@ function BrowseByNeed({ competitions }: { competitions: Competition[] }) {
     return competitions.filter((c) => c.category === cat).length;
   };
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12" aria-label="Browse by need">
+    <section
+      className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12"
+      aria-label="Browse by need"
+    >
       <SectionHeading
         eyebrow="Start with your goal"
         title="Browse by need"
@@ -2898,10 +2970,22 @@ function HowItWorksPreview() {
           {[
             { title: "1. Choose a prize", desc: "Browse first — no money asked up front." },
             { title: "2. Choose entries", desc: "Price and total shown clearly before payment." },
-            { title: "3. Create account", desc: "Phone/OTP prominently, email/Google also available." },
-            { title: "4. Pay securely", desc: "Direct payment and/or wallet, subject to provider review." },
-            { title: "5. Get confirmation", desc: "Entry numbers and draw date shown immediately." },
-            { title: "6. Follow result", desc: "Simple My Entries screen + verifiable draw result." },
+            {
+              title: "3. Create account",
+              desc: "Phone/OTP prominently, email/Google also available.",
+            },
+            {
+              title: "4. Pay securely",
+              desc: "Direct payment and/or wallet, subject to provider review.",
+            },
+            {
+              title: "5. Get confirmation",
+              desc: "Entry numbers and draw date shown immediately.",
+            },
+            {
+              title: "6. Follow result",
+              desc: "Simple My Entries screen + verifiable draw result.",
+            },
           ].map((step, index) => (
             <div key={step.title} className="rounded-[20px] bg-paper p-4 ring-1 ring-ink/5">
               <span className="font-display text-2xl font-extrabold text-coral">{index + 1}</span>
@@ -3043,9 +3127,9 @@ export function TrustSafetyPage() {
             How Raffila checks prizes and partners
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-ink/65">
-            Every prize is inspected, documented with serial numbers and condition, and consigned
-            by a verified enterprise partner before entries open. Custody and escrow guarantees
-            apply where stated on the competition page.
+            Every prize is inspected, documented with serial numbers and condition, and consigned by
+            a verified enterprise partner before entries open. Custody and escrow guarantees apply
+            where stated on the competition page.
           </p>
           <Button asChild variant="outline" size="md" className="mt-4 min-h-11">
             <Link to="/become-a-partner">For asset owners — become a partner</Link>
@@ -3076,9 +3160,8 @@ export function TrustSafetyPage() {
             Plain-English verifiable draws
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-ink/65">
-            When a competition closes, entries freeze. A secure, verifiable process picks the
-            winner and the full public record is published so anyone can check it — no hidden
-            steps.
+            When a competition closes, entries freeze. A secure, verifiable process picks the winner
+            and the full public record is published so anyone can check it — no hidden steps.
           </p>
           <Button asChild variant="outline" size="md" className="mt-4 min-h-11">
             <Link to="/draw-verification/$campaign" params={{ campaign: "example" }}>

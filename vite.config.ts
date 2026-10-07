@@ -27,14 +27,53 @@ const PRERENDER_PATHS = [
 ];
 
 export default defineConfig({
+  vite: {
+    // firebase-admin is Node-only (grpc, node:http). Client components import
+    // modules that reach the Admin SDK through a server-side dynamic import, so
+    // Vite's dev dependency crawler would otherwise pre-bundle a ~7MB Node
+    // bundle for the browser and break client hydration. Excluding it from the
+    // client optimizer fixes dev. It is deliberately NOT marked ssr.external:
+    // the production server bundle must stay self-contained (the cPanel zip
+    // ships no node_modules).
+    optimizeDeps: {
+      exclude: ["firebase-admin", "firebase-admin/app", "firebase-admin/firestore"],
+    },
+    // The release pipeline (scripts/build-namecheap.ps1) writes then deletes
+    // .output/ and drops zips into deploy/ while `npm run dev` may be running.
+    // Vite's watcher was crashing on those directories with
+    // "UNKNOWN: unknown error, lstat '.output\public\assets'" and taking the
+    // dev server down. Keep build artifacts out of the watched set.
+    server: {
+      watch: {
+        ignored: [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.output/**",
+          "**/.output",
+          "**/dist",
+          "**/dist/**",
+          "**/deploy/**",
+          "**/.tanstack-start/**",
+          "**/coverage/**",
+          "**/*.zip",
+        ],
+      },
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
-    // Static prerendering: prerendered HTML is a build-time snapshot — the
-    // client hydrates and refetches live Firestore data.
+    // Static prerendering is performed AFTER the build by
+    // scripts/prerender-namecheap.mjs, which boots the freshly built nitro
+    // node-server and crawls these routes (deterministic: real production
+    // bundle, real asset URLs, VITE_BUILD_ID baked into the HTML).
+    // The plugin's own prerender flow MUST stay disabled: its preview shim
+    // imports nitro's node-server entry, whose default export has no .fetch
+    // (and importing it starts a rogue listener that hangs the build), so
+    // every route 500s and zero pages are emitted.
     prerender: {
-      enabled: true,
+      enabled: false,
       crawlLinks: false,
       autoSubfolderIndex: true,
       filter: (page: { path: string }) => {
@@ -42,6 +81,9 @@ export default defineConfig({
         return PRERENDER_PATHS.includes(p);
       },
     },
-    pages: PRERENDER_PATHS.map((path) => ({ path, prerender: { enabled: true, crawlLinks: false } })),
+    pages: PRERENDER_PATHS.map((path) => ({
+      path,
+      prerender: { enabled: true, crawlLinks: false },
+    })),
   },
 });

@@ -55,6 +55,7 @@ import { Route as PartnerListingsRouteImport } from './routes/partner.listings'
 import { Route as PartnerProfileRouteImport } from './routes/partner.profile'
 import { Route as PartnerSettlementsRouteImport } from './routes/partner.settlements'
 import { Route as PartnerSubmitRouteImport } from './routes/partner.submit'
+import { Route as PaymentCallbackRouteImport } from './routes/payment.callback'
 import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as DashboardReferralsPayoutRouteImport } from './routes/dashboard.referrals.payout'
 
@@ -289,6 +290,11 @@ const PartnerSubmitRoute = PartnerSubmitRouteImport.update({
   path: '/partner/submit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PaymentCallbackRoute = PaymentCallbackRouteImport.update({
+  id: '/payment/callback',
+  path: '/payment/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapXmlRoute = SitemapXmlRouteImport.update({
   id: '/sitemap/xml',
   path: '/sitemap/xml',
@@ -344,6 +350,7 @@ export interface FileRoutesByFullPath {
   '/partner/profile': typeof PartnerProfileRoute
   '/partner/settlements': typeof PartnerSettlementsRoute
   '/partner/submit': typeof PartnerSubmitRoute
+  '/payment/callback': typeof PaymentCallbackRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin/': typeof AdminIndexRoute
   '/competitions/': typeof CompetitionsIndexRoute
@@ -393,6 +400,7 @@ export interface FileRoutesByTo {
   '/partner/profile': typeof PartnerProfileRoute
   '/partner/settlements': typeof PartnerSettlementsRoute
   '/partner/submit': typeof PartnerSubmitRoute
+  '/payment/callback': typeof PaymentCallbackRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin': typeof AdminIndexRoute
   '/competitions': typeof CompetitionsIndexRoute
@@ -444,6 +452,7 @@ export interface FileRoutesById {
   '/partner/profile': typeof PartnerProfileRoute
   '/partner/settlements': typeof PartnerSettlementsRoute
   '/partner/submit': typeof PartnerSubmitRoute
+  '/payment/callback': typeof PaymentCallbackRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/admin/': typeof AdminIndexRoute
   '/competitions/': typeof CompetitionsIndexRoute
@@ -496,6 +505,7 @@ export interface FileRouteTypes {
     | '/partner/profile'
     | '/partner/settlements'
     | '/partner/submit'
+    | '/payment/callback'
     | '/sitemap/xml'
     | '/admin/'
     | '/competitions/'
@@ -545,6 +555,7 @@ export interface FileRouteTypes {
     | '/partner/profile'
     | '/partner/settlements'
     | '/partner/submit'
+    | '/payment/callback'
     | '/sitemap/xml'
     | '/admin'
     | '/competitions'
@@ -595,6 +606,7 @@ export interface FileRouteTypes {
     | '/partner/profile'
     | '/partner/settlements'
     | '/partner/submit'
+    | '/payment/callback'
     | '/sitemap/xml'
     | '/admin/'
     | '/competitions/'
@@ -645,6 +657,7 @@ export interface RootRouteChildren {
   PartnerProfileRoute: typeof PartnerProfileRoute
   PartnerSettlementsRoute: typeof PartnerSettlementsRoute
   PartnerSubmitRoute: typeof PartnerSubmitRoute
+  PaymentCallbackRoute: typeof PaymentCallbackRoute
   SitemapXmlRoute: typeof SitemapXmlRoute
   AdminIndexRoute: typeof AdminIndexRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -975,6 +988,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnerSubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/payment/callback': {
+      id: '/payment/callback'
+      path: '/payment/callback'
+      fullPath: '/payment/callback'
+      preLoaderRoute: typeof PaymentCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap/xml': {
       id: '/sitemap/xml'
       path: '/sitemap/xml'
@@ -1059,6 +1079,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartnerProfileRoute: PartnerProfileRoute,
   PartnerSettlementsRoute: PartnerSettlementsRoute,
   PartnerSubmitRoute: PartnerSubmitRoute,
+  PaymentCallbackRoute: PaymentCallbackRoute,
   SitemapXmlRoute: SitemapXmlRoute,
   AdminIndexRoute: AdminIndexRoute,
   DashboardIndexRoute: DashboardIndexRoute,

@@ -52,6 +52,18 @@ export function getPaystackCallbackUrl(): string {
   return "https://raffila.com/dashboard/wallet";
 }
 
+/**
+ * URL Paystack redirects to after a DIRECT ticket purchase. The callback
+ * page verifies the payment server-side and issues draw tickets —
+ * no wallet involved.
+ */
+export function getTicketCallbackUrl(): string {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/payment/callback`;
+  }
+  return "https://raffila.com/payment/callback";
+}
+
 export function parseAmountNaira(raw: string): number {
   const n = Number(raw);
   if (!Number.isFinite(n)) return 0;

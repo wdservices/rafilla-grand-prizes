@@ -1,10 +1,11 @@
-import { LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, ShoppingCart, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuthActions, useAuthSession } from "@/hooks/useAuthSession";
+import { openCart, useCartCount } from "@/lib/cart-store";
 
 const links = [
   { label: "Home", to: "/" as const },
@@ -22,11 +23,29 @@ const links = [
   { label: "Competition rules", to: "/competition-rules" as const },
 ];
 
+function CartButton({ count }: { count: number }) {
+  return (
+    <button
+      onClick={openCart}
+      aria-label={count > 0 ? `Open cart, ${count} tickets` : "Open cart"}
+      className="relative grid size-10 shrink-0 place-items-center rounded-full bg-white text-ink ring-1 ring-ink/10 transition-colors hover:ring-coral/40"
+    >
+      <ShoppingCart className="size-5" />
+      {count > 0 && (
+        <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-coral px-1 py-0.5 font-display text-[10px] font-extrabold leading-none text-white">
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
+    </button>
+  );
+}
+
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isAuthenticated, role, user } = useAuthSession();
   const { signOut } = useAuthActions();
+  const cartCount = useCartCount();
 
   return (
     <header className="relative z-30 mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
@@ -79,6 +98,7 @@ export function SiteHeader() {
           </Link>
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
+              <CartButton count={cartCount} />
               <Button asChild variant="outline" size="sm">
                 <Link
                   to={role === "admin" ? "/admin" : role === "partner" ? "/partner" : "/dashboard"}
@@ -109,6 +129,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2 lg:hidden">
+          <CartButton count={cartCount} />
           {isAuthenticated ? (
             <Button asChild variant="outline" size="sm">
               <Link

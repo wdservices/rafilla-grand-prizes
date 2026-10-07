@@ -29,6 +29,7 @@ import {
   parseAmountNaira,
 } from "@/lib/paystack";
 import { confirmWalletFunding, initializePaystackTransaction } from "@/lib/paystack-server";
+import { fetchFeatureFlags } from "@/lib/platform-config";
 import { db } from "@/lib/firebase";
 import { collection, doc, limit, onSnapshot, orderBy, query } from "firebase/firestore";
 
@@ -446,6 +447,43 @@ export function DashboardWalletPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const visible = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // Belt-and-braces kill-switch. The route's beforeLoad guard stops navigation,
+  // but it can be bypassed (deep link already open when the flag flips, client
+  // router cache, a stale tab). This guarantees the page never renders wallet UI.
+  const [walletEnabled, setWalletEnabled] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetchFeatureFlags()
+      .then((f) => {
+        if (!cancelled) setWalletEnabled(f["wallet"] !== false);
+      })
+      .catch(() => {
+        if (!cancelled) setWalletEnabled(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (walletEnabled === false) {
+    return (
+      <DashboardAppShell
+        title="Wallet"
+        breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Wallet" }]}
+      >
+        <div className="rounded-[24px] bg-white p-10 text-center ring-1 ring-ink/5">
+          <h2 className="font-display text-xl font-extrabold text-ink">
+            Wallet funding is currently unavailable
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink/55">
+            Wallet top-ups have been turned off by the Raffila team. Competition entries are
+            unaffected — you can still enter competitions and track your entries.
+          </p>
+        </div>
+      </DashboardAppShell>
+    );
+  }
 
   return (
     <DashboardAppShell

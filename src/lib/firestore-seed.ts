@@ -1,6 +1,6 @@
 import { collection, doc, writeBatch, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
-import { competitions, winnerCards, partners, REWARD_POOL } from "./raffila-data";
+import { winnerCards, partners, REWARD_POOL } from "./raffila-data";
 
 export interface SeedProgress {
   stage: string;
@@ -147,104 +147,10 @@ export async function seedFirestoreDatabase(
     }
     await partnerBatch.commit();
 
-    // 4. Seed Competitions and Raffle Draws
-    onProgress?.({
-      stage: "Competitions & Raffle Draws",
-      count: 0,
-      total: competitions.length,
-      completed: false,
-    });
-
-    for (let i = 0; i < competitions.length; i++) {
-      const c = competitions[i];
-      const compBatch = writeBatch(db);
-
-      // Main competition document
-      const compRef = doc(db, "competitions", c.slug);
-      compBatch.set(compRef, {
-        slug: c.slug,
-        title: c.title,
-        category: c.category,
-        partner: c.partner,
-        description: c.description,
-        prizeValueKobo: c.prizeValueKobo,
-        entryPrice: c.entryPrice,
-        totalEntries: c.totalEntries,
-        entriesSold: c.entriesSold,
-        closes: c.closes,
-        daysUntilClose: c.daysUntilClose,
-        status: c.status,
-        featured: c.featured || false,
-        image: typeof c.image === "string" ? c.image : "",
-        imageAlt: c.imageAlt,
-        accent: c.accent,
-        specs: c.specs,
-        drawDate: c.drawDate,
-        prizeCondition: c.prizeCondition,
-        warranty: c.warranty,
-        make: c.make,
-        model: c.model,
-        year: c.year,
-        inclusions: c.inclusions,
-        exclusions: c.exclusions,
-        updatedAt: new Date().toISOString(),
-      });
-      stats.competitions++;
-
-      // Raffle Draw Document (Cryptographic Fair Draw Schema)
-      const drawRef = doc(db, "draws", c.slug);
-      const isCompleted = c.status === "COMPLETED";
-      const sampleWinner = SEED_USERS[i % (SEED_USERS.length - 1)]; // Don't pick admin
-      const winningTicketNum = String(1000 + ((i * 3821) % 9000)).padStart(6, "0");
-
-      compBatch.set(drawRef, {
-        competitionSlug: c.slug,
-        competitionTitle: c.title,
-        status: isCompleted ? "VERIFIED" : "SCHEDULED",
-        drawDate: c.drawDate,
-        totalEligibleTickets: c.entriesSold,
-        algorithm: "HMAC-SHA256::NIST-Beacon-v2",
-        algorithmSalt: `raffila-draw-v1::${c.slug}::t-5-snapshot`,
-        snapshotHash: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b8${i.toString(16).padStart(2, "0")}`,
-        beaconSeed: `9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a${i.toString(16).padStart(2, "0")}`,
-        winningTicketNumber: isCompleted ? winningTicketNum : null,
-        winnerUserId: isCompleted ? sampleWinner.id : null,
-        winnerName: isCompleted ? sampleWinner.displayName : null,
-        winnerHandle: isCompleted ? sampleWinner.handle : null,
-        verifiedChecks: [true, true, true, true, true],
-        publicAuditUrl: `/draw-verification/${c.slug}`,
-        createdAt: new Date().toISOString(),
-      });
-      stats.draws++;
-
-      // Seed representative sample tickets for this draw with user information
-      const ticketCountToSeed = Math.min(5, c.entriesSold > 0 ? c.entriesSold : 3);
-      for (let t = 1; t <= ticketCountToSeed; t++) {
-        const assignedUser = SEED_USERS[(i + t) % (SEED_USERS.length - 1)];
-        const ticketNum = String(t * 1000 + i * 42).padStart(6, "0");
-        const ticketRef = doc(db, "competitions", c.slug, "tickets", `TKT-${ticketNum}`);
-        compBatch.set(ticketRef, {
-          ticketNumber: ticketNum,
-          ticketCode: `TKT-${ticketNum}`,
-          competitionSlug: c.slug,
-          userId: assignedUser.id,
-          userName: assignedUser.displayName,
-          userHandle: assignedUser.handle,
-          userEmail: assignedUser.email,
-          purchasedAt: new Date(Date.now() - t * 3600000 * 24).toISOString(),
-          status: isCompleted && ticketNum === winningTicketNum ? "WINNER" : "ACTIVE",
-        });
-        stats.tickets++;
-      }
-
-      await compBatch.commit();
-      onProgress?.({
-        stage: `Seeded competition: ${c.title}`,
-        count: i + 1,
-        total: competitions.length,
-        completed: false,
-      });
-    }
+    // 4. Competitions are NOT seeded.
+    // There is no hardcoded catalogue any more: a competition exists only if an
+    // operator created it in the admin dashboard. Seeding fixtures here is what
+    // made deleted competitions reappear, so this step is intentionally absent.
 
     // 5. Seed Past Winners
     onProgress?.({
@@ -275,8 +181,8 @@ export async function seedFirestoreDatabase(
 
     onProgress?.({
       stage: "Database Seeding Completed Successfully!",
-      count: competitions.length,
-      total: competitions.length,
+      count: winnerCards.length,
+      total: winnerCards.length,
       completed: true,
     });
 

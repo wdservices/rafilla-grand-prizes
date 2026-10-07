@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   generatePaystackReference,
+  getTicketCallbackUrl,
   koboToNaira,
   nairaToKobo,
   parseAmountNaira,
@@ -34,6 +35,21 @@ describe("paystack helpers", () => {
     expect(a).toMatch(/^RF-[A-Z0-9]{8}$/);
     expect(b).toMatch(/^RF-[A-Z0-9]{8}$/);
     expect(a).not.toBe(b);
+  });
+
+  it("supports custom reference prefixes for ticket orders", () => {
+    expect(generatePaystackReference("RF-TKT")).toMatch(/^RF-TKT-[A-Z0-9]{8}$/);
+  });
+
+  it("computes ticket subtotals in kobo", () => {
+    const entryPriceKobo = 250000; // ₦2,500
+    const qty = 4;
+    expect(entryPriceKobo * qty).toBe(1000000);
+    expect(koboToNaira(entryPriceKobo * qty)).toBe(10000);
+  });
+
+  it("points ticket checkout at the payment callback page", () => {
+    expect(getTicketCallbackUrl()).toMatch(/\/payment\/callback$/);
   });
 
   it("enforces a sane minimum amount", () => {

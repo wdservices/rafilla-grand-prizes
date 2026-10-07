@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { competitions } from "@/lib/raffila-data";
+import { getLiveCompetitions } from "@/lib/competitions-feed";
 
 export const Route = createFileRoute("/sitemap/xml")({
   server: {
@@ -7,6 +7,12 @@ export const Route = createFileRoute("/sitemap/xml")({
       GET: async () => {
         const baseUrl = "https://raffila.com";
         const today = new Date().toISOString().split("T")[0];
+
+        // Served from Firestore so deleted competitions drop out of the sitemap
+        // instead of being pinned forever by a hardcoded list.
+        const { competitions } = await getLiveCompetitions().catch(() => ({
+          competitions: [] as Awaited<ReturnType<typeof getLiveCompetitions>>["competitions"],
+        }));
 
         const staticRoutes = [
           "",

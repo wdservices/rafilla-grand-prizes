@@ -14,9 +14,16 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteFooter } from "@/components/raffila/site-footer";
 import { SiteHeader } from "@/components/raffila/site-header";
 import { CookieConsentBanner } from "@/components/raffila/cookie";
+import { BuildMismatchBanner } from "@/components/raffila/build-mismatch-banner";
+import { CartDrawer } from "@/components/raffila/cart/cart-drawer";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorPage } from "@/components/raffila/error-page";
 import { canAccessRoute } from "@/lib/auth-store";
+
+/** Baked at release build time; empty in dev. Visible in view-source. */
+const BUILD_ID = String(
+  (typeof import.meta !== "undefined" && import.meta.env?.["VITE_BUILD_ID"]) || "",
+).trim();
 
 function NotFoundComponent() {
   return (
@@ -88,6 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      ...(BUILD_ID ? [{ name: "build-id", content: BUILD_ID }] : []),
       { title: "Raffila Grand Prizes — Fair draws. Real prizes." },
       {
         name: "description",
@@ -160,12 +168,14 @@ function RootComponent() {
         >
           Skip to content
         </a>
+        <BuildMismatchBanner />
         {!hidePublicChrome && <SiteHeader />}
         <main id="main-content" tabIndex={-1}>
           <Outlet />
         </main>
         {!hidePublicChrome && <SiteFooter />}
         {!hidePublicChrome && <CookieConsentBanner />}
+        <CartDrawer />
         <Toaster position="top-center" richColors closeButton />
       </div>
     </QueryClientProvider>

@@ -29,7 +29,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { getCompetition, winnerCards, type Competition } from "@/lib/raffila-data";
+import { winnerCards, type Competition } from "@/lib/raffila-data";
 import type { DrawLifecycleStatus } from "@/lib/draw-system";
 import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
@@ -66,10 +66,12 @@ function makeDrawRecord(
   forceStatus?: DrawStatus,
   liveList?: Competition[],
 ): DrawRecord {
-  const competition =
-    (liveList ? findCompetition(liveList, slug) : undefined) ?? getCompetition(slug);
+  // Firestore only — no static catalogue lookup, so a deleted competition
+  // cannot be resurrected as a draw record.
+  const competition = liveList ? findCompetition(liveList, slug) : undefined;
   const winner = winnerCards[0];
   const status: DrawStatus = forceStatus ?? "VERIFIED";
+  const winnerName = winner?.winnerName ?? "Raffila winner";
   return {
     campaignId: "CMP-" + slug.toUpperCase().slice(0, 12),
     competitionTitle: competition?.title ?? "Premium prize draw",
@@ -84,7 +86,7 @@ function makeDrawRecord(
     beaconEpoch: "123456",
     beaconTime: "2026-09-03 18:00:00 UTC",
     beaconSeed: "a7f3d8c2e91b4a605f2e8c7d1b3a94e50f6a2c8d1e7b94a350f1d86e2c49703a",
-    winnerName: winner.winnerName,
+    winnerName,
     winnerHandle: "@tunmise_ade",
     winningTicket: "049382",
     winningEntry:

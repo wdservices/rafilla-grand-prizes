@@ -2,6 +2,22 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import {
+  apiRootStatusResponse,
+  ensureNodeGlobals,
+  isApiRootRequest,
+  loadLocalEnvFile,
+  normalizeBackendMountPath,
+  rewriteRequestPath,
+} from "./lib/backend-mount";
+
+// Node ESM has no __dirname/__filename, but bundled CJS (Firestore libs)
+// references bare __dirname — seed globals before anything else evaluates.
+ensureNodeGlobals();
+// cPanel split deploy: secrets may live in ~/backend/.env next to the app
+// instead of the process environment. Fill-only (real env vars always win),
+// runs once at startup before any route module is evaluated.
+loadLocalEnvFile();
 
 type FetchHandler = (request: Request, ...args: Array<unknown>) => Promise<Response> | Response;
 
@@ -58,14 +74,25 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const url = new URL(request.url);
+      // Mount-root status: opening /api in a browser shows a JSON success
+      // document instead of SSR-ing the homepage (works unstripped; the
+      // public_html rewrite adds ?api-root=1 so stripped arrivals match too).
+      if (isApiRootRequest(url.pathname, url.search)) {
+        return apiRootStatusResponse();
+      }
+      // Namecheap split deploy: the app is mounted at /api (public_html holds
+      // the static frontend; Apache rewrites non-file paths to /api/<path>).
+      // Passenger may or may not strip the mount prefix before the request
+      // reaches Node — normalize both shapes to the canonical in-app route.
+      const mountedPath = normalizeBackendMountPath(url.pathname);
       // Crawlers request /sitemap.xml, but file-based routing maps dots to
       // slashes (/sitemap/xml). Rewrite internally so the canonical path serves
       // the real content (no extra redirect hop). (/robots.txt is a static
       // file in public/ and needs no rewrite.)
-      const url = new URL(request.url);
-      if (url.pathname === "/sitemap.xml") {
-        url.pathname = "/sitemap/xml";
-        request = new Request(url, request);
+      const routedPath = mountedPath === "/sitemap.xml" ? "/sitemap/xml" : mountedPath;
+      if (routedPath !== url.pathname) {
+        request = rewriteRequestPath(request, routedPath);
       }
       const handle = await getFetchHandler();
       const response = await handle(request, env, ctx);

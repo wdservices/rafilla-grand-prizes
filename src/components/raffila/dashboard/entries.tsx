@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Search, Copy, Check, FileDown, Ticket, Eye, X, QrCode } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
 
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
 import { formatNaira, trackEvent } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
+import { db } from "@/lib/firebase";
 
 type EntryStatus = "Entered" | "Won" | "Lost";
 
@@ -41,9 +44,15 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toUpperCase();
 
-function genTickets(): MockEntry[] {
-  return [];
-}
+type RawEntry = {
+  entryId: string;
+  competitionSlug: string;
+  competitionTitle: string;
+  competitionImage: string;
+  quantity: number;
+  ticketNumbers: string[];
+  status: string;
+};
 
 export function DashboardEntriesPage() {
   const { user } = useAuthSession();
@@ -53,12 +62,67 @@ export function DashboardEntriesPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [toastId, setToastId] = useState<string | null>(null);
   const [ticketOpen, setTicketOpen] = useState<MockEntry | null>(null);
+  const [rawEntries, setRawEntries] = useState<RawEntry[]>([]);
+  const { competitions } = useCompetitions();
+  const uid = user?.id?.startsWith("firebase_")
+    ? user.id.slice("firebase_".length)
+    : (user?.id ?? "");
 
   useEffect(() => {
     trackEvent("my_entries_view", {});
   }, []);
 
-  const entries = genTickets();
+  // Live entries written server-side on confirmed payment (Paystack or
+  // referral). Clients can read their own subcollection but never write it.
+  useEffect(() => {
+    if (!uid) {
+      setRawEntries([]);
+      return;
+    }
+    const q = query(
+      collection(db, "users", uid, "entries"),
+      orderBy("createdAt", "desc"),
+      limit(100),
+    );
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setRawEntries(
+          snap.docs.map((d) => {
+            const v = d.data() as Record<string, unknown>;
+            const nums = Array.isArray(v["ticketNumbers"]) ? (v["ticketNumbers"] as unknown[]) : [];
+            return {
+              entryId: String(v["entryId"] ?? d.id),
+              competitionSlug: String(v["competitionSlug"] ?? ""),
+              competitionTitle: String(v["competitionTitle"] ?? "Competition"),
+              competitionImage: String(v["competitionImage"] ?? ""),
+              quantity: Number(v["quantity"] ?? nums.length) || nums.length,
+              ticketNumbers: nums.map((n) => String(n)),
+              status: String(v["status"] ?? "CONFIRMED"),
+            };
+          }),
+        );
+      },
+      () => setRawEntries([]),
+    );
+    return () => unsub();
+  }, [uid]);
+
+  const entries: MockEntry[] = useMemo<MockEntry[]>(
+    () =>
+      rawEntries.map((e) => ({
+        id: e.entryId,
+        competitionTitle: e.competitionTitle,
+        competitionSlug: e.competitionSlug,
+        competitionImage: e.competitionImage,
+        competitionImageAlt: `${e.competitionTitle} prize`,
+        ticketCount: e.quantity,
+        drawDate: findCompetition(competitions, e.competitionSlug)?.drawDate ?? "—",
+        ticketNumbers: e.ticketNumbers,
+        status: "Entered",
+      })),
+    [rawEntries, competitions],
+  );
 
   const filtered = entries.filter((e) => {
     const isActive = e.status === "Entered";

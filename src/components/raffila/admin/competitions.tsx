@@ -125,6 +125,8 @@ type CompStatus =
   | "CANCELLED";
 
 interface MockComp {
+  /** Firestore document ID — the only correct target for writes/deletes. */
+  docId: string;
   id: string;
   name: string;
   slug: string;
@@ -136,16 +138,18 @@ interface MockComp {
   image: string;
   partner: string;
   drawDate: string;
-  condition?: "new" | "likenew" | "refurbished" | "used";
-  marketValue?: number;
-  description?: string;
-  featured?: boolean;
-  publicResults?: boolean;
-  startDate?: string;
-  liveDelay?: number;
-  maxPerUser?: number;
-  entriesPaused?: boolean;
-  entriesClosed?: boolean;
+  /** Full ISO draw timestamp when the DB has one (used by the edit form). */
+  drawDateIso?: string;
+  condition: "new" | "likenew" | "refurbished" | "used" | undefined;
+  marketValue: number | undefined;
+  description: string;
+  featured: boolean;
+  publicResults: boolean;
+  startDate: string;
+  liveDelay: number;
+  maxPerUser: number;
+  entriesPaused: boolean;
+  entriesClosed: boolean;
 }
 
 const IMAGES = [mercedesImage, techBundleImage, apartmentImage];
@@ -157,64 +161,6 @@ const PARTNERS = [
   "Abuja Tech Hub",
 ];
 const CATEGORIES = ["Auto", "Tech", "Property", "Jewelry", "Home", "Experience"];
-const STATUSES: CompStatus[] = [
-  "LIVE",
-  "SCHEDULED",
-  "DRAFT",
-  "COMPLETED",
-  "LIVE",
-  "LIVE",
-  "SCHEDULED",
-  "DRAFT",
-  "COMPLETED",
-  "LIVE",
-  "SCHEDULED",
-  "LIVE",
-];
-
-const NAMES = [
-  "Mercedes-Benz C-Class 2025",
-  "Nova X1 Tech Bundle",
-  "Luxury 2-Bed Apartment",
-  "Ikeja Home Studio",
-  "Abuja Generator Pack",
-  "PH Laptop Suite",
-  "Eko Weekend Giveaway",
-  "Lekki Jewelry Set",
-  "Lagos Yacht Experience",
-  "Jos Land Plot",
-  "Kano Textile Bundle",
-  "VI Penthouse Week",
-];
-
-const TOTAL_ENTRIES_POOL = [
-  5000, 10000, 22500, 6000, 5000, 4000, 8000, 3000, 2500, 15000, 10000, 5000,
-];
-const TICKET_PRICE_POOL = [
-  10000, 5000, 2500, 1500, 1000, 7500, 2000, 5000, 20000, 3000, 6000, 4000,
-];
-
-const COMPS: MockComp[] = NAMES.map((n, i) => ({
-  id: `RF-C-${String(i + 1).padStart(5, "0")}`,
-  name: n,
-  slug: n.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-  category: CATEGORIES[i % CATEGORIES.length]!,
-  status: STATUSES[i % STATUSES.length]!,
-  entriesSold: Math.floor(Math.random() * 4500) + 200,
-  totalEntries: TOTAL_ENTRIES_POOL[i]!,
-  ticketPrice: TICKET_PRICE_POOL[i]! * 100,
-  image: IMAGES[i % IMAGES.length]!,
-  partner: PARTNERS[i % PARTNERS.length]!,
-  drawDate: `2026-${String((i % 11) + 2).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
-  condition: (["new", "likenew", "refurbished", "used"] as const)[i % 4],
-  marketValue: (TOTAL_ENTRIES_POOL[i]! * TICKET_PRICE_POOL[i]! * 100) / 3,
-  description: `Premium ${CATEGORIES[i % CATEGORIES.length]} asset. Verified authenticity, full documentation, and insured delivery to anywhere in Nigeria.`,
-  featured: i === 0 || i === 2,
-  publicResults: i % 3 !== 0,
-  startDate: `2026-${String((i % 11) + 1).padStart(2, "0")}-01T09:00`,
-  liveDelay: 60 + i * 5,
-  maxPerUser: 50 + i * 15,
-}));
 
 const statusTone: Record<CompStatus, string> = {
   DRAFT: "bg-ink/10 text-ink",
@@ -306,8 +252,13 @@ function compToForm(c: MockComp): FormState {
     ticketPrice: String(c.ticketPrice / 100),
     totalEntries: String(c.totalEntries),
     maxPerUser: String(c.maxPerUser ?? 200),
-    startDate: c.startDate ?? "2026-04-01T09:00",
-    drawDate: `${c.drawDate}T21:00`,
+    startDate: c.startDate || "2026-04-01T09:00",
+    // DB stores a full ISO timestamp; don't append T21:00 to one that has it.
+    drawDate: c.drawDateIso
+      ? c.drawDateIso.replace(" ", "T").slice(0, 16)
+      : c.drawDate
+        ? `${c.drawDate}T21:00`
+        : "2026-06-18T21:00",
     liveDelay: String(c.liveDelay ?? 60),
     featured: !!c.featured,
     publicResults: !!c.publicResults,
@@ -338,7 +289,11 @@ export function AdminCompetitionsPage() {
   const PAGE_SIZE = 10;
 
   // ---- Live draw lifecycle state (Firestore-backed, merged over catalogue) ----
+  // Keyed by real Firestore document ID. The list is rendered straight from
+  // this map, so what you see is exactly what the database contains.
   const [dbCompData, setDbCompData] = useState<Record<string, Record<string, unknown>>>({});
+  // Locally hides a row until the refetch confirms the delete landed.
+  const [deletedSlugs, setDeletedSlugs] = useState<Set<string>>(new Set());
   const [drawRecords, setDrawRecords] = useState<Record<string, DrawRecord>>({});
   const [drawHistory, setDrawHistory] = useState<DrawRecord[]>([]);
   const [drawRefreshKey, setDrawRefreshKey] = useState(0);
@@ -355,7 +310,6 @@ export function AdminCompetitionsPage() {
   // Delete competition state
   const [deleteTarget, setDeleteTarget] = useState<MockComp | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [deletedSlugs, setDeletedSlugs] = useState<Set<string>>(new Set());
 
   // Cancel competition state
   const [cancelTarget, setCancelTarget] = useState<MockComp | null>(null);
@@ -403,36 +357,16 @@ export function AdminCompetitionsPage() {
     return () => clearInterval(t);
   }, [drawRefreshKey]);
 
-  /** Catalogue merged with live Firestore state (draw lifecycle overlay). */
+  /** Rows are built purely from Firestore documents. There is no static
+   * catalogue to merge in, so a competition exists if and only if its
+   * document exists — deleting a document really does remove the row, and a
+   * page reload cannot resurrect it. */
   const mergedComps: MockComp[] = useMemo(() => {
-    const seen = new Set(COMPS.map((c) => c.slug));
-    const live: MockComp[] = COMPS.map((c) => {
-      if (deletedSlugs.has(c.slug)) return null as any;
-      const data = dbCompData[c.slug];
-      if (!data) return c;
-      const draw = drawRecords[c.slug] ?? null;
-      const state = deriveDrawState(data, draw as any);
-      const mapped: MockComp["status"] =
-        state === "DRAW_READY" ||
-        state === "DRAW_IN_PROGRESS" ||
-        state === "WINNER_SELECTED" ||
-        state === "COMPLETED"
-          ? state
-          : (String(data["status"] ?? c.status).toUpperCase() as MockComp["status"]);
-      return {
-        ...c,
-        status: mapped,
-        entriesSold: Number(data["entriesSold"] ?? c.entriesSold),
-        totalEntries: Number(data["totalEntries"] ?? c.totalEntries),
-        entriesPaused: data["entriesPaused"] === true,
-        entriesClosed: data["entriesClosed"] === true,
-      };
-    });
-    // Firestore-only competitions (created via the form) appended live.
-    Object.entries(dbCompData).forEach(([id, data], i) => {
-      if (seen.has(id)) return;
-      if (deletedSlugs.has(id)) return;
-      const draw = drawRecords[id] ?? null;
+    const out: MockComp[] = [];
+    Object.entries(dbCompData).forEach(([docId, data], i) => {
+      if (deletedSlugs.has(docId)) return;
+      const slug = String(data["slug"] ?? docId);
+      const draw = drawRecords[slug] ?? drawRecords[docId] ?? null;
       const state = deriveDrawState(data, draw as any);
       const raw = String(data["status"] ?? "DRAFT").toUpperCase();
       const mapped: MockComp["status"] = (
@@ -446,10 +380,13 @@ export function AdminCompetitionsPage() {
             : "DRAFT"
       ) as MockComp["status"];
       const images = Array.isArray(data["images"]) ? (data["images"] as string[]) : [];
-      live.push({
-        id: `RF-C-${id.slice(0, 8).toUpperCase()}`,
-        name: String(data["title"] ?? data["assetName"] ?? id),
-        slug: String(data["slug"] ?? id),
+      out.push({
+        // Firestore's real document ID: every mutation (delete/cancel/draw)
+        // must target this, not the slug field.
+        docId,
+        id: `RF-C-${docId.slice(0, 8).toUpperCase()}`,
+        name: String(data["title"] ?? data["assetName"] ?? docId),
+        slug,
         category: String(data["category"] ?? "General"),
         status: mapped,
         entriesSold: Number(data["entriesSold"] ?? 0),
@@ -458,11 +395,22 @@ export function AdminCompetitionsPage() {
         image: String(data["image"] ?? images[0] ?? IMAGES[i % IMAGES.length]!),
         partner: String(data["partner"] ?? "Raffila"),
         drawDate: String(data["drawDate"] ?? ""),
+        condition: (["new", "likenew", "refurbished", "used"] as const).find(
+          (c) => c === data["condition"],
+        ),
+        marketValue: Number(data["marketValueKobo"] ?? data["prizeValueKobo"] ?? 0) || undefined,
+        description: String(data["description"] ?? ""),
+        featured: data["featured"] === true,
+        publicResults: data["publicResults"] === true,
+        startDate: String(data["startDate"] ?? ""),
+        drawDateIso: String(data["drawDate"] ?? ""),
+        liveDelay: Number(data["liveDelay"] ?? 60),
+        maxPerUser: Number(data["maxPerUser"] ?? 200),
         entriesPaused: data["entriesPaused"] === true,
         entriesClosed: data["entriesClosed"] === true,
       });
     });
-    return live.filter(Boolean) as MockComp[];
+    return out;
   }, [dbCompData, drawRecords, deletedSlugs]);
 
   const drawReadyCount = useMemo(
@@ -470,14 +418,18 @@ export function AdminCompetitionsPage() {
     [mergedComps],
   );
 
-  const statusMap: Record<string, CompStatus | "all"> = {
-    live: "LIVE",
-    scheduled: "SCHEDULED",
-    draft: "DRAFT",
-    "draw-ready": "DRAW_READY",
-    completed: "COMPLETED",
-    all: "all",
-  };
+  const statusMap = useMemo(
+    () =>
+      ({
+        live: "LIVE",
+        scheduled: "SCHEDULED",
+        draft: "DRAFT",
+        "draw-ready": "DRAW_READY",
+        completed: "COMPLETED",
+        all: "all",
+      }) as Record<string, CompStatus | "all">,
+    [],
+  );
 
   const filtered = useMemo(() => {
     const list =
@@ -497,7 +449,7 @@ export function AdminCompetitionsPage() {
       if (st === "all") return true;
       return c.status === st;
     });
-  }, [tab, search, mergedComps]);
+  }, [tab, search, mergedComps, statusMap]);
 
   const [liveTicketRows, setLiveTicketRows] = useState<any[]>([]);
   const [liveTicketsLoading, setLiveTicketsLoading] = useState(false);
@@ -516,7 +468,7 @@ export function AdminCompetitionsPage() {
         // Real ticket records, grouped by purchase (entryId) for the table.
         const snap = await getDocs(
           query(
-            collection(db, "competitions", comp.slug, "tickets"),
+            collection(db, "competitions", comp.docId, "tickets"),
             orderBy("purchasedAt", "desc"),
             limit(500),
           ),
@@ -619,7 +571,7 @@ export function AdminCompetitionsPage() {
     setForm(compToForm(comp));
     setStepIdx(0);
     setSubmitted(false);
-    setEditId(comp.id);
+    setEditId(comp.docId);
     setModalMode("edit");
   }
   function closeModal() {
@@ -679,10 +631,10 @@ export function AdminCompetitionsPage() {
       };
       if (modalMode === "edit") {
         // Edit must never reset sales counters or creation metadata.
-        // setDoc+merge (not updateDoc): mock-only rows like "jos-land-plot"
-        // have no Firestore doc yet, and updateDoc throws
-        // "No document to update" for those. Merge preserves existing fields.
-        await setDoc(doc(db, "competitions", compId), payload, { merge: true });
+        // setDoc+merge (not updateDoc) preserves existing fields.
+        // Writes target the real document ID (editId) — writing to the slug
+        // would create a second phantom document whenever they differ.
+        await setDoc(doc(db, "competitions", editId || compId), payload, { merge: true });
       } else {
         await setDoc(doc(db, "competitions", compId), {
           ...payload,
@@ -729,7 +681,7 @@ export function AdminCompetitionsPage() {
     try {
       const existing = await getDoc(doc(db, "competitions", slug));
       if (existing.exists()) slug = `${base}-${Date.now().toString(36)}`;
-      const src = await getDoc(doc(db, "competitions", comp.slug));
+      const src = await getDoc(doc(db, "competitions", comp.docId));
       const srcData = src.exists() ? (src.data() as Record<string, unknown>) : {};
       const nowIso = new Date().toISOString();
       await setDoc(doc(db, "competitions", slug), {
@@ -771,7 +723,7 @@ export function AdminCompetitionsPage() {
    * Used for draw simulations: reopen → seed/buy tickets → set close time → draw. */
   async function reopenCompetition(comp: MockComp) {
     try {
-      await updateDoc(doc(db, "competitions", comp.slug), {
+      await updateDoc(doc(db, "competitions", comp.docId), {
         status: "LIVE",
         entriesClosed: false,
         entriesPaused: false,
@@ -800,7 +752,7 @@ export function AdminCompetitionsPage() {
   async function togglePauseCompetition(comp: MockComp) {
     const pausing = !comp.entriesPaused;
     try {
-      await updateDoc(doc(db, "competitions", comp.slug), {
+      await updateDoc(doc(db, "competitions", comp.docId), {
         entriesPaused: pausing,
         updatedAt: serverTimestamp(),
       });
@@ -859,7 +811,7 @@ export function AdminCompetitionsPage() {
     const target = cancelTarget;
     setCancelling(true);
     try {
-      await updateDoc(doc(db, "competitions", target.slug), {
+      await updateDoc(doc(db, "competitions", target.docId), {
         status: "CANCELLED",
         entriesClosed: true,
         updatedAt: serverTimestamp(),
@@ -978,8 +930,11 @@ export function AdminCompetitionsPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await deleteDoc(doc(db, "competitions", deleteTarget.slug));
-      setDeletedSlugs((prev) => new Set(prev).add(deleteTarget.slug));
+      // Target the real document ID. Using the slug field silently no-ops
+      // whenever a doc's ID differs from its slug (and deleteDoc on a missing
+      // doc reports success), which is what made deletes look like they worked.
+      await deleteDoc(doc(db, "competitions", deleteTarget.docId));
+      setDeletedSlugs((prev) => new Set(prev).add(deleteTarget.docId));
       await logActivity({
         eventType: "COMPETITION_DELETE",
         targetType: "competition",
@@ -996,6 +951,9 @@ export function AdminCompetitionsPage() {
         description: `${deleteTarget.name} has been permanently removed.`,
       });
       setDeleteTarget(null);
+      // Re-read from Firestore so the list reflects DB truth immediately
+      // (not just the optimistic local hide, and not on next reload).
+      await refreshDrawState();
     } catch (err) {
       toast.error("Failed to delete competition", {
         description: err instanceof Error ? err.message : "Unknown error",

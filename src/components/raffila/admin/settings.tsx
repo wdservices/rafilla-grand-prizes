@@ -385,12 +385,17 @@ export function AdminSettingsPage() {
     };
   }, []);
 
-  const saveFeatures = async () => {
+  /** Persist a feature-flag patch. Shared by the toggle handler and the
+   *  explicit Save button so both write through the same path. */
+  const persistFeatures = async (
+    next: Record<string, boolean>,
+    opts: { silent?: boolean } = {},
+  ) => {
     setFeaturesSaving(true);
     try {
       await setDoc(
         doc(db, "platformSettings", PLATFORM_CONFIG_DOC_ID),
-        { features, updatedAt: serverTimestamp() },
+        { features: next, updatedAt: serverTimestamp() },
         { merge: true },
       );
       await logActivity({
@@ -398,15 +403,51 @@ export function AdminSettingsPage() {
         targetType: "platformSettings",
         targetId: PLATFORM_CONFIG_DOC_ID,
         summary: "Updated feature availability",
-        details: { features },
+        details: { features: next },
       });
-      toast.success("Feature availability saved", {
-        description: "User dashboard navigation updates immediately.",
-      });
+      if (!opts.silent) {
+        toast.success("Feature availability saved", {
+          description: "User dashboard navigation updates immediately.",
+        });
+      }
+      return true;
     } catch (err: any) {
       toast.error("Save failed", { description: err?.message || String(err) });
+      // Re-read the truth so the UI can't keep showing an unsaved state.
+      try {
+        const snap = await getDoc(doc(db, "platformSettings", PLATFORM_CONFIG_DOC_ID));
+        const stored =
+          ((snap.data() as Record<string, unknown> | undefined)?.["features"] as
+            Record<string, unknown> | undefined) ?? {};
+        const rolled: Record<string, boolean> = { ...DEFAULT_FEATURES };
+        for (const { key } of FEATURE_META) {
+          if (typeof stored[key] === "boolean") rolled[key] = stored[key] as boolean;
+        }
+        setFeatures(rolled);
+      } catch {
+        /* keep local state if the re-read also fails */
+      }
+      return false;
     } finally {
       setFeaturesSaving(false);
+    }
+  };
+
+  const saveFeatures = () => persistFeatures(features);
+
+  /** Toggling a switch persists immediately — the switch must never claim to
+   *  be off while Firestore still says on. */
+  const toggleFeature = async (key: string, value: boolean) => {
+    const next = { ...features, [key]: value };
+    setFeatures(next);
+    const ok = await persistFeatures(next, { silent: true });
+    if (ok) {
+      const label = FEATURE_META.find((f) => f.key === key)?.label ?? key;
+      toast.success(`${label} ${value ? "enabled" : "disabled"}`, {
+        description: value
+          ? "Visible on the user dashboard again."
+          : "Hidden from the user dashboard immediately.",
+      });
     }
   };
 
@@ -678,23 +719,22 @@ export function AdminSettingsPage() {
                   </div>
                   <Switch
                     checked={features[f.key] !== false}
-                    onCheckedChange={(v) => setFeatures((prev) => ({ ...prev, [f.key]: !!v }))}
+                    disabled={featuresSaving}
+                    onCheckedChange={(v) => void toggleFeature(f.key, !!v)}
                   />
                 </div>
               ))}
-              <Button
-                variant="primary"
-                onClick={() => void saveFeatures()}
-                disabled={featuresSaving}
-                className="h-11 rounded-full px-6 font-bold"
-              >
+              <p className="flex items-center gap-2 text-[11px] font-bold text-ink/50">
                 {featuresSaving ? (
-                  <RefreshCw className="mr-1.5 size-4 animate-spin" />
+                  <>
+                    <RefreshCw className="size-3.5 animate-spin" /> Saving…
+                  </>
                 ) : (
-                  <CheckCircle2 className="mr-1.5 size-4" />
+                  <>
+                    <CheckCircle2 className="size-3.5 text-mint" /> Changes save automatically.
+                  </>
                 )}
-                {featuresSaving ? "Saving…" : "Save feature availability"}
-              </Button>
+              </p>
             </div>
           )}
         </Section>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { fetchFeatureFlags, NAV_FEATURE_KEY } from "@/lib/platform-config";
 import {
@@ -163,19 +163,22 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
     };
   }, []);
 
-  const gateItems = (items: NavItem[]) =>
-    items.filter((item) => {
-      const key = NAV_FEATURE_KEY[item.label];
-      if (!key) return true;
-      if (!features) return true;
-      return features[key] !== false;
-    });
-  const visibleItems = useMemo(() => gateItems(navItems), [features]);
-  const visibleBottomItems = useMemo(() => gateItems(bottomNavItems), [features]);
+  const gateItems = useCallback(
+    (items: NavItem[]) =>
+      items.filter((item) => {
+        const key = NAV_FEATURE_KEY[item.label];
+        if (!key) return true;
+        if (!features) return true;
+        return features[key] !== false;
+      }),
+    [features],
+  );
+  const visibleItems = useMemo(() => gateItems(navItems), [gateItems]);
+  const visibleBottomItems = useMemo(() => gateItems(bottomNavItems), [gateItems]);
 
   const monogram = user?.avatarMonogram ?? (user ? initialsOf(user) : "U");
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Raffila user";
-  const email = user?.email ?? "user@raffila.com";
+  const email = user?.email ?? "";
   const verified = user?.verified ?? false;
 
   const runLogout = () => {

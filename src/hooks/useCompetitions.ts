@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 
-import { competitions as mockCompetitions, type Competition } from "@/lib/raffila-data";
+import type { Competition } from "@/lib/raffila-data";
 import { getLiveCompetitions } from "@/lib/competitions-feed";
 
 /**
- * Competitions everywhere in the app come from here: Firestore documents
- * first (so admin-published competitions appear), mock catalogue filling
- * gaps. Pass includeDrafts for the admin management view.
+ * Competitions everywhere in the app come from here, and Firestore is the only
+ * source: the list starts empty so nothing fictional ever flashes on screen,
+ * and deleted documents cannot come back on refresh. `live` is false when the
+ * read failed. Pass includeDrafts for the admin management view.
  */
 export function useCompetitions(includeDrafts = false) {
-  const [competitions, setCompetitions] = useState<Competition[]>(mockCompetitions);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [loading, setLoading] = useState(true);
   const [live, setLive] = useState(false);
 
@@ -29,7 +30,6 @@ export function useCompetitions(includeDrafts = false) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [includeDrafts]);
 
   return { competitions, loading, live };

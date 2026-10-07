@@ -1,6 +1,6 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
 import { CompetitionDetailPage } from "@/components/raffila/public-pages";
-import { formatNaira, getCompetition } from "@/lib/raffila-data";
+import { formatNaira } from "@/lib/raffila-data";
 
 const canonicalBase = "https://raffila.com";
 const ogImageDefault = "https://raffila.com/og-default.png";
@@ -9,19 +9,30 @@ export const Route = createFileRoute("/competitions/$slug")({
   head: ({ params }) => {
     const pathname = `/competitions/${params.slug}`;
     const canonical = `${canonicalBase}${pathname}`;
-    const competition = getCompetition(params.slug);
-    const priceStr = competition ? formatNaira(competition.entryPrice) : "";
-    const title = competition
-      ? `${competition.title} — Win ${competition.make || ""} ${competition.model || ""} for ${priceStr} · Raffila`
-          .replace(/\s+/g, " ")
-          .trim()
-      : `Competition: ${params.slug} — Raffila`;
-    const description = competition
-      ? `${competition.description.slice(0, 135)} Entry ${formatNaira(competition.entryPrice)}. Prize value ${formatNaira(competition.prizeValueKobo)}. Live draw ${competition.drawDate}. raffila.com`
-      : `Prize draw competition ${params.slug} — transparent, verified draws at Raffila. raffila.com`;
-    const ogImage = competition
-      ? `https://raffila.com/og/competitions/${competition.slug}.png`
-      : ogImageDefault;
+    // Competition records live only in Firestore, which isn't reachable during
+    // head() resolution (it runs before/without the client SDK). Meta is
+    // therefore derived from the slug; the page fetches the live record and
+    // fills in real pricing/prize details in the UI.
+    const label = params.slug
+      .split("-")
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+    const title = `${label} — Win with Raffila`;
+    const description = `Enter ${label} on Raffila for a verified, transparent prize draw. Secure entries, published results. raffila.com`;
+    const ogImage = ogImageDefault;
+    const competition = undefined as
+      | {
+          title: string;
+          description: string;
+          entryPrice: number;
+          prizeValueKobo: number;
+          daysUntilClose: number;
+          make?: string;
+          model?: string;
+          drawDate?: string;
+        }
+      | undefined;
 
     const eventJsonLd = JSON.stringify({
       "@context": "https://schema.org",

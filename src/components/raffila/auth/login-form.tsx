@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Eye, EyeOff, Loader2, ShieldCheck, User, Store, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DEFAULT_CREDENTIALS, type UserRole } from "@/lib/auth-store";
+import type { UserRole } from "@/lib/auth-store";
 import { useAuthActions } from "@/hooks/useAuthSession";
 import { cn } from "@/lib/utils";
 
@@ -53,12 +53,11 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState<UserRole | null>(null);
   const [success, setSuccess] = useState(false);
   const [successRole, setSuccessRole] = useState<UserRole | null>(null);
   const [errors, setErrors] = useState<AuthErrors>({});
 
-  const { signIn, signInWithGoogle, signInAsDemo } = useAuthActions();
+  const { signIn, signInWithGoogle } = useAuthActions();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -79,12 +78,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
   function validate() {
     const next: AuthErrors = {};
     if (!email.trim()) next.email = "Email is required";
-    else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) &&
-      email.trim() !== "admin" &&
-      email.trim() !== "user" &&
-      email.trim() !== "partner"
-    ) {
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       next.email = "Enter a valid email address";
     }
     if (!password) next.password = "Password is required";
@@ -114,33 +108,6 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
       });
       setSuccessRole(res.user.role);
       setSuccess(true);
-    }
-  }
-
-  async function handleDemoSignIn(role: UserRole) {
-    setDemoLoading(role);
-    setErrors({});
-    try {
-      const cred = DEFAULT_CREDENTIALS[role];
-      setEmail(cred.email);
-      setPassword(cred.password);
-      const res = signInAsDemo(role);
-      if (res.ok) {
-        toast.success(`Signed in as ${role}!`, {
-          description:
-            role === "admin"
-              ? "Opening Admin Dashboard..."
-              : role === "partner"
-                ? "Opening Partner Portal..."
-                : "Opening Player Dashboard...",
-        });
-        setSuccessRole(role);
-        setSuccess(true);
-      } else {
-        toast.error("Demo login failed", { description: res.message });
-      }
-    } finally {
-      setDemoLoading(null);
     }
   }
 
@@ -275,7 +242,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
           variant="primary"
           size="lg"
           className="w-full h-12 rounded-xl text-base shadow-sm cursor-pointer hover:brightness-105 active:scale-[0.98] transition-all"
-          disabled={loading || demoLoading !== null}
+          disabled={loading}
         >
           {loading ? <Loader2 className="size-4.5 animate-spin" /> : null}
           {loading ? "Signing in..." : "Sign in"}
@@ -297,7 +264,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
           variant="outline"
           size="lg"
           className="w-full h-12 rounded-xl border-ink/15 hover:border-ink/25 hover:bg-cream/30 cursor-pointer active:scale-[0.98] transition-all"
-          disabled={loading || demoLoading !== null}
+          disabled={loading}
           onClick={onGoogleSignIn}
         >
           <GoogleIcon className="size-4.5" />
@@ -321,71 +288,6 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
           </Link>
         </p>
       </form>
-
-      {/* Quick Demo Sign-In Box */}
-      <div className="rounded-2xl border border-ink/10 bg-cream/30 p-4">
-        <div className="flex items-center gap-1.5 mb-2.5">
-          <Sparkles className="size-3.5 text-coral" />
-          <span className="text-xs font-extrabold uppercase tracking-wider text-ink/65">
-            1-Click Demo Accounts
-          </span>
-        </div>
-        <p className="text-[11px] text-ink/50 mb-3">
-          Explore Raffila instantly with preconfigured accounts:
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            disabled={loading || demoLoading !== null}
-            onClick={() => handleDemoSignIn("user")}
-            className="group flex flex-col items-center justify-center rounded-xl border border-ink/10 bg-white p-2.5 text-center transition-all duration-150 hover:border-coral hover:bg-coral/5 hover:shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
-          >
-            <div className="mb-1 rounded-lg bg-sky/10 p-1.5 text-sky group-hover:bg-coral/10 group-hover:text-coral transition-colors">
-              {demoLoading === "user" ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <User className="size-3.5" />
-              )}
-            </div>
-            <span className="text-xs font-extrabold text-ink">Player</span>
-            <span className="text-[10px] text-ink/40">Demo user</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={loading || demoLoading !== null}
-            onClick={() => handleDemoSignIn("partner")}
-            className="group flex flex-col items-center justify-center rounded-xl border border-ink/10 bg-white p-2.5 text-center transition-all duration-150 hover:border-coral hover:bg-coral/5 hover:shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
-          >
-            <div className="mb-1 rounded-lg bg-mint/20 p-1.5 text-mint group-hover:bg-coral/10 group-hover:text-coral transition-colors">
-              {demoLoading === "partner" ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Store className="size-3.5" />
-              )}
-            </div>
-            <span className="text-xs font-extrabold text-ink">Partner</span>
-            <span className="text-[10px] text-ink/40">ABC Motors</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={loading || demoLoading !== null}
-            onClick={() => handleDemoSignIn("admin")}
-            className="group flex flex-col items-center justify-center rounded-xl border border-coral/30 bg-coral/5 p-2.5 text-center transition-all duration-150 hover:border-coral hover:bg-coral/10 hover:shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
-          >
-            <div className="mb-1 rounded-lg bg-coral/15 p-1.5 text-coral group-hover:scale-110 transition-transform">
-              {demoLoading === "admin" ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <ShieldCheck className="size-3.5" />
-              )}
-            </div>
-            <span className="text-xs font-extrabold text-ink">Admin</span>
-            <span className="text-[10px] text-ink/40">Superadmin</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { competitions } from "@/lib/raffila-data";
 
 const canonicalBase = "https://raffila.com";
 const ogImageDefault = "https://raffila.com/og-default.png";
@@ -12,19 +11,15 @@ export const Route = createFileRoute("/competitions")({
     const description =
       "Browse all live prize competitions on Raffila — cars, homes, electronics, jewelry, business grants, travel and more. Transparent entry prices, fair verified draws. raffila.com";
 
-    const itemList = competitions.slice(0, 32).map((c, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      url: `${canonicalBase}/competitions/${c.slug}`,
-      name: c.title,
-    }));
-    const itemListJsonLd = JSON.stringify({
+    // Competition URLs are no longer listed here: they live only in Firestore
+    // and cannot be read during head() resolution. The /sitemap/xml route is
+    // the single source of competition URLs.
+    const collectionJsonLd = JSON.stringify({
       "@context": "https://schema.org",
-      "@type": "ItemList",
-      itemListElement: itemList,
-      numberOfItems: itemList.length,
+      "@type": "CollectionPage",
       name: "Raffila Live Competitions",
       description: "Live and upcoming prize competitions on Raffila",
+      url: canonical,
     });
 
     return {
@@ -49,7 +44,7 @@ export const Route = createFileRoute("/competitions")({
         { name: "twitter:creator", content: "@raffilang" },
         {
           "data-head-children": true,
-          __html: `<script type="application/ld+json">${itemListJsonLd}</script>`,
+          __html: `<script type="application/ld+json">${collectionJsonLd}</script>`,
         } as any,
       ],
       links: [

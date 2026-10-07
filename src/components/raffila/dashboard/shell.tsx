@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useAuthActions } from "@/hooks/useAuthSession";
+import { fetchFeatureFlags, NAV_FEATURE_KEY } from "@/lib/platform-config";
 import {
   LayoutDashboard,
   Trophy,
@@ -120,6 +121,33 @@ export function DashboardShell({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { signOut } = useAuthActions();
+  const [features, setFeatures] = useState<Record<string, boolean> | null>(null);
+
+  // Same kill-switch as DashboardAppShell: Admin → Settings → Feature availability.
+  useEffect(() => {
+    let cancelled = false;
+    fetchFeatureFlags()
+      .then((f) => {
+        if (!cancelled) setFeatures(f);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const gateItems = useCallback(
+    (items: NavItem[]) =>
+      items.filter((item) => {
+        const key = NAV_FEATURE_KEY[item.label];
+        if (!key) return true;
+        if (!features) return true;
+        return features[key] !== false;
+      }),
+    [features],
+  );
+  const visibleDesktopItems = useMemo(() => gateItems(desktopNavItems), [gateItems]);
+  const visibleBottomItems = useMemo(() => gateItems(bottomNavItems), [gateItems]);
 
   const handleLogout = () => signOut({ to: "/auth" });
 
@@ -169,7 +197,7 @@ export function DashboardShell({
         </div>
 
         <nav className="flex-1 space-y-1 px-3">
-          {desktopNavItems.map((item) => {
+          {visibleDesktopItems.map((item) => {
             const isActive = activeKey === item.key;
             return (
               <Link
@@ -274,7 +302,7 @@ export function DashboardShell({
         </div>
 
         <nav className="space-y-1 px-3 pb-4">
-          {desktopNavItems.map((item) => {
+          {visibleDesktopItems.map((item) => {
             const isActive = activeKey === item.key;
             return (
               <Link
@@ -369,7 +397,7 @@ export function DashboardShell({
 
       <nav className="fixed inset-x-0 bottom-3 z-40 mx-auto w-[calc(100%-24px)] max-w-md rounded-[28px] bg-white ring-1 ring-ink/5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)] lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5 px-1.5 pb-1.5 pt-2">
-          {bottomNavItems.map((item) => {
+          {visibleBottomItems.map((item) => {
             const isActive = activeKey === item.key;
             return (
               <Link
