@@ -177,14 +177,9 @@ export function CartDrawer() {
           via: "referral",
         });
         clearCart();
-        const { logActivity } = await import("@/lib/activity-log");
-        await logActivity({
-          eventType: "TICKET_PURCHASE",
-          targetType: "cart_order",
-          targetId: res.reference,
-          summary: `Purchased ${res.items.reduce((n, i) => n + i.quantity, 0)} ticket(s) with referral earnings`,
-          details: { items: res.items, reference: res.reference },
-        }).catch(() => {});
+        // Audit logging already happens server-side in issueOrderTickets (it
+        // holds the admin credential). Logging again here produced two
+        // TICKET_PURCHASE rows sharing one reference.
       } else {
         setError(res.gatewayResponse || "Referral payment failed.");
       }

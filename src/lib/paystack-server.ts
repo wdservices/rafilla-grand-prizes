@@ -397,14 +397,26 @@ async function issueOrderTickets(
 
   try {
     const via = kind === "paystack" ? "Paystack" : "referral earnings";
+    const totalTickets = items.reduce((n, i) => n + i.quantity, 0);
+    // Name the competitions in the summary so the audit table is searchable by
+    // competition without opening the raw details blob.
+    const names = items.map((i) => i.competitionTitle).join(", ");
+    const nowIso = new Date().toISOString();
+    // Written directly with the server credential (the client-side logActivity
+    // uses the user's session, which cannot see every purchase). Fields the
+    // admin UI reads must all be present or the row renders as "Unknown"/"Low".
     await adminDb.collection("activityLogs").add({
       eventType: "TICKET_PURCHASE",
+      riskLevel: "low",
       actorId: uid,
       actorEmail: email,
+      actorName: userName || email || uid,
+      actorRole: "user",
       targetType: "cart_order",
       targetId: reference,
-      summary: `Purchased ${items.reduce((n, i) => n + i.quantity, 0)} ticket(s) across ${items.length} competition(s) via ${via}`,
-      details: { items, reference },
+      summary: `Purchased ${totalTickets} ticket(s) for ${names || items.length + " competition(s)"} via ${via}`,
+      details: { items, reference, totalTickets, amountKobo: chargeKobo },
+      clientAt: nowIso,
       createdAt: now,
     });
   } catch {

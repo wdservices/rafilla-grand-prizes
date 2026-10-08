@@ -324,6 +324,57 @@ button {
   }
 }
 
+/*
+ * Date/time inputs.
+ *
+ * Two problems this solves:
+ *  1. The native picker icon sat flush against the field edge and was clipped by
+ *     the field's padding, so the only way to open the picker was to guess where
+ *     the icon was.
+ *  2. Clicking anywhere except that tiny icon did nothing — it just selected a
+ *     text segment, so the field looked read-only.
+ *
+ * The visible icon is now drawn by the component (app styling). The native
+ * indicator is kept as a transparent full-height strip over it, which preserves
+ * the native fallback on browsers without showPicker() support.
+ */
+@utility datetime-field {
+  /* Room for the icon so the value text can never run underneath it. */
+  padding-right: 3rem;
+  cursor: pointer;
+
+  &::-webkit-datetime-edit {
+    cursor: pointer;
+  }
+
+  /* Transparent but still clickable: covers the icon area so browsers without
+     showPicker() can still open the picker from the right-hand side. */
+  &::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset-block: 0;
+    right: 0;
+    width: 3rem;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in oklch, var(--color-coral) 55%, transparent);
+    outline-offset: 1px;
+  }
+
+  /* Whole field reacts on hover so it reads as one button. */
+  &:hover {
+    background-color: color-mix(in oklch, var(--color-paper) 70%, white);
+    box-shadow: 0 0 0 1px color-mix(in oklch, var(--color-ink) 22%, transparent);
+  }
+}
+
 /* Scrollbar hide utility for filter bars */
 @utility scrollbar-none {
   scrollbar-width: none;

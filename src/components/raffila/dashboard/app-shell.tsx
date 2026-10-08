@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CartButton } from "@/components/raffila/cart/cart-button";
 import { cn } from "@/lib/utils";
 import { useAuthActions, useAuthSession, initialsOf } from "@/hooks/useAuthSession";
 
@@ -418,6 +419,7 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
           </Link>
         </div>
         <div className="flex items-center gap-2">
+          <CartButton />
           <Button
             variant="ghost"
             size="sm"
@@ -439,6 +441,10 @@ export function DashboardAppShell({ children, title, breadcrumbs }: Props) {
 
       <main className="min-w-0 lg:ml-[260px] min-h-screen overflow-x-hidden px-4 py-6 lg:px-8 lg:py-8 pb-28">
         <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6">
+          {/* Desktop counterpart of the mobile header's cart button. */}
+          <div className="hidden justify-end lg:flex">
+            <CartButton />
+          </div>
           <div className="flex justify-end">
             <Button
               variant="outline"

@@ -3,6 +3,7 @@ export * from "./overview";
 export * from "./users";
 export * from "./partners";
 export * from "./competitions";
+export * from "./entries";
 export * from "./payouts";
 export * from "./reports";
 export * from "./config";

@@ -3,6 +3,7 @@ import {
   Users,
   Handshake,
   Trophy,
+  Ticket,
   Banknote,
   BarChart3,
   Settings2,
@@ -40,6 +41,7 @@ export type AdminNavKey =
   | "users"
   | "partners"
   | "competitions"
+  | "entries"
   | "payouts"
   | "reports"
   | "config"
@@ -57,6 +59,7 @@ const OPS_GROUP: Array<{
   { key: "users", label: "Users", icon: Users },
   { key: "partners", label: "Partners", icon: Handshake },
   { key: "competitions", label: "Competitions", icon: Trophy },
+  { key: "entries", label: "Entries", icon: Ticket },
   { key: "payouts", label: "Payouts", icon: Banknote },
   { key: "reports", label: "Reports", icon: BarChart3 },
 ];
@@ -78,6 +81,7 @@ const navRoute: Record<AdminNavKey, string> = {
   users: "/admin/users",
   partners: "/admin/partners",
   competitions: "/admin/competitions",
+  entries: "/admin/entries",
   payouts: "/admin/payouts",
   reports: "/admin/reports",
   config: "/admin/config",

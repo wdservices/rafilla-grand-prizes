@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { lagosChartLabels, lagosDateShort } from "@/lib/format";
 import { collection, getDocs, limit, query, where } from "firebase/firestore";
+import { fetchAllEntries } from "@/lib/admin-entries";
 import {
   Users,
   Trophy,
@@ -260,6 +261,233 @@ function mapCompStatus(raw: unknown): CompStatus {
   return "SCHEDULED";
 }
 
+/** Revenue-shaped view of one purchase, for the breakdown panel. */
+type EntryRevenueFact = {
+  competitionSlug: string;
+  competitionTitle: string;
+  quantity: number;
+  amountKobo: number;
+  isReferral: boolean;
+  createdAtMs: number;
+};
+
+type CompFact = {
+  slug: string;
+  title: string;
+  entriesSold: number;
+  totalEntries: number;
+  entryPriceKobo: number;
+};
+
+/**
+ * Per-competition revenue. The overall REVENUE card answers "how much did we
+ * take"; this answers "which competition took it". Sums are derived from the
+ * entry records rather than a stored counter so they can never drift from the
+ * purchases they represent.
+ */
+function CompetitionRevenue({
+  entries,
+  competitions,
+}: {
+  entries: EntryRevenueFact[];
+  competitions: CompFact[];
+}) {
+  const [selected, setSelected] = useState<string>("all");
+
+  const rows = useMemo(() => {
+    const bySlug = new Map<string, { tickets: number; revenueKobo: number; buyers: number }>();
+    const bump = (slug: string, revenueKobo: number) => {
+      const cur = bySlug.get(slug) ?? { tickets: 0, revenueKobo: 0, buyers: 0 };
+      cur.revenueKobo += revenueKobo;
+      bySlug.set(slug, cur);
+    };
+    for (const e of entries) {
+      const slug = e.competitionSlug || "unknown";
+      const cur = bySlug.get(slug) ?? { tickets: 0, revenueKobo: 0, buyers: 0 };
+      cur.tickets += e.quantity;
+      // Referral orders are paid from referral balance, not cash.
+      bump(slug, e.isReferral ? 0 : e.amountKobo);
+      bySlug.set(slug, cur);
+    }
+    return competitions
+      .map((c) => ({
+        ...c,
+        tickets: bySlug.get(c.slug)?.tickets ?? 0,
+        revenueKobo: bySlug.get(c.slug)?.revenueKobo ?? 0,
+      }))
+      .sort((a, b) => b.revenueKobo - a.revenueKobo || b.tickets - a.tickets);
+  }, [entries, competitions]);
+
+  const totals = useMemo(
+    () =>
+      rows.reduce(
+        (acc, r) => ({
+          tickets: acc.tickets + r.tickets,
+          revenueKobo: acc.revenueKobo + r.revenueKobo,
+        }),
+        { tickets: 0, revenueKobo: 0 },
+      ),
+    [rows],
+  );
+
+  const focus = selected === "all" ? null : (rows.find((r) => r.slug === selected) ?? null);
+  const shownTickets = focus ? focus.tickets : totals.tickets;
+  const shownRevenue = focus ? focus.revenueKobo : totals.revenueKobo;
+  const shownEntries = focus?.totalEntries ?? 0;
+  const shownSold = focus?.entriesSold ?? 0;
+
+  return (
+    <section className="mt-6">
+      <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                Revenue by competition
+              </p>
+              <h3 className="mt-1 font-display text-xl font-extrabold text-ink">
+                Where the money came from
+              </h3>
+            </div>
+            <select
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              aria-label="Select a competition to break down revenue"
+              className="h-10 max-w-[260px] rounded-full border-0 bg-lilac/20 px-4 text-xs font-extrabold text-ink ring-1 ring-ink/10 focus:ring-coral/60"
+            >
+              <option value="all">All competitions</option>
+              {rows.map((r) => (
+                <option key={r.slug} value={r.slug}>
+                  {r.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="rounded-2xl bg-white p-4 ring-1 ring-ink/5">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                Tickets sold
+              </p>
+              <p className="mt-1.5 font-display text-2xl font-extrabold text-ink">
+                {shownTickets.toLocaleString("en-NG")}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white p-4 ring-1 ring-ink/5">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                Revenue generated
+              </p>
+              <p className="mt-1.5 font-display text-2xl font-extrabold text-ink">
+                {formatNaira(shownRevenue)}
+              </p>
+            </div>
+            {focus ? (
+              <>
+                <div className="rounded-2xl bg-white p-4 ring-1 ring-ink/5">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                    Entry price
+                  </p>
+                  <p className="mt-1.5 font-display text-2xl font-extrabold text-ink">
+                    {formatNaira(focus.entryPriceKobo)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white p-4 ring-1 ring-ink/5">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                    Entries remaining
+                  </p>
+                  <p className="mt-1.5 font-display text-2xl font-extrabold text-ink">
+                    {Math.max(0, shownEntries - shownSold).toLocaleString("en-NG")}
+                  </p>
+                  <p className="mt-0.5 text-[10px] font-bold text-ink/40">
+                    of {shownEntries.toLocaleString("en-NG")}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="col-span-2 rounded-2xl bg-white p-4 ring-1 ring-ink/5">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                  Scope
+                </p>
+                <p className="mt-1.5 text-sm font-extrabold text-ink">
+                  All {rows.length} competition{rows.length === 1 ? "" : "s"}
+                </p>
+                <p className="mt-0.5 text-[11px] font-bold text-ink/45">
+                  Pick a competition above to see its own totals.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[560px] text-left">
+              <thead>
+                <tr className="border-b border-ink/5 text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
+                  <th className="py-2">Competition</th>
+                  <th className="py-2 text-right">Tickets</th>
+                  <th className="py-2 text-right">Revenue</th>
+                  <th className="py-2 text-right">Share</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center text-xs font-bold text-ink/45">
+                      No competitions yet.
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((r) => {
+                    const pct =
+                      totals.revenueKobo > 0
+                        ? Math.round((r.revenueKobo / totals.revenueKobo) * 100)
+                        : r.tickets > 0
+                          ? 0
+                          : 0;
+                    return (
+                      <tr
+                        key={r.slug}
+                        onClick={() => setSelected(r.slug)}
+                        className={cn(
+                          "cursor-pointer border-b border-ink/5 text-sm last:border-0 hover:bg-white",
+                          selected === r.slug && "bg-white",
+                        )}
+                      >
+                        <td className="py-2.5 pr-3">
+                          <p className="truncate font-extrabold text-ink">{r.title}</p>
+                          <p className="truncate text-[11px] font-bold text-ink/40">{r.slug}</p>
+                        </td>
+                        <td className="py-2.5 text-right font-display font-extrabold tabular-nums text-ink">
+                          {r.tickets.toLocaleString("en-NG")}
+                        </td>
+                        <td className="py-2.5 text-right font-extrabold tabular-nums text-ink">
+                          {formatNaira(r.revenueKobo)}
+                        </td>
+                        <td className="py-2.5 pl-3 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <div className="h-1.5 w-16 overflow-hidden rounded-full bg-ink/8">
+                              <div
+                                className="h-full rounded-full bg-coral"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="w-9 text-right text-[11px] font-extrabold tabular-nums text-ink/55">
+                              {pct}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
 function actionFor(status: CompStatus): string {
   switch (status) {
     case "LIVE":
@@ -310,6 +538,11 @@ export function AdminOverview() {
   const [lifecycle, setLifecycle] = useState<
     Array<{ name: string; pct: number; status: CompStatus; action: string }>
   >([]);
+  // Raw rows kept for the per-competition revenue breakdown below.
+  const [entryDocs, setEntryDocs] = useState<EntryRevenueFact[]>([]);
+  const [compRows, setCompRows] = useState<CompFact[]>([]);
+  // Never render "0 revenue" because a query silently failed — say so instead.
+  const [entryLoadError, setEntryLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -317,16 +550,13 @@ export function AdminOverview() {
       setLoading(true);
       setLoadError(null);
       try {
-        const [usersSnap, compsSnap, purchaseSnap, payoutSnap] = await Promise.all([
+        const [usersSnap, compsSnap, entryLoad, payoutSnap] = await Promise.all([
           getDocs(query(collection(db, "users"), limit(300))),
           getDocs(query(collection(db, "competitions"), limit(100))),
-          getDocs(
-            query(
-              collection(db, "activityLogs"),
-              where("eventType", "==", "TICKET_PURCHASE"),
-              limit(500),
-            ),
-          ),
+          // Per-user reads, NOT a collectionGroup query — that needs a
+          // collection-group index which is not auto-created, and a swallowed
+          // rejection rendered "0 tickets / ₦0" on this dashboard.
+          fetchAllEntries(),
           getDocs(query(collection(db, "payouts"), limit(100))).catch(() => null),
         ]);
         if (cancelled) return;
@@ -409,25 +639,49 @@ export function AdminOverview() {
           }),
         );
 
+        // Per-competition revenue panel inputs.
+        setCompRows(
+          comps.map((c) => ({
+            slug: c.id,
+            title: String(c.v["title"] ?? c.v["name"] ?? c.id),
+            entriesSold: Number(c.v["entriesSold"] ?? 0) || 0,
+            totalEntries: Number(c.v["totalEntries"] ?? 0) || 0,
+            entryPriceKobo: Number(c.v["entryPrice"] ?? 0) || 0,
+          })),
+        );
+        setEntryLoadError(entryLoad.error);
+        setEntryDocs(
+          entryLoad.entries.map((e) => ({
+            competitionSlug: e.competitionSlug,
+            competitionTitle: e.competitionTitle,
+            quantity: e.quantity,
+            amountKobo: e.amountKobo,
+            isReferral: !!e.referralReference,
+            createdAtMs: e.createdAtMs,
+          })),
+        );
+
         // Ticket purchases → 7d / MTD / 14-day chart
+        // Derived from the entry records, which carry the real `amountKobo`.
+        // Referral orders are paid from referral balance, not cash, so they
+        // count as tickets but not revenue.
         const tickets = Array(14).fill(0) as number[];
         const revenue = Array(14).fill(0) as number[];
         let count7 = 0;
         let rev7 = 0;
         let revM = 0;
-        purchaseSnap.docs.forEach((d) => {
-          const v = d.data() as Record<string, unknown>;
-          const ms = toMs(v["createdAt"]) || toMs(v["clientAt"]);
-          if (!ms) return;
-          const det = (v["details"] as Record<string, unknown>) ?? {};
-          const amt = Number(det["entryPriceKobo"] ?? det["amountKobo"] ?? 0) || 0;
+        entryLoad.entries.forEach((e) => {
+          const ms = e.createdAtMs;
+          const ticketQty = e.quantity;
+          if (!ms || ticketQty <= 0) return;
+          const amt = e.referralReference ? 0 : e.amountKobo;
           const dayIdx = Math.floor((now - ms) / dayMs);
           if (dayIdx >= 0 && dayIdx < 14) {
-            tickets[13 - dayIdx]! += 1;
+            tickets[13 - dayIdx]! += ticketQty;
             revenue[13 - dayIdx]! += amt;
           }
           if (ms >= weekAgo) {
-            count7++;
+            count7 += ticketQty;
             rev7 += amt;
           }
           if (ms >= monthStart.getTime()) revM += amt;
@@ -543,6 +797,17 @@ export function AdminOverview() {
           tone="mint"
         />
       </section>
+
+      {entryLoadError && (
+        <div className="mt-6 rounded-[22px] bg-coral/10 p-5 ring-1 ring-coral/30">
+          <p className="text-sm font-extrabold text-ink">Ticket data could not be loaded</p>
+          <p className="mt-1 text-xs font-bold text-ink/60">
+            Revenue and ticket counts below are unreliable until this is resolved: {entryLoadError}
+          </p>
+        </div>
+      )}
+
+      <CompetitionRevenue entries={entryDocs} competitions={compRows} />
 
       <section className="mt-6">
         <Card className="rounded-[28px] border-0 bg-paper p-0 ring-1 ring-ink/5 shadow-none">

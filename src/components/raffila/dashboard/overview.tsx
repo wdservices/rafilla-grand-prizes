@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Wallet, Users, Ticket, Trophy, Copy, Check, Clock } from "lucide-react";
+import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
 
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/raffila-data";
 import { lagosGreeting } from "@/lib/format";
-import { useCompetitions } from "@/hooks/useCompetitions";
+import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { fetchFeatureFlags } from "@/lib/platform-config";
+import { db } from "@/lib/firebase";
 
 type KpiProps = {
   label: string;
@@ -40,20 +42,47 @@ function KpiCard({ label, value, sub, icon, iconBg, right }: KpiProps) {
   );
 }
 
-const recentEntries: Array<{
-  id: string;
-  competition: string;
-  tickets: number;
-  drawDate: string;
-  status: "Entered" | "Won" | "Lost" | "Drawn";
-}> = [];
-
-const statusStyles: Record<(typeof recentEntries)[number]["status"], string> = {
+const statusStyles: Record<RecentEntry["status"], string> = {
   Entered: "bg-mint/30 text-ink",
   Drawn: "bg-sky/20 text-ink",
   Won: "bg-lemon/40 text-ink",
   Lost: "bg-ink/10 text-ink/70",
 };
+
+type RecentEntry = {
+  id: string;
+  competition: string;
+  tickets: number;
+  drawDate: string;
+  status: "Entered" | "Won" | "Lost" | "Drawn";
+};
+
+/** Shape of users/{uid}/entries/{entryId}, written server-side on payment. */
+type RawEntry = {
+  entryId: string;
+  competitionSlug: string;
+  competitionTitle: string;
+  quantity: number;
+  amountKobo: number;
+  status: string;
+  createdAtMs: number;
+  isWinner: boolean;
+};
+
+function toMs(v: unknown): number {
+  try {
+    const x = v as { toDate?: () => Date };
+    if (x && typeof x.toDate === "function") return x.toDate().getTime();
+  } catch {
+    /* fall through */
+  }
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string" && v) {
+    const t = new Date(v).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }
+  return 0;
+}
 
 export function DashboardOverviewPage() {
   const { user } = useAuthSession();
@@ -82,6 +111,75 @@ export function DashboardOverviewPage() {
   };
 
   const greeting = lagosGreeting();
+  const uid = user?.id?.startsWith("firebase_") ? user.id.slice("firebase_".length) : user?.id;
+
+  // Live entries for this user, written server-side on confirmed payment.
+  // This KPI row was previously hardcoded to "0 / Across 0 competitions".
+  const [rawEntries, setRawEntries] = useState<RawEntry[]>([]);
+  useEffect(() => {
+    if (!uid) {
+      setRawEntries([]);
+      return;
+    }
+    const unsub = onSnapshot(
+      query(collection(db, "users", uid, "entries"), orderBy("createdAt", "desc"), limit(100)),
+      (snap) => {
+        setRawEntries(
+          snap.docs.map((d) => {
+            const v = d.data() as Record<string, unknown>;
+            return {
+              entryId: String(v["entryId"] ?? d.id),
+              competitionSlug: String(v["competitionSlug"] ?? ""),
+              competitionTitle: String(v["competitionTitle"] ?? v["competitionSlug"] ?? "—"),
+              quantity: Number(v["quantity"] ?? 0) || 0,
+              amountKobo: Number(v["amountKobo"] ?? 0) || 0,
+              status: String(v["status"] ?? "CONFIRMED").toUpperCase(),
+              createdAtMs: toMs(v["createdAt"]),
+              isWinner:
+                v["winnerTicketNumber"] != null ||
+                String(v["status"] ?? "").toUpperCase() === "WON",
+            };
+          }),
+        );
+      },
+      () => setRawEntries([]),
+    );
+    return () => unsub();
+  }, [uid]);
+
+  const totalTickets = useMemo(() => rawEntries.reduce((n, e) => n + e.quantity, 0), [rawEntries]);
+  const competitionsEntered = useMemo(
+    () => new Set(rawEntries.map((e) => e.competitionSlug).filter(Boolean)).size,
+    [rawEntries],
+  );
+  const totalSpentKobo = useMemo(
+    () => rawEntries.reduce((n, e) => n + e.amountKobo, 0),
+    [rawEntries],
+  );
+  const activeCompetitions = useMemo(
+    () => competitions.filter((c) => c.status === "LIVE" || c.status === "CLOSING SOON").length,
+    [competitions],
+  );
+  const prizesWon = useMemo(() => rawEntries.filter((e) => e.isWinner).length, [rawEntries]);
+  const wonValueKobo = useMemo(
+    () => rawEntries.filter((e) => e.isWinner).reduce((n, e) => n + e.amountKobo, 0),
+    [rawEntries],
+  );
+
+  const recentEntries: RecentEntry[] = useMemo(
+    () =>
+      rawEntries.slice(0, 5).map((e) => {
+        const comp = findCompetition(competitions, e.competitionSlug);
+        return {
+          id: e.entryId,
+          competition: e.competitionTitle,
+          tickets: e.quantity,
+          drawDate: comp?.drawDate || comp?.closes || "—",
+          status: e.isWinner ? "Won" : e.status === "REFUNDED" ? "Lost" : "Entered",
+        };
+      }),
+    [rawEntries, competitions],
+  );
 
   return (
     <DashboardAppShell
@@ -136,22 +234,22 @@ export function DashboardOverviewPage() {
         <div className="grid gap-4 grid-cols-1 xs:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label="Total entries"
-            value="0"
-            sub="Across 0 competitions"
+            value={totalTickets.toLocaleString("en-NG")}
+            sub={`Across ${competitionsEntered} competition${competitionsEntered === 1 ? "" : "s"}`}
             icon={<Ticket className="size-5 text-coral" />}
             iconBg="bg-coral/10"
           />
           <KpiCard
             label="Active competitions"
-            value="0"
+            value={activeCompetitions.toLocaleString("en-NG")}
             sub="Draws coming up"
             icon={<Trophy className="size-5 text-coral" />}
             iconBg="bg-coral/10"
           />
           <KpiCard
             label="Prizes won"
-            value="0"
-            sub={`${formatNaira(0)} value`}
+            value={prizesWon.toLocaleString("en-NG")}
+            sub={`${formatNaira(wonValueKobo)} value`}
             icon={<Trophy className="size-5 text-coral" />}
             iconBg="bg-coral/10"
           />

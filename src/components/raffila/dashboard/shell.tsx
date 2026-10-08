@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CartButton } from "@/components/raffila/cart/cart-button";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -367,6 +368,7 @@ export function DashboardShell({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <CartButton />
           <Button
             variant="ghost"
             size="sm"
@@ -382,6 +384,10 @@ export function DashboardShell({
       </header>
 
       <main className="min-w-0 overflow-x-hidden lg:ml-[268px] min-h-screen pt-5 pb-28 px-4 sm:px-6 lg:px-8 lg:pt-8">
+        {/* Desktop counterpart of the mobile header's cart button. */}
+        <div className="mb-4 hidden justify-end lg:flex">
+          <CartButton />
+        </div>
         <div className="mb-4 flex justify-end">
           <Button
             variant="outline"

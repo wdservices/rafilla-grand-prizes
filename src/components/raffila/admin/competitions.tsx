@@ -162,6 +162,58 @@ const PARTNERS = [
 ];
 const CATEGORIES = ["Auto", "Tech", "Property", "Jewelry", "Home", "Experience"];
 
+/**
+ * Date/time input whose ENTIRE surface opens the native picker. By default a
+ * `datetime-local` input only opens the calendar from its tiny trailing icon,
+ * so clicking anywhere else just selects a text segment. `showPicker()` makes
+ * the whole field a single, obvious target.
+ *
+ * Typing still works: Escape closes the picker and leaves the segments focused.
+ */
+export function DateTimeField({
+  value,
+  onChange,
+  label,
+  id,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  label: string;
+  id: string;
+}) {
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type="datetime-local"
+        aria-label={label}
+        title={`${label} — click anywhere to open the date and time picker`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onClick={(e) => {
+          const el = e.currentTarget;
+          // Not supported on every browser, and throws if the picker is already
+          // open — either way the field stays focusable and typeable.
+          if (typeof el.showPicker === "function") {
+            try {
+              el.showPicker();
+            } catch {
+              /* already showing / unsupported */
+            }
+          }
+        }}
+        className="datetime-field h-12 rounded-2xl border-0 bg-white pl-4 text-sm font-bold text-ink ring-1 ring-ink/10 transition-shadow focus-visible:ring-coral"
+      />
+      {/* App-styled icon; the native indicator remains underneath as a
+          transparent fallback strip for browsers without showPicker(). */}
+      <CalendarDays
+        aria-hidden="true"
+        className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-ink/45 transition-colors peer-focus:text-coral"
+      />
+    </div>
+  );
+}
+
 const statusTone: Record<CompStatus, string> = {
   DRAFT: "bg-ink/10 text-ink",
   SCHEDULED: "bg-sky/25 text-ink",
@@ -182,6 +234,18 @@ const STEP_LABELS = [
   "Review & Publish",
 ] as const;
 type Step = (typeof STEP_LABELS)[number];
+
+/**
+ * Publishing statuses an operator can pick. Only LIVE / SCHEDULED / UPCOMING /
+ * COMPLETED reach the public site — docToCompetition() filters DRAFT and
+ * CANCELLED out of public feeds, so a draft is invisible everywhere.
+ */
+const PUBLISH_STATUSES: Array<{ value: CompStatus; label: string; hint: string }> = [
+  { value: "LIVE", label: "Live now", hint: "Public and open for entries immediately." },
+  { value: "SCHEDULED", label: "Scheduled", hint: "Public now; entries open at the start date." },
+  { value: "DRAFT", label: "Draft", hint: "Saved but completely hidden from the public site." },
+  { value: "COMPLETED", label: "Completed", hint: "Public, but entries are closed." },
+];
 
 type FormState = {
   id?: string;
@@ -837,13 +901,49 @@ export function AdminCompetitionsPage() {
     }
   }
 
+  /** One-click publish for a draft/scheduled competition. */
+  async function publishCompetition(comp: MockComp) {
+    try {
+      await updateDoc(doc(db, "competitions", comp.docId), {
+        status: "LIVE",
+        updatedAt: serverTimestamp(),
+      });
+      await logActivity({
+        eventType: "COMPETITION_UPDATE",
+        targetType: "competition",
+        targetId: comp.slug,
+        summary: `Published "${comp.name}"`,
+        details: { slug: comp.slug, from: comp.status, to: "LIVE" },
+      });
+      setDrawRefreshKey((k) => k + 1);
+      toast.success("Competition published", {
+        description: `${comp.name} is now live and visible on raffila.com.`,
+      });
+    } catch (err) {
+      toast.error("Publish failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }
+
   function performAction(comp: MockComp, action: string) {
     switch (action) {
       case "view":
+        // Drafts and cancelled competitions are filtered out of every public
+        // feed, so navigating would just dead-end on "Competition unavailable".
+        if (comp.status === "DRAFT" || comp.status === "CANCELLED") {
+          toast.warning("Not published yet", {
+            description: `"${comp.name}" is ${comp.status} and hidden from the public site. Use Publish now, or set a status in Edit competition.`,
+          });
+          return;
+        }
         void navigate({
           to: "/competitions/$slug",
           params: { slug: comp.slug },
         });
+        break;
+      case "publish":
+        void publishCompetition(comp);
         break;
       case "edit":
         openEdit(comp);
@@ -1146,6 +1246,15 @@ export function AdminCompetitionsPage() {
                               <EyeIcon className="mr-2 size-4" />
                               View on site
                             </DropdownMenuItem>
+                            {(c.status === "DRAFT" || c.status === "SCHEDULED") && (
+                              <DropdownMenuItem
+                                className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-mint/25 focus:text-ink"
+                                onClick={() => performAction(c, "publish")}
+                              >
+                                <Upload className="mr-2 size-4" />
+                                Publish now
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               className="rounded-xl cursor-pointer px-3 py-2 text-sm font-bold text-ink/80 focus:bg-coral/15 focus:text-ink"
                               onClick={() => performAction(c, "edit")}
@@ -2039,7 +2148,9 @@ export function AdminCompetitionsPage() {
               <p className="mt-2 max-w-md text-sm font-bold text-ink/60">
                 {modalMode === "edit"
                   ? "Edits saved. Asset review, schedule, and draw settings remain live adjustable."
-                  : "Your draft competition has been saved. Asset review, schedule, and draw settings can be adjusted before going live."}
+                  : form.status === "DRAFT"
+                    ? "Saved as a draft — it is hidden from the public site until you publish it."
+                    : "Competition created and published. It is now visible on raffila.com."}
               </p>
               <div className="mt-6 grid w-full max-w-md grid-cols-2 gap-3 text-left">
                 <Card className="rounded-2xl border-0 bg-cream/60 p-0 ring-1 ring-ink/10">
@@ -2063,9 +2174,23 @@ export function AdminCompetitionsPage() {
                   </CardContent>
                 </Card>
               </div>
-              <Button variant="primary" className="mt-7" onClick={closeModal}>
-                <Sparkles className="size-4" /> Done
-              </Button>
+              <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+                {form.status !== "DRAFT" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const slug = form.slug || form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+                      closeModal();
+                      void navigate({ to: "/competitions/$slug", params: { slug } });
+                    }}
+                  >
+                    <EyeIcon className="size-4" /> View on site
+                  </Button>
+                )}
+                <Button variant="primary" onClick={closeModal}>
+                  <Sparkles className="size-4" /> Done
+                </Button>
+              </div>
             </div>
           ) : (
             <>
@@ -2460,22 +2585,22 @@ export function AdminCompetitionsPage() {
                       <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
                         Start date
                       </Label>
-                      <Input
-                        type="datetime-local"
+                      <DateTimeField
+                        id="competition-start-date"
+                        label="Start date"
                         value={form.startDate}
-                        onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                        className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10 focus-visible:ring-coral"
+                        onChange={(next) => setForm({ ...form, startDate: next })}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
                         Draw date
                       </Label>
-                      <Input
-                        type="datetime-local"
+                      <DateTimeField
+                        id="competition-draw-date"
+                        label="Draw date"
                         value={form.drawDate}
-                        onChange={(e) => setForm({ ...form, drawDate: e.target.value })}
-                        className="h-12 rounded-2xl border-0 bg-white px-4 text-sm font-bold text-ink ring-1 ring-ink/10 focus-visible:ring-coral"
+                        onChange={(next) => setForm({ ...form, drawDate: next })}
                       />
                     </div>
                     <div className="space-y-2">
@@ -2494,6 +2619,38 @@ export function AdminCompetitionsPage() {
 
                 {stepIdx === 4 && (
                   <div className="space-y-3">
+                    <div className="space-y-2 rounded-2xl bg-white p-4 ring-1 ring-ink/10">
+                      <Label className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-ink/50">
+                        Publish status
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        {PUBLISH_STATUSES.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setForm({ ...form, status: opt.value })}
+                            className={cn(
+                              "rounded-full px-4 py-2 text-xs font-extrabold capitalize ring-1 transition-colors",
+                              form.status === opt.value
+                                ? "bg-ink text-paper ring-ink"
+                                : "bg-cream text-ink ring-ink/10 hover:bg-lilac/15",
+                            )}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[11px] font-bold text-ink/50">
+                        {PUBLISH_STATUSES.find((o) => o.value === form.status)?.hint ??
+                          "Choose whether this competition is public."}
+                      </p>
+                      {form.status === "DRAFT" && (
+                        <p className="rounded-xl bg-lemon/30 px-3 py-2 text-[11px] font-extrabold text-ink">
+                          Drafts are hidden from the public site. “View on site” will show
+                          “Competition unavailable” until you publish.
+                        </p>
+                      )}
+                    </div>
                     <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-4 ring-1 ring-ink/10">
                       <div>
                         <p className="text-sm font-extrabold text-ink">Featured competition</p>
@@ -2543,6 +2700,14 @@ export function AdminCompetitionsPage() {
                         k: "Schedule",
                         title: `Draw · ${form.drawDate.replace("T", " ")}`,
                         sub: `Start ${form.startDate.replace("T", " ")} · delay ${form.liveDelay}m · ${form.featured ? "featured" : "not featured"} · ${form.publicResults ? "public" : "private"} results`,
+                      },
+                      {
+                        k: "Visibility",
+                        title: form.status === "DRAFT" ? "Draft — hidden from site" : form.status,
+                        sub:
+                          form.status === "DRAFT"
+                            ? "Will NOT appear on raffila.com. Choose Live now or Scheduled to publish."
+                            : `Public on raffila.com · ${form.publicResults ? "public" : "private"} results`,
                       },
                     ].map((s) => (
                       <Card

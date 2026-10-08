@@ -64,11 +64,10 @@ export function TicketPurchaseModal({
   const handleAddToCart = () => {
     addToCart(competitionSlug, qty);
     trackEvent("add_to_cart", { competition: competitionSlug, qty });
-    toast.success("Added to cart", {
-      description: `${qty} ticket${qty === 1 ? "" : "s"} · ${competition.title}`,
-      className: "!bg-mint/30 !text-ink !border-0 !ring-1 !ring-mint/40",
-      icon: <Check className="size-4 text-mint" />,
-    });
+    // Close the modal and show the cart, otherwise the item is saved but the
+    // visitor has no visible confirmation or route to checkout.
+    onClose();
+    setTimeout(() => openCart(), 50);
   };
 
   const handleBuyNow = () => {

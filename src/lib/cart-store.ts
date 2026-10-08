@@ -116,12 +116,22 @@ export function addToCart(competitionSlug: string, quantity: number): void {
   const qty = Math.floor(quantity);
   if (!slug || !Number.isFinite(qty) || qty < 1) return;
   const capped = Math.min(CART_MAX_QTY_PER_LINE, qty);
-  const existing = items.find((it) => it.competitionSlug === slug);
-  if (existing) {
-    existing.quantity = Math.min(CART_MAX_QTY_PER_LINE, existing.quantity + capped);
+  const existingIdx = items.findIndex((it) => it.competitionSlug === slug);
+  if (existingIdx >= 0) {
+    // Replace with a new object rather than mutating in place: the previous
+    // snapshot shares these references, and useSyncExternalStore consumers must
+    // never see a value change underneath them.
+    items = [
+      ...items.slice(0, existingIdx),
+      {
+        competitionSlug: slug,
+        quantity: Math.min(CART_MAX_QTY_PER_LINE, items[existingIdx]!.quantity + capped),
+      },
+      ...items.slice(existingIdx + 1),
+    ];
   } else {
     if (items.length >= CART_MAX_LINES) return;
-    items.push({ competitionSlug: slug, quantity: capped });
+    items = [...items, { competitionSlug: slug, quantity: capped }];
   }
   commitItems();
 }
@@ -132,9 +142,16 @@ export function setCartQty(competitionSlug: string, quantity: number): void {
     removeFromCart(competitionSlug);
     return;
   }
-  const existing = items.find((it) => it.competitionSlug === competitionSlug);
-  if (!existing) return;
-  existing.quantity = Math.min(CART_MAX_QTY_PER_LINE, qty);
+  const idx = items.findIndex((it) => it.competitionSlug === competitionSlug);
+  if (idx < 0) return;
+  items = [
+    ...items.slice(0, idx),
+    {
+      competitionSlug: items[idx]!.competitionSlug,
+      quantity: Math.min(CART_MAX_QTY_PER_LINE, qty),
+    },
+    ...items.slice(idx + 1),
+  ];
   commitItems();
 }
 

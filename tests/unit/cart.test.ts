@@ -80,4 +80,31 @@ describe("cart store", () => {
     expect(lines[0]?.quantity).toBe(4);
     expect(lines[0]?.remaining).toBe(4);
   });
+
+  /**
+   * useSyncExternalStore consumers must never observe a line change underneath
+   * them. Mutating the shared object in place left the previous snapshot
+   * reporting the NEW quantity, which breaks React's snapshot comparison.
+   */
+  it("does not mutate previously returned snapshots", () => {
+    addToCart("car", 2);
+    const first = getCartItems();
+    expect(first[0]?.quantity).toBe(2);
+
+    addToCart("car", 3);
+    const second = getCartItems();
+
+    expect(second[0]?.quantity).toBe(5);
+    // The old snapshot must still report what it reported before.
+    expect(first[0]?.quantity).toBe(2);
+    expect(first).not.toBe(second);
+  });
+
+  it("does not mutate previously returned snapshots when quantity is set", () => {
+    addToCart("car", 7);
+    const first = getCartItems();
+    setCartQty("car", 1);
+    expect(first[0]?.quantity).toBe(7);
+    expect(getCartItems()[0]?.quantity).toBe(1);
+  });
 });

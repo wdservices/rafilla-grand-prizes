@@ -28,6 +28,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAuditLogsRouteImport } from './routes/admin.audit-logs'
 import { Route as AdminCompetitionsRouteImport } from './routes/admin.competitions'
 import { Route as AdminConfigRouteImport } from './routes/admin.config'
+import { Route as AdminEntriesRouteImport } from './routes/admin.entries'
 import { Route as AdminFraudRouteImport } from './routes/admin.fraud'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
@@ -152,6 +153,11 @@ const AdminCompetitionsRoute = AdminCompetitionsRouteImport.update({
 const AdminConfigRoute = AdminConfigRouteImport.update({
   id: '/admin/config',
   path: '/admin/config',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEntriesRoute = AdminEntriesRouteImport.update({
+  id: '/admin/entries',
+  path: '/admin/entries',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminFraudRoute = AdminFraudRouteImport.update({
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/competitions': typeof AdminCompetitionsRoute
   '/admin/config': typeof AdminConfigRoute
+  '/admin/entries': typeof AdminEntriesRoute
   '/admin/fraud': typeof AdminFraudRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -376,6 +383,7 @@ export interface FileRoutesByTo {
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/competitions': typeof AdminCompetitionsRoute
   '/admin/config': typeof AdminConfigRoute
+  '/admin/entries': typeof AdminEntriesRoute
   '/admin/fraud': typeof AdminFraudRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -428,6 +436,7 @@ export interface FileRoutesById {
   '/admin/audit-logs': typeof AdminAuditLogsRoute
   '/admin/competitions': typeof AdminCompetitionsRoute
   '/admin/config': typeof AdminConfigRoute
+  '/admin/entries': typeof AdminEntriesRoute
   '/admin/fraud': typeof AdminFraudRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -481,6 +490,7 @@ export interface FileRouteTypes {
     | '/admin/audit-logs'
     | '/admin/competitions'
     | '/admin/config'
+    | '/admin/entries'
     | '/admin/fraud'
     | '/admin/notifications'
     | '/admin/partners'
@@ -531,6 +541,7 @@ export interface FileRouteTypes {
     | '/admin/audit-logs'
     | '/admin/competitions'
     | '/admin/config'
+    | '/admin/entries'
     | '/admin/fraud'
     | '/admin/notifications'
     | '/admin/partners'
@@ -582,6 +593,7 @@ export interface FileRouteTypes {
     | '/admin/audit-logs'
     | '/admin/competitions'
     | '/admin/config'
+    | '/admin/entries'
     | '/admin/fraud'
     | '/admin/notifications'
     | '/admin/partners'
@@ -634,6 +646,7 @@ export interface RootRouteChildren {
   AdminAuditLogsRoute: typeof AdminAuditLogsRoute
   AdminCompetitionsRoute: typeof AdminCompetitionsRoute
   AdminConfigRoute: typeof AdminConfigRoute
+  AdminEntriesRoute: typeof AdminEntriesRoute
   AdminFraudRoute: typeof AdminFraudRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPartnersRoute: typeof AdminPartnersRoute
@@ -797,6 +810,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/config'
       fullPath: '/admin/config'
       preLoaderRoute: typeof AdminConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/entries': {
+      id: '/admin/entries'
+      path: '/admin/entries'
+      fullPath: '/admin/entries'
+      preLoaderRoute: typeof AdminEntriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/fraud': {
@@ -1056,6 +1076,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAuditLogsRoute: AdminAuditLogsRoute,
   AdminCompetitionsRoute: AdminCompetitionsRoute,
   AdminConfigRoute: AdminConfigRoute,
+  AdminEntriesRoute: AdminEntriesRoute,
   AdminFraudRoute: AdminFraudRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPartnersRoute: AdminPartnersRoute,

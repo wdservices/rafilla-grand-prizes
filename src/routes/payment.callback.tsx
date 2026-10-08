@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowRight, CheckCircle2, Copy, Loader2, Ticket } from "
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/raffila-data";
 import { confirmTicketPurchase, type IssuedTicketLine } from "@/lib/paystack-server";
+import { clearCart } from "@/lib/cart-store";
 
 const canonicalBase = "https://raffila.com";
 
@@ -18,7 +19,7 @@ type State =
     }
   | { phase: "error"; message: string };
 
-function PaymentCallbackPage() {
+export function PaymentCallbackPage() {
   const [state, setState] = useState<State | null>(null);
   const [reference, setReference] = useState<string | null>(null);
   const handledRef = useRef<string | null>(null);
@@ -28,6 +29,12 @@ function PaymentCallbackPage() {
     try {
       const res = await confirmTicketPurchase({ data: { reference: ref } });
       if (res.ok) {
+        // Tickets are confirmed and issued, so the cart has served its purpose.
+        // The Paystack path redirects away from the drawer and never cleared it,
+        // leaving already-purchased tickets sitting in the cart to be bought
+        // again. Only clear on success — a failed/abandoned payment must keep
+        // the cart so the buyer can retry.
+        clearCart();
         setState({
           phase: "done",
           items: res.items,
