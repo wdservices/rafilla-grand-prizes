@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Search, Copy, Check, FileDown, Ticket, Eye, X, QrCode } from "lucide-react";
+import { Search, Copy, Check, FileDown, Ticket, Eye, X } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useMemo } from "react";
 import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
 
@@ -404,9 +405,29 @@ export function DashboardEntriesPage() {
             </div>
 
             <div className="mt-6 rounded-2xl bg-cream p-6 ring-1 ring-ink/5 flex flex-col items-center">
-              <div className="size-40 grid place-items-center rounded-2xl bg-white ring-1 ring-ink/10">
-                <QrCode className="size-28 text-ink/80" />
-              </div>
+              {(() => {
+                // The QR must be unique per user AND per purchase. Encoding only
+                // the competition slug produced an identical code for every buyer,
+                // so the payload carries the entry id, the owner uid and the slug.
+                const payload = [
+                  "RAFFILA",
+                  ticketOpen.id,
+                  uid ?? "guest",
+                  ticketOpen.competitionSlug,
+                ].join("|");
+                return (
+                  <div className="size-40 grid place-items-center rounded-2xl bg-white p-3 ring-1 ring-ink/10">
+                    <QRCodeSVG
+                      value={payload}
+                      size={112}
+                      bgColor="#ffffff"
+                      fgColor="#172a23"
+                      level="M"
+                      title={`Entry ${ticketOpen.id}`}
+                    />
+                  </div>
+                );
+              })()}
               <p className="mt-4 font-mono text-xs font-bold text-ink/60">{ticketOpen.id}</p>
             </div>
 

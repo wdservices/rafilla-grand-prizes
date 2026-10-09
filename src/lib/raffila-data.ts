@@ -49,6 +49,7 @@ export const categories = [
   "Fashion & Luxury",
   "Lifestyle",
   "Collectibles",
+  "Food",
 ];
 
 /** Legacy category names mapped to final taxonomy (for Firestore migration). */
@@ -57,7 +58,25 @@ export const LEGACY_CATEGORY_MAP: Record<string, string> = {
   Fashion: "Fashion & Luxury",
   Jewelry: "Fashion & Luxury",
   "Business grants": "Cash & Business",
+  Auto: "Vehicles",
+  Tech: "Electronics",
+  Property: "Homes & Property",
+  Home: "Home & Living",
+  Experience: "Travel & Experiences",
 };
+
+/**
+ * Normalise any stored category (old admin free-text or current taxonomy) to
+ * the public-facing taxonomy. Shared by the competition feed and the admin
+ * form so a competition's stored category always matches the public filter.
+ */
+export function normalizeCategory(raw: string): string {
+  const key = raw.trim().toLowerCase();
+  const map: Record<string, string> = {};
+  for (const [k, v] of Object.entries(LEGACY_CATEGORY_MAP)) map[k.toLowerCase()] = v;
+  map["auto"] = "Vehicles";
+  return map[key] ?? raw.trim();
+}
 
 /** Budget navigation — separate from category (PDF §3). Amounts in kobo. */
 export const BUDGET_FILTERS = [

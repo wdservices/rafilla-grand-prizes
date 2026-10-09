@@ -99,8 +99,19 @@ export function SiteFooter() {
           <Cookie className="size-3.5 text-coral" /> Cookie preferences
         </button>
         <div className="flex flex-col gap-1 sm:items-end">
-          <p>© 2026 Raffila. Development preview.</p>
-          <p>Public inventory shown here is demo data pending platform configuration.</p>
+          <p>© 2026 Raffila. All rights reserved.</p>
+          <p>
+            Website developed by{" "}
+            <a
+              href="https://www.bwtng.live"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-extrabold underline decoration-ink/25 underline-offset-2 transition-colors hover:decoration-ink/60"
+            >
+              Bluewaves Technologies
+            </a>{" "}
+            — www.bwtng.live
+          </p>
         </div>
       </div>
     </footer>

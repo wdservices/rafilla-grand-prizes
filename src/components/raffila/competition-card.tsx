@@ -60,9 +60,7 @@ export function CompetitionCard({
                 <h2 className="font-display text-2xl font-extrabold leading-tight text-ink sm:text-3xl">
                   {competition.title}
                 </h2>
-                <p className="mt-1 text-xs font-bold text-ink/50">
-                  {competition.category} · {formatNaira(competition.prizeValueKobo)} prize value
-                </p>
+                <p className="mt-1 text-xs font-bold text-ink/50">{competition.category}</p>
               </div>
               <span className="shrink-0 rounded-full bg-mint/30 px-2.5 py-1 text-[11px] font-extrabold text-ink">
                 {competition.status}
@@ -152,19 +150,11 @@ export function CompetitionCard({
                 {competition.status}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">Entry</p>
                 <p className="break-words font-display text-base font-extrabold text-ink sm:text-lg">
                   {formatNaira(competition.entryPrice)}
-                </p>
-              </div>
-              <div className="hidden min-w-0 sm:block">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
-                  Prize value
-                </p>
-                <p className="break-words font-bold text-ink text-xs sm:text-sm">
-                  {formatNaira(competition.prizeValueKobo)}
                 </p>
               </div>
               <div className="min-w-0">

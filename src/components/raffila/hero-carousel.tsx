@@ -95,8 +95,7 @@ function FeaturedSlide({ competition }: { competition: Competition }) {
                 {competition.title}
               </h2>
               <p className="mt-1 break-words text-xs font-bold leading-relaxed text-ink/50">
-                {competition.category} · {formatNaira(competition.prizeValueKobo)} prize value ·{" "}
-                {competition.partner}
+                {competition.category} · {competition.partner}
               </p>
             </div>
             <span className="w-fit shrink-0 rounded-full bg-mint/30 px-2.5 py-1 text-[11px] font-extrabold text-ink">

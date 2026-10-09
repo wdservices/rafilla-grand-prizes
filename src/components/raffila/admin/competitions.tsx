@@ -160,7 +160,24 @@ const PARTNERS = [
   "Lekki Luxury Autos",
   "Abuja Tech Hub",
 ];
-const CATEGORIES = ["Auto", "Tech", "Property", "Jewelry", "Home", "Experience"];
+/**
+ * Admin category choices. These MUST match the public filter taxonomy in
+ * raffila-data.ts — the form stores the display name verbatim so a competition
+ * saved here is immediately findable under the same category publicly.
+ */
+const CATEGORIES = [
+  "Vehicles",
+  "Homes & Property",
+  "Electronics",
+  "Furniture & Appliances",
+  "Education",
+  "Cash & Business",
+  "Travel & Experiences",
+  "Fashion & Luxury",
+  "Lifestyle",
+  "Collectibles",
+  "Food",
+];
 
 /**
  * Date/time input whose ENTIRE surface opens the native picker. By default a
@@ -276,7 +293,7 @@ function emptyForm(): FormState {
   return {
     name: "",
     slug: "",
-    category: CATEGORIES[0]!.toLowerCase(),
+    category: CATEGORIES[0]!,
     description: "",
     assetName: "",
     assets: [],
@@ -2272,7 +2289,7 @@ export function AdminCompetitionsPage() {
                           {CATEGORIES.map((c) => (
                             <SelectItem
                               key={c}
-                              value={c.toLowerCase()}
+                              value={c}
                               className="rounded-xl font-bold"
                             >
                               {c}

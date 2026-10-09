@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 
-const snapshotHandler = { fn: null as null | ((cb: (s: unknown) => void) => void) };
+type SnapCb = (snap: { docs: unknown[]; empty: boolean }) => void;
+const snapshotHandler: { fn: null | SnapCb } = { fn: null };
 
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn(() => ({})),
@@ -31,14 +32,14 @@ vi.mock("@/lib/platform-config", () => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children }: { children?: unknown }) => <a href="#">{children}</a>,
+  Link: ({ children }: { children?: React.ReactNode }) => <a href="#">{children}</a>,
   useNavigate: () => vi.fn(),
   useLocation: () => ({ pathname: "/dashboard" }),
   useParams: () => ({}),
 }));
 
 vi.mock("@/components/raffila/dashboard/app-shell", () => ({
-  DashboardAppShell: ({ children }: { children?: unknown }) => <div>{children}</div>,
+  DashboardAppShell: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
 }));
 
 import { DashboardOverviewPage } from "@/components/raffila/dashboard/overview";

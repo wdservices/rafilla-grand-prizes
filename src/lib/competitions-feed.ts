@@ -2,7 +2,7 @@ import { collection, getDocs, limit, query } from "firebase/firestore";
 
 import { db } from "./firebase";
 import { formatCloses, formatDrawDate } from "./format";
-import { LEGACY_CATEGORY_MAP, type Competition } from "./raffila-data";
+import { LEGACY_CATEGORY_MAP, normalizeCategory, type Competition } from "./raffila-data";
 
 const ACCENTS: Competition["accent"][] = ["coral", "sky", "lemon", "mint", "lilac"];
 
@@ -65,10 +65,7 @@ export function docToCompetition(
   // Migrate legacy / free-text category names to final taxonomy (PDF §2).
   // Firestore docs created via admin free-text (e.g. "auto") are normalized
   // case-insensitively so carousels/filters never show raw variants.
-  const categoryMap: Record<string, string> = {};
-  for (const [k, v] of Object.entries(LEGACY_CATEGORY_MAP)) categoryMap[k.toLowerCase()] = v;
-  categoryMap["auto"] = "Vehicles";
-  const category = categoryMap[rawCategory.trim().toLowerCase()] ?? rawCategory;
+  const category = normalizeCategory(rawCategory);
   const entryPrice = Number(data["entryPrice"] ?? 0) || 0;
   const totalEntries = Number(data["totalEntries"] ?? 0) || 0;
   const entriesSold = Number(data["entriesSold"] ?? 0) || 0;

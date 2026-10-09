@@ -1310,24 +1310,19 @@ export function CompetitionDetailPage() {
               {competition.title}
             </h1>
             <p className="mt-3 text-base leading-relaxed text-ink/60">{competition.description}</p>
-            <div className="mt-7 grid grid-cols-2 gap-3 border-y border-ink/10 py-5 sm:gap-4">
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-ink/45">Entry price</p>
-                <p className="mt-1 break-words font-display text-xl font-extrabold text-ink sm:text-2xl">
-                  {formatNaira(competition.entryPrice)}
-                </p>
-              </div>
-              <div className="min-w-0 text-right sm:text-left">
-                <p className="text-xs font-bold text-ink/45">Prize value</p>
-                <p className="mt-1 break-words font-display text-xl font-extrabold text-ink sm:text-2xl">
-                  {formatNaira(competition.prizeValueKobo)}
-                </p>
-              </div>
+            <div className="mt-7 border-y border-ink/10 py-5">
+              <p className="text-xs font-bold text-ink/45">Entry price</p>
+              <p className="mt-1 break-words font-display text-xl font-extrabold text-ink sm:text-2xl">
+                {formatNaira(competition.entryPrice)}
+              </p>
             </div>
             <div className="mt-6">
               <div className="flex items-center justify-between text-sm font-bold">
                 <span className="text-ink/55">Sales progress</span>
-                <span>{progress}% sold</span>
+                <span>
+                  {ticketsLeft.toLocaleString("en-NG")} of{" "}
+                  {competition.totalEntries.toLocaleString("en-NG")} sold
+                </span>
               </div>
               <Progress value={progress} className="mt-2 h-3 bg-ink/10 [&>div]:bg-coral" />
               <p className="mt-2 text-sm font-extrabold text-coral">

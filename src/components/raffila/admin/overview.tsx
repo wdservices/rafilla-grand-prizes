@@ -285,6 +285,39 @@ type CompFact = {
  * entry records rather than a stored counter so they can never drift from the
  * purchases they represent.
  */
+/**
+ * Per-competition totals derived from entry records.
+ *
+ * Exported (and unit-tested) because getting this wrong silently understates
+ * revenue: tickets and revenue must accumulate into the SAME bucket, or an
+ * early write is clobbered by a later one holding a stale snapshot.
+ */
+export function buildCompetitionRows(
+  entries: EntryRevenueFact[],
+  competitions: CompFact[],
+): Array<CompFact & { tickets: number; revenueKobo: number }> {
+  const bySlug = new Map<string, { tickets: number; revenueKobo: number }>();
+  for (const e of entries) {
+    const slug = e.competitionSlug || "unknown";
+    // One read, one mutation, one write — no interleaved helpers.
+    const cur = bySlug.get(slug) ?? { tickets: 0, revenueKobo: 0 };
+    cur.tickets += e.quantity;
+    // Referral orders are paid from referral balance, not cash.
+    if (!e.isReferral) cur.revenueKobo += e.amountKobo;
+    bySlug.set(slug, cur);
+  }
+  return competitions
+    .map((c) => {
+      const acc = bySlug.get(c.slug);
+      return {
+        ...c,
+        tickets: acc?.tickets ?? 0,
+        revenueKobo: acc?.revenueKobo ?? 0,
+      };
+    })
+    .sort((a, b) => b.revenueKobo - a.revenueKobo || b.tickets - a.tickets);
+}
+
 function CompetitionRevenue({
   entries,
   competitions,
@@ -294,29 +327,7 @@ function CompetitionRevenue({
 }) {
   const [selected, setSelected] = useState<string>("all");
 
-  const rows = useMemo(() => {
-    const bySlug = new Map<string, { tickets: number; revenueKobo: number; buyers: number }>();
-    const bump = (slug: string, revenueKobo: number) => {
-      const cur = bySlug.get(slug) ?? { tickets: 0, revenueKobo: 0, buyers: 0 };
-      cur.revenueKobo += revenueKobo;
-      bySlug.set(slug, cur);
-    };
-    for (const e of entries) {
-      const slug = e.competitionSlug || "unknown";
-      const cur = bySlug.get(slug) ?? { tickets: 0, revenueKobo: 0, buyers: 0 };
-      cur.tickets += e.quantity;
-      // Referral orders are paid from referral balance, not cash.
-      bump(slug, e.isReferral ? 0 : e.amountKobo);
-      bySlug.set(slug, cur);
-    }
-    return competitions
-      .map((c) => ({
-        ...c,
-        tickets: bySlug.get(c.slug)?.tickets ?? 0,
-        revenueKobo: bySlug.get(c.slug)?.revenueKobo ?? 0,
-      }))
-      .sort((a, b) => b.revenueKobo - a.revenueKobo || b.tickets - a.tickets);
-  }, [entries, competitions]);
+  const rows = useMemo(() => buildCompetitionRows(entries, competitions), [entries, competitions]);
 
   const totals = useMemo(
     () =>

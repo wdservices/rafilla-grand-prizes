@@ -111,8 +111,6 @@ export function TicketPurchaseModal({
               </Badge>
               <h3 className="font-display text-2xl font-extrabold text-ink">{competition.title}</h3>
               <p className="mt-1 text-sm font-bold text-ink/55">
-                Prize value ·{" "}
-                <span className="text-ink">{formatNaira(competition.prizeValueKobo)}</span> ·{" "}
                 <span className="text-coral">{formatNaira(competition.entryPrice)} / ticket</span>
               </p>
             </div>

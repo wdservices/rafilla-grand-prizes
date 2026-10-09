@@ -65,9 +65,6 @@ export function DashboardCompetitionsPage() {
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <h3 className="font-display text-lg font-extrabold text-ink">{c.title}</h3>
-                <p className="mt-1 text-xs font-bold uppercase tracking-widest text-ink/45">
-                  Prize value · <span className="text-ink/70">{formatNaira(c.prizeValueKobo)}</span>
-                </p>
                 <p className="mt-3 line-clamp-2 text-sm text-ink/60">{c.description}</p>
 
                 <div className="mt-4">
