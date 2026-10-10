@@ -325,6 +325,7 @@ export const faqs = [
 
 export type WinnerCard = {
   id: string;
+  competitionSlug?: string;
   winnerName: string;
   prize: string;
   competition: string;

@@ -107,10 +107,7 @@ describe("deriveDrawState", () => {
 
   it("completed draw wins over flags", () => {
     expect(
-      deriveDrawState(
-        { status: "LIVE" },
-        { status: "COMPLETED", winningTicketNumber: "123456" },
-      ),
+      deriveDrawState({ status: "LIVE" }, { status: "COMPLETED", winningTicketNumber: "123456" }),
     ).toBe("WINNER_SELECTED");
   });
 
@@ -125,9 +122,7 @@ describe("deriveDrawState", () => {
 
   it("maps in-progress draws", () => {
     expect(deriveDrawState({ status: "DRAW_IN_PROGRESS" }, null)).toBe("DRAW_IN_PROGRESS");
-    expect(deriveDrawState({ status: "LIVE" }, { status: "IN_PROGRESS" })).toBe(
-      "DRAW_IN_PROGRESS",
-    );
+    expect(deriveDrawState({ status: "LIVE" }, { status: "IN_PROGRESS" })).toBe("DRAW_IN_PROGRESS");
   });
 
   it("recovers failed draws back to DRAW_READY", () => {

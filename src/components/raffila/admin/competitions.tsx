@@ -50,6 +50,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AdminDrawControlRoom } from "./admin-draw-control-room";
 
 import mercedesImage from "@/assets/raffila-mercedes.jpg";
 import techBundleImage from "@/assets/raffila-tech-bundle.jpg";
@@ -387,6 +388,7 @@ export function AdminCompetitionsPage() {
   const [drawResult, setDrawResult] = useState<DrawRecord | null>(null);
   const [drawError, setDrawError] = useState<string | null>(null);
   const [resultFor, setResultFor] = useState<DrawRecord | null>(null);
+  const [controlRoomComp, setControlRoomComp] = useState<MockComp | null>(null);
 
   // Delete competition state
   const [deleteTarget, setDeleteTarget] = useState<MockComp | null>(null);
@@ -1757,19 +1759,40 @@ export function AdminCompetitionsPage() {
         open={drawPhase === "confirm" && !!drawTarget}
         onOpenChange={(v) => !v && closeDrawFlow()}
       >
-        <DialogContent className="rounded-[28px] bg-white p-6 sm:max-w-md">
+        <DialogContent className="rounded-[28px] bg-white p-6 sm:max-w-md max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 font-display text-2xl font-extrabold text-ink">
               <span className="grid size-10 place-items-center rounded-2xl bg-lemon/40">
                 <Target className="size-5 text-ink" />
               </span>
-              Ready to start draw
+              Start Draw Confirmation
             </DialogTitle>
             <DialogDescription className="text-sm font-bold text-ink/60">
               {drawTarget?.name}
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-4 grid grid-cols-2 gap-3">
+
+          {/* Prize Image */}
+          {drawTarget?.image && (
+            <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden ring-1 ring-ink/10 mt-2">
+              <img
+                src={drawTarget.image}
+                alt={drawTarget.name}
+                className="size-full object-cover"
+              />
+            </div>
+          )}
+
+          {/* Scheduled draw date & time */}
+          <div className="mt-3 flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-cream/60 ring-1 ring-ink/10 text-xs font-bold text-ink/70">
+            <span className="flex items-center gap-1.5">
+              <Clock className="size-3.5 text-coral" />
+              Scheduled Draw Time:
+            </span>
+            <span className="font-extrabold text-ink">{drawTarget?.drawDate || "Today"}</span>
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-3">
             <div className="rounded-2xl bg-cream/60 p-3.5 ring-1 ring-ink/10">
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/45">
                 Eligible tickets
@@ -1787,21 +1810,19 @@ export function AdminCompetitionsPage() {
               </p>
             </div>
           </div>
+
           <div className="mt-3 rounded-2xl bg-sky/15 p-4 text-xs font-bold leading-relaxed text-ink/70 ring-1 ring-sky/20">
             Every eligible ticket number participates individually — a member with 10 tickets has 10
-            independent chances. The winner is selected by a secure random process and the result is
-            frozen once committed.
+            independent chances. After confirmation, the Admin Draw Control Room opens where you can
+            view the Draw Engine diagnostics and live Public Wheel preview.
           </div>
-          {drawStats && drawStats.eligibleTickets === 0 && !drawStatsLoading && (
-            <p className="mt-3 rounded-2xl bg-coral/15 p-3 text-xs font-extrabold text-coral ring-1 ring-coral/30">
-              No eligible tickets are available for this competition. The draw cannot proceed.
-            </p>
-          )}
+
           {drawError && (
             <p className="mt-3 rounded-2xl bg-coral/15 p-3 text-xs font-extrabold text-coral ring-1 ring-coral/30">
               {drawError}
             </p>
           )}
+
           <DialogFooter className="mt-5 flex gap-2">
             <Button variant="outline" onClick={closeDrawFlow} className="flex-1">
               Cancel
@@ -1809,14 +1830,34 @@ export function AdminCompetitionsPage() {
             <Button
               variant="primary"
               className="flex-1"
-              disabled={drawStatsLoading || !drawStats || drawStats.eligibleTickets === 0}
-              onClick={() => void confirmDraw()}
+              disabled={drawStatsLoading}
+              onClick={() => {
+                if (drawTarget) {
+                  setControlRoomComp(drawTarget);
+                  closeDrawFlow();
+                }
+              }}
             >
-              <Dices className="size-4" /> Proceed to draw
+              <Dices className="size-4" /> Open Control Room
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ---------------- Admin Draw Control Room ---------------- */}
+      {controlRoomComp && (
+        <AdminDrawControlRoom
+          isOpen={!!controlRoomComp}
+          onClose={() => {
+            setControlRoomComp(null);
+            void refreshDrawState();
+          }}
+          competition={controlRoomComp}
+          onSuccess={() => {
+            void refreshDrawState();
+          }}
+        />
+      )}
 
       {/* ---------------- Draw ceremony (presentation only) ---------------- */}
       <Dialog open={drawPhase === "drawing"}>
@@ -2287,11 +2328,7 @@ export function AdminCompetitionsPage() {
                         </SelectTrigger>
                         <SelectContent className="rounded-[22px] bg-white p-1 ring-1 ring-ink/10">
                           {CATEGORIES.map((c) => (
-                            <SelectItem
-                              key={c}
-                              value={c}
-                              className="rounded-xl font-bold"
-                            >
+                            <SelectItem key={c} value={c} className="rounded-xl font-bold">
                               {c}
                             </SelectItem>
                           ))}

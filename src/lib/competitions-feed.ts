@@ -48,6 +48,36 @@ function toMs(value: unknown): number {
  * Returns null for drafts (unless includeDrafts) so unpublished work never
  * leaks onto public surfaces.
  */
+/**
+ * Determine whether a competition's draw has concluded.
+ * Concluded competitions are removed from the active competitions listing
+ * and only displayed on the winners section, public draw/verification replay,
+ * and the user's (winner's) dashboard.
+ */
+export function isCompetitionConcluded(
+  c: Competition | Record<string, unknown> | null | undefined,
+): boolean {
+  if (!c) return false;
+  const rawStatus = String((c as any).status ?? "").toUpperCase();
+  if (
+    rawStatus === "COMPLETED" ||
+    rawStatus === "WINNER_SELECTED" ||
+    rawStatus === "CONCLUDED"
+  ) {
+    return true;
+  }
+  if ((c as any).winningTicketNumber != null || (c as any).winnerTicketNumber != null) {
+    return true;
+  }
+  if ((c as any).drawCompletedAt != null) {
+    return true;
+  }
+  if ((c as any).entriesClosed && ((c as any).winnerName || (c as any).winnerDisplayName)) {
+    return true;
+  }
+  return false;
+}
+
 export function docToCompetition(
   id: string,
   data: Record<string, unknown>,
@@ -57,14 +87,15 @@ export function docToCompetition(
   const rawStatus = String(data["status"] ?? "LIVE").toUpperCase();
   if (!includeDrafts && (rawStatus === "DRAFT" || rawStatus === "CANCELLED")) return null;
 
-  const status: Competition["status"] =
-    rawStatus === "LIVE"
+  const isConcluded = isCompetitionConcluded(data);
+
+  const status: Competition["status"] = isConcluded
+    ? "COMPLETED"
+    : rawStatus === "LIVE"
       ? "LIVE"
-      : rawStatus === "COMPLETED"
-        ? "COMPLETED"
-        : rawStatus === "CLOSING SOON"
-          ? "CLOSING SOON"
-          : "UPCOMING";
+      : rawStatus === "CLOSING SOON"
+        ? "CLOSING SOON"
+        : "UPCOMING";
 
   const slug = String(data["slug"] ?? id);
   const title = String(data["title"] ?? data["assetName"] ?? slug);
@@ -84,8 +115,7 @@ export function docToCompetition(
   const images = Array.isArray(data["images"]) ? (data["images"] as string[]) : [];
   const image = String(data["image"] ?? images[0] ?? "");
 
-  const winnerDisplayNameRaw =
-    data["winnerDisplayName"] ?? data["winnerName"] ?? null;
+  const winnerDisplayNameRaw = data["winnerDisplayName"] ?? data["winnerName"] ?? null;
   return {
     slug,
     title,
@@ -99,7 +129,7 @@ export function docToCompetition(
     closes: formatCloses(closesRaw),
     daysUntilClose,
     status,
-    featured: Boolean(data["featured"] ?? index === 0),
+    featured: isConcluded ? false : Boolean(data["featured"] ?? index === 0),
     image,
     imageAlt: String(data["imageAlt"] ?? data["assetName"] ?? title),
     accent: accentFor(slug),
@@ -117,14 +147,18 @@ export function docToCompetition(
     exclusions: Array.isArray(data["exclusions"]) ? (data["exclusions"] as string[]) : [],
     maxTicketsPerUser: Number(data["maxPerUser"] ?? data["maxTicketsPerUser"] ?? 50) || 50,
     marketValueKobo,
-    winningTicketId: data["winningTicketId"] as string | null | undefined ?? null,
+    winningTicketId: (data["winningTicketId"] as string | null | undefined) ?? null,
     winningTicketNumber:
-      data["winningTicketNumber"] ?? data["winnerTicketNumber"] as string | null | undefined ?? null,
-    winnerUserId: data["winnerUserId"] as string | null | undefined ?? null,
+      data["winningTicketNumber"] ??
+      (data["winnerTicketNumber"] as string | null | undefined) ??
+      null,
+    winnerUserId: (data["winnerUserId"] as string | null | undefined) ?? null,
     winnerDisplayName: winnerDisplayNameRaw as string | null,
-    winnerHandle: data["winnerHandle"] as string | null | undefined ?? null,
+    winnerHandle: (data["winnerHandle"] as string | null | undefined) ?? null,
     winnerTicketNumber:
-      data["winnerTicketNumber"] ?? data["winningTicketNumber"] as string | null | undefined ?? null,
+      data["winnerTicketNumber"] ??
+      (data["winningTicketNumber"] as string | null | undefined) ??
+      null,
   };
 }
 
@@ -244,17 +278,15 @@ export async function getLiveWinners(): Promise<{
       );
       showcaseWinners = winnersSnap.docs.map((d) => {
         const raw = d.data() as Record<string, unknown>;
-        const competitionSlug =
-          String(raw["competitionSlug"] ?? raw["competitionId"] ?? "");
+        const competitionSlug = String(raw["competitionSlug"] ?? raw["competitionId"] ?? "");
         const comp = comps.find((c) => c.slug === competitionSlug);
         const img = winnerImage(comp);
         const valueKobo = winnerMarketValueKobo(comp);
-        const competitionTitle = String(
-          raw["competitionTitle"] ?? comp?.title ?? competitionSlug,
-        );
+        const competitionTitle = String(raw["competitionTitle"] ?? comp?.title ?? competitionSlug);
         const winnerNameRaw = String(raw["winnerName"] ?? raw["winnerDisplayName"] ?? "");
         return {
           id: String(raw["id"] ?? d.id),
+          competitionSlug: competitionSlug || comp?.slug || "",
           winnerName: winnerNameRaw || "Verified Winner",
           prize: competitionTitle,
           competition: comp?.category || competitionTitle,
@@ -271,13 +303,14 @@ export async function getLiveWinners(): Promise<{
     }
 
     const wonCompetitions = comps
-      .filter((c) => c.winnerDisplayName && (c.status === "COMPLETED" || c.winnerTicketNumber))
+      .filter((c) => (c.winnerDisplayName || c.winnerTicketNumber) && (c.status === "COMPLETED" || c.winnerTicketNumber))
       .map((c) => {
         const img = winnerImage(c);
         const valueKobo = winnerMarketValueKobo(c);
         return {
           id: `comp-${c.slug}`,
-          winnerName: c.winnerDisplayName as string,
+          competitionSlug: c.slug,
+          winnerName: (c.winnerDisplayName || c.winnerHandle || "Verified Winner") as string,
           prize: c.title,
           competition: c.category,
           drawDate: c.drawDate || winnerDrawDateString(new Date().toISOString()),

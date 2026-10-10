@@ -89,11 +89,33 @@ export function CompetitionCard({
               </span>
             </p>
             <div className="flex items-center gap-2">
-              <Button asChild variant="primary" size="lg" className="min-h-12 flex-1 text-base">
-                <Link to="/competitions/$slug" params={{ slug: competition.slug }}>
-                  Enter for {formatNaira(competition.entryPrice)}
-                </Link>
-              </Button>
+              {competition.status === "DRAW_READY" || competition.status === "DRAW_IN_PROGRESS" ? (
+                <Button
+                  asChild
+                  size="lg"
+                  className="min-h-12 flex-1 text-base bg-gradient-to-r from-[#D4AF37] to-[#E5C158] hover:from-[#E5C158] hover:to-[#D4AF37] text-[#0A261B] font-extrabold shadow-lg"
+                >
+                  <Link to="/competitions/$slug/draw" params={{ slug: competition.slug }}>
+                    🎯 Watch Live Draw
+                  </Link>
+                </Button>
+              ) : competition.status === "COMPLETED" || competition.status === "WINNER_SELECTED" ? (
+                <Button
+                  asChild
+                  size="lg"
+                  className="min-h-12 flex-1 text-base bg-[#10B981] hover:bg-emerald-600 text-white font-extrabold shadow-lg"
+                >
+                  <Link to="/competitions/$slug/draw" params={{ slug: competition.slug }}>
+                    🏆 View Draw Results
+                  </Link>
+                </Button>
+              ) : (
+                <Button asChild variant="primary" size="lg" className="min-h-12 flex-1 text-base">
+                  <Link to="/competitions/$slug" params={{ slug: competition.slug }}>
+                    Enter for {formatNaira(competition.entryPrice)}
+                  </Link>
+                </Button>
+              )}
               <Button asChild variant="outline" size="icon" aria-label="See how Raffila works">
                 <Link to="/how-it-works">
                   <ArrowUpRight className="size-5" />
@@ -293,16 +315,38 @@ export function CompetitionCard({
               Details <ArrowUpRight className="ml-1 size-3.5" />
             </Link>
           </Button>
-          <Button
-            variant="primary"
-            size="md"
-            className="min-h-12 flex-[1.5] min-w-0 text-base shadow-[0_12px_28px_-12px_var(--coral)]"
-            onClick={() => onEnterDraw?.(qty)}
-            disabled={!onEnterDraw || ticketsLeft === 0}
-          >
-            <Ticket className="size-4 shrink-0" />{" "}
-            <span className="truncate">Enter for {formatNaira(competition.entryPrice)}</span>
-          </Button>
+          {competition.status === "DRAW_READY" || competition.status === "DRAW_IN_PROGRESS" ? (
+            <Button
+              asChild
+              size="md"
+              className="min-h-12 flex-[1.5] min-w-0 text-sm font-extrabold bg-gradient-to-r from-[#D4AF37] to-[#E5C158] hover:from-[#E5C158] hover:to-[#D4AF37] text-[#0A261B] shadow-md"
+            >
+              <Link to="/competitions/$slug/draw" params={{ slug: competition.slug }}>
+                Watch Live Draw
+              </Link>
+            </Button>
+          ) : competition.status === "COMPLETED" || competition.status === "WINNER_SELECTED" ? (
+            <Button
+              asChild
+              size="md"
+              className="min-h-12 flex-[1.5] min-w-0 text-sm font-extrabold bg-[#10B981] hover:bg-emerald-600 text-white shadow-md"
+            >
+              <Link to="/competitions/$slug/draw" params={{ slug: competition.slug }}>
+                View Results
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="md"
+              className="min-h-12 flex-[1.5] min-w-0 text-base shadow-[0_12px_28px_-12px_var(--coral)]"
+              onClick={() => onEnterDraw?.(qty)}
+              disabled={!onEnterDraw || ticketsLeft === 0}
+            >
+              <Ticket className="size-4 shrink-0" />{" "}
+              <span className="truncate">Enter for {formatNaira(competition.entryPrice)}</span>
+            </Button>
+          )}
         </div>
       </div>
     </article>

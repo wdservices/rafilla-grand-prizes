@@ -10,7 +10,7 @@ import { TicketPurchaseModal } from "@/components/raffila/purchase";
 
 export function DashboardCompetitionsPage() {
   const [modalSlug, setModalSlug] = useState<string | null>(null);
-  const { competitions } = useCompetitions();
+  const { activeCompetitions } = useCompetitions();
 
   const accentMap = {
     coral: { ring: "ring-coral/15", badge: "bg-coral/15 text-coral", progress: "bg-coral" },
@@ -32,7 +32,7 @@ export function DashboardCompetitionsPage() {
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {competitions.map((c) => {
+        {activeCompetitions.map((c) => {
           const accent = accentMap[c.accent];
           return (
             <div

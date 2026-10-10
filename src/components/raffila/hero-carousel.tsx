@@ -153,11 +153,11 @@ export function useFeaturedCarousel() {
   const progressRafRef = useRef<number | null>(null);
   const lastTickRef = useRef<number>(performance.now());
 
-  // Firestore only — no catalogue fallback, so a deleted competition stays gone.
-  const { competitions: liveCompetitions } = useCompetitions();
+  // Firestore only — only active, non-concluded competitions appear in the carousel.
+  const { activeCompetitions } = useCompetitions();
   const slides = useMemo(
-    () => [...liveCompetitions].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)),
-    [liveCompetitions],
+    () => [...activeCompetitions].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)),
+    [activeCompetitions],
   );
 
   useEffect(() => {

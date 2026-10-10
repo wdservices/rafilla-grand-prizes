@@ -78,45 +78,45 @@
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.20 0.040 180);
+  --foreground: oklch(0.2 0.04 180);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.20 0.040 180);
+  --card-foreground: oklch(0.2 0.04 180);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.20 0.040 180);
-  --primary: oklch(0.40 0.09 152);
+  --popover-foreground: oklch(0.2 0.04 180);
+  --primary: oklch(0.4 0.09 152);
   --primary-foreground: oklch(0.99 0.005 80);
   --secondary: oklch(0.96 0.01 175);
-  --secondary-foreground: oklch(0.20 0.040 180);
+  --secondary-foreground: oklch(0.2 0.04 180);
   --muted: oklch(0.96 0.01 175);
   --muted-foreground: oklch(0.56 0.05 175);
   --accent: oklch(0.96 0.01 175);
-  --accent-foreground: oklch(0.20 0.040 180);
+  --accent-foreground: oklch(0.2 0.04 180);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --border: oklch(0.93 0.013 170);
   --input: oklch(0.93 0.013 170);
-  --ring: oklch(0.40 0.09 152);
-  --chart-1: oklch(0.40 0.09 152);
+  --ring: oklch(0.4 0.09 152);
+  --chart-1: oklch(0.4 0.09 152);
   --chart-2: oklch(0.84 0.16 140);
-  --chart-3: oklch(0.80 0.15 88);
+  --chart-3: oklch(0.8 0.15 88);
   --chart-4: oklch(0.82 0.08 170);
   --chart-5: oklch(0.83 0.06 180);
   --sidebar: oklch(0.98 0.01 175);
-  --sidebar-foreground: oklch(0.20 0.040 180);
-  --sidebar-primary: oklch(0.40 0.09 152);
+  --sidebar-foreground: oklch(0.2 0.04 180);
+  --sidebar-primary: oklch(0.4 0.09 152);
   --sidebar-primary-foreground: oklch(0.99 0.005 80);
   --sidebar-accent: oklch(0.96 0.01 175);
-  --sidebar-accent-foreground: oklch(0.20 0.040 180);
+  --sidebar-accent-foreground: oklch(0.2 0.04 180);
   --sidebar-border: oklch(0.93 0.013 170);
-  --sidebar-ring: oklch(0.40 0.09 152);
-  --ink: oklch(0.20 0.040 180);
+  --sidebar-ring: oklch(0.4 0.09 152);
+  --ink: oklch(0.2 0.04 180);
   --cream: oklch(0.98 0.018 78);
   --paper: oklch(0.995 0.006 78);
   --rose: oklch(0.72 0.13 355);
-  --coral: oklch(0.40 0.09 152);
+  --coral: oklch(0.4 0.09 152);
   --sky: oklch(0.82 0.08 170);
   --mint: oklch(0.84 0.16 140);
-  --lemon: oklch(0.80 0.15 88);
+  --lemon: oklch(0.8 0.15 88);
   --lilac: oklch(0.83 0.06 180);
   --raf-green: oklch(0.36 0.07 150);
   --raf-lime: oklch(0.84 0.16 138);
@@ -210,7 +210,13 @@
   input[type="button"]:not(:disabled),
   input[type="submit"]:not(:disabled) {
     cursor: pointer;
-    transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), filter 0.15s ease, opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+      transform 0.15s cubic-bezier(0.2, 0, 0, 1),
+      filter 0.15s ease,
+      opacity 0.15s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
   }
 
   button:not([role="switch"]):not(:disabled):not([aria-disabled="true"]):hover,
@@ -283,9 +289,20 @@
 }
 
 @keyframes authSlide {
-  0%, 100% { opacity: 0; transform: scale(1.05); }
-  5%, 28% { opacity: 1; transform: scale(1); }
-  33% { opacity: 0; transform: scale(1.02); }
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  5%,
+  28% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  33% {
+    opacity: 0;
+    transform: scale(1.02);
+  }
 }
 
 @utility raf-float {
@@ -306,7 +323,15 @@
   }
 }
 
-:where(button, a, [role="button"], input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+:where(
+  button,
+  a,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  [tabindex]:not([tabindex="-1"])
+):focus-visible {
   outline: 3px solid var(--coral) !important;
   outline-offset: 2px;
   border-radius: 14px;

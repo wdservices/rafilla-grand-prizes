@@ -12,7 +12,8 @@ const buttonVariants = cva(
         primary:
           "bg-coral text-paper shadow-[0_8px_20px_-8px_var(--coral)] hover:bg-coral/95 hover:brightness-105 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_-8px_var(--coral)] active:translate-y-0 active:scale-[0.98]",
         dark: "bg-ink text-cream shadow-[0_14px_30px_-10px_var(--ink)] hover:bg-ink/90 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]",
-        outline: "border border-ink/15 bg-paper text-ink hover:bg-lilac/20 hover:border-ink/30 hover:brightness-105 active:scale-[0.98]",
+        outline:
+          "border border-ink/15 bg-paper text-ink hover:bg-lilac/20 hover:border-ink/30 hover:brightness-105 active:scale-[0.98]",
         ghost: "text-ink/65 hover:bg-paper hover:text-ink active:scale-[0.98]",
       },
       size: {

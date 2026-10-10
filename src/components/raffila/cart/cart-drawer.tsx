@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/useAuthSession";
-import { useCompetitions } from "@/hooks/useCompetitions";
+import { useCompetitions, isCompetitionConcluded } from "@/hooks/useCompetitions";
 import {
   clearCart,
   closeCart,
@@ -71,14 +71,16 @@ export function CartDrawer() {
 
   const catalogue = useMemo(
     () =>
-      competitions.map((c) => ({
-        slug: c.slug,
-        title: c.title,
-        entryPriceKobo: c.entryPrice,
-        image: c.image,
-        totalEntries: c.totalEntries,
-        entriesSold: c.entriesSold,
-      })),
+      competitions
+        .filter((c) => !isCompetitionConcluded(c))
+        .map((c) => ({
+          slug: c.slug,
+          title: c.title,
+          entryPriceKobo: c.entryPrice,
+          image: c.image,
+          totalEntries: c.totalEntries,
+          entriesSold: c.entriesSold,
+        })),
     [competitions],
   );
   const { lines, subtotalKobo, totalQty } = useMemo(

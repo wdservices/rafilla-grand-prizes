@@ -15,6 +15,7 @@ import { SiteFooter } from "@/components/raffila/site-footer";
 import { SiteHeader } from "@/components/raffila/site-header";
 import { CookieConsentBanner } from "@/components/raffila/cookie";
 import { BuildMismatchBanner } from "@/components/raffila/build-mismatch-banner";
+import { ScheduledDrawNotification } from "@/components/raffila/draws";
 import { CartDrawer } from "@/components/raffila/cart/cart-drawer";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorPage } from "@/components/raffila/error-page";
@@ -169,6 +170,7 @@ function RootComponent() {
           Skip to content
         </a>
         <BuildMismatchBanner />
+        {!hidePublicChrome && <ScheduledDrawNotification />}
         {!hidePublicChrome && <SiteHeader />}
         <main id="main-content" tabIndex={-1}>
           <Outlet />

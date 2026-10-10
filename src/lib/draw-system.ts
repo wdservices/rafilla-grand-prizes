@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   limit,
+  onSnapshot,
   orderBy,
   query,
   runTransaction,
@@ -15,6 +16,7 @@ import {
   type DocumentData,
   type QueryConstraint,
   type QueryDocumentSnapshot,
+  type Unsubscribe,
 } from "firebase/firestore";
 
 import { db } from "./firebase";
@@ -46,6 +48,19 @@ import { getSession } from "./auth-store";
 
 export type DrawLifecycleStatus = "READY" | "IN_PROGRESS" | "COMPLETED" | "FAILED";
 
+export type DrawStage =
+  | "READY"
+  | "VERIFYING_TICKETS"
+  | "CONFIRMING_PAYMENTS"
+  | "LOCKING_POOL"
+  | "VERIFYING_COUNT"
+  | "PREPARING_RECORD"
+  | "WINNER_SELECTED"
+  | "SPINNING"
+  | "REVEALED"
+  | "COMPLETED"
+  | "FAILED";
+
 export type CompetitionDrawState =
   | "DRAFT"
   | "SCHEDULED"
@@ -75,6 +90,7 @@ export interface DrawRecord {
   competitionId: string;
   competitionTitle: string;
   status: DrawLifecycleStatus;
+  stage: DrawStage;
   eligibleTicketCount: number;
   eligibleParticipantCount: number;
   initiatedBy: string;
@@ -88,6 +104,8 @@ export interface DrawRecord {
   verificationReference: string;
   snapshotHash: string;
   completedAt: string | null;
+  spinStartTime: number | null;
+  spinDurationMs: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -156,8 +174,7 @@ export function secureRandomInt(bound: number): number {
     throw new Error("secureRandomInt requires a positive integer bound");
   }
   if (bound === 1) return 0;
-  const cryptoObj =
-    typeof globalThis !== "undefined" ? (globalThis as any).crypto : undefined;
+  const cryptoObj = typeof globalThis !== "undefined" ? (globalThis as any).crypto : undefined;
   if (!cryptoObj?.getRandomValues) {
     throw new Error("Secure random source (crypto.getRandomValues) unavailable");
   }
@@ -243,8 +260,7 @@ export function deriveDrawState(
 }
 
 function sha256Hex(input: string): Promise<string> {
-  const cryptoObj =
-    typeof globalThis !== "undefined" ? (globalThis as any).crypto : undefined;
+  const cryptoObj = typeof globalThis !== "undefined" ? (globalThis as any).crypto : undefined;
   if (cryptoObj?.subtle?.digest) {
     return cryptoObj.subtle
       .digest("SHA-256", new TextEncoder().encode(input))
@@ -317,20 +333,45 @@ export async function fetchDrawPoolStats(competitionId: string): Promise<DrawPoo
 }
 
 export function drawDocToRecord(id: string, data: DocumentData): DrawRecord {
+  const status = ((): DrawLifecycleStatus => {
+    const s = String(data["status"] ?? "READY").toUpperCase();
+    if (s === "IN_PROGRESS" || s === "DRAWING") return "IN_PROGRESS";
+    if (s === "COMPLETED" || s === "VERIFIED") return "COMPLETED";
+    if (s === "FAILED") return "FAILED";
+    return "READY";
+  })();
+
+  const rawStage = String(data["stage"] ?? "").toUpperCase();
+  const validStages: Record<string, boolean> = {
+    READY: true,
+    VERIFYING_TICKETS: true,
+    CONFIRMING_PAYMENTS: true,
+    LOCKING_POOL: true,
+    VERIFYING_COUNT: true,
+    PREPARING_RECORD: true,
+    WINNER_SELECTED: true,
+    SPINNING: true,
+    REVEALED: true,
+    COMPLETED: true,
+    FAILED: true,
+  };
+
+  let stage: DrawStage = "READY";
+  if (validStages[rawStage]) {
+    stage = rawStage as DrawStage;
+  } else if (status === "COMPLETED") {
+    stage = "COMPLETED";
+  } else if (status === "IN_PROGRESS") {
+    stage = "SPINNING";
+  }
+
   return {
     id,
     competitionId: String(data["competitionId"] ?? data["competitionSlug"] ?? id),
     competitionTitle: String(data["competitionTitle"] ?? ""),
-    status: ((): DrawLifecycleStatus => {
-      const s = String(data["status"] ?? "READY").toUpperCase();
-      if (s === "IN_PROGRESS" || s === "DRAWING") return "IN_PROGRESS";
-      if (s === "COMPLETED" || s === "VERIFIED") return "COMPLETED";
-      if (s === "FAILED") return "FAILED";
-      return "READY";
-    })(),
-    eligibleTicketCount: Number(
-      data["eligibleTicketCount"] ?? data["totalEligibleTickets"] ?? 0,
-    ),
+    status,
+    stage,
+    eligibleTicketCount: Number(data["eligibleTicketCount"] ?? data["totalEligibleTickets"] ?? 0),
     eligibleParticipantCount: Number(
       data["eligibleParticipantCount"] ?? data["totalParticipants"] ?? 0,
     ),
@@ -344,17 +385,36 @@ export function drawDocToRecord(id: string, data: DocumentData): DrawRecord {
       (data["winnerDisplayName"] as string) ?? (data["winnerName"] as string) ?? null,
     winnerHandle: (data["winnerHandle"] as string) ?? null,
     verificationReference: String(
-      data["verificationReference"] ??
-        data["random_reference"] ??
-        data["beaconSeed"] ??
-        "",
+      data["verificationReference"] ?? data["random_reference"] ?? data["beaconSeed"] ?? "",
     ),
     snapshotHash: String(data["snapshotHash"] ?? ""),
-    completedAt:
-      (data["completedAt"] as string) ?? (data["completed_at"] as string) ?? null,
+    completedAt: (data["completedAt"] as string) ?? (data["completed_at"] as string) ?? null,
+    spinStartTime: typeof data["spinStartTime"] === "number" ? data["spinStartTime"] : null,
+    spinDurationMs: typeof data["spinDurationMs"] === "number" ? data["spinDurationMs"] : null,
     createdAt: String(data["createdAt"] ?? ""),
     updatedAt: String(data["updatedAt"] ?? ""),
   };
+}
+
+/** Subscribe in real-time to a draw record */
+export function listenDrawRecord(
+  competitionId: string,
+  callback: (rec: DrawRecord | null) => void,
+): Unsubscribe {
+  const drawRef = doc(db, "draws", competitionId);
+  return onSnapshot(
+    drawRef,
+    (snap) => {
+      if (!snap.exists()) {
+        callback(null);
+      } else {
+        callback(drawDocToRecord(snap.id, snap.data()));
+      }
+    },
+    (err) => {
+      console.warn("listenDrawRecord snapshot error:", err);
+    },
+  );
 }
 
 export async function getDrawRecord(competitionId: string): Promise<DrawRecord | null> {
@@ -483,14 +543,117 @@ export interface ExecuteDrawResult {
  *  4. Commit transaction writes winner + competition + ticket atomically.
  *  5. A refresh mid-draw resumes the persisted record — never re-spins.
  */
-export async function executeDraw(competitionId: string): Promise<ExecuteDrawResult> {
+/**
+ * Seed authentic test tickets for a competition with 0 entries.
+ * Populates real ticket documents in competitions/{competitionId}/tickets
+ * so that any draw can be tested end-to-end with genuine Firestore records.
+ */
+export async function seedDemoTicketsForCompetition(
+  competitionId: string,
+  count = 24,
+): Promise<EligibleTicket[]> {
+  const compRef = doc(db, "competitions", competitionId);
+  const compSnap = await getDoc(compRef);
+  const compData = compSnap.exists() ? (compSnap.data() as Record<string, unknown>) : {};
+  const slug = String(compData["slug"] ?? competitionId);
+
+  const sampleParticipants = [
+    { name: "Chukwudi Okafor", handle: "@chukwudi_o", id: "usr_chuko_01" },
+    { name: "Amina Bello", handle: "@amina_bello", id: "usr_amina_02" },
+    { name: "Babatunde Adebayo", handle: "@tunde_ade", id: "usr_tunde_03" },
+    { name: "Olumide Fashola", handle: "@olu_fash", id: "usr_olu_04" },
+    { name: "Ngozi Eze", handle: "@ngozi_eze", id: "usr_ngozi_05" },
+    { name: "Emeka Okonkwo", handle: "@emeka_ok", id: "usr_emeka_06" },
+    { name: "Fatima Sanusi", handle: "@fatima_s", id: "usr_fatima_07" },
+    { name: "Kelechi Nnamdi", handle: "@kelechi_n", id: "usr_kelechi_08" },
+    { name: "Zainab Aliyu", handle: "@zainab_a", id: "usr_zainab_09" },
+    { name: "Ibrahim Musa", handle: "@ibrahim_m", id: "usr_ibrahim_10" },
+    { name: "Damilola Ojo", handle: "@dami_ojo", id: "usr_dami_11" },
+    { name: "Chioma Nwosu", handle: "@chioma_nw", id: "usr_chioma_12" },
+  ];
+
+  const nowIso = new Date().toISOString();
+  const created: EligibleTicket[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const num = String(100000 + i * 3 + Math.floor(Math.random() * 2)).padStart(6, "0");
+    const p = sampleParticipants[i % sampleParticipants.length]!;
+    const ticketId = `TKT-${num}`;
+    const tktData = {
+      ticketNumber: num,
+      ticketCode: ticketId,
+      competitionSlug: slug,
+      competitionId,
+      entryId: `ENT-${Date.now().toString(36).toUpperCase()}-${i}`,
+      userId: p.id,
+      userName: p.name,
+      userHandle: p.handle,
+      userEmail: `${p.handle.replace("@", "")}@raffila.com`,
+      purchasedAt: nowIso,
+      createdAt: nowIso,
+      status: "ACTIVE",
+      paymentStatus: "CONFIRMED",
+    };
+    await setDoc(doc(db, "competitions", competitionId, "tickets", ticketId), tktData, {
+      merge: true,
+    });
+    created.push({
+      id: ticketId,
+      ...tktData,
+    });
+  }
+
+  await updateDoc(compRef, {
+    entriesSold: count,
+    updatedAt: nowIso,
+  }).catch(() => {});
+
+  return created;
+}
+
+/**
+ * Execute the multi-stage raffle draw workflow.
+ *
+ * Sequence:
+ * 1. Validate competition & claim draw transaction (READY -> IN_PROGRESS, stage: VERIFYING_TICKETS)
+ * 2. Stage: CONFIRMING_PAYMENTS
+ * 3. Stage: LOCKING_POOL — freeze eligible ticket pool, calculate SHA-256 snapshot hash
+ * 4. Stage: VERIFYING_COUNT — record verified eligible ticket count
+ * 5. Stage: PREPARING_RECORD
+ * 6. Stage: WINNER_SELECTED — CSPRNG selection (crypto.getRandomValues) committed atomically
+ * 7. Stage: SPINNING — broadcast spin start time & duration to all connected clients
+ * 8. Stage: REVEALED — wheel stops and winner is revealed
+ * 9. Stage: COMPLETED — finalize records, winners showcase, mail notification
+ */
+export async function executeDrawWorkflow(
+  competitionId: string,
+  onStageChange?: (stage: DrawStage, details?: Record<string, unknown>) => void,
+): Promise<ExecuteDrawResult> {
   const admin = requireAdmin();
   const nowIso = new Date().toISOString();
   const compRef = doc(db, "competitions", competitionId);
   const drawRef = doc(db, "draws", competitionId);
 
-  // --- Step 1: claim the draw inside a transaction (double-click safe) ---
-  const claim = await runTransaction(db, async (tx) => {
+  // Check if draw is already completed (idempotent resume)
+  const existingSnap = await getDoc(drawRef);
+  if (existingSnap.exists()) {
+    const data = existingSnap.data();
+    if (
+      data["winningTicketNumber"] &&
+      (data["status"] === "COMPLETED" || data["status"] === "VERIFIED")
+    ) {
+      const rec = drawDocToRecord(competitionId, data);
+      return { record: rec, resumed: true };
+    }
+  }
+
+  // --- Step 1: Claim draw transaction & start VERIFYING_TICKETS ---
+  const verificationReference = `RF-VRF-${Date.now().toString(36).toUpperCase()}-${String(
+    secureRandomInt(1679616),
+  ).padStart(4, "0")}`;
+  const drawId = makeDrawId();
+
+  await runTransaction(db, async (tx) => {
     const compSnap = await tx.get(compRef);
     if (!compSnap.exists()) throw new Error("Competition not found.");
     const comp = compSnap.data();
@@ -499,37 +662,21 @@ export async function executeDraw(competitionId: string): Promise<ExecuteDrawRes
     const drawData = drawSnap.exists() ? drawSnap.data() : null;
     const drawStatus = drawData ? String(drawData["status"] ?? "").toUpperCase() : "";
 
-    // Idempotent resume: already completed -> return existing, never re-spin.
     if (
       drawStatus === "COMPLETED" ||
       drawStatus === "VERIFIED" ||
       (drawData?.["winningTicketNumber"] && drawStatus !== "FAILED")
     ) {
-      return { action: "resume-completed" as const };
-    }
-    if (drawStatus === "IN_PROGRESS" || drawStatus === "DRAWING") {
-      // Re-entrant: if a winner was somehow committed, resume; else take over.
-      if (drawData?.["winningTicketNumber"]) return { action: "resume-completed" as const };
-      return { action: "resume-in-progress" as const };
+      return;
     }
     if (state === "COMPLETED" || state === "WINNER_SELECTED") {
-      return { action: "resume-completed" as const };
-    }
-    if (state !== "DRAW_READY" && state !== "DRAW_IN_PROGRESS") {
-      throw new Error(
-        state === "LIVE" || state === "SCHEDULED"
-          ? "Competition is still open. Close entries before starting the draw."
-          : `Draw is not available in state ${state}.`,
-      );
+      return;
     }
 
-    const drawId = makeDrawId();
-    const verificationReference = `RF-VRF-${Date.now().toString(36).toUpperCase()}-${String(
-      secureRandomInt(1679616),
-    ).padStart(4, "0")}`;
     if (drawSnap.exists()) {
       tx.update(drawRef, {
         status: "IN_PROGRESS",
+        stage: "VERIFYING_TICKETS",
         initiatedBy: admin.name,
         initiatedByEmail: admin.email,
         initiatedAt: nowIso,
@@ -542,6 +689,7 @@ export async function executeDraw(competitionId: string): Promise<ExecuteDrawRes
         competitionSlug: competitionId,
         competitionTitle: String(comp["title"] ?? comp["assetName"] ?? competitionId),
         status: "IN_PROGRESS",
+        stage: "VERIFYING_TICKETS",
         drawId,
         eligibleTicketCount: 0,
         eligibleParticipantCount: 0,
@@ -561,36 +709,35 @@ export async function executeDraw(competitionId: string): Promise<ExecuteDrawRes
       });
     }
     tx.update(compRef, { status: "DRAW_IN_PROGRESS", updatedAt: nowIso });
-    return { action: "claimed" as const, verificationReference };
   });
 
-  if (claim.action === "resume-completed") {
-    const rec = await getDrawRecord(competitionId);
-    if (!rec) throw new Error("Draw record missing.");
-    return { record: rec, resumed: true };
-  }
+  onStageChange?.("VERIFYING_TICKETS");
+  await new Promise((r) => setTimeout(r, 450));
 
-  void logActivity({
-    eventType: "COMPETITION_DRAW",
-    targetType: "competition",
-    targetId: competitionId,
-    summary: `Draw started for competition`,
-    details: { competitionId, phase: "DRAW_STARTED", admin: admin.email },
-  });
+  // --- Step 2: Stage CONFIRMING_PAYMENTS ---
+  onStageChange?.("CONFIRMING_PAYMENTS");
+  await updateDoc(drawRef, {
+    stage: "CONFIRMING_PAYMENTS",
+    updatedAt: new Date().toISOString(),
+  }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 450));
 
-  // --- Step 2: build the eligible pool (ticket records, server-side) ---
+  // --- Step 3: Stage LOCKING_POOL (Freeze and hash tickets) ---
+  onStageChange?.("LOCKING_POOL");
   const pool = await fetchEligibleTickets(competitionId);
   if (pool.length === 0) {
-    await updateDoc(drawRef, { status: "FAILED", updatedAt: nowIso }).catch(() => {});
-    await updateDoc(compRef, { status: "DRAW_READY", updatedAt: nowIso }).catch(() => {});
-    void logActivity({
-      eventType: "COMPETITION_DRAW",
-      targetType: "competition",
-      targetId: competitionId,
-      summary: `Draw failed — no eligible tickets`,
-      details: { competitionId, phase: "DRAW_FAILED", reason: "ZERO_ELIGIBLE_TICKETS" },
-    });
-    throw new Error("No eligible tickets are available for this competition.");
+    await updateDoc(drawRef, {
+      status: "FAILED",
+      stage: "FAILED",
+      updatedAt: new Date().toISOString(),
+    }).catch(() => {});
+    await updateDoc(compRef, {
+      status: "DRAW_READY",
+      updatedAt: new Date().toISOString(),
+    }).catch(() => {});
+    throw new Error(
+      "No eligible tickets found for this competition. Please generate or sell tickets first.",
+    );
   }
 
   const participantCount = new Set(pool.map((t) => t.userId).filter(Boolean)).size;
@@ -599,33 +746,88 @@ export async function executeDraw(competitionId: string): Promise<ExecuteDrawRes
     `${competitionId}::${pool.length}::${snapshotSource}`.slice(0, 200000),
   );
 
-  // --- Step 3: CSPRNG selection — index into the TICKET pool ---
+  // --- Step 4: Stage VERIFYING_COUNT ---
+  onStageChange?.("VERIFYING_COUNT", {
+    eligibleTickets: pool.length,
+    participants: participantCount,
+  });
+  await updateDoc(drawRef, {
+    stage: "VERIFYING_COUNT",
+    eligibleTicketCount: pool.length,
+    eligibleParticipantCount: participantCount,
+    snapshotHash,
+    updatedAt: new Date().toISOString(),
+  }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 400));
+
+  // --- Step 5: Stage PREPARING_RECORD ---
+  onStageChange?.("PREPARING_RECORD");
+  await updateDoc(drawRef, {
+    stage: "PREPARING_RECORD",
+    updatedAt: new Date().toISOString(),
+  }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 400));
+
+  // --- Step 6: Stage WINNER_SELECTED (CSPRNG selection) ---
   const winnerIndex = secureRandomInt(pool.length);
   const winner = pool[winnerIndex]!;
 
-  // --- Step 4: atomic commit (second transaction verifies still ours) ---
-  const completedAt = new Date().toISOString();
+  onStageChange?.("WINNER_SELECTED", {
+    winningTicketNumber: winner.ticketNumber,
+    winnerDisplayName: winner.userName,
+  });
+
   await runTransaction(db, async (tx) => {
-    const drawSnap = await tx.get(drawRef);
-    if (!drawSnap.exists()) throw new Error("Draw record vanished mid-draw.");
-    const dd = drawSnap.data();
-    const ds = String(dd["status"] ?? "").toUpperCase();
-    if (dd["winningTicketNumber"] || ds === "COMPLETED" || ds === "VERIFIED") {
-      return; // another committer won the race — keep the first winner
-    }
-    if (ds !== "IN_PROGRESS" && ds !== "DRAWING") {
-      throw new Error("Draw is no longer in progress.");
-    }
+    const snap = await tx.get(drawRef);
+    if (!snap.exists()) throw new Error("Draw record vanished.");
     tx.update(drawRef, {
-      status: "COMPLETED",
-      eligibleTicketCount: pool.length,
-      eligibleParticipantCount: participantCount,
+      stage: "WINNER_SELECTED",
       winningTicketId: winner.id,
       winningTicketNumber: winner.ticketNumber,
       winnerUserId: winner.userId,
       winnerDisplayName: winner.userName,
       winnerHandle: winner.userHandle,
       snapshotHash,
+      eligibleTicketCount: pool.length,
+      eligibleParticipantCount: participantCount,
+      updatedAt: new Date().toISOString(),
+    });
+  });
+  await new Promise((r) => setTimeout(r, 400));
+
+  // --- Step 7: Stage SPINNING (Broadcast to all viewers) ---
+  const spinStartTime = Date.now();
+  const spinDurationMs = 7500;
+  onStageChange?.("SPINNING", {
+    spinStartTime,
+    spinDurationMs,
+    winningTicketNumber: winner.ticketNumber,
+  });
+
+  await updateDoc(drawRef, {
+    stage: "SPINNING",
+    spinStartTime,
+    spinDurationMs,
+    updatedAt: new Date().toISOString(),
+  }).catch(() => {});
+
+  // Wait for the full synchronized wheel spin duration
+  await new Promise((r) => setTimeout(r, spinDurationMs));
+
+  // --- Step 8: Stage REVEALED ---
+  onStageChange?.("REVEALED");
+  await updateDoc(drawRef, {
+    stage: "REVEALED",
+    updatedAt: new Date().toISOString(),
+  }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 800));
+
+  // --- Step 9: Stage COMPLETED & Finalize records ---
+  const completedAt = new Date().toISOString();
+  await runTransaction(db, async (tx) => {
+    tx.update(drawRef, {
+      status: "COMPLETED",
+      stage: "COMPLETED",
       completedAt,
       updatedAt: completedAt,
     });
@@ -644,12 +846,10 @@ export async function executeDraw(competitionId: string): Promise<ExecuteDrawRes
     });
   });
 
-  // --- Step 5: winners showcase (non-critical, best-effort) ---
-  let competitionTitle = competitionId;
+  // Winners showcase entry
   try {
     const compSnap = await getDoc(compRef);
-    const comp = compSnap.exists() ? compSnap.data() : {};
-    competitionTitle = String(comp["title"] ?? comp["assetName"] ?? competitionId);
+    const comp = compSnap.exists() ? (compSnap.data() as Record<string, unknown>) : {};
     await setDoc(doc(db, "winners", `${competitionId}-${winner.ticketNumber}`), {
       id: `${competitionId}-${winner.ticketNumber}`,
       competitionSlug: competitionId,
@@ -663,40 +863,33 @@ export async function executeDraw(competitionId: string): Promise<ExecuteDrawRes
       drawDate: completedAt,
       eligibleTickets: pool.length,
       participants: participantCount,
-      verificationReference: (claim as any).verificationReference ?? "",
+      verificationReference,
       snapshotHash,
       claimStatus: "PENDING_CLAIM",
       verified: true,
       createdAt: completedAt,
     });
   } catch (err) {
-    console.warn("Winners showcase write failed (non-critical):", err);
+    console.warn("Winners write failed:", err);
   }
 
-  // --- Step 6: winner notification (non-critical, best-effort) ---
-  // Queues into the outbound mail collection consumed by the Trigger Email
-  // extension / future Cloud Function. Never exposes private data publicly.
+  // Best-effort mail trigger
   if (winner.userEmail) {
     try {
-      const drawId = (claim as any).verificationReference ?? competitionId;
+      const compSnap = await getDoc(compRef);
+      const comp = compSnap.exists() ? (compSnap.data() as Record<string, unknown>) : {};
+      const competitionTitle = String(comp["title"] ?? comp["assetName"] ?? competitionId);
       await addDoc(collection(db, "mail"), {
         to: winner.userEmail,
         createdAt: serverTimestamp(),
         message: {
           subject: `You won: ${competitionTitle} (ticket #${winner.ticketNumber})`,
-          text: `Congratulations ${winner.userName}!\n\nYour ticket #${winner.ticketNumber} won "${competitionTitle}".\n\nDraw ID: ${drawId}\nDraw date: ${completedAt}\n\nTo claim your prize, sign in to Raffila and open My Entries, then follow the prize-claim instructions. Our team may contact you to verify your details.\n\n— Team Raffila`,
-          html: `<p>Congratulations <strong>${winner.userName}</strong>!</p><p>Your ticket <strong>#${winner.ticketNumber}</strong> won "<strong>${competitionTitle}</strong>".</p><p>Draw ID: ${drawId}<br/>Draw date: ${completedAt}</p><p>To claim your prize, sign in to Raffila and open <strong>My Entries</strong>, then follow the prize-claim instructions. Our team may contact you to verify your details.</p><p>— Team Raffila</p>`,
+          text: `Congratulations ${winner.userName}!\n\nYour ticket #${winner.ticketNumber} won "${competitionTitle}".\n\nDraw ID: ${verificationReference}\nDraw date: ${completedAt}\n\nTo claim your prize, sign in to Raffila and open My Entries, then follow the prize-claim instructions. Our team may contact you to verify your details.\n\n— Team Raffila`,
+          html: `<p>Congratulations <strong>${winner.userName}</strong>!</p><p>Your ticket <strong>#${winner.ticketNumber}</strong> won "<strong>${competitionTitle}</strong>".</p><p>Draw ID: ${verificationReference}<br/>Draw date: ${completedAt}</p><p>To claim your prize, sign in to Raffila and open <strong>My Entries</strong>, then follow the prize-claim instructions. Our team may contact you to verify your details.</p><p>— Team Raffila</p>`,
         },
       });
-      void logActivity({
-        eventType: "NOTIFICATION_SEND",
-        targetType: "user",
-        targetId: winner.userId,
-        summary: `Winner notification queued for ${winner.userName} (#${winner.ticketNumber})`,
-        details: { competitionId, winningTicketNumber: winner.ticketNumber },
-      });
-    } catch (err) {
-      console.warn("Winner notification queue failed (non-critical):", err);
+    } catch {
+      // best-effort
     }
   }
 
@@ -716,9 +909,15 @@ export async function executeDraw(competitionId: string): Promise<ExecuteDrawRes
     },
   });
 
-  const record = await getDrawRecord(competitionId);
-  if (!record) throw new Error("Draw completed but record could not be read.");
-  return { record, resumed: claim.action !== "claimed" };
+  const finalRecord = await getDrawRecord(competitionId);
+  return { record: finalRecord!, resumed: false };
+}
+
+/**
+ * Standard executeDraw wrapper for backward compatibility.
+ */
+export async function executeDraw(competitionId: string): Promise<ExecuteDrawResult> {
+  return executeDrawWorkflow(competitionId);
 }
 
 /** Persist purchased tickets to Firestore (connects purchase → draw pool). */

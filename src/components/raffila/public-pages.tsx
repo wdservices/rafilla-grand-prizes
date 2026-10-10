@@ -109,7 +109,7 @@ import {
   matchesBudget,
   trackEvent,
 } from "@/lib/raffila-data";
-import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
+import { useCompetitions, findCompetition, isCompetitionConcluded } from "@/hooks/useCompetitions";
 import { useWinners } from "@/hooks/useWinners";
 import {
   HeroFeaturedCarousel,
@@ -157,7 +157,7 @@ function LiveCompetitionsSection({ competitions }: { competitions: Competition[]
 }
 
 export function HomePage() {
-  const { competitions } = useCompetitions();
+  const { competitions, activeCompetitions } = useCompetitions();
   const { winners } = useWinners();
   const carousel = useFeaturedCarousel();
   return (
@@ -262,13 +262,13 @@ export function HomePage() {
         </div>
       </section>
 
-      <PopularUnder1000 competitions={competitions} />
+      <PopularUnder1000 competitions={activeCompetitions} />
 
       <TrustStrip />
 
-      <LiveCompetitionsSection competitions={competitions} />
+      <LiveCompetitionsSection competitions={activeCompetitions} />
 
-      <BrowseByNeed competitions={competitions} />
+      <BrowseByNeed competitions={activeCompetitions} />
 
       <HowItWorksPreview />
 
@@ -600,7 +600,7 @@ export function CompetitionsFilterBar({
               </SelectTrigger>
               <SelectContent className="rounded-2xl border-0 bg-paper p-1 font-body shadow-lg ring-1 ring-ink/10">
                 <SelectItem value="all" className="rounded-xl text-xs font-bold">
-                  All
+                  All active
                 </SelectItem>
                 <SelectItem value="live" className="rounded-xl text-xs font-bold">
                   Live now
@@ -610,9 +610,6 @@ export function CompetitionsFilterBar({
                 </SelectItem>
                 <SelectItem value="ending-soon" className="rounded-xl text-xs font-bold">
                   Ending soon (≤7d)
-                </SelectItem>
-                <SelectItem value="completed" className="rounded-xl text-xs font-bold">
-                  Completed
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -853,7 +850,7 @@ export function CompetitionsFilterBar({
 }
 
 export function CompetitionsPage() {
-  const { competitions } = useCompetitions();
+  const { activeCompetitions } = useCompetitions();
   const [state, setState] = useState<CompetitionsFilterState>({
     query: "",
     category: "All",
@@ -870,7 +867,7 @@ export function CompetitionsPage() {
   const [modalQty, setModalQty] = useState<number>(1);
   const filtered = useMemo(() => {
     const q = state.query.trim().toLowerCase();
-    const list = competitions.filter((c) => {
+    const list = activeCompetitions.filter((c) => {
       if (state.category !== "All" && c.category !== state.category) return false;
       if (!matchesBudget(c.entryPrice, (state.budget as any) ?? "all")) return false;
       if (q) {
@@ -890,14 +887,11 @@ export function CompetitionsPage() {
         case "ending-soon":
           if (c.daysUntilClose > 7) return false;
           break;
-        case "completed":
-          if (c.status !== "COMPLETED") return false;
-          break;
       }
       return true;
     });
     return applySort(list, state.sort);
-  }, [state, competitions]);
+  }, [state, activeCompetitions]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(state.page, totalPages);
   const paged = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
@@ -911,7 +905,7 @@ export function CompetitionsPage() {
       <CompetitionsFilterBar
         state={state}
         setState={setState}
-        totalCount={competitions.length}
+        totalCount={activeCompetitions.length}
         filteredCount={filtered.length}
       />
       {filtered.length === 0 ? (
@@ -1116,17 +1110,18 @@ export function CompetitionDetailPage() {
   const [showStickyBar, setShowStickyBar] = useState(false);
   const competition = findCompetition(competitions, slug);
   const [qty, setQty] = useState<number>(1);
+  const isConcluded = isCompetitionConcluded(competition);
   const cd = useCountdownDays(Math.max(1, competition?.daysUntilClose ?? 1));
   const related = useMemo(() => {
     return competitions
-      .filter((c) => c.slug !== competition?.slug)
+      .filter((c) => c.slug !== competition?.slug && !isCompetitionConcluded(c))
       .sort(() => Math.random() - 0.5)
       .slice(0, 4);
   }, [competitions, competition?.slug]);
   const partnerCompetitions = useMemo(
     () =>
       competitions
-        .filter((c) => c.partner === competition?.partner && c.slug !== competition?.slug)
+        .filter((c) => c.partner === competition?.partner && c.slug !== competition?.slug && !isCompetitionConcluded(c))
         .slice(0, 3),
     [competitions, competition?.partner, competition?.slug],
   );
@@ -1228,16 +1223,26 @@ export function CompetitionDetailPage() {
                 {formatNaira(totalKobo)}
               </p>
             </div>
-            <QuantityStepper value={safeQty} onChange={setQty} min={1} max={maxQty} size="sm" />
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setModalOpen(true)}
-              className="shrink-0 shadow-[0_12px_28px_-12px_var(--coral)]"
-              disabled={ticketsLeft === 0}
-            >
-              <Ticket className="size-3.5" /> Enter draw
-            </Button>
+            {isConcluded ? (
+              <Button asChild size="sm" className="bg-[#0A261B] hover:bg-[#133E2B] text-cream font-extrabold">
+                <Link to="/competitions/$slug/draw" params={{ slug: competition.slug }}>
+                  🎯 Watch Draw Replay
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <QuantityStepper value={safeQty} onChange={setQty} min={1} max={maxQty} size="sm" />
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setModalOpen(true)}
+                  className="shrink-0 shadow-[0_12px_28px_-12px_var(--coral)]"
+                  disabled={ticketsLeft === 0}
+                >
+                  <Ticket className="size-3.5" /> Enter draw
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -1278,6 +1283,47 @@ export function CompetitionDetailPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+
+        {isConcluded && (
+          <div className="mt-6 rounded-[24px] bg-gradient-to-r from-[#0D2F24] via-[#144C39] to-[#0A261B] p-5 text-cream ring-1 ring-[#D4AF37]/30 shadow-lg">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#D4AF37]/20 text-[#D4AF37]">
+                  <Trophy className="size-6 text-[#D4AF37]" />
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#D4AF37]/20 px-2.5 py-0.5 text-[11px] font-extrabold text-[#D4AF37]">
+                      DRAW CONCLUDED
+                    </span>
+                    <span className="text-xs font-mono font-bold text-cream/70">
+                      Ticket #{competition.winnerTicketNumber || competition.winningTicketNumber || "—"}
+                    </span>
+                  </div>
+                  <p className="mt-1 font-display text-base sm:text-lg font-extrabold text-white">
+                    Winner: {competition.winnerDisplayName || competition.winnerName || "Verified Winner"}
+                  </p>
+                  <p className="text-xs text-cream/75">
+                    This draw has concluded and results are publicly verifiable. No new entries can be purchased.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button asChild size="sm" className="bg-[#D4AF37] hover:bg-[#E5C158] text-[#0A261B] font-extrabold">
+                  <Link to="/competitions/$slug/draw" params={{ slug: competition.slug }}>
+                    🎯 Watch Draw Experience
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm" className="border-cream/30 text-cream hover:bg-cream/10 font-bold">
+                  <Link to="/winners">
+                    🏆 Winners Circle
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div
           ref={heroRef}
           className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-8"
@@ -1354,57 +1400,118 @@ export function CompetitionDetailPage() {
               </div>
             </div>
             <div className="mt-6 space-y-4">
-              <div className="flex flex-col gap-3 rounded-2xl bg-cream p-4 ring-1 ring-ink/5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40">
-                    Your tickets
-                  </p>
-                  <p className="mt-1 font-display text-sm font-extrabold text-ink">
-                    {`${safeQty} × ${formatNaira(competition.entryPrice)} entr${safeQty === 1 ? "y" : "ies"}`}
+              {isConcluded ? (
+                <div className="space-y-4">
+                  <div className="rounded-2xl bg-[#0D2F24]/10 p-5 ring-1 ring-[#0D2F24]/20">
+                    <div className="flex items-center gap-3">
+                      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#D4AF37]/20 text-[#0A261B]">
+                        <Trophy className="size-6 text-[#D4AF37]" />
+                      </span>
+                      <div>
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-800">
+                          DRAW CONCLUDED
+                        </span>
+                        <p className="mt-1 font-display text-base font-extrabold text-ink">
+                          Winner: {competition.winnerDisplayName || competition.winnerName || "Verified Winner"}
+                        </p>
+                        <p className="font-mono text-xs font-bold text-ink/70">
+                          Winning Ticket: #{competition.winnerTicketNumber || competition.winningTicketNumber || "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    asChild
+                    size="lg"
+                    className="min-h-12 w-full text-base bg-[#0A261B] hover:bg-[#133E2B] text-cream font-extrabold shadow-lg"
+                  >
+                    <Link to="/competitions/$slug/draw" params={{ slug: competition.slug }}>
+                      🎯 Watch Draw Replay &amp; Wheel of Fortune <ArrowRight className="size-4" />
+                    </Link>
+                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button asChild variant="outline" size="sm" className="w-full">
+                      <Link to="/winners">
+                        🏆 Winners Circle
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm" className="w-full">
+                      <Link to="/draw-verification/$slug" params={{ slug: competition.slug }}>
+                        🔍 Verification
+                      </Link>
+                    </Button>
+                  </div>
+                  <p className="text-center text-xs font-bold text-ink/50">
+                    Entries permanently closed. Draw verified on blockchain snapshot.
                   </p>
                 </div>
-                <QuantityStepper value={safeQty} onChange={setQty} min={1} max={maxQty} size="md" />
-                <div className="text-left sm:text-right">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40">
-                    Total
-                  </p>
-                  <p className="break-words font-display text-2xl font-extrabold text-ink tabular-nums">
-                    {formatNaira(totalKobo)}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-2xl bg-raf-lime/25 px-4 py-3 ring-1 ring-raf-lime/40">
-                <p className="text-[12px] font-extrabold text-ink">
-                  <Ticket className="mr-1 inline size-4 text-raf-green" /> {chanceLabel}
-                  {safeQty > 1 && (
-                    <span className="ml-2 font-bold text-ink/55">
-                      (buy more tickets to improve your odds)
-                    </span>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-3 rounded-2xl bg-cream p-4 ring-1 ring-ink/5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40">
+                        Your tickets
+                      </p>
+                      <p className="mt-1 font-display text-sm font-extrabold text-ink">
+                        {`${safeQty} × ${formatNaira(competition.entryPrice)} entr${safeQty === 1 ? "y" : "ies"}`}
+                      </p>
+                    </div>
+                    <QuantityStepper value={safeQty} onChange={setQty} min={1} max={maxQty} size="md" />
+                    <div className="text-left sm:text-right">
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-ink/40">
+                        Total
+                      </p>
+                      <p className="break-words font-display text-2xl font-extrabold text-ink tabular-nums">
+                        {formatNaira(totalKobo)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-raf-lime/25 px-4 py-3 ring-1 ring-raf-lime/40">
+                    <p className="text-[12px] font-extrabold text-ink">
+                      <Ticket className="mr-1 inline size-4 text-raf-green" /> {chanceLabel}
+                      {safeQty > 1 && (
+                        <span className="ml-2 font-bold text-ink/55">
+                          (buy more tickets to improve your odds)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  {competition.status === "DRAW_READY" || competition.status === "DRAW_IN_PROGRESS" ? (
+                    <Button
+                      asChild
+                      size="lg"
+                      className="min-h-12 w-full text-base bg-gradient-to-r from-[#D4AF37] to-[#E5C158] hover:from-[#E5C158] hover:to-[#D4AF37] text-[#0A261B] font-extrabold shadow-lg"
+                    >
+                      <Link to="/competitions/$slug/draw" params={{ slug: competition.slug }}>
+                        🎯 Watch Live Draw on Wheel of Fortune <ArrowRight className="size-4" />
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="min-h-12 w-full text-base shadow-[0_12px_28px_-12px_var(--coral)]"
+                      onClick={() => setModalOpen(true)}
+                      disabled={ticketsLeft === 0}
+                    >
+                      <Ticket className="size-4" />
+                      {`Enter for ${formatNaira(totalKobo)} · ${safeQty} ticket${safeQty === 1 ? "" : "s"}`}{" "}
+                      <ArrowRight className="size-4" />
+                    </Button>
                   )}
-                </p>
-              </div>
-              <Button
-                variant="primary"
-                size="lg"
-                className="min-h-12 w-full text-base shadow-[0_12px_28px_-12px_var(--coral)]"
-                onClick={() => setModalOpen(true)}
-                disabled={ticketsLeft === 0}
-              >
-                <Ticket className="size-4" />
-                {`Enter for ${formatNaira(totalKobo)} · ${safeQty} ticket${safeQty === 1 ? "" : "s"}`}{" "}
-                <ArrowRight className="size-4" />
-              </Button>
-              <p className="text-center text-xs font-bold text-ink/60">
-                {ticketsLeft.toLocaleString("en-NG")} entries remaining · Closes{" "}
-                {competition.closes} · Draw {competition.drawDate}
-              </p>
-              <p className="text-center text-xs font-bold text-ink/45">
-                Tickets reserved for 5 minutes · Wallet &amp; Referrals only · Limit {maxQty}{" "}
-                tickets per draw ·{" "}
-                <Link to="/faq" className="font-extrabold text-coral underline underline-offset-2">
-                  Get help with this entry
-                </Link>
-              </p>
+                  <p className="text-center text-xs font-bold text-ink/60">
+                    {ticketsLeft.toLocaleString("en-NG")} entries remaining · Closes{" "}
+                    {competition.closes} · Draw {competition.drawDate}
+                  </p>
+                  <p className="text-center text-xs font-bold text-ink/45">
+                    Tickets reserved for 5 minutes · Wallet &amp; Referrals only · Limit {maxQty}{" "}
+                    tickets per draw ·{" "}
+                    <Link to="/faq" className="font-extrabold text-coral underline underline-offset-2">
+                      Get help with this entry
+                    </Link>
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>

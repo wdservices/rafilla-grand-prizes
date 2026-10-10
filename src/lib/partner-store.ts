@@ -631,7 +631,10 @@ class PartnerStore {
       await setDoc(doc(db, "partner_profiles", partnerId), stripUndefined(newPartner as any));
       console.log("[Firestore] Partner profile written:", partnerId);
       if (createdAsset) {
-        await setDoc(doc(db, "partner_assets", createdAsset.id), stripUndefined(createdAsset as any));
+        await setDoc(
+          doc(db, "partner_assets", createdAsset.id),
+          stripUndefined(createdAsset as any),
+        );
         console.log("[Firestore] Partner asset written:", createdAsset.id);
       }
     } catch (e: any) {

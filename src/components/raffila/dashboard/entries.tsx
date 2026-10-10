@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Search, Copy, Check, FileDown, Ticket, Eye, X } from "lucide-react";
+import { Search, Copy, Check, FileDown, Ticket, Eye, X, Trophy } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useMemo } from "react";
 import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
@@ -10,10 +10,10 @@ import { Button } from "@/components/ui/button";
 import { formatNaira, trackEvent } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/useAuthSession";
-import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
+import { useCompetitions, findCompetition, isCompetitionConcluded } from "@/hooks/useCompetitions";
 import { db } from "@/lib/firebase";
 
-type EntryStatus = "Entered" | "Won" | "Lost";
+type EntryStatus = "Entered" | "Won" | "Lost" | "Completed";
 
 type MockEntry = {
   id: string;
@@ -25,14 +25,16 @@ type MockEntry = {
   drawDate: string;
   ticketNumbers: string[];
   status: EntryStatus;
+  isUserWinner?: boolean;
+  winningTicketNumber?: string | null;
 };
 
-const statuses: Array<"All" | "Active" | "Completed"> = ["All", "Active", "Completed"];
+const statuses: Array<"All" | "Active" | "Completed" | "Won"> = ["All", "Active", "Completed", "Won"];
 
 const statusBadge: Record<string, string> = {
   Entered: "bg-mint/30 text-ink",
   Active: "bg-mint/30 text-ink",
-  Won: "bg-lemon/40 text-ink",
+  Won: "bg-[#D4AF37]/20 text-[#0A261B] ring-1 ring-[#D4AF37]/40 font-extrabold",
   Lost: "bg-ink/10 text-ink/70",
   Completed: "bg-ink/10 text-ink/70",
 };
@@ -111,18 +113,36 @@ export function DashboardEntriesPage() {
 
   const entries: MockEntry[] = useMemo<MockEntry[]>(
     () =>
-      rawEntries.map((e) => ({
-        id: e.entryId,
-        competitionTitle: e.competitionTitle,
-        competitionSlug: e.competitionSlug,
-        competitionImage: e.competitionImage,
-        competitionImageAlt: `${e.competitionTitle} prize`,
-        ticketCount: e.quantity,
-        drawDate: findCompetition(competitions, e.competitionSlug)?.drawDate ?? "—",
-        ticketNumbers: e.ticketNumbers,
-        status: "Entered",
-      })),
-    [rawEntries, competitions],
+      rawEntries.map((e) => {
+        const comp = findCompetition(competitions, e.competitionSlug);
+        const isConcluded = isCompetitionConcluded(comp);
+        const winTkt = comp?.winnerTicketNumber || comp?.winningTicketNumber;
+        const isUserWinner =
+          e.status === "WON" ||
+          (comp && comp.winnerUserId === uid) ||
+          (Boolean(winTkt) && e.ticketNumbers.some((t) => String(t) === String(winTkt)));
+
+        const status: EntryStatus = isUserWinner
+          ? "Won"
+          : isConcluded
+            ? "Completed"
+            : "Entered";
+
+        return {
+          id: e.entryId,
+          competitionTitle: e.competitionTitle || comp?.title || "Competition",
+          competitionSlug: e.competitionSlug,
+          competitionImage: e.competitionImage || comp?.image || "",
+          competitionImageAlt: `${e.competitionTitle || comp?.title} prize`,
+          ticketCount: e.quantity,
+          drawDate: comp?.drawDate ?? "—",
+          ticketNumbers: e.ticketNumbers,
+          status,
+          isUserWinner,
+          winningTicketNumber: winTkt ? String(winTkt) : null,
+        };
+      }),
+    [rawEntries, competitions, uid],
   );
 
   const filtered = entries.filter((e) => {
@@ -130,7 +150,8 @@ export function DashboardEntriesPage() {
     const matchesStatus =
       filter === "All" ||
       (filter === "Active" && isActive) ||
-      (filter === "Completed" && !isActive);
+      (filter === "Completed" && (e.status === "Completed" || e.status === "Won")) ||
+      (filter === "Won" && e.status === "Won");
     const q = search.trim().toLowerCase();
     const matchesSearch =
       !q || e.id.toLowerCase().includes(q) || e.competitionTitle.toLowerCase().includes(q);
@@ -264,6 +285,36 @@ export function DashboardEntriesPage() {
           </div>
         )}
 
+        {entries.some((e) => e.status === "Won") && (
+          <div className="rounded-[24px] bg-gradient-to-r from-[#0D2F24] via-[#144C39] to-[#0A261B] p-6 text-cream ring-1 ring-[#D4AF37]/40 shadow-xl">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#D4AF37]/20 text-[#D4AF37]">
+                  <Trophy className="size-7 text-[#D4AF37]" />
+                </span>
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#D4AF37]/20 px-3 py-1 text-xs font-extrabold text-[#D4AF37]">
+                    🎉 WINNER VERIFIED
+                  </span>
+                  <h3 className="mt-1 font-display text-xl sm:text-2xl font-extrabold text-white">
+                    Congratulations! You have a winning ticket!
+                  </h3>
+                  <p className="text-xs sm:text-sm text-cream/75">
+                    Your winning ticket was selected and verified in the official prize draw. Click below to view the draw replay or verify your prize claim.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button asChild size="md" className="bg-[#D4AF37] hover:bg-[#E5C158] text-[#0A261B] font-extrabold shadow-md">
+                  <Link to="/winners">
+                    🏆 View in Winners Circle
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="rounded-[24px] bg-white p-6 ring-1 ring-ink/5 sm:p-8">
           <div className="overflow-x-auto -mx-4 px-4">
             <table className="w-full min-w-[860px] text-left text-sm">
@@ -364,9 +415,25 @@ export function DashboardEntriesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Button variant="outline" size="sm" onClick={() => setTicketOpen(e)}>
-                          <Eye className="size-3.5" /> View ticket
-                        </Button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {e.status === "Won" && (
+                            <Button asChild size="sm" className="bg-[#D4AF37] hover:bg-[#E5C158] text-[#0A261B] font-extrabold text-xs">
+                              <Link to="/competitions/$slug/draw" params={{ slug: e.competitionSlug }}>
+                                🎯 Draw
+                              </Link>
+                            </Button>
+                          )}
+                          {e.status === "Completed" && (
+                            <Button asChild variant="outline" size="sm" className="text-xs">
+                              <Link to="/competitions/$slug/draw" params={{ slug: e.competitionSlug }}>
+                                Draw
+                              </Link>
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm" onClick={() => setTicketOpen(e)}>
+                            <Eye className="size-3.5" /> View ticket
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))

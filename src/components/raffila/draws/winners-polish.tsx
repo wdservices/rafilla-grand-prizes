@@ -208,7 +208,9 @@ export function WinnersPagePolished() {
       let winnerCat: CategoryFilter = "ALL";
       if (/(benz|mercedes|lexus|toyota|car|suv|sedan|auto|vehicle|tesla)/i.test(catText)) {
         winnerCat = "Auto";
-      } else if (/(tech|bundle|phone|nova|laptop|electronics|gadget|apple|samsung)/i.test(catText)) {
+      } else if (
+        /(tech|bundle|phone|nova|laptop|electronics|gadget|apple|samsung)/i.test(catText)
+      ) {
         winnerCat = "Tech";
       } else if (/(apartment|home|property|house|estate|bed|luxury.*(home|apt))/i.test(catText)) {
         winnerCat = "Property";

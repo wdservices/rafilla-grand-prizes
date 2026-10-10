@@ -7,7 +7,7 @@ import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/raffila-data";
 import { lagosGreeting } from "@/lib/format";
-import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
+import { useCompetitions, findCompetition, isCompetitionConcluded } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { fetchFeatureFlags } from "@/lib/platform-config";
@@ -54,7 +54,7 @@ type RecentEntry = {
   competition: string;
   tickets: number;
   drawDate: string;
-  status: "Entered" | "Won" | "Lost" | "Drawn";
+  status: "Entered" | "Won" | "Lost" | "Drawn" | "Completed";
 };
 
 /** Shape of users/{uid}/entries/{entryId}, written server-side on payment. */
@@ -66,6 +66,7 @@ type RawEntry = {
   amountKobo: number;
   status: string;
   createdAtMs: number;
+  ticketNumbers: string[];
   isWinner: boolean;
 };
 
@@ -86,7 +87,7 @@ function toMs(v: unknown): number {
 
 export function DashboardOverviewPage() {
   const { user } = useAuthSession();
-  const { competitions } = useCompetitions();
+  const { competitions, activeCompetitions } = useCompetitions();
   const [walletEnabled, setWalletEnabled] = useState(true);
 
   // Wallet kill-switch: Admin → Settings → Feature availability.
@@ -114,7 +115,6 @@ export function DashboardOverviewPage() {
   const uid = user?.id?.startsWith("firebase_") ? user.id.slice("firebase_".length) : user?.id;
 
   // Live entries for this user, written server-side on confirmed payment.
-  // This KPI row was previously hardcoded to "0 / Across 0 competitions".
   const [rawEntries, setRawEntries] = useState<RawEntry[]>([]);
   useEffect(() => {
     if (!uid) {
@@ -127,6 +127,9 @@ export function DashboardOverviewPage() {
         setRawEntries(
           snap.docs.map((d) => {
             const v = d.data() as Record<string, unknown>;
+            const tktNums = Array.isArray(v["ticketNumbers"])
+              ? (v["ticketNumbers"] as unknown[]).map(String)
+              : [];
             return {
               entryId: String(v["entryId"] ?? d.id),
               competitionSlug: String(v["competitionSlug"] ?? ""),
@@ -135,6 +138,7 @@ export function DashboardOverviewPage() {
               amountKobo: Number(v["amountKobo"] ?? 0) || 0,
               status: String(v["status"] ?? "CONFIRMED").toUpperCase(),
               createdAtMs: toMs(v["createdAt"]),
+              ticketNumbers: tktNums,
               isWinner:
                 v["winnerTicketNumber"] != null ||
                 String(v["status"] ?? "").toUpperCase() === "WON",
@@ -147,38 +151,55 @@ export function DashboardOverviewPage() {
     return () => unsub();
   }, [uid]);
 
-  const totalTickets = useMemo(() => rawEntries.reduce((n, e) => n + e.quantity, 0), [rawEntries]);
+  const resolvedEntries = useMemo(() => {
+    return rawEntries.map((e) => {
+      const comp = findCompetition(competitions, e.competitionSlug);
+      const isConcluded = isCompetitionConcluded(comp);
+      const winTkt = comp?.winnerTicketNumber || comp?.winningTicketNumber;
+      const isWinner =
+        e.isWinner ||
+        (comp && comp.winnerUserId === uid) ||
+        (Boolean(winTkt) && e.ticketNumbers.some((t) => String(t) === String(winTkt)));
+
+      const prizeValueKobo = comp?.marketValueKobo || comp?.prizeValueKobo || 0;
+      return {
+        ...e,
+        isWinner,
+        isConcluded,
+        prizeValueKobo,
+        drawDate: comp?.drawDate || comp?.closes || "—",
+      };
+    });
+  }, [rawEntries, competitions, uid]);
+
+  const totalTickets = useMemo(() => resolvedEntries.reduce((n, e) => n + e.quantity, 0), [resolvedEntries]);
   const competitionsEntered = useMemo(
-    () => new Set(rawEntries.map((e) => e.competitionSlug).filter(Boolean)).size,
-    [rawEntries],
+    () => new Set(resolvedEntries.map((e) => e.competitionSlug).filter(Boolean)).size,
+    [resolvedEntries],
   );
   const totalSpentKobo = useMemo(
-    () => rawEntries.reduce((n, e) => n + e.amountKobo, 0),
-    [rawEntries],
+    () => resolvedEntries.reduce((n, e) => n + e.amountKobo, 0),
+    [resolvedEntries],
   );
-  const activeCompetitions = useMemo(
-    () => competitions.filter((c) => c.status === "LIVE" || c.status === "CLOSING SOON").length,
-    [competitions],
-  );
-  const prizesWon = useMemo(() => rawEntries.filter((e) => e.isWinner).length, [rawEntries]);
+  const activeCompetitionsCount = activeCompetitions.length;
+  const prizesWon = useMemo(() => resolvedEntries.filter((e) => e.isWinner).length, [resolvedEntries]);
   const wonValueKobo = useMemo(
-    () => rawEntries.filter((e) => e.isWinner).reduce((n, e) => n + e.amountKobo, 0),
-    [rawEntries],
+    () => resolvedEntries.filter((e) => e.isWinner).reduce((n, e) => n + (e.prizeValueKobo || e.amountKobo), 0),
+    [resolvedEntries],
   );
 
   const recentEntries: RecentEntry[] = useMemo(
     () =>
-      rawEntries.slice(0, 5).map((e) => {
-        const comp = findCompetition(competitions, e.competitionSlug);
+      resolvedEntries.slice(0, 5).map((e) => {
         return {
           id: e.entryId,
           competition: e.competitionTitle,
           tickets: e.quantity,
-          drawDate: comp?.drawDate || comp?.closes || "—",
-          status: e.isWinner ? "Won" : e.status === "REFUNDED" ? "Lost" : "Entered",
+          drawDate: e.drawDate,
+          status: e.isWinner ? "Won" : e.isConcluded ? "Completed" : e.status === "REFUNDED" ? "Lost" : "Entered",
         };
       }),
-    [rawEntries, competitions],
+    [resolvedEntries],
   );
 
   return (

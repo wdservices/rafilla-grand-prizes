@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { formatNaira, getProgress, trackEvent } from "@/lib/raffila-data";
-import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
+import { useCompetitions, findCompetition, isCompetitionConcluded } from "@/hooks/useCompetitions";
 import { cn, formatNaira as formatNairaKobo } from "@/lib/utils";
 import { addToCart, openCart, useCartItems } from "@/lib/cart-store";
 import { OversellBanner } from "./checkout-banner";
@@ -42,7 +42,7 @@ export function TicketPurchaseModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, competitionSlug]);
 
-  if (!open || !competition) return null;
+  if (!open || !competition || isCompetitionConcluded(competition)) return null;
 
   const entryPriceKobo = competition.entryPrice;
   const subtotalKobo = entryPriceKobo * qty;
