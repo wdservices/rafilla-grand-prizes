@@ -35,6 +35,12 @@ export type Competition = {
   exclusions: string[];
   maxTicketsPerUser: number;
   marketValueKobo: number;
+  winningTicketId?: string | null;
+  winningTicketNumber?: string | null;
+  winnerUserId?: string | null;
+  winnerDisplayName?: string | null;
+  winnerHandle?: string | null;
+  winnerTicketNumber?: string | null;
 };
 
 export const categories = [

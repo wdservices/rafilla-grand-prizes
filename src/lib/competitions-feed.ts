@@ -1,8 +1,15 @@
-import { collection, getDocs, limit, query } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, Timestamp } from "firebase/firestore";
 
 import { db } from "./firebase";
-import { formatCloses, formatDrawDate } from "./format";
-import { LEGACY_CATEGORY_MAP, normalizeCategory, type Competition } from "./raffila-data";
+import { formatCloses, formatDrawDate, lagosDateWithYear } from "./format";
+import {
+  LEGACY_CATEGORY_MAP,
+  normalizeCategory,
+  type Competition,
+  formatNaira,
+  winnerCards as fallbackWinnerCards,
+  type WinnerCard,
+} from "./raffila-data";
 
 const ACCENTS: Competition["accent"][] = ["coral", "sky", "lemon", "mint", "lilac"];
 
@@ -77,6 +84,8 @@ export function docToCompetition(
   const images = Array.isArray(data["images"]) ? (data["images"] as string[]) : [];
   const image = String(data["image"] ?? images[0] ?? "");
 
+  const winnerDisplayNameRaw =
+    data["winnerDisplayName"] ?? data["winnerName"] ?? null;
   return {
     slug,
     title,
@@ -108,6 +117,14 @@ export function docToCompetition(
     exclusions: Array.isArray(data["exclusions"]) ? (data["exclusions"] as string[]) : [],
     maxTicketsPerUser: Number(data["maxPerUser"] ?? data["maxTicketsPerUser"] ?? 50) || 50,
     marketValueKobo,
+    winningTicketId: data["winningTicketId"] as string | null | undefined ?? null,
+    winningTicketNumber:
+      data["winningTicketNumber"] ?? data["winnerTicketNumber"] as string | null | undefined ?? null,
+    winnerUserId: data["winnerUserId"] as string | null | undefined ?? null,
+    winnerDisplayName: winnerDisplayNameRaw as string | null,
+    winnerHandle: data["winnerHandle"] as string | null | undefined ?? null,
+    winnerTicketNumber:
+      data["winnerTicketNumber"] ?? data["winningTicketNumber"] as string | null | undefined ?? null,
   };
 }
 
@@ -169,5 +186,125 @@ export async function getLiveCompetitions(includeDrafts = false): Promise<{
   } catch (err) {
     console.error("Competitions feed failed to read Firestore:", err);
     return { competitions: [], live: false };
+  }
+}
+
+function winnerDrawDateString(value: unknown): string {
+  try {
+    const v = value as any;
+    if (v && typeof v.toDate === "function") {
+      return lagosDateWithYear((v.toDate() as Date).toISOString());
+    }
+  } catch {
+    // ignore
+  }
+  if (value instanceof Date) return lagosDateWithYear(value.toISOString());
+  if (typeof value === "string" && value) return lagosDateWithYear(value);
+  if (typeof value === "number" && value > 0) return lagosDateWithYear(value);
+  return lagosDateWithYear(new Date().toISOString());
+}
+
+function winnerMarketValueKobo(comp: Competition | undefined): number {
+  if (!comp) return 0;
+  return comp.marketValueKobo || comp.prizeValueKobo || 0;
+}
+
+function winnerImage(comp: Competition | undefined): { image: string; imageAlt: string } {
+  if (comp && comp.image) return { image: comp.image, imageAlt: comp.imageAlt || comp.title };
+  const firstFallback = fallbackWinnerCards[0];
+  return {
+    image: firstFallback?.image ?? "",
+    imageAlt: firstFallback?.imageAlt ?? "Competition prize",
+  };
+}
+
+/**
+ * Build a combined winners feed:
+ *  1. Read the `winners` Firestore collection (most recent first).
+ *  2. Join with competitions for prize image, title, value, and category context.
+ *  3. Include COMPLETED competitions that carry winner fields directly (in case
+ *     the winners showcase best-effort write was skipped).
+ *  4. If no winners are live yet AND the read itself succeeded, surface the
+ *     static seed cards so the UI is never empty on a fresh environment —
+ *     but if the read failed, return empty so the caller can show an error.
+ */
+export async function getLiveWinners(): Promise<{
+  winners: WinnerCard[];
+  live: boolean;
+}> {
+  try {
+    const comps = await fetchDbCompetitions(false);
+    const compBySlug = new Map<string, Competition>();
+    comps.forEach((c) => compBySlug.set(c.slug, c));
+
+    let showcaseWinners: WinnerCard[] = [];
+    try {
+      const winnersSnap = await getDocs(
+        query(collection(db, "winners"), orderBy("createdAt", "desc"), limit(50)),
+      );
+      showcaseWinners = winnersSnap.docs.map((d) => {
+        const raw = d.data() as Record<string, unknown>;
+        const competitionSlug =
+          String(raw["competitionSlug"] ?? raw["competitionId"] ?? "");
+        const comp = comps.find((c) => c.slug === competitionSlug);
+        const img = winnerImage(comp);
+        const valueKobo = winnerMarketValueKobo(comp);
+        const competitionTitle = String(
+          raw["competitionTitle"] ?? comp?.title ?? competitionSlug,
+        );
+        const winnerNameRaw = String(raw["winnerName"] ?? raw["winnerDisplayName"] ?? "");
+        return {
+          id: String(raw["id"] ?? d.id),
+          winnerName: winnerNameRaw || "Verified Winner",
+          prize: competitionTitle,
+          competition: comp?.category || competitionTitle,
+          drawDate: winnerDrawDateString(raw["drawDate"] ?? raw["createdAt"]),
+          location: comp?.partner ? `${comp.partner} draw` : "Lagos, Nigeria",
+          amount: valueKobo > 0 ? formatNaira(valueKobo) : comp?.title ? competitionTitle : "",
+          verified: Boolean(raw["verified"] ?? true),
+          image: img.image,
+          imageAlt: img.imageAlt,
+        };
+      });
+    } catch (wsErr) {
+      console.warn("Winners showcase read failed, falling back to competition fields:", wsErr);
+    }
+
+    const wonCompetitions = comps
+      .filter((c) => c.winnerDisplayName && (c.status === "COMPLETED" || c.winnerTicketNumber))
+      .map((c) => {
+        const img = winnerImage(c);
+        const valueKobo = winnerMarketValueKobo(c);
+        return {
+          id: `comp-${c.slug}`,
+          winnerName: c.winnerDisplayName as string,
+          prize: c.title,
+          competition: c.category,
+          drawDate: c.drawDate || winnerDrawDateString(new Date().toISOString()),
+          location: c.partner ? `${c.partner} draw` : "Lagos, Nigeria",
+          amount: valueKobo > 0 ? formatNaira(valueKobo) : c.title,
+          verified: true,
+          image: img.image,
+          imageAlt: img.imageAlt,
+        } as WinnerCard;
+      });
+
+    const seenIds = new Set<string>();
+    const merged: WinnerCard[] = [];
+    for (const w of [...showcaseWinners, ...wonCompetitions]) {
+      if (!w || !w.id) continue;
+      if (seenIds.has(w.id)) continue;
+      seenIds.add(w.id);
+      merged.push(w);
+    }
+
+    if (merged.length === 0) {
+      return { winners: [...fallbackWinnerCards], live: true };
+    }
+
+    return { winners: merged, live: true };
+  } catch (err) {
+    console.error("Winners feed failed to read Firestore:", err);
+    return { winners: [], live: false };
   }
 }

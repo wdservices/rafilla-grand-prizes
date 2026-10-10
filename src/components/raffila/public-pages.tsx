@@ -110,6 +110,7 @@ import {
   trackEvent,
 } from "@/lib/raffila-data";
 import { useCompetitions, findCompetition } from "@/hooks/useCompetitions";
+import { useWinners } from "@/hooks/useWinners";
 import {
   HeroFeaturedCarousel,
   FeaturedCategoryDots,
@@ -157,6 +158,7 @@ function LiveCompetitionsSection({ competitions }: { competitions: Competition[]
 
 export function HomePage() {
   const { competitions } = useCompetitions();
+  const { winners } = useWinners();
   const carousel = useFeaturedCarousel();
   return (
     <div>
@@ -310,7 +312,7 @@ export function HomePage() {
           </Button>
         </div>
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          {winnerCards.slice(0, 3).map((winner) => (
+          {winners.slice(0, 3).map((winner) => (
             <WinnerCard key={winner.id} winner={winner} />
           ))}
         </div>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { winnerCards, type WinnerCard as WinnerCardType } from "@/lib/raffila-data";
+import { useWinners } from "@/hooks/useWinners";
 import { cn } from "@/lib/utils";
 
 export function EnhancedWinnerCard({
@@ -184,34 +185,49 @@ export function WinnersFilterBar({
 }
 
 export function WinnersPagePolished() {
+  const { winners, loading } = useWinners();
   const [query, setQuery] = useState("");
   const [year, setYear] = useState<YearFilter>("ALL");
   const [category, setCategory] = useState<CategoryFilter>("ALL");
   const [status, setStatus] = useState<WinnerStatus>("ALL");
 
+  const source = winners.length > 0 ? winners : winnerCards;
+
   const filtered = useMemo(() => {
-    return winnerCards.filter((w) => {
+    return source.filter((w) => {
       const matchesQuery =
         query === "" ||
         w.winnerName.toLowerCase().includes(query.toLowerCase()) ||
         w.prize.toLowerCase().includes(query.toLowerCase()) ||
+        w.competition.toLowerCase().includes(query.toLowerCase()) ||
         w.location.toLowerCase().includes(query.toLowerCase());
 
       const matchesYear = year === "ALL" || w.drawDate.includes(year);
 
-      const catMap: Record<string, CategoryFilter> = {
-        "Mercedes-Benz C-Class 2025": "Auto",
-        "Nova X1 Bundle": "Tech",
-        "Luxury 2-Bed Apartment": "Property",
-      };
-      const winnerCat = catMap[w.prize] ?? "ALL";
+      const catText = `${w.prize} ${w.competition}`.toLowerCase();
+      let winnerCat: CategoryFilter = "ALL";
+      if (/(benz|mercedes|lexus|toyota|car|suv|sedan|auto|vehicle|tesla)/i.test(catText)) {
+        winnerCat = "Auto";
+      } else if (/(tech|bundle|phone|nova|laptop|electronics|gadget|apple|samsung)/i.test(catText)) {
+        winnerCat = "Tech";
+      } else if (/(apartment|home|property|house|estate|bed|luxury.*(home|apt))/i.test(catText)) {
+        winnerCat = "Property";
+      }
       const matchesCategory = category === "ALL" || category === winnerCat;
 
-      const matchesStatus = status === "ALL" || statusForWinner[w.id] === status;
+      const winnerStatus: WinnerStatus =
+        statusForWinner[w.id] ?? (w.verified ? "FULFILLED" : "SELECTED");
+      const matchesStatus = status === "ALL" || status === winnerStatus;
 
       return matchesQuery && matchesYear && matchesCategory && matchesStatus;
     });
-  }, [query, year, category, status]);
+  }, [query, year, category, status, source]);
+
+  const campaignSlugFor = (winner: WinnerCardType): string => {
+    if (campaignSlugs[winner.id]) return campaignSlugs[winner.id];
+    if (winner.id.startsWith("comp-")) return winner.id.replace("comp-", "");
+    return winner.id;
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
@@ -241,7 +257,9 @@ export function WinnersPagePolished() {
 
       <div className="mt-6 flex items-center justify-between">
         <p className="text-sm font-bold text-ink/50">
-          {filtered.length} winner{filtered.length === 1 ? "" : "s"}
+          {loading
+            ? "Loading winners…"
+            : `${filtered.length} winner${filtered.length === 1 ? "" : "s"}`}
         </p>
         <Badge className="border-0 bg-mint/30 text-ink">
           <BadgeCheck className="mr-1 size-3 text-mint" /> Every draw is verified
@@ -280,7 +298,7 @@ export function WinnersPagePolished() {
             <EnhancedWinnerCard
               key={winner.id}
               winner={winner}
-              campaignSlug={campaignSlugs[winner.id] ?? winner.id}
+              campaignSlug={campaignSlugFor(winner)}
             />
           ))}
         </div>
