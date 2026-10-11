@@ -50,6 +50,7 @@ import { Route as DashboardTransactionsRouteImport } from './routes/dashboard.tr
 import { Route as DashboardWalletRouteImport } from './routes/dashboard.wallet'
 import { Route as DrawVerificationCampaignRouteImport } from './routes/draw-verification.$campaign'
 import { Route as DrawVerificationSlugRouteImport } from './routes/draw-verification.$slug'
+import { Route as DrawSlugRouteImport } from './routes/draw.$slug'
 import { Route as PartnerIndexRouteImport } from './routes/partner.index'
 import { Route as PartnerAnalyticsRouteImport } from './routes/partner.analytics'
 import { Route as PartnerListingsRouteImport } from './routes/partner.listings'
@@ -58,6 +59,7 @@ import { Route as PartnerSettlementsRouteImport } from './routes/partner.settlem
 import { Route as PartnerSubmitRouteImport } from './routes/partner.submit'
 import { Route as PaymentCallbackRouteImport } from './routes/payment.callback'
 import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
+import { Route as CompetitionsSlugDrawRouteImport } from './routes/competitions.$slug.draw'
 import { Route as DashboardReferralsPayoutRouteImport } from './routes/dashboard.referrals.payout'
 
 const IndexRoute = IndexRouteImport.update({
@@ -266,6 +268,11 @@ const DrawVerificationSlugRoute = DrawVerificationSlugRouteImport.update({
   path: '/draw-verification/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DrawSlugRoute = DrawSlugRouteImport.update({
+  id: '/draw/$slug',
+  path: '/draw/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PartnerIndexRoute = PartnerIndexRouteImport.update({
   id: '/partner/',
   path: '/partner/',
@@ -306,6 +313,11 @@ const SitemapXmlRoute = SitemapXmlRouteImport.update({
   path: '/sitemap/xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompetitionsSlugDrawRoute = CompetitionsSlugDrawRouteImport.update({
+  id: '/draw',
+  path: '/draw',
+  getParentRoute: () => CompetitionsSlugRoute,
+} as any)
 const DashboardReferralsPayoutRoute =
   DashboardReferralsPayoutRouteImport.update({
     id: '/payout',
@@ -341,7 +353,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/api/health': typeof ApiHealthRoute
-  '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/competitions/$slug': typeof CompetitionsSlugRouteWithChildren
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/entries': typeof DashboardEntriesRoute
   '/dashboard/profile': typeof DashboardProfileRoute
@@ -352,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/wallet': typeof DashboardWalletRoute
   '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
   '/draw-verification/$slug': typeof DrawVerificationSlugRoute
+  '/draw/$slug': typeof DrawSlugRoute
   '/partner/analytics': typeof PartnerAnalyticsRoute
   '/partner/listings': typeof PartnerListingsRoute
   '/partner/profile': typeof PartnerProfileRoute
@@ -363,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/competitions/': typeof CompetitionsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/partner/': typeof PartnerIndexRoute
+  '/competitions/$slug/draw': typeof CompetitionsSlugDrawRoute
   '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
 }
 export interface FileRoutesByTo {
@@ -392,7 +406,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/api/health': typeof ApiHealthRoute
-  '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/competitions/$slug': typeof CompetitionsSlugRouteWithChildren
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/entries': typeof DashboardEntriesRoute
   '/dashboard/profile': typeof DashboardProfileRoute
@@ -403,6 +417,7 @@ export interface FileRoutesByTo {
   '/dashboard/wallet': typeof DashboardWalletRoute
   '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
   '/draw-verification/$slug': typeof DrawVerificationSlugRoute
+  '/draw/$slug': typeof DrawSlugRoute
   '/partner/analytics': typeof PartnerAnalyticsRoute
   '/partner/listings': typeof PartnerListingsRoute
   '/partner/profile': typeof PartnerProfileRoute
@@ -414,6 +429,7 @@ export interface FileRoutesByTo {
   '/competitions': typeof CompetitionsIndexRoute
   '/dashboard': typeof DashboardIndexRoute
   '/partner': typeof PartnerIndexRoute
+  '/competitions/$slug/draw': typeof CompetitionsSlugDrawRoute
   '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
 }
 export interface FileRoutesById {
@@ -445,7 +461,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/api/health': typeof ApiHealthRoute
-  '/competitions/$slug': typeof CompetitionsSlugRoute
+  '/competitions/$slug': typeof CompetitionsSlugRouteWithChildren
   '/dashboard/competitions': typeof DashboardCompetitionsRoute
   '/dashboard/entries': typeof DashboardEntriesRoute
   '/dashboard/profile': typeof DashboardProfileRoute
@@ -456,6 +472,7 @@ export interface FileRoutesById {
   '/dashboard/wallet': typeof DashboardWalletRoute
   '/draw-verification/$campaign': typeof DrawVerificationCampaignRoute
   '/draw-verification/$slug': typeof DrawVerificationSlugRoute
+  '/draw/$slug': typeof DrawSlugRoute
   '/partner/analytics': typeof PartnerAnalyticsRoute
   '/partner/listings': typeof PartnerListingsRoute
   '/partner/profile': typeof PartnerProfileRoute
@@ -467,6 +484,7 @@ export interface FileRoutesById {
   '/competitions/': typeof CompetitionsIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/partner/': typeof PartnerIndexRoute
+  '/competitions/$slug/draw': typeof CompetitionsSlugDrawRoute
   '/dashboard/referrals/payout': typeof DashboardReferralsPayoutRoute
 }
 export interface FileRouteTypes {
@@ -510,6 +528,7 @@ export interface FileRouteTypes {
     | '/dashboard/wallet'
     | '/draw-verification/$campaign'
     | '/draw-verification/$slug'
+    | '/draw/$slug'
     | '/partner/analytics'
     | '/partner/listings'
     | '/partner/profile'
@@ -521,6 +540,7 @@ export interface FileRouteTypes {
     | '/competitions/'
     | '/dashboard/'
     | '/partner/'
+    | '/competitions/$slug/draw'
     | '/dashboard/referrals/payout'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -561,6 +581,7 @@ export interface FileRouteTypes {
     | '/dashboard/wallet'
     | '/draw-verification/$campaign'
     | '/draw-verification/$slug'
+    | '/draw/$slug'
     | '/partner/analytics'
     | '/partner/listings'
     | '/partner/profile'
@@ -572,6 +593,7 @@ export interface FileRouteTypes {
     | '/competitions'
     | '/dashboard'
     | '/partner'
+    | '/competitions/$slug/draw'
     | '/dashboard/referrals/payout'
   id:
     | '__root__'
@@ -613,6 +635,7 @@ export interface FileRouteTypes {
     | '/dashboard/wallet'
     | '/draw-verification/$campaign'
     | '/draw-verification/$slug'
+    | '/draw/$slug'
     | '/partner/analytics'
     | '/partner/listings'
     | '/partner/profile'
@@ -624,6 +647,7 @@ export interface FileRouteTypes {
     | '/competitions/'
     | '/dashboard/'
     | '/partner/'
+    | '/competitions/$slug/draw'
     | '/dashboard/referrals/payout'
   fileRoutesById: FileRoutesById
 }
@@ -665,6 +689,7 @@ export interface RootRouteChildren {
   DashboardWalletRoute: typeof DashboardWalletRoute
   DrawVerificationCampaignRoute: typeof DrawVerificationCampaignRoute
   DrawVerificationSlugRoute: typeof DrawVerificationSlugRoute
+  DrawSlugRoute: typeof DrawSlugRoute
   PartnerAnalyticsRoute: typeof PartnerAnalyticsRoute
   PartnerListingsRoute: typeof PartnerListingsRoute
   PartnerProfileRoute: typeof PartnerProfileRoute
@@ -966,6 +991,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DrawVerificationSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/draw/$slug': {
+      id: '/draw/$slug'
+      path: '/draw/$slug'
+      fullPath: '/draw/$slug'
+      preLoaderRoute: typeof DrawSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/partner/': {
       id: '/partner/'
       path: '/partner'
@@ -1022,6 +1054,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapXmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/competitions/$slug/draw': {
+      id: '/competitions/$slug/draw'
+      path: '/draw'
+      fullPath: '/competitions/$slug/draw'
+      preLoaderRoute: typeof CompetitionsSlugDrawRouteImport
+      parentRoute: typeof CompetitionsSlugRoute
+    }
     '/dashboard/referrals/payout': {
       id: '/dashboard/referrals/payout'
       path: '/payout'
@@ -1032,13 +1071,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface CompetitionsSlugRouteChildren {
+  CompetitionsSlugDrawRoute: typeof CompetitionsSlugDrawRoute
+}
+
+const CompetitionsSlugRouteChildren: CompetitionsSlugRouteChildren = {
+  CompetitionsSlugDrawRoute: CompetitionsSlugDrawRoute,
+}
+
+const CompetitionsSlugRouteWithChildren =
+  CompetitionsSlugRoute._addFileChildren(CompetitionsSlugRouteChildren)
+
 interface CompetitionsRouteChildren {
-  CompetitionsSlugRoute: typeof CompetitionsSlugRoute
+  CompetitionsSlugRoute: typeof CompetitionsSlugRouteWithChildren
   CompetitionsIndexRoute: typeof CompetitionsIndexRoute
 }
 
 const CompetitionsRouteChildren: CompetitionsRouteChildren = {
-  CompetitionsSlugRoute: CompetitionsSlugRoute,
+  CompetitionsSlugRoute: CompetitionsSlugRouteWithChildren,
   CompetitionsIndexRoute: CompetitionsIndexRoute,
 }
 
@@ -1095,6 +1145,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardWalletRoute: DashboardWalletRoute,
   DrawVerificationCampaignRoute: DrawVerificationCampaignRoute,
   DrawVerificationSlugRoute: DrawVerificationSlugRoute,
+  DrawSlugRoute: DrawSlugRoute,
   PartnerAnalyticsRoute: PartnerAnalyticsRoute,
   PartnerListingsRoute: PartnerListingsRoute,
   PartnerProfileRoute: PartnerProfileRoute,
