@@ -47,6 +47,7 @@ const statusStyles: Record<RecentEntry["status"], string> = {
   Drawn: "bg-sky/20 text-ink",
   Won: "bg-lemon/40 text-ink",
   Lost: "bg-ink/10 text-ink/70",
+  Completed: "bg-ink/10 text-ink/70",
 };
 
 type RecentEntry = {
@@ -262,7 +263,7 @@ export function DashboardOverviewPage() {
           />
           <KpiCard
             label="Active competitions"
-            value={activeCompetitions.toLocaleString("en-NG")}
+            value={activeCompetitionsCount.toLocaleString("en-NG")}
             sub="Draws coming up"
             icon={<Trophy className="size-5 text-coral" />}
             iconBg="bg-coral/10"

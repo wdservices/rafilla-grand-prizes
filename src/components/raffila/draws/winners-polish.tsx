@@ -226,7 +226,8 @@ export function WinnersPagePolished() {
   }, [query, year, category, status, source]);
 
   const campaignSlugFor = (winner: WinnerCardType): string => {
-    if (campaignSlugs[winner.id]) return campaignSlugs[winner.id];
+    const mapped = campaignSlugs[winner.id];
+    if (mapped) return mapped;
     if (winner.id.startsWith("comp-")) return winner.id.replace("comp-", "");
     return winner.id;
   };

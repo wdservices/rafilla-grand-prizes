@@ -89,7 +89,8 @@ export function CompetitionCard({
               </span>
             </p>
             <div className="flex items-center gap-2">
-              {competition.status === "DRAW_READY" || competition.status === "DRAW_IN_PROGRESS" ? (
+              {(competition.status as string) === "DRAW_READY" ||
+              (competition.status as string) === "DRAW_IN_PROGRESS" ? (
                 <Button
                   asChild
                   size="lg"
@@ -99,7 +100,7 @@ export function CompetitionCard({
                     🎯 Watch Live Draw
                   </Link>
                 </Button>
-              ) : competition.status === "COMPLETED" || competition.status === "WINNER_SELECTED" ? (
+              ) : competition.status === "COMPLETED" ? (
                 <Button
                   asChild
                   size="lg"
@@ -315,7 +316,8 @@ export function CompetitionCard({
               Details <ArrowUpRight className="ml-1 size-3.5" />
             </Link>
           </Button>
-          {competition.status === "DRAW_READY" || competition.status === "DRAW_IN_PROGRESS" ? (
+          {(competition.status as string) === "DRAW_READY" ||
+              (competition.status as string) === "DRAW_IN_PROGRESS" ? (
             <Button
               asChild
               size="md"
@@ -325,7 +327,7 @@ export function CompetitionCard({
                 Watch Live Draw
               </Link>
             </Button>
-          ) : competition.status === "COMPLETED" || competition.status === "WINNER_SELECTED" ? (
+          ) : competition.status === "COMPLETED" ? (
             <Button
               asChild
               size="md"

@@ -27,8 +27,9 @@ vi.mock("@/hooks/useAuthSession", () => ({
   useAuthSession: () => ({ user: { id: "firebase_alice" } }),
 }));
 vi.mock("@/hooks/useCompetitions", () => ({
-  useCompetitions: () => ({ competitions: [], loading: false, live: true }),
+  useCompetitions: () => ({ competitions: [], activeCompetitions: [], loading: false, live: true }),
   findCompetition: () => undefined,
+  isCompetitionConcluded: () => false,
 }));
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children?: React.ReactNode }) => <a href="#">{children}</a>,

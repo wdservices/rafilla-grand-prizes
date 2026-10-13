@@ -37,9 +37,9 @@ export function ScheduledDrawNotification() {
     // 1. Look for competitions currently LIVE DRAW or DRAW_READY
     const liveComp = competitions.find(
       (c) =>
-        (c.status === "DRAW_IN_PROGRESS" ||
-          c.status === "DRAW_READY" ||
-          c.status === "WINNER_SELECTED") &&
+        ((c.status as string) === "DRAW_IN_PROGRESS" ||
+          (c.status as string) === "DRAW_READY" ||
+          (c.status as string) === "WINNER_SELECTED") &&
         !dismissedSlugs.has(c.slug),
     );
     if (liveComp) return liveComp;
@@ -62,7 +62,7 @@ export function ScheduledDrawNotification() {
     const featuredActive = competitions.find(
       (c) =>
         c.featured &&
-        (c.status === "LIVE" || c.status === "DRAW_READY") &&
+        (c.status === "LIVE" || (c.status as string) === "DRAW_READY") &&
         !dismissedSlugs.has(c.slug),
     );
     if (featuredActive) return featuredActive;
@@ -84,11 +84,12 @@ export function ScheduledDrawNotification() {
   // - "postponed": CANCELLED or SUSPENDED
   // - "today": Scheduled for today
   const statusType: "live" | "starting_soon" | "completed" | "postponed" | "today" = (() => {
-    if (todayComp.status === "DRAW_IN_PROGRESS") return "live";
-    if (todayComp.status === "DRAW_READY") return "starting_soon";
-    if (todayComp.status === "COMPLETED" || todayComp.status === "WINNER_SELECTED")
+    if ((todayComp.status as string) === "DRAW_IN_PROGRESS") return "live";
+    if ((todayComp.status as string) === "DRAW_READY") return "starting_soon";
+    if (todayComp.status === "COMPLETED" || (todayComp.status as string) === "WINNER_SELECTED")
       return "completed";
-    if (todayComp.status === "CANCELLED" || todayComp.status === "SUSPENDED") return "postponed";
+    if ((todayComp.status as string) === "CANCELLED" || (todayComp.status as string) === "SUSPENDED")
+      return "postponed";
     return "today";
   })();
 

@@ -24,6 +24,7 @@ import {
   ShieldAlert,
   Sparkles,
   Ticket,
+  Trophy,
   WalletCards,
   X,
   Award,
@@ -102,7 +103,6 @@ import {
   type Competition,
   applySort,
   type SortKey,
-  REWARD_POOL,
   BROWSE_BY_NEED,
   TRUST_SIGNALS,
   BUDGET_FILTERS,
@@ -111,6 +111,7 @@ import {
 } from "@/lib/raffila-data";
 import { useCompetitions, findCompetition, isCompetitionConcluded } from "@/hooks/useCompetitions";
 import { useWinners } from "@/hooks/useWinners";
+import { useRewardPool } from "@/hooks/useRewardPool";
 import {
   HeroFeaturedCarousel,
   FeaturedCategoryDots,
@@ -159,6 +160,7 @@ function LiveCompetitionsSection({ competitions }: { competitions: Competition[]
 export function HomePage() {
   const { competitions, activeCompetitions } = useCompetitions();
   const { winners } = useWinners();
+  const rewardPool = useRewardPool();
   const carousel = useFeaturedCarousel();
   return (
     <div>
@@ -240,10 +242,13 @@ export function HomePage() {
               </span>
               <div>
                 <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/50">
-                  {REWARD_POOL.label}
+                  {rewardPool.label}
                 </p>
                 <p className="mt-1 font-display text-3xl font-extrabold text-ink">
-                  {formatNaira(REWARD_POOL.totalKobo)}
+                  {formatNaira(rewardPool.totalKobo)}
+                </p>
+                <p className="mt-1 text-[11px] font-bold text-ink/45">
+                  {rewardPool.contributionPct}% of every entry
                 </p>
               </div>
               <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-mint/40 px-2.5 py-1 text-[11px] font-extrabold text-ink">
@@ -1301,7 +1306,7 @@ export function CompetitionDetailPage() {
                     </span>
                   </div>
                   <p className="mt-1 font-display text-base sm:text-lg font-extrabold text-white">
-                    Winner: {competition.winnerDisplayName || competition.winnerName || "Verified Winner"}
+                    Winner: {competition.winnerDisplayName || "Verified Winner"}
                   </p>
                   <p className="text-xs text-cream/75">
                     This draw has concluded and results are publicly verifiable. No new entries can be purchased.
@@ -1412,7 +1417,7 @@ export function CompetitionDetailPage() {
                           DRAW CONCLUDED
                         </span>
                         <p className="mt-1 font-display text-base font-extrabold text-ink">
-                          Winner: {competition.winnerDisplayName || competition.winnerName || "Verified Winner"}
+                          Winner: {competition.winnerDisplayName || "Verified Winner"}
                         </p>
                         <p className="font-mono text-xs font-bold text-ink/70">
                           Winning Ticket: #{competition.winnerTicketNumber || competition.winningTicketNumber || "—"}
@@ -1476,7 +1481,8 @@ export function CompetitionDetailPage() {
                       )}
                     </p>
                   </div>
-                  {competition.status === "DRAW_READY" || competition.status === "DRAW_IN_PROGRESS" ? (
+                  {(competition.status as string) === "DRAW_READY" ||
+                  (competition.status as string) === "DRAW_IN_PROGRESS" ? (
                     <Button
                       asChild
                       size="lg"

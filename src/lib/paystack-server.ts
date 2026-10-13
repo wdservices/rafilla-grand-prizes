@@ -6,16 +6,27 @@ import { createServerFn } from "@tanstack/react-start";
  * a Node-only package into the browser module graph (this file IS imported by
  * client components), which breaks the Vite client build.
  */
-type AdminDocSnapshot = { exists: boolean; get(field: string): unknown };
+type AdminDocSnapshot = {
+  exists: boolean;
+  data(): Record<string, unknown> | undefined;
+  get(field: string): unknown;
+};
+type AdminCollectionRef = {
+  doc(id: string): AdminDocRef;
+  add(data: Record<string, unknown>): void;
+};
 type AdminDocRef = {
   get(): Promise<AdminDocSnapshot>;
-  collection(name: string): AdminDocRef;
+  collection(name: string): AdminCollectionRef;
   set(data: Record<string, unknown>, options?: { merge?: boolean }): void;
 };
-type AdminCollectionRef = { doc(id: string): AdminDocRef };
+type AdminTransaction = {
+  get(ref: AdminDocRef): Promise<AdminDocSnapshot>;
+  set(ref: AdminDocRef, data: Record<string, unknown>, options?: { merge?: boolean }): void;
+};
 type AdminFirestore = {
   collection(name: string): AdminCollectionRef;
-  runTransaction<T>(fn: (tx: unknown) => Promise<T>): Promise<T>;
+  runTransaction<T>(fn: (tx: AdminTransaction) => Promise<T>): Promise<T>;
 };
 
 const PAYSTACK_API_BASE = "https://api.paystack.co";
@@ -150,6 +161,26 @@ export type TicketConfirmResult =
 
 export const CART_MAX_ORDER_LINES = 20;
 export const CART_MAX_QTY_PER_LINE = 50;
+
+/** Default share of every entry fee that accrues to the community pool. */
+export const DEFAULT_REWARD_POOL_PCT = 5;
+
+/**
+ * Clamp an admin-entered pool contribution percentage into a usable 0–100
+ * number. Missing/invalid input falls back to the default rate.
+ */
+export function normalizeRewardPoolPct(raw: unknown): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return DEFAULT_REWARD_POOL_PCT;
+  return Math.min(100, Math.max(0, n));
+}
+
+/** Kobo that accrues to the reward pool for an entry-fee amount at a rate. */
+export function rewardPoolContributionKobo(amountKobo: number, pct: number): number {
+  if (!Number.isFinite(amountKobo) || amountKobo <= 0) return 0;
+  if (!Number.isFinite(pct) || pct <= 0) return 0;
+  return Math.round((amountKobo * Math.min(100, pct)) / 100);
+}
 
 /**
  * Normalize order lines from Paystack metadata or client input. Accepts
@@ -315,6 +346,32 @@ async function issueOrderTickets(
       items = (prev["items"] as IssuedTicketLine[]) ?? [];
       alreadyConfirmed = true;
       return;
+    }
+    // Reward pool: every qualifying entry fee contributes the admin-configured
+    // percentage (Admin → Config → Reward pool, default 5%) to the community
+    // pool, credited inside the same transaction as the idempotency record so
+    // a retry can never double-credit it. Doc ids are inlined because this
+    // file is imported by client components and must not pull in the client
+    // Firebase modules that own those constants.
+    const configSnap = await tx.get(adminDb.collection("platformSettings").doc("raffila_config"));
+    const pct = normalizeRewardPoolPct(
+      (configSnap.data()?.["rewardPool"] as Record<string, unknown> | undefined)?.[
+        "contributionPct"
+      ],
+    );
+    const contributionKobo = rewardPoolContributionKobo(expectedTotalKobo, pct);
+    if (contributionKobo > 0) {
+      tx.set(
+        adminDb.collection("platformSettings").doc("rewardPool"),
+        {
+          totalKobo: FieldValue.increment(contributionKobo),
+          contributionsCount: FieldValue.increment(1),
+          lastContributionKobo: contributionKobo,
+          lastReference: reference,
+          updatedAt: now,
+        },
+        { merge: true },
+      );
     }
     if (kind === "referral") {
       const userRef = adminDb.collection("users").doc(uid);

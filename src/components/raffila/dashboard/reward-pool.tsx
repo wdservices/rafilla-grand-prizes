@@ -4,7 +4,8 @@ import { Link } from "@tanstack/react-router";
 
 import { DashboardAppShell } from "@/components/raffila/dashboard/app-shell";
 import { Button } from "@/components/ui/button";
-import { formatNaira, REWARD_POOL } from "@/lib/raffila-data";
+import { formatNaira } from "@/lib/raffila-data";
+import { useRewardPool } from "@/hooks/useRewardPool";
 import { cn } from "@/lib/utils";
 
 const leaderboard = [
@@ -26,7 +27,11 @@ const rankTone: Record<number, string> = {
   3: "bg-coral/15 ring-coral/20",
 };
 
+// Leaderboard data is still placeholder — no referral-ranking engine yet.
+const yourRank = 0;
+
 export function DashboardRewardPoolPage() {
+  const pool = useRewardPool();
   const [time, setTime] = useState({ d: 3, h: 14, m: 22, s: 5 });
 
   useEffect(() => {
@@ -72,17 +77,16 @@ export function DashboardRewardPoolPage() {
           <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-ink ring-1 ring-ink/5">
-                <Sparkles className="size-3.5 text-coral" /> {REWARD_POOL.tagline}
+                <Sparkles className="size-3.5 text-coral" /> {pool.tagline}
               </div>
               <p className="mt-4 text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
-                {REWARD_POOL.label}
+                {pool.label}
               </p>
               <p className="mt-2 font-display text-[clamp(2.5rem,8vw,5rem)] font-extrabold leading-none tracking-tight text-ink">
-                {formatNaira(REWARD_POOL.totalKobo)}
+                {formatNaira(pool.totalKobo)}
               </p>
               <p className="mt-3 text-xs font-bold text-ink/55">
-                Funded by {REWARD_POOL.totalParticipants.toLocaleString("en-NG")} participants ·
-                grows live with every entry
+                Funded by {pool.contributionPct}% of every entry · grows live
               </p>
             </div>
 
@@ -134,7 +138,7 @@ export function DashboardRewardPoolPage() {
             </div>
             <p className="text-xs font-bold text-ink/50">
               You're ranked{" "}
-              <span className="font-display font-extrabold text-coral">#{REWARD_POOL.rank}</span>
+              <span className="font-display font-extrabold text-coral">#{yourRank}</span>
             </p>
           </div>
 
@@ -150,7 +154,7 @@ export function DashboardRewardPoolPage() {
               </thead>
               <tbody className="divide-y divide-ink/10">
                 {leaderboard.map((r) => (
-                  <tr key={r.rank} className={cn(r.rank === REWARD_POOL.rank && "bg-lemon/10")}>
+                  <tr key={r.rank} className={cn(r.rank === yourRank && "bg-lemon/10")}>
                     <td className="px-4 py-3">
                       <span
                         className={cn(
@@ -167,7 +171,7 @@ export function DashboardRewardPoolPage() {
                           {r.avatar}
                         </span>
                         <span className="font-extrabold text-ink">{r.name}</span>
-                        {r.rank === REWARD_POOL.rank && (
+                        {r.rank === yourRank && (
                           <span className="rounded-full bg-coral/15 px-2 py-0.5 text-[10px] font-extrabold text-coral">
                             You
                           </span>

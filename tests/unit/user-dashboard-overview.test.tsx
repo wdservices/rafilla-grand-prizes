@@ -23,8 +23,9 @@ vi.mock("@/hooks/useAuthSession", () => ({
 }));
 
 vi.mock("@/hooks/useCompetitions", () => ({
-  useCompetitions: () => ({ competitions: [], loading: false, live: true }),
+  useCompetitions: () => ({ competitions: [], activeCompetitions: [], loading: false, live: true }),
   findCompetition: () => undefined,
+  isCompetitionConcluded: () => false,
 }));
 
 vi.mock("@/lib/platform-config", () => ({

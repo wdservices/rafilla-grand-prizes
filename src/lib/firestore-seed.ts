@@ -105,12 +105,18 @@ export async function seedFirestoreDatabase(
       completed: false,
     });
     const poolBatch = writeBatch(db);
-    poolBatch.set(doc(db, "platformSettings", "rewardPool"), {
-      totalKobo: REWARD_POOL.totalKobo,
-      label: REWARD_POOL.label,
-      seasonLabel: REWARD_POOL.seasonLabel,
-      updatedAt: new Date().toISOString(),
-    });
+    // Merge only the labels — never totalKobo, or re-seeding would wipe the
+    // live balance that ticket purchases have accrued.
+    poolBatch.set(
+      doc(db, "platformSettings", "rewardPool"),
+      {
+        label: REWARD_POOL.label,
+        seasonLabel: REWARD_POOL.seasonLabel,
+        tagline: REWARD_POOL.tagline,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
     await poolBatch.commit();
     stats.platformSettings = 1;
 

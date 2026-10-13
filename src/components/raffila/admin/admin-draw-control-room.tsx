@@ -368,9 +368,9 @@ export function AdminDrawControlRoom({
             {/* Same Wheel Component with Rafilla Logo */}
             <WheelOfFortune
               tickets={tickets}
-              winningTicketNumber={drawRecord?.winningTicketNumber}
+              winningTicketNumber={drawRecord?.winningTicketNumber ?? null}
               isSpinning={currentStage === "SPINNING"}
-              spinStartTime={drawRecord?.spinStartTime}
+              spinStartTime={drawRecord?.spinStartTime ?? null}
               spinDurationMs={drawRecord?.spinDurationMs || 7500}
               size="md"
             />

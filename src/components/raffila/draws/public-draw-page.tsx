@@ -258,9 +258,9 @@ export function PublicDrawPage({ slug: propSlug }: PublicDrawPageProps) {
             {/* Large Prominent Wheel Component */}
             <WheelOfFortune
               tickets={tickets}
-              winningTicketNumber={drawRecord?.winningTicketNumber}
+              winningTicketNumber={drawRecord?.winningTicketNumber ?? null}
               isSpinning={localSpinning || currentStage === "SPINNING"}
-              spinStartTime={drawRecord?.spinStartTime}
+              spinStartTime={drawRecord?.spinStartTime ?? null}
               spinDurationMs={drawRecord?.spinDurationMs || 7500}
               onSpinComplete={handleSpinComplete}
               size="lg"
@@ -341,7 +341,7 @@ export function PublicDrawPage({ slug: propSlug }: PublicDrawPageProps) {
         winningTicketNumber={drawRecord?.winningTicketNumber || ""}
         winnerDisplayName={drawRecord?.winnerDisplayName || "Verified Participant"}
         drawId={drawRecord?.verificationReference || `RF-DRAW-${slug.slice(0, 8)}`}
-        completedAt={drawRecord?.completedAt}
+        completedAt={drawRecord?.completedAt ?? null}
       />
     </div>
   );

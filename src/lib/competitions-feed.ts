@@ -149,14 +149,14 @@ export function docToCompetition(
     marketValueKobo,
     winningTicketId: (data["winningTicketId"] as string | null | undefined) ?? null,
     winningTicketNumber:
-      data["winningTicketNumber"] ??
+      (data["winningTicketNumber"] as string | null | undefined) ??
       (data["winnerTicketNumber"] as string | null | undefined) ??
       null,
     winnerUserId: (data["winnerUserId"] as string | null | undefined) ?? null,
     winnerDisplayName: winnerDisplayNameRaw as string | null,
     winnerHandle: (data["winnerHandle"] as string | null | undefined) ?? null,
     winnerTicketNumber:
-      data["winnerTicketNumber"] ??
+      (data["winnerTicketNumber"] as string | null | undefined) ??
       (data["winningTicketNumber"] as string | null | undefined) ??
       null,
   };
