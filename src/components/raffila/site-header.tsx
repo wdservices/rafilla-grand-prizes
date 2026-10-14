@@ -1,11 +1,12 @@
-import { LayoutDashboard, LogOut, Menu, X } from "lucide-react";
+import { Coins, LayoutDashboard, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 import { CartButton } from "@/components/raffila/cart/cart-button";
-import { cn } from "@/lib/utils";
+import { cn, formatNaira } from "@/lib/utils";
 import { useAuthActions, useAuthSession } from "@/hooks/useAuthSession";
+import { useRewardPool } from "@/hooks/useRewardPool";
 
 const links = [
   { label: "Home", to: "/" as const },
@@ -28,6 +29,7 @@ export function SiteHeader() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { isAuthenticated, role, user } = useAuthSession();
   const { signOut } = useAuthActions();
+  const rewardPool = useRewardPool();
 
   return (
     <header className="relative z-30 mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
@@ -78,6 +80,18 @@ export function SiteHeader() {
           >
             About
           </Link>
+          <span
+            className="inline-flex items-center gap-2 rounded-full bg-paper py-1.5 pl-2 pr-3 ring-1 ring-ink/10"
+            title="Raffila reward pool"
+          >
+            <span className="grid size-6 place-items-center rounded-full bg-lemon/40">
+              <Coins className="size-3.5 text-ink/70" />
+            </span>
+            <span className="text-[11px] font-bold text-ink/50">Reward Pool</span>
+            <span className="text-xs font-extrabold tabular-nums text-ink">
+              {formatNaira(rewardPool.totalKobo)}
+            </span>
+          </span>
           {isAuthenticated ? (
             <div className="flex items-center gap-2">
               <CartButton />
@@ -114,6 +128,17 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2 lg:hidden">
+          <span
+            className="hidden items-center gap-1.5 rounded-full bg-paper py-1.5 pl-1.5 pr-2.5 ring-1 ring-ink/10 sm:inline-flex"
+            title="Raffila reward pool"
+          >
+            <span className="grid size-5 place-items-center rounded-full bg-lemon/40">
+              <Coins className="size-3 text-ink/70" />
+            </span>
+            <span className="text-[11px] font-extrabold tabular-nums text-ink">
+              {formatNaira(rewardPool.totalKobo)}
+            </span>
+          </span>
           <CartButton />
           {isAuthenticated ? (
             <Button asChild variant="outline" size="sm">

@@ -165,55 +165,64 @@ export function HomePage() {
   return (
     <div>
       <section className="mx-auto max-w-7xl px-4 pb-8 pt-8 sm:px-6 sm:pt-12 lg:px-8 lg:pb-12">
-        <div className="flex flex-wrap items-center gap-2">
-          <Pill tone="coral">
-            <span className="size-2 rounded-full bg-coral" /> Featured prize
-          </Pill>
-          <Pill>
-            <BadgeCheck className="size-3.5 text-mint" /> Verifiable draw
-          </Pill>
-        </div>
-        <h1 className="raf-rise mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[1.04] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-          Big opportunities.
-          <br />
-          Affordable entries. <span className="text-coral">Transparent draws.</span>
-        </h1>
-        <div className="mt-5 max-w-xl">
-          <p className="text-base leading-relaxed text-ink/65 sm:text-lg">
-            What can you win? Can you afford to enter? Is Raffila trustworthy? Start with the prize
-            — no wallet needed to browse.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Button asChild variant="primary" size="lg" className="min-h-12 text-base">
-              <Link
-                to="/competitions"
-                onClick={() => trackEvent("competition_card_click", { source: "hero" })}
-              >
-                Explore Competitions <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <span className="inline-flex items-center gap-2 text-xs font-extrabold text-ink/50">
-              <span className="grid size-8 place-items-center rounded-full bg-mint/40 text-ink">
-                ₦
-              </span>{" "}
-              Built for Africa
-            </span>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,420px)] lg:items-center">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Pill tone="coral">
+                <span className="size-2 rounded-full bg-coral" /> Featured prize
+              </Pill>
+              <Pill>
+                <BadgeCheck className="size-3.5 text-mint" /> Verifiable draw
+              </Pill>
+            </div>
+            <h1 className="raf-rise mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[1.04] tracking-tight text-ink sm:text-5xl lg:text-6xl">
+              Big opportunities.
+              <br />
+              Affordable entries. <span className="text-coral">Transparent draws.</span>
+            </h1>
+            <div className="mt-5 max-w-xl">
+              <p className="text-base leading-relaxed text-ink/65 sm:text-lg">
+                What can you win? Can you afford to enter? Is Raffila trustworthy? Start with the
+                prize — no wallet needed to browse.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <Button asChild variant="primary" size="lg" className="min-h-12 text-base">
+                  <Link
+                    to="/competitions"
+                    onClick={() => trackEvent("competition_card_click", { source: "hero" })}
+                  >
+                    Explore Competitions <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+                <span className="inline-flex items-center gap-2 text-xs font-extrabold text-ink/50">
+                  <span className="grid size-8 place-items-center rounded-full bg-mint/40 text-ink">
+                    ₦
+                  </span>{" "}
+                  Built for Africa
+                </span>
+              </div>
+            </div>
           </div>
+          <HeroRewardPoolCard
+            liveCount={activeCompetitions.length}
+            contributionPct={rewardPool.contributionPct}
+            totalKobo={rewardPool.totalKobo}
+          />
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)] lg:items-start">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
           <div className="min-w-0">
             <HeroFeaturedCarousel controller={carousel} showDots={false} />
             <div className="mt-4 lg:hidden">
               <FeaturedCategoryDots controller={carousel} />
             </div>
           </div>
-          <div className="hidden space-y-4 lg:block">
-            <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5">
+          <div className="hidden lg:flex lg:h-full lg:flex-col lg:gap-4">
+            <div className="flex flex-1 flex-col rounded-[28px] bg-paper p-6 ring-1 ring-ink/5">
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
                 Why Raffila
               </p>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="mt-5 grid flex-1 content-between gap-4 sm:grid-cols-2">
                 <TrustItem
                   icon={<ShieldCheck />}
                   title="Clear by design"
@@ -236,24 +245,41 @@ export function HomePage() {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-4 rounded-[28px] bg-lemon/40 p-6 ring-1 ring-ink/5">
-              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-paper text-coral shadow-sm">
-                <Sparkles className="size-5" />
-              </span>
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/50">
-                  {rewardPool.label}
-                </p>
-                <p className="mt-1 font-display text-3xl font-extrabold text-ink">
-                  {formatNaira(rewardPool.totalKobo)}
-                </p>
-                <p className="mt-1 text-[11px] font-bold text-ink/45">
-                  {rewardPool.contributionPct}% of every entry
-                </p>
-              </div>
-              <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-mint/40 px-2.5 py-1 text-[11px] font-extrabold text-ink">
-                <span className="size-1.5 rounded-full bg-mint" /> Live
-              </span>
+            <div className="rounded-[28px] bg-lilac/20 p-6 ring-1 ring-ink/5">
+              <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
+                How it works
+              </p>
+              <ol className="mt-4 space-y-3.5">
+                {[
+                  {
+                    title: "Pick a prize",
+                    text: "Browse live campaigns — no wallet needed.",
+                  },
+                  {
+                    title: "Buy entries",
+                    text: "Clear pricing, pay securely.",
+                  },
+                  {
+                    title: "Watch the draw",
+                    text: "Audited, publicly verifiable results.",
+                  },
+                ].map((step, index) => (
+                  <li key={step.title} className="flex gap-3">
+                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-paper font-display text-xs font-extrabold text-coral ring-1 ring-ink/10">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-extrabold text-ink">{step.title}</p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-ink/55">{step.text}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <Button asChild variant="outline" size="sm" className="mt-5 w-full">
+                <Link to="/how-it-works">
+                  See the full guide <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
             </div>
             <div className="rounded-[28px] bg-paper p-6 ring-1 ring-ink/5">
               <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-ink/45">
@@ -3157,6 +3183,69 @@ function Pill({ children, tone }: { children: React.ReactNode; tone?: "coral" })
     >
       {children}
     </span>
+  );
+}
+/**
+ * Hero rewards-pool panel. Live balance from Firestore (via HomePage's
+ * useRewardPool subscription) plus the live-competition count, rendered in the
+ * premium dark-green/gold treatment used across draw surfaces.
+ */
+function HeroRewardPoolCard({
+  totalKobo,
+  contributionPct,
+  liveCount,
+}: {
+  totalKobo: number;
+  contributionPct: number;
+  liveCount: number;
+}) {
+  return (
+    <div className="raf-rise relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#144C39] via-[#0D2F24] to-[#0A261B] p-6 text-cream ring-1 ring-[#D4AF37]/30 shadow-[0_20px_50px_-20px_rgba(10,38,27,0.5)] sm:p-8">
+      <div className="pointer-events-none absolute -right-16 -top-16 size-52 rounded-full bg-[#D4AF37]/15 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 -left-12 size-56 rounded-full bg-[#10B981]/10 blur-3xl" />
+      <div className="relative">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-cream/55">
+          Raffila Rewards Pool
+        </p>
+        <p className="mt-3 font-display text-[clamp(2.25rem,5vw,3.25rem)] font-extrabold leading-none tracking-tight tabular-nums text-cream">
+          {formatNaira(totalKobo)}
+        </p>
+        <p className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-cream/65">
+          <span className="size-2 rounded-full bg-[#D4AF37] animate-pulse" />
+          Growing live · waiting to be won
+        </p>
+        <div className="mt-6 grid grid-cols-3 gap-3 border-t border-cream/10 pt-5">
+          <div>
+            <p className="font-display text-xl font-extrabold tabular-nums text-cream">
+              {liveCount}
+            </p>
+            <p className="mt-0.5 text-[11px] font-bold text-cream/50">Live campaigns</p>
+          </div>
+          <div>
+            <p className="font-display text-xl font-extrabold tabular-nums text-cream">
+              {contributionPct}%
+            </p>
+            <p className="mt-0.5 text-[11px] font-bold text-cream/50">Of revenue funds pool</p>
+          </div>
+          <div>
+            <p className="font-display text-xl font-extrabold text-cream">Shared</p>
+            <p className="mt-0.5 text-[11px] font-bold text-cream/50">With participants</p>
+          </div>
+        </div>
+        <Button
+          asChild
+          size="lg"
+          className="mt-6 w-full bg-gradient-to-r from-[#D4AF37] to-[#E5C158] hover:from-[#E5C158] hover:to-[#D4AF37] text-[#0A261B] font-extrabold shadow-lg"
+        >
+          <Link
+            to="/competitions"
+            onClick={() => trackEvent("competition_card_click", { source: "hero_reward_pool" })}
+          >
+            Enter a campaign <ArrowRight className="size-4" />
+          </Link>
+        </Button>
+      </div>
+    </div>
   );
 }
 function TrustItem({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
