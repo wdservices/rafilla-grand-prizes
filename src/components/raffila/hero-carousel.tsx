@@ -19,6 +19,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { formatNaira, getProgress, type Competition } from "@/lib/raffila-data";
+import { fallbackPrizeImage } from "@/lib/competitions-feed";
 import { useCompetitions } from "@/hooks/useCompetitions";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,6 @@ function ProgressDetails({
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3 text-xs font-bold text-ink/55">
         <span>Sales progress</span>
-        <span className="font-extrabold text-ink">{progress}%</span>
       </div>
       <Progress
         value={progress}
@@ -60,8 +60,7 @@ function ProgressDetails({
           accentStyles[competition.accent].fill,
         )}
       />
-      <div className="flex items-center justify-between gap-3 text-[11px] font-bold text-ink/50">
-        <span>{progress}% of allocation sold</span>
+      <div className="flex items-center text-[11px] font-bold text-ink/50">
         <span className="flex items-center gap-1">
           <ShieldAlert className="size-3 text-coral" /> Ends {competition.closes}
         </span>
@@ -86,7 +85,16 @@ function FeaturedSlide({ competition }: { competition: Competition }) {
           loading="eager"
           fetchPriority="high"
           decoding="sync"
-          className="aspect-[16/10] w-full rounded-[18px] object-cover"
+          className="aspect-[16/10] w-full rounded-[18px] object-contain"
+          onError={(e) => {
+            const el = e.currentTarget;
+            if (el.dataset["fallbackApplied"] === "1") return;
+            el.dataset["fallbackApplied"] = "1";
+            const fallback = fallbackPrizeImage(
+              `${competition.slug} ${competition.title} ${competition.category}`,
+            );
+            if (fallback) el.src = fallback;
+          }}
         />
         <div className="space-y-3 pt-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">

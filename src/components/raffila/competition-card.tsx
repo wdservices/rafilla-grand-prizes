@@ -9,7 +9,21 @@ import {
   getProgress,
   type Competition,
 } from "@/lib/raffila-data";
+import { fallbackPrizeImage } from "@/lib/competitions-feed";
 import { cn } from "@/lib/utils";
+
+/** Swap a 404'd prize image for the stable public copy once, never looping. */
+function imageFallbackHandler(competition: Competition) {
+  return (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const el = e.currentTarget;
+    if (el.dataset["fallbackApplied"] === "1") return;
+    el.dataset["fallbackApplied"] = "1";
+    const fallback = fallbackPrizeImage(
+      `${competition.slug} ${competition.title} ${competition.category}`,
+    );
+    if (fallback) el.src = fallback;
+  };
+}
 
 const accentStyles = {
   coral: { surface: "bg-rose/20", fill: "bg-coral", badge: "bg-coral/15 text-coral" },
@@ -52,7 +66,8 @@ export function CompetitionCard({
             loading="eager"
             fetchPriority="high"
             decoding="sync"
-            className="aspect-[16/10] w-full rounded-[18px] object-cover"
+            className="aspect-[16/10] w-full rounded-[18px] object-contain"
+            onError={imageFallbackHandler(competition)}
           />
           <div className="space-y-3 pt-4">
             <div className="flex items-start justify-between gap-3">
@@ -80,7 +95,6 @@ export function CompetitionCard({
             </div>
             <ProgressDetails competition={competition} progress={progress} />
             <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-bold text-ink/60">
-              <span>{ticketsLeft.toLocaleString("en-NG")} entries remaining</span>
               <span className="inline-flex items-center gap-1">
                 <CalendarDays className="size-3.5" /> Closes {closesShort}
               </span>
@@ -144,7 +158,8 @@ export function CompetitionCard({
               height={576}
               loading="lazy"
               decoding="async"
-              className="aspect-[4/3] w-full object-cover sm:size-[180px] sm:aspect-square"
+              className="aspect-[4/3] w-full object-contain sm:size-[180px] sm:aspect-square"
+              onError={imageFallbackHandler(competition)}
             />
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-3">
@@ -173,19 +188,11 @@ export function CompetitionCard({
                 {competition.status}
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-2">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">Entry</p>
                 <p className="break-words font-display text-base font-extrabold text-ink sm:text-lg">
                   {formatNaira(competition.entryPrice)}
-                </p>
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-ink/40">
-                  Entries remaining
-                </p>
-                <p className="font-bold text-ink text-xs sm:text-sm">
-                  {ticketsLeft.toLocaleString("en-NG")}
                 </p>
               </div>
               <div className="min-w-0">
@@ -200,7 +207,6 @@ export function CompetitionCard({
               <div className="min-w-0 sm:col-span-2 md:col-span-2">
                 <div className="mb-1 flex items-center justify-between gap-2 text-xs font-bold">
                   <span className="truncate text-ink/60">Sales progress</span>
-                  <span className="shrink-0">{progress}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-ink/10">
                   <div
@@ -209,7 +215,7 @@ export function CompetitionCard({
                   />
                 </div>
                 <p className="mt-2 break-words rounded-2xl bg-cream px-3 py-1.5 text-[11px] font-bold text-ink/70 ring-1 ring-ink/10">
-                  {ticketsLeft.toLocaleString("en-NG")} entries remaining � Closes {closesShort} �{" "}
+                  Closes {closesShort} ·{" "}
                   <span className="inline-flex items-center gap-1 font-extrabold text-ink">
                     <BadgeCheck className="size-3.5 text-mint" /> Verified partner
                   </span>
@@ -257,7 +263,8 @@ export function CompetitionCard({
           height={480}
           loading="lazy"
           decoding="async"
-          className="aspect-[16/10] w-full object-cover"
+          className="aspect-[16/10] w-full object-contain"
+          onError={imageFallbackHandler(competition)}
         />
       </div>
       <div className="min-w-0 flex-1 space-y-1.5 pt-3">
@@ -278,7 +285,6 @@ export function CompetitionCard({
           Enter for {formatNaira(competition.entryPrice)}
         </p>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-bold text-ink/60">
-          <span>{ticketsLeft.toLocaleString("en-NG")} entries remaining</span>
           <span className="inline-flex items-center gap-1">
             <CalendarDays className="size-3" /> Closes {closesShort}
           </span>
@@ -306,8 +312,7 @@ export function CompetitionCard({
         </div>
         <div className="rounded-2xl bg-cream px-3 py-2 ring-1 ring-ink/10">
           <p className="break-words text-[11px] font-bold text-ink/70">
-            {ticketsLeft.toLocaleString("en-NG")} entries remaining � Closes {closesShort} � By{" "}
-            {competition.partner}
+            Closes {closesShort} · By {competition.partner}
           </p>
         </div>
         <div className="flex items-center gap-2">

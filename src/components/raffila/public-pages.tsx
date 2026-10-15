@@ -1158,16 +1158,16 @@ export function CompetitionDetailPage() {
   );
 
   const assignedPartner = useMemo(() => {
-    if (!competition?.partner) return null;
+    // Staff-created competitions display as Rafilla's own — never attach them
+    // to a placeholder partner account from the store.
+    if (!competition?.partner || competition.partner === "Raffila") return null;
     const partners = partnerStore.getAllPartners();
     return (
       partners.find(
         (p) =>
           p.businessName.toLowerCase().includes(competition.partner.toLowerCase()) ||
           competition.partner.toLowerCase().includes(p.businessName.toLowerCase()),
-      ) ||
-      partners[0] ||
-      null
+      ) || null
     );
   }, [competition?.partner]);
 
@@ -1237,9 +1237,6 @@ export function CompetitionDetailPage() {
             </p>
             <div className="mt-0.5 flex flex-wrap items-center gap-2">
               <LiveCountdownPill competition={competition} />
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-ink/55">
-                <Ticket className="size-3" /> {ticketsLeft.toLocaleString("en-NG")} left
-              </span>
               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-raf-green">
                 <BadgeCheck className="size-3" /> {chanceLabel}
               </span>
@@ -1365,7 +1362,7 @@ export function CompetitionDetailPage() {
               alt={`${competition.title} prize`}
               width={1200}
               height={760}
-              className="aspect-[4/3] w-full rounded-[22px] object-cover"
+              className="aspect-[4/3] w-full rounded-[22px] object-contain"
             />
           </div>
           <div className="rounded-[28px] bg-paper p-5 ring-1 ring-ink/5 sm:p-6 lg:p-8">
@@ -1398,15 +1395,8 @@ export function CompetitionDetailPage() {
             <div className="mt-6">
               <div className="flex items-center justify-between text-sm font-bold">
                 <span className="text-ink/55">Sales progress</span>
-                <span>
-                  {ticketsLeft.toLocaleString("en-NG")} of{" "}
-                  {competition.totalEntries.toLocaleString("en-NG")} sold
-                </span>
               </div>
               <Progress value={progress} className="mt-2 h-3 bg-ink/10 [&>div]:bg-coral" />
-              <p className="mt-2 text-sm font-extrabold text-coral">
-                {progress}% of allocation sold
-              </p>
             </div>
             <div className="mt-4 grid grid-cols-1 gap-3 xs:grid-cols-2">
               <div className="rounded-2xl bg-cream p-3 ring-1 ring-ink/5">
@@ -1532,8 +1522,7 @@ export function CompetitionDetailPage() {
                     </Button>
                   )}
                   <p className="text-center text-xs font-bold text-ink/60">
-                    {ticketsLeft.toLocaleString("en-NG")} entries remaining · Closes{" "}
-                    {competition.closes} · Draw {competition.drawDate}
+                    Closes {competition.closes} · Draw {competition.drawDate}
                   </p>
                   <p className="text-center text-xs font-bold text-ink/45">
                     Tickets reserved for 5 minutes · Wallet &amp; Referrals only · Limit {maxQty}{" "}
@@ -2054,7 +2043,7 @@ export function CompetitionDetailPage() {
                                 alt={`${c.title} prize`}
                                 loading="lazy"
                                 decoding="async"
-                                className="aspect-[4/3] w-full rounded-xl object-cover"
+                                className="aspect-[4/3] w-full rounded-xl object-contain"
                               />
                               <div className="mt-3 px-1">
                                 <p className="truncate font-display text-sm font-extrabold text-ink group-hover:text-coral">
@@ -2108,8 +2097,7 @@ export function CompetitionDetailPage() {
                 Feeling lucky?
               </h3>
               <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ink/65 sm:text-base">
-                {ticketsLeft.toLocaleString("en-NG")} entries remain for this competition, and every
-                ticket gets you one step closer to the draw.
+                Every ticket gets you one step closer to the draw.
               </p>
               <Button
                 variant="primary"
@@ -3387,7 +3375,7 @@ export function TrustSafetyPage() {
       <div className="mt-8 rounded-[28px] bg-lemon/40 p-6 ring-1 ring-ink/5 sm:p-8">
         <h2 className="font-display text-xl font-extrabold text-ink">Responsible participation</h2>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-ink/65">
-          Raffila shows factual entries remaining, closing date, total cost and clear status. We
+          Raffila shows the closing date, total cost and clear status. We
           avoid artificial scarcity, flashing urgency and repeated buy-more prompts. You can set a
           voluntary weekly spending alert from your account.
         </p>

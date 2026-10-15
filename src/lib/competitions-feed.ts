@@ -44,6 +44,73 @@ function toMs(value: unknown): number {
 }
 
 /**
+ * Stable prize images committed in `public/`. Vite re-hashes `/assets/*`
+ * imports on every build, so any such URL persisted in Firestore 404s on the
+ * next deploy — as do legacy fixture paths (e.g. `/mercedes-benz-c-class.png`)
+ * that were never committed. These copies never change between deploys.
+ */
+const STABLE_PRIZE_IMAGES = {
+  mercedes: "/raffila-mercedes.jpg",
+  tech: "/raffila-tech-bundle.jpg",
+  apartment: "/raffila-apartment.jpg",
+} as const;
+
+/** Stable public prize image matching the competition's subject, if one exists. */
+export function fallbackPrizeImage(context: string): string {
+  const h = context.toLowerCase();
+  if (/mercedes|c[-_ ]?class/.test(h)) return STABLE_PRIZE_IMAGES.mercedes;
+  if (/apartment|lekki|property|real[-_ ]?estate|\bhome\b/.test(h))
+    return STABLE_PRIZE_IMAGES.apartment;
+  if (/tech[-_ ]?bundle|iphone|macbook|phone|laptop|electronic/.test(h))
+    return STABLE_PRIZE_IMAGES.tech;
+  return "";
+}
+
+/**
+ * Prize image URLs must survive redeploys. External URLs (Cloudinary etc.)
+ * and the stable `public/` copies pass through untouched; every other
+ * relative path — Vite-hashed `/assets/*` URLs from an old build, or legacy
+ * fixture paths that were never committed — 404s on the hosted site, so it is
+ * rewritten (by subject keyword, with slug/title/category as context) to the
+ * matching stable copy. Empty values are filled the same way.
+ */
+export function resolvePrizeImage(raw: unknown, context = ""): string {
+  const url = String(raw ?? "").trim();
+  if (/^https?:\/\//i.test(url) || url.startsWith("/raffila-")) return url;
+  return fallbackPrizeImage(`${url} ${context}`) || url;
+}
+
+/**
+ * Placeholder partner names the admin form offers for staff-created
+ * competitions. No real business stands behind them, so they must never reach
+ * public surfaces — a competition created by a Rafilla admin is presented as
+ * Rafilla's own. A competition that carries a real partnerId keeps the
+ * partner name stored on its document.
+ */
+const PLACEHOLDER_PARTNERS = new Set([
+  "lux wheels ltd",
+  "luxwheelsltd",
+  "techhome ng",
+  "techhomeng",
+  "adebayo homes",
+  "adebayohomes",
+  "lekki luxury autos",
+  "lekkiluxuryautos",
+  "abuja tech hub",
+  "abujatechhub",
+]);
+
+/** Display partner: staff-created competitions are Rafilla's own, not a partner's. */
+function resolvePartner(data: Record<string, unknown>): string {
+  const assignedPartnerId = String(data["partnerId"] ?? data["assignedPartnerId"] ?? "").trim();
+  const rawPartner = String(data["partner"] ?? "").trim();
+  if (assignedPartnerId) return rawPartner || "Raffila";
+  if (!rawPartner) return "Raffila";
+  const key = rawPartner.toLowerCase().replace(/\s+/g, " ");
+  return PLACEHOLDER_PARTNERS.has(key) ? "Raffila" : rawPartner;
+}
+
+/**
  * Map a Firestore competition document to the app's Competition shape.
  * Returns null for drafts (unless includeDrafts) so unpublished work never
  * leaks onto public surfaces.
@@ -113,14 +180,14 @@ export function docToCompetition(
   const closesMs = toMs(data["closes"] ?? data["drawDate"]);
   const daysUntilClose = closesMs ? Math.max(0, Math.ceil((closesMs - Date.now()) / 86400000)) : 30;
   const images = Array.isArray(data["images"]) ? (data["images"] as string[]) : [];
-  const image = String(data["image"] ?? images[0] ?? "");
+  const image = resolvePrizeImage(data["image"] ?? images[0] ?? "", `${slug} ${title} ${rawCategory}`);
 
   const winnerDisplayNameRaw = data["winnerDisplayName"] ?? data["winnerName"] ?? null;
   return {
     slug,
     title,
     category,
-    partner: String(data["partner"] ?? "Raffila"),
+    partner: resolvePartner(data),
     description: String(data["description"] ?? ""),
     prizeValueKobo: marketValueKobo,
     entryPrice,

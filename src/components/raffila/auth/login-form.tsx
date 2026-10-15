@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { UserRole } from "@/lib/auth-store";
+import type { UserRole, RaffilaUser } from "@/lib/auth-store";
 import { useAuthActions } from "@/hooks/useAuthSession";
 import { cn } from "@/lib/utils";
 
@@ -45,9 +45,15 @@ type AuthErrors = { email?: string; password?: string; global?: string };
 
 interface LoginFormProps {
   onSwitchToRegister?: () => void;
+  /**
+   * Guest-checkout hook: when provided, a successful sign-in calls this
+   * instead of redirecting to the dashboard, so the visitor resumes payment
+   * in place. The /auth page omits it and keeps the dashboard redirect.
+   */
+  onSuccess?: (user: RaffilaUser) => void;
 }
 
-export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
+export function LoginForm({ onSwitchToRegister, onSuccess }: LoginFormProps = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -92,11 +98,20 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
     if (!validate()) return;
     setLoading(true);
     setErrors({});
-    const res = await signIn({ email: email.trim(), password, remember });
+    const res = await signIn({
+      email: email.trim(),
+      password,
+      remember,
+      redirectTo: onSuccess ? false : undefined,
+    });
     setLoading(false);
     if (!res.ok) {
       setErrors({ global: res.message });
       toast.error("Sign in failed", { description: res.message });
+    } else if (onSuccess) {
+      // Guest checkout: stay on the page and resume payment in place.
+      toast.success("Welcome back!", { description: "Taking you straight to payment…" });
+      onSuccess(res.user);
     } else {
       toast.success("Welcome back!", {
         description:
@@ -114,7 +129,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
   async function onGoogleSignIn() {
     setLoading(true);
     setErrors({});
-    const res = await signInWithGoogle();
+    const res = await signInWithGoogle({ redirectTo: onSuccess ? false : undefined });
     setLoading(false);
     if (!res.ok) {
       setErrors({ global: res.message });
@@ -122,7 +137,14 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps = {}) {
       return;
     }
     if (res.needsProfile) {
+      // Profile completion has its own full-screen flow — leave the cart
+      // dialog and come back to payment after it finishes.
       window.location.href = "/auth?mode=complete";
+      return;
+    }
+    if (onSuccess) {
+      toast.success("Signed in with Google!", { description: "Taking you straight to payment…" });
+      onSuccess(res.user);
       return;
     }
     toast.success("Signed in with Google!");

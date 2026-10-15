@@ -76,6 +76,12 @@ export function useAuthActions() {
       email: string;
       password: string;
       remember?: boolean;
+      /**
+       * Post sign-in destination. `false` stays on the current page — used by
+       * the guest-checkout dialog, which resumes the pending payment in place
+       * instead of sending the fresh session to the dashboard.
+       */
+      redirectTo?: string | false | undefined;
     }): Promise<SignInResult> {
       const remember = input.remember ?? true;
 
@@ -120,14 +126,19 @@ export function useAuthActions() {
           }
         }
 
-        const redirect =
+        const roleRedirect =
           user.role === "admin" ? "/admin" : user.role === "partner" ? "/partner" : "/dashboard";
+        let redirect: string;
+        if (input.redirectTo === false) redirect = "";
+        else redirect = input.redirectTo ?? roleRedirect;
         void logActivity({
           eventType: "AUTH_LOGIN",
           targetType: "session",
           summary: `Signed in with email`,
         });
-        setTimeout(() => void navigate({ to: redirect as any }), 0);
+        if (redirect) {
+          setTimeout(() => void navigate({ to: redirect as any }), 0);
+        }
         return { ok: true, user, redirect };
       } catch (err: any) {
         const message =
@@ -142,7 +153,7 @@ export function useAuthActions() {
       }
     },
 
-    async signInWithGoogle(): Promise<
+    async signInWithGoogle(options?: { redirectTo?: string | false | undefined }): Promise<
       | { ok: true; user: RaffilaUser; redirect: string; needsProfile: boolean }
       | { ok: false; message: string }
     > {
@@ -227,14 +238,19 @@ export function useAuthActions() {
         };
         setFirebaseSession(user, true);
 
-        const redirect =
+        const roleRedirect =
           user.role === "admin" ? "/admin" : user.role === "partner" ? "/partner" : "/dashboard";
+        let redirect: string;
+        if (options?.redirectTo === false) redirect = "";
+        else redirect = options?.redirectTo ?? roleRedirect;
         void logActivity({
           eventType: "AUTH_LOGIN",
           targetType: "session",
           summary: `Signed in with Google (${user.role})`,
         });
-        setTimeout(() => void navigate({ to: redirect as any }), 0);
+        if (redirect) {
+          setTimeout(() => void navigate({ to: redirect as any }), 0);
+        }
         return { ok: true, user, redirect, needsProfile: false };
       } catch (err: any) {
         if (err?.code === "auth/popup-closed-by-user") {

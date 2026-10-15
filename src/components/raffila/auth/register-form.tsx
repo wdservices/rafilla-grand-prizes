@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { getPasswordStrength, passwordStrengthLabels } from "@/lib/password-strength";
 import { useAuthActions } from "@/hooks/useAuthSession";
+import type { RaffilaUser } from "@/lib/auth-store";
 import {
   checkUsernameAvailability,
   checkEmailAvailability,
@@ -77,7 +78,18 @@ function isAdult(dob: string): boolean {
   return age >= 18;
 }
 
-export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin?: () => void } = {}) {
+export function RegisterForm({
+  onSwitchToLogin,
+  onSuccess,
+}: {
+  onSwitchToLogin?: () => void;
+  /**
+   * Guest-checkout hook: when provided, a successful registration calls this
+   * instead of redirecting to the dashboard, so the new account resumes the
+   * pending payment in place. The /auth page omits it and keeps the redirect.
+   */
+  onSuccess?: (user: RaffilaUser) => void;
+} = {}) {
   const [step, setStep] = useState<1 | 2>(1);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -275,20 +287,31 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin?: () => void
     }
 
     setLoading(false);
+    if (onSuccess) {
+      // Guest checkout: brand-new account resumes the pending payment here.
+      onSuccess(result.user);
+      return;
+    }
     setSuccess(true);
   }
 
   async function onGoogleSignUp() {
     setLoading(true);
     setErrors({});
-    const res = await signInWithGoogle();
+    const res = await signInWithGoogle({ redirectTo: onSuccess ? false : undefined });
     setLoading(false);
     if (!res.ok) {
       setErrors({ global: res.message });
       return;
     }
     if (res.needsProfile) {
+      // Profile completion has its own full-screen flow — leave the cart
+      // dialog and come back to payment after it finishes.
       window.location.href = "/auth?mode=complete";
+      return;
+    }
+    if (onSuccess) {
+      onSuccess(res.user);
       return;
     }
     setSuccess(true);

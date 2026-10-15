@@ -102,7 +102,7 @@ export function TicketPurchaseModal({
                 alt={`${competition.title} prize`}
                 loading="lazy"
                 decoding="async"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
               />
             </div>
             <div>

@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/raffila-data";
 import { cn } from "@/lib/utils";
+import { getSession } from "@/lib/auth-store";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useCompetitions, isCompetitionConcluded } from "@/hooks/useCompetitions";
 import {
@@ -39,6 +40,7 @@ import {
   type IssuedTicketLine,
 } from "@/lib/paystack-server";
 import { generatePaystackReference, getTicketCallbackUrl } from "@/lib/paystack";
+import { CheckoutAuthDialog } from "@/components/raffila/auth/checkout-auth-dialog";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 
@@ -68,6 +70,7 @@ export function CartDrawer() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<SuccessState | null>(null);
   const [referralKobo, setReferralKobo] = useState<number | null>(null);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const catalogue = useMemo(
     () =>
@@ -126,9 +129,16 @@ export function CartDrawer() {
 
   const checkoutPaystack = async () => {
     setError(null);
-    const email = user?.email?.trim();
-    if (!email || !uid) {
-      setError("Sign in to complete your purchase.");
+    // Read the session fresh instead of the render closure: this function also
+    // runs in the same tick as an inline guest sign-in, before the hook
+    // re-renders with the new user.
+    const session = getSession();
+    const email = session?.user?.email?.trim();
+    const payUid = sessionUid(session?.user?.id);
+    if (!email || !payUid) {
+      // Reached the payment step without a session — prompt inline instead of
+      // stranding the visitor on an error message.
+      setAuthOpen(true);
       return;
     }
     if (lines.length === 0) return;
@@ -143,11 +153,12 @@ export function CartDrawer() {
           metadata: {
             kind: "ticket_purchase",
             items: orderItems,
-            uid,
+            uid: payUid,
             email,
             userName:
-              [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Raffila Member",
-            userHandle: user?.handle ?? "",
+              [session?.user?.firstName, session?.user?.lastName].filter(Boolean).join(" ") ||
+              "Raffila Member",
+            userHandle: session?.user?.handle ?? "",
           },
         },
       });
@@ -161,15 +172,17 @@ export function CartDrawer() {
 
   const checkoutReferral = async () => {
     setError(null);
-    if (!uid) {
-      setError("Sign in to complete your purchase.");
+    const session = getSession();
+    const payUid = sessionUid(session?.user?.id);
+    if (!payUid) {
+      setAuthOpen(true);
       return;
     }
     if (lines.length === 0) return;
     setProcessing(true);
     try {
       const res = await confirmReferralPurchase({
-        data: { items: orderItems, uid, reference: generatePaystackReference("RF-REF") },
+        data: { items: orderItems, uid: payUid, reference: generatePaystackReference("RF-REF") },
       });
       if (res.ok) {
         setSuccess({
@@ -190,6 +203,16 @@ export function CartDrawer() {
     } finally {
       setProcessing(false);
     }
+  };
+
+  /**
+   * Guest signed in from the checkout dialog: close it and resume the payment
+   * they were making. The session is fresh at this moment, and the cart
+   * itself never left temperature — checkoutPaystack re-reads the session.
+   */
+  const handleAuthenticated = () => {
+    setAuthOpen(false);
+    void checkoutPaystack();
   };
 
   return (
@@ -261,12 +284,18 @@ export function CartDrawer() {
 
               {!user ? (
                 <div className="rounded-2xl bg-lemon/30 p-4 ring-1 ring-lemon/50">
-                  <p className="text-sm font-extrabold text-ink">Sign in to check out</p>
+                  <p className="text-sm font-extrabold text-ink">One more step — sign in to pay</p>
                   <p className="mt-1 text-xs font-bold text-ink/60">
-                    Your cart is saved — sign in and come back to pay.
+                    Your {totalQty} {totalQty === 1 ? "ticket" : "tickets"} stay saved — sign in and
+                    payment comes straight back up.
                   </p>
-                  <Button asChild variant="primary" size="md" className="mt-3 w-full">
-                    <Link to="/auth">Sign in / Create account</Link>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="mt-3 w-full"
+                    onClick={() => setAuthOpen(true)}
+                  >
+                    Sign in / Create account to pay {formatNaira(subtotalKobo)}
                   </Button>
                 </div>
               ) : (
@@ -347,6 +376,15 @@ export function CartDrawer() {
           )}
         </div>
       </aside>
+
+      <CheckoutAuthDialog
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        onAuthenticated={handleAuthenticated}
+        totalKobo={subtotalKobo}
+        ticketCount={totalQty}
+        competitionTitle={lines[0]?.title}
+      />
     </div>
   );
 }
